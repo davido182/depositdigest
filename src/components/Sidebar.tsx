@@ -10,8 +10,9 @@ import {
   Menu,
 } from "lucide-react";
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -19,9 +20,12 @@ import {
   SidebarHeader,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { toast } from "sonner";
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const menuItems = [
     {
@@ -55,6 +59,12 @@ export function Sidebar() {
       path: "/settings",
     },
   ];
+
+  const handleLogout = () => {
+    logout();
+    toast.success("Logged out successfully");
+    navigate("/login");
+  };
 
   return (
     <SidebarComponent>
@@ -96,7 +106,10 @@ export function Sidebar() {
         </nav>
       </SidebarContent>
       <SidebarFooter className="p-4 border-t border-sidebar-border">
-        <button className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200 w-full">
+        <button 
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200 w-full"
+          onClick={handleLogout}
+        >
           <LogOut className="h-5 w-5" />
           {!isCollapsed && <span>Logout</span>}
         </button>
