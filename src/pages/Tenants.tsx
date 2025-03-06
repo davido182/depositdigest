@@ -1,6 +1,7 @@
 
 import { Layout } from "@/components/Layout";
 import { TenantList } from "@/components/tenants/TenantList";
+import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import { Tenant } from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -70,14 +71,30 @@ const mockTenants: Tenant[] = [
 ];
 
 const Tenants = () => {
-  const [tenants] = useState<Tenant[]>(mockTenants);
+  const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
 
   const handleAddTenant = () => {
-    toast.info("Add tenant feature coming soon");
+    setCurrentTenant(null);
+    setIsEditModalOpen(true);
   };
 
   const handleEditTenant = (tenant: Tenant) => {
-    toast.info(`Edit tenant: ${tenant.name}`);
+    setCurrentTenant(tenant);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveTenant = (updatedTenant: Tenant) => {
+    if (currentTenant) {
+      // Update existing tenant
+      setTenants(
+        tenants.map((t) => (t.id === updatedTenant.id ? updatedTenant : t))
+      );
+    } else {
+      // Add new tenant
+      setTenants([...tenants, updatedTenant]);
+    }
   };
 
   return (
@@ -88,6 +105,12 @@ const Tenants = () => {
           tenants={tenants}
           onAddTenant={handleAddTenant}
           onEditTenant={handleEditTenant}
+        />
+        <TenantEditForm
+          tenant={currentTenant}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleSaveTenant}
         />
       </section>
     </Layout>
