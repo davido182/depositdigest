@@ -1,4 +1,3 @@
-
 import { Layout } from "@/components/Layout";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { TenantList } from "@/components/tenants/TenantList";
@@ -6,7 +5,7 @@ import { PaymentsList } from "@/components/payments/PaymentsList";
 import { Payment, Tenant } from "@/types";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 // Mock data
 const mockTenants: Tenant[] = [
