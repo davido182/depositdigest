@@ -1,7 +1,8 @@
+
 import { Layout } from "@/components/Layout";
 import { TenantList } from "@/components/tenants/TenantList";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
-import { Tenant } from "@/types";
+import { Tenant, TenantStatus } from "@/types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
@@ -25,7 +26,7 @@ const Tenants = () => {
           setIsOffline(false);
         } else {
           setIsOffline(true);
-          const mockTenants = [
+          const mockTenants: Tenant[] = [
             {
               id: "1",
               name: "Alex Johnson",
@@ -36,7 +37,7 @@ const Tenants = () => {
               leaseEndDate: "2024-01-15",
               rentAmount: 1500,
               depositAmount: 1500,
-              status: "active",
+              status: "active" as TenantStatus,
               paymentHistory: [],
               createdAt: "2023-01-10",
               updatedAt: "2023-01-10",
@@ -51,7 +52,7 @@ const Tenants = () => {
               leaseEndDate: "2024-03-01",
               rentAmount: 1700,
               depositAmount: 1700,
-              status: "active",
+              status: "active" as TenantStatus,
               paymentHistory: [],
               createdAt: "2023-02-25",
               updatedAt: "2023-02-25",
@@ -66,7 +67,7 @@ const Tenants = () => {
               leaseEndDate: "2023-11-01",
               rentAmount: 1600,
               depositAmount: 1600,
-              status: "late",
+              status: "late" as TenantStatus,
               paymentHistory: [],
               createdAt: "2022-10-25",
               updatedAt: "2022-10-25",
@@ -81,7 +82,7 @@ const Tenants = () => {
               leaseEndDate: "2024-02-15",
               rentAmount: 1800,
               depositAmount: 1800,
-              status: "notice",
+              status: "notice" as TenantStatus,
               paymentHistory: [],
               createdAt: "2023-02-10",
               updatedAt: "2023-02-10",
