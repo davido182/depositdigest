@@ -13,10 +13,15 @@ export function Layout({ children }: LayoutProps) {
   // Prevent hydration mismatch by mounting on client-side only
   useEffect(() => {
     setMounted(true);
+    console.log("Layout component mounted");
   }, []);
 
   if (!mounted) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
