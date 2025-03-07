@@ -22,11 +22,15 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      // Add a default onError handler to avoid uncaught promise rejections
-      onError: (error) => {
-        console.error("Query error:", error);
-      }
     },
+  },
+  // Add a global error handler at the QueryClient level
+  logger: {
+    error: (error) => {
+      console.error("Query error:", error);
+    },
+    log: console.log,
+    warn: console.warn,
   },
 });
 
