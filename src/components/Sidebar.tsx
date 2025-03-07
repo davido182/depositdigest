@@ -8,6 +8,7 @@ import {
   Home,
   LogOut,
   Menu,
+  Tool,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -42,6 +43,11 @@ export function Sidebar() {
       title: "Payments",
       icon: Wallet,
       path: "/payments",
+    },
+    {
+      title: "Maintenance",
+      icon: Tool,
+      path: "/maintenance",
     },
     {
       title: "Reports",

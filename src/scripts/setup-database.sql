@@ -34,8 +34,30 @@ CREATE TABLE IF NOT EXISTS payments (
   FOREIGN KEY (tenantId) REFERENCES tenants(id)
 );
 
+-- Create maintenance_requests table
+CREATE TABLE IF NOT EXISTS maintenance_requests (
+  id VARCHAR(36) PRIMARY KEY,
+  tenantId VARCHAR(36) NOT NULL,
+  unit VARCHAR(20) NOT NULL,
+  title VARCHAR(100) NOT NULL,
+  description TEXT NOT NULL,
+  category ENUM('plumbing', 'electrical', 'heating', 'appliance', 'structural', 'other') NOT NULL,
+  priority ENUM('emergency', 'high', 'medium', 'low') NOT NULL,
+  status ENUM('pending', 'assigned', 'in_progress', 'completed', 'cancelled') NOT NULL DEFAULT 'pending',
+  images JSON,
+  assignedTo VARCHAR(100),
+  notes TEXT,
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL,
+  completedAt DATETIME,
+  FOREIGN KEY (tenantId) REFERENCES tenants(id)
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_tenants_status ON tenants(status);
 CREATE INDEX idx_payments_tenantId ON payments(tenantId);
 CREATE INDEX idx_payments_date ON payments(date);
 CREATE INDEX idx_payments_status ON payments(status);
+CREATE INDEX idx_maintenance_tenantId ON maintenance_requests(tenantId);
+CREATE INDEX idx_maintenance_status ON maintenance_requests(status);
+CREATE INDEX idx_maintenance_priority ON maintenance_requests(priority);

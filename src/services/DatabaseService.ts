@@ -1,7 +1,6 @@
-
 import mysql from 'mysql2/promise';
 import { dbConfig } from '../config/database';
-import { Tenant, Payment } from '@/types';
+import { Tenant, Payment, MaintenanceRequest } from '@/types';
 
 class DatabaseService {
   private static instance: DatabaseService;
@@ -141,6 +140,89 @@ class DatabaseService {
       return id;
     } catch (error) {
       console.error('Error creating payment:', error);
+      throw error;
+    }
+  }
+
+  // Maintenance Request methods
+  public async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
+    try {
+      const [rows] = await this.pool.query('SELECT * FROM maintenance_requests');
+      return rows as MaintenanceRequest[];
+    } catch (error) {
+      console.error('Error fetching maintenance requests:', error);
+      throw error;
+    }
+  }
+
+  public async getMaintenanceRequestById(id: string): Promise<MaintenanceRequest | null> {
+    try {
+      const [rows] = await this.pool.query('SELECT * FROM maintenance_requests WHERE id = ?', [id]);
+      const requests = rows as MaintenanceRequest[];
+      return requests.length > 0 ? requests[0] : null;
+    } catch (error) {
+      console.error(`Error fetching maintenance request with id ${id}:`, error);
+      throw error;
+    }
+  }
+
+  public async getMaintenanceRequestsByTenant(tenantId: string): Promise<MaintenanceRequest[]> {
+    try {
+      const [rows] = await this.pool.query('SELECT * FROM maintenance_requests WHERE tenantId = ?', [tenantId]);
+      return rows as MaintenanceRequest[];
+    } catch (error) {
+      console.error(`Error fetching maintenance requests for tenant ${tenantId}:`, error);
+      throw error;
+    }
+  }
+
+  public async createMaintenanceRequest(request: Omit<MaintenanceRequest, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    try {
+      const id = crypto.randomUUID();
+      const now = new Date().toISOString();
+      
+      await this.pool.query(
+        `INSERT INTO maintenance_requests 
+        (id, tenantId, unit, title, description, category, priority, status, createdAt, updatedAt) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, request.tenantId, request.unit, request.title, request.description, 
+          request.category, request.priority, request.status, now, now]
+      );
+      
+      return id;
+    } catch (error) {
+      console.error('Error creating maintenance request:', error);
+      throw error;
+    }
+  }
+
+  public async updateMaintenanceRequest(id: string, request: Partial<MaintenanceRequest>): Promise<boolean> {
+    try {
+      const now = new Date().toISOString();
+      
+      // Build the dynamic part of the query
+      const updateFields: string[] = [];
+      const values: any[] = [];
+      
+      Object.entries(request).forEach(([key, value]) => {
+        if (key !== 'id' && key !== 'createdAt') {
+          updateFields.push(`${key} = ?`);
+          values.push(value);
+        }
+      });
+      
+      updateFields.push('updatedAt = ?');
+      values.push(now);
+      
+      // Add the ID at the end for the WHERE clause
+      values.push(id);
+      
+      const query = `UPDATE maintenance_requests SET ${updateFields.join(', ')} WHERE id = ?`;
+      const [result] = await this.pool.query(query, values);
+      
+      return (result as mysql.ResultSetHeader).affectedRows > 0;
+    } catch (error) {
+      console.error(`Error updating maintenance request with id ${id}:`, error);
       throw error;
     }
   }
