@@ -34,7 +34,7 @@ const queryClient = new QueryClient({
 });
 
 // Set up query error handling
-queryClient.setMutationDefaults({
+queryClient.setMutationDefaults(["global"], {
   mutationFn: async () => {
     // This is just a placeholder - actual mutation functions will be defined where used
     return null;
