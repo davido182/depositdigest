@@ -8,7 +8,7 @@ import {
   Home,
   LogOut,
   Menu,
-  Tool,
+  Wrench,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -46,7 +46,7 @@ export function Sidebar() {
     },
     {
       title: "Maintenance",
-      icon: Tool,
+      icon: Wrench,
       path: "/maintenance",
     },
     {
