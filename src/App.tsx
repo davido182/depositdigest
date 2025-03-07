@@ -24,20 +24,24 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
     mutations: {
-      onError: (error) => {
-        console.error("Mutation error:", error);
+      onSettled: (data, error) => {
+        if (error) {
+          console.error("Mutation error:", error);
+        }
       },
     },
   },
 });
 
-// Add global error handler
-queryClient.setDefaultOptions({
-  queries: {
-    onError: (error) => {
-      console.error("Query error:", error);
-    },
+// Set up query error handling
+queryClient.setMutationDefaults({
+  mutationFn: async () => {
+    // This is just a placeholder - actual mutation functions will be defined where used
+    return null;
   },
+  onError: (error) => {
+    console.error("Mutation default error handler:", error);
+  }
 });
 
 const App = () => {
