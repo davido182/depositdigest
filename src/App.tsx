@@ -23,14 +23,20 @@ const queryClient = new QueryClient({
       retry: 1,
       refetchOnWindowFocus: false,
     },
+    mutations: {
+      onError: (error) => {
+        console.error("Mutation error:", error);
+      },
+    },
   },
-  // Add a global error handler at the QueryClient level
-  logger: {
-    error: (error) => {
+});
+
+// Add global error handler
+queryClient.setDefaultOptions({
+  queries: {
+    onError: (error) => {
       console.error("Query error:", error);
     },
-    log: console.log,
-    warn: console.warn,
   },
 });
 
