@@ -12,6 +12,8 @@ const Reports = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [occupancyRate, setOccupancyRate] = useState<string>("0");
+  const [collectionRate, setCollectionRate] = useState<string>("0");
 
   useEffect(() => {
     const loadData = async () => {
@@ -23,6 +25,10 @@ const Reports = () => {
         
         setTenants(loadedTenants);
         setPayments(loadedPayments);
+        
+        // Calculate rates on load
+        calculateOccupancy(loadedTenants);
+        calculateRentCollection(loadedTenants, loadedPayments);
       } catch (error) {
         console.error("Error loading report data:", error);
         toast.error("Failed to load report data");
@@ -34,28 +40,67 @@ const Reports = () => {
     loadData();
   }, []);
 
+  const calculateOccupancy = (currentTenants: Tenant[]) => {
+    const activeCount = currentTenants.filter(t => t.status === 'active').length;
+    const totalUnits = 20; // Assuming total units is 20
+    const rate = totalUnits > 0 ? (activeCount / totalUnits * 100).toFixed(1) : "0";
+    setOccupancyRate(rate);
+    return rate;
+  };
+
+  const calculateRentCollection = (currentTenants: Tenant[], currentPayments: Payment[]) => {
+    const totalRent = currentTenants.reduce((sum, tenant) => sum + tenant.rentAmount, 0);
+    const collectedRent = currentPayments.filter(p => p.status === 'completed').reduce((sum, payment) => sum + payment.amount, 0);
+    const rate = totalRent > 0 ? (collectedRent / totalRent * 100).toFixed(1) : "0";
+    setCollectionRate(rate);
+    return rate;
+  };
+
   const generateOccupancyReport = () => {
-    const activeCount = tenants.filter(t => t.status === 'active').length;
-    const totalUnits = tenants.length;
-    const occupancyRate = totalUnits > 0 ? (activeCount / totalUnits * 100).toFixed(1) : "0";
+    const rate = calculateOccupancy(tenants);
     
-    toast.success(`Generated Occupancy Report: ${occupancyRate}% occupancy rate`);
+    toast.success(`Occupancy Report: ${rate}% occupancy rate`);
+    
+    // Show more detailed information
+    const activeCount = tenants.filter(t => t.status === 'active').length;
+    const noticeCount = tenants.filter(t => t.status === 'notice').length;
+    const inactiveCount = tenants.filter(t => t.status === 'inactive').length;
+    const lateCount = tenants.filter(t => t.status === 'late').length;
+    
+    console.log({
+      total: 20,
+      active: activeCount,
+      notice: noticeCount,
+      inactive: inactiveCount,
+      late: lateCount,
+      occupancyRate: rate
+    });
   };
 
   const generateRentCollectionReport = () => {
+    const rate = calculateRentCollection(tenants, payments);
+    
+    toast.success(`Rent Collection Report: ${rate}% collection rate`);
+    
+    // Show more detailed information
     const totalRent = tenants.reduce((sum, tenant) => sum + tenant.rentAmount, 0);
     const collectedRent = payments.filter(p => p.status === 'completed').reduce((sum, payment) => sum + payment.amount, 0);
-    const collectionRate = totalRent > 0 ? (collectedRent / totalRent * 100).toFixed(1) : "0";
+    const pendingRent = payments.filter(p => p.status === 'pending').reduce((sum, payment) => sum + payment.amount, 0);
     
-    toast.success(`Generated Rent Collection Report: ${collectionRate}% collection rate`);
+    console.log({
+      totalRent,
+      collectedRent,
+      pendingRent,
+      collectionRate: rate
+    });
   };
 
   const exportTenantData = () => {
     try {
       // Create CSV content
-      const header = "Name,Email,Unit,Status,Rent Amount\n";
+      const header = "Name,Email,Unit,Status,Rent Amount,Move In Date,Lease End Date\n";
       const rows = tenants.map(tenant => 
-        `${tenant.name},${tenant.email},${tenant.unit},${tenant.status},${tenant.rentAmount}`
+        `${tenant.name},${tenant.email},${tenant.unit},${tenant.status},${tenant.rentAmount},${tenant.moveInDate},${tenant.leaseEndDate}`
       ).join("\n");
       
       const csvContent = `data:text/csv;charset=utf-8,${header}${rows}`;
@@ -64,7 +109,7 @@ const Reports = () => {
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "tenants_report.csv");
+      link.setAttribute("download", `tenants_report_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       
       // Trigger download
@@ -95,7 +140,7 @@ const Reports = () => {
                   <div>
                     <h2 className="text-xl font-semibold">Occupancy Report</h2>
                     <p className="text-muted-foreground text-sm mt-1">
-                      Overview of unit occupancy status
+                      Current occupancy rate: {occupancyRate}%
                     </p>
                   </div>
                   <PieChart className="h-6 w-6 text-primary" />
@@ -113,7 +158,7 @@ const Reports = () => {
                   <div>
                     <h2 className="text-xl font-semibold">Rent Collection</h2>
                     <p className="text-muted-foreground text-sm mt-1">
-                      Track rent payments and collection rates
+                      Current collection rate: {collectionRate}%
                     </p>
                   </div>
                   <Filter className="h-6 w-6 text-primary" />

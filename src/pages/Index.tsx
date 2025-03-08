@@ -1,146 +1,42 @@
+
 import { Layout } from "@/components/Layout";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { TenantList } from "@/components/tenants/TenantList";
 import { PaymentsList } from "@/components/payments/PaymentsList";
+import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import { Payment, Tenant } from "@/types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-
-// Mock data
-const mockTenants: Tenant[] = [
-  {
-    id: "1",
-    name: "Alex Johnson",
-    email: "alex.johnson@example.com",
-    phone: "(555) 123-4567",
-    unit: "101",
-    moveInDate: "2023-01-15",
-    leaseEndDate: "2024-01-15",
-    rentAmount: 1500,
-    depositAmount: 1500,
-    status: "active",
-    paymentHistory: [],
-    createdAt: "2023-01-10",
-    updatedAt: "2023-01-10",
-  },
-  {
-    id: "2",
-    name: "Sarah Williams",
-    email: "sarah.williams@example.com",
-    phone: "(555) 987-6543",
-    unit: "205",
-    moveInDate: "2023-03-01",
-    leaseEndDate: "2024-03-01",
-    rentAmount: 1700,
-    depositAmount: 1700,
-    status: "active",
-    paymentHistory: [],
-    createdAt: "2023-02-25",
-    updatedAt: "2023-02-25",
-  },
-  {
-    id: "3",
-    name: "Michael Chen",
-    email: "michael.chen@example.com",
-    phone: "(555) 456-7890",
-    unit: "310",
-    moveInDate: "2022-11-01",
-    leaseEndDate: "2023-11-01",
-    rentAmount: 1600,
-    depositAmount: 1600,
-    status: "late",
-    paymentHistory: [],
-    createdAt: "2022-10-25",
-    updatedAt: "2022-10-25",
-  },
-  {
-    id: "4",
-    name: "Jessica Rodriguez",
-    email: "jessica.rodriguez@example.com",
-    phone: "(555) 789-0123",
-    unit: "402",
-    moveInDate: "2023-02-15",
-    leaseEndDate: "2024-02-15",
-    rentAmount: 1800,
-    depositAmount: 1800,
-    status: "notice",
-    paymentHistory: [],
-    createdAt: "2023-02-10",
-    updatedAt: "2023-02-10",
-  },
-];
-
-const mockPayments: Payment[] = [
-  {
-    id: "p1",
-    tenantId: "1",
-    amount: 1500,
-    date: "2023-08-01",
-    type: "rent",
-    method: "transfer",
-    status: "completed",
-    createdAt: "2023-08-01",
-  },
-  {
-    id: "p2",
-    tenantId: "2",
-    amount: 1700,
-    date: "2023-08-02",
-    type: "rent",
-    method: "card",
-    status: "completed",
-    createdAt: "2023-08-02",
-  },
-  {
-    id: "p3",
-    tenantId: "3",
-    amount: 1600,
-    date: "2023-07-28",
-    type: "rent",
-    method: "transfer",
-    status: "pending",
-    createdAt: "2023-07-28",
-  },
-  {
-    id: "p4",
-    tenantId: "4",
-    amount: 1800,
-    date: "2023-08-01",
-    type: "rent",
-    method: "check",
-    status: "completed",
-    createdAt: "2023-08-01",
-  },
-  {
-    id: "p5",
-    tenantId: "1",
-    amount: 75,
-    date: "2023-07-15",
-    type: "fee",
-    method: "cash",
-    status: "completed",
-    createdAt: "2023-07-15",
-  },
-];
-
-// Dashboard stats
-const dashboardStats = {
-  totalUnits: 20,
-  occupiedUnits: 17,
-  vacantUnits: 3,
-  occupancyRate: 85,
-  totalTenants: 17,
-  monthlyRevenue: 28000,
-  overduePayments: 2,
-  pendingDeposits: 1,
-  upcomingMoveIns: 1,
-  upcomingMoveOuts: 2,
-};
+import DatabaseService from "@/services/DatabaseService";
 
 const Index = () => {
-  const [tenants] = useState<Tenant[]>(mockTenants);
-  const [payments] = useState<Payment[]>(mockPayments);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const dbService = DatabaseService.getInstance();
+        const loadedTenants = await dbService.getTenants();
+        const loadedPayments = await dbService.getPayments();
+        
+        setTenants(loadedTenants);
+        setPayments(loadedPayments);
+      } catch (error) {
+        console.error("Error loading data:", error);
+        toast.error("Failed to load data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   // Create a map of tenant IDs to names for the payments list
   const tenantNames = tenants.reduce(
@@ -152,11 +48,37 @@ const Index = () => {
   );
 
   const handleAddTenant = () => {
-    toast.info("Add tenant feature coming soon");
+    setCurrentTenant(null);
+    setIsEditModalOpen(true);
   };
 
   const handleEditTenant = (tenant: Tenant) => {
-    toast.info(`Edit tenant: ${tenant.name}`);
+    setCurrentTenant(tenant);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveTenant = async (updatedTenant: Tenant) => {
+    try {
+      const dbService = DatabaseService.getInstance();
+      
+      if (currentTenant) {
+        await dbService.updateTenant(updatedTenant.id, updatedTenant);
+        setTenants(
+          tenants.map((t) => (t.id === updatedTenant.id ? updatedTenant : t))
+        );
+        toast.success("Tenant updated successfully");
+      } else {
+        const newId = await dbService.createTenant(updatedTenant);
+        const newTenant = { ...updatedTenant, id: newId };
+        setTenants([...tenants, newTenant]);
+        toast.success("Tenant added successfully");
+      }
+      
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error("Error saving tenant:", error);
+      toast.error("Failed to save tenant");
+    }
   };
 
   const handleAddPayment = () => {
@@ -167,7 +89,18 @@ const Index = () => {
     <Layout>
       <section className="space-y-6">
         <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-        <DashboardSummary stats={dashboardStats} />
+        <DashboardSummary stats={{
+          totalUnits: 20,
+          occupiedUnits: tenants.filter(t => t.status === 'active').length,
+          vacantUnits: 20 - tenants.filter(t => t.status === 'active').length,
+          occupancyRate: Math.round((tenants.filter(t => t.status === 'active').length / 20) * 100),
+          totalTenants: tenants.length,
+          monthlyRevenue: tenants.reduce((sum, tenant) => sum + tenant.rentAmount, 0),
+          overduePayments: tenants.filter(t => t.status === 'late').length,
+          pendingDeposits: 1,
+          upcomingMoveIns: 1,
+          upcomingMoveOuts: tenants.filter(t => t.status === 'notice').length,
+        }} />
       </section>
 
       <Tabs defaultValue="tenants" className="w-full">
@@ -190,6 +123,13 @@ const Index = () => {
           />
         </TabsContent>
       </Tabs>
+
+      <TenantEditForm
+        tenant={currentTenant}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleSaveTenant}
+      />
     </Layout>
   );
 };
