@@ -4,18 +4,23 @@ import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { TenantList } from "@/components/tenants/TenantList";
 import { PaymentsList } from "@/components/payments/PaymentsList";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
+import { UnitManagementModal } from "@/components/units/UnitManagementModal";
 import { Payment, Tenant } from "@/types";
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
+import { Button } from "@/components/ui/button";
+import { Building, Plus } from "lucide-react";
 
 const Index = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [totalUnits, setTotalUnits] = useState(20);
 
   useEffect(() => {
     const loadData = async () => {
@@ -27,6 +32,7 @@ const Index = () => {
         
         setTenants(loadedTenants);
         setPayments(loadedPayments);
+        setTotalUnits(dbService.getTotalUnits());
       } catch (error) {
         console.error("Error loading data:", error);
         toast.error("Failed to load data");
@@ -57,6 +63,23 @@ const Index = () => {
     setIsEditModalOpen(true);
   };
 
+  const handleDeleteTenant = async (tenant: Tenant) => {
+    try {
+      const dbService = DatabaseService.getInstance();
+      const success = await dbService.deleteTenant(tenant.id);
+      
+      if (success) {
+        setTenants(tenants.filter(t => t.id !== tenant.id));
+        toast.success(`Tenant ${tenant.name} removed successfully`);
+      } else {
+        toast.error("Failed to remove tenant");
+      }
+    } catch (error) {
+      console.error("Error removing tenant:", error);
+      toast.error("Failed to remove tenant");
+    }
+  };
+
   const handleSaveTenant = async (updatedTenant: Tenant) => {
     try {
       const dbService = DatabaseService.getInstance();
@@ -81,6 +104,19 @@ const Index = () => {
     }
   };
 
+  const handleUpdateUnitCount = (newCount: number) => {
+    try {
+      const dbService = DatabaseService.getInstance();
+      dbService.setTotalUnits(newCount);
+      setTotalUnits(newCount);
+      toast.success(`Property updated to ${newCount} units`);
+      setIsUnitModalOpen(false);
+    } catch (error) {
+      console.error("Error updating unit count:", error);
+      toast.error("Failed to update unit count");
+    }
+  };
+
   const handleAddPayment = () => {
     toast.info("Add payment feature coming soon");
   };
@@ -88,12 +124,23 @@ const Index = () => {
   return (
     <Layout>
       <section className="space-y-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+          <Button 
+            variant="outline" 
+            className="gap-1.5"
+            onClick={() => setIsUnitModalOpen(true)}
+          >
+            <Building className="h-4 w-4" />
+            <span>Manage Units</span>
+          </Button>
+        </div>
+        
         <DashboardSummary stats={{
-          totalUnits: 20,
+          totalUnits: totalUnits,
           occupiedUnits: tenants.filter(t => t.status === 'active').length,
-          vacantUnits: 20 - tenants.filter(t => t.status === 'active').length,
-          occupancyRate: Math.round((tenants.filter(t => t.status === 'active').length / 20) * 100),
+          vacantUnits: totalUnits - tenants.filter(t => t.status === 'active').length,
+          occupancyRate: Math.round((tenants.filter(t => t.status === 'active').length / totalUnits) * 100),
           totalTenants: tenants.length,
           monthlyRevenue: tenants.reduce((sum, tenant) => sum + tenant.rentAmount, 0),
           overduePayments: tenants.filter(t => t.status === 'late').length,
@@ -113,6 +160,7 @@ const Index = () => {
             tenants={tenants}
             onAddTenant={handleAddTenant}
             onEditTenant={handleEditTenant}
+            onDeleteTenant={handleDeleteTenant}
           />
         </TabsContent>
         <TabsContent value="payments" className="mt-2">
@@ -129,6 +177,13 @@ const Index = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSaveTenant}
+      />
+      
+      <UnitManagementModal
+        isOpen={isUnitModalOpen}
+        onClose={() => setIsUnitModalOpen(false)}
+        currentUnitCount={totalUnits}
+        onSave={handleUpdateUnitCount}
       />
     </Layout>
   );

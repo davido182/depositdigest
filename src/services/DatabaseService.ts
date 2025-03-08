@@ -13,11 +13,18 @@ class DatabaseService {
   private tenantService: TenantService;
   private paymentService: PaymentService;
   private maintenanceService: MaintenanceService;
+  private totalUnits: number = 20; // Default units count
 
   private constructor() {
     this.tenantService = TenantService.getInstance();
     this.paymentService = PaymentService.getInstance();
     this.maintenanceService = MaintenanceService.getInstance();
+    
+    // Try to load saved unit count from localStorage
+    const savedUnits = localStorage.getItem('propertyTotalUnits');
+    if (savedUnits) {
+      this.totalUnits = parseInt(savedUnits, 10);
+    }
   }
 
   public static getInstance(): DatabaseService {
@@ -30,6 +37,16 @@ class DatabaseService {
   // Test connection
   public async testConnection(): Promise<boolean> {
     return this.tenantService.testConnection();
+  }
+
+  // Unit management
+  public getTotalUnits(): number {
+    return this.totalUnits;
+  }
+  
+  public setTotalUnits(units: number): void {
+    this.totalUnits = units;
+    localStorage.setItem('propertyTotalUnits', units.toString());
   }
 
   // Tenant methods
@@ -46,7 +63,13 @@ class DatabaseService {
   }
 
   public async updateTenant(id: string, tenant: Partial<Tenant>): Promise<boolean> {
-    return this.tenantService.updateTenant(id, tenant);
+    // Ensure changes are persisted to localStorage in demo mode
+    const result = await this.tenantService.updateTenant(id, tenant);
+    return result;
+  }
+  
+  public async deleteTenant(id: string): Promise<boolean> {
+    return this.tenantService.deleteTenant(id);
   }
 
   // Payment methods

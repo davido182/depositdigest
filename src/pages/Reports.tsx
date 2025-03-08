@@ -14,6 +14,7 @@ const Reports = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [occupancyRate, setOccupancyRate] = useState<string>("0");
   const [collectionRate, setCollectionRate] = useState<string>("0");
+  const [totalUnits, setTotalUnits] = useState(20);
 
   useEffect(() => {
     const loadData = async () => {
@@ -22,12 +23,14 @@ const Reports = () => {
         const dbService = DatabaseService.getInstance();
         const loadedTenants = await dbService.getTenants();
         const loadedPayments = await dbService.getPayments();
+        const units = dbService.getTotalUnits();
         
         setTenants(loadedTenants);
         setPayments(loadedPayments);
+        setTotalUnits(units);
         
         // Calculate rates on load
-        calculateOccupancy(loadedTenants);
+        calculateOccupancy(loadedTenants, units);
         calculateRentCollection(loadedTenants, loadedPayments);
       } catch (error) {
         console.error("Error loading report data:", error);
@@ -40,10 +43,9 @@ const Reports = () => {
     loadData();
   }, []);
 
-  const calculateOccupancy = (currentTenants: Tenant[]) => {
+  const calculateOccupancy = (currentTenants: Tenant[], units: number) => {
     const activeCount = currentTenants.filter(t => t.status === 'active').length;
-    const totalUnits = 20; // Assuming total units is 20
-    const rate = totalUnits > 0 ? (activeCount / totalUnits * 100).toFixed(1) : "0";
+    const rate = units > 0 ? (activeCount / units * 100).toFixed(1) : "0";
     setOccupancyRate(rate);
     return rate;
   };
@@ -57,7 +59,7 @@ const Reports = () => {
   };
 
   const generateOccupancyReport = () => {
-    const rate = calculateOccupancy(tenants);
+    const rate = calculateOccupancy(tenants, totalUnits);
     
     toast.success(`Occupancy Report: ${rate}% occupancy rate`);
     
@@ -68,7 +70,7 @@ const Reports = () => {
     const lateCount = tenants.filter(t => t.status === 'late').length;
     
     console.log({
-      total: 20,
+      total: totalUnits,
       active: activeCount,
       notice: noticeCount,
       inactive: inactiveCount,
@@ -97,26 +99,33 @@ const Reports = () => {
 
   const exportTenantData = () => {
     try {
-      // Create CSV content
-      const header = "Name,Email,Unit,Status,Rent Amount,Move In Date,Lease End Date\n";
-      const rows = tenants.map(tenant => 
-        `${tenant.name},${tenant.email},${tenant.unit},${tenant.status},${tenant.rentAmount},${tenant.moveInDate},${tenant.leaseEndDate}`
-      ).join("\n");
-      
-      const csvContent = `data:text/csv;charset=utf-8,${header}${rows}`;
-      
-      // Create download link
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `tenants_report_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      
-      // Trigger download
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success("Tenants data exported successfully");
+      // Get the latest tenant data before export
+      const dbService = DatabaseService.getInstance();
+      dbService.getTenants().then(latestTenants => {
+        // Create CSV content
+        const header = "Name,Email,Unit,Status,Rent Amount,Move In Date,Lease End Date\n";
+        const rows = latestTenants.map(tenant => 
+          `${tenant.name},${tenant.email || 'N/A'},${tenant.unit || 'N/A'},${tenant.status},${tenant.rentAmount},${tenant.moveInDate || 'N/A'},${tenant.leaseEndDate || 'N/A'}`
+        ).join("\n");
+        
+        const csvContent = `data:text/csv;charset=utf-8,${header}${rows}`;
+        
+        // Create download link
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `tenants_report_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        
+        // Trigger download
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.success("Tenants data exported successfully");
+      }).catch(error => {
+        console.error("Error fetching latest tenant data:", error);
+        toast.error("Failed to export tenant data");
+      });
     } catch (error) {
       console.error("Error exporting tenant data:", error);
       toast.error("Failed to export tenant data");

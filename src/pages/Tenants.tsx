@@ -2,17 +2,22 @@
 import { Layout } from "@/components/Layout";
 import { TenantList } from "@/components/tenants/TenantList";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
+import { UnitManagementModal } from "@/components/units/UnitManagementModal";
 import { Tenant, TenantStatus } from "@/types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
+import { Button } from "@/components/ui/button";
+import { Building } from "lucide-react";
 
 const Tenants = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
+  const [totalUnits, setTotalUnits] = useState(20);
 
   useEffect(() => {
     const loadTenants = async () => {
@@ -23,6 +28,7 @@ const Tenants = () => {
         if (isConnected) {
           const loadedTenants = await dbService.getTenants();
           setTenants(loadedTenants);
+          setTotalUnits(dbService.getTotalUnits());
           setIsOffline(false);
         } else {
           setIsOffline(true);
@@ -112,6 +118,28 @@ const Tenants = () => {
     setCurrentTenant(tenant);
     setIsEditModalOpen(true);
   };
+  
+  const handleDeleteTenant = async (tenant: Tenant) => {
+    try {
+      const dbService = DatabaseService.getInstance();
+      const success = await dbService.deleteTenant(tenant.id);
+      
+      if (success) {
+        setTenants(tenants.filter(t => t.id !== tenant.id));
+        toast.success(`Tenant ${tenant.name} removed successfully`);
+      } else {
+        toast.error("Failed to remove tenant");
+      }
+    } catch (error) {
+      console.error("Error removing tenant:", error);
+      toast.error("Failed to remove tenant");
+      
+      if (isOffline) {
+        setTenants(tenants.filter(t => t.id !== tenant.id));
+        toast.info("Tenant removed in offline mode");
+      }
+    }
+  };
 
   const handleSaveTenant = async (updatedTenant: Tenant) => {
     try {
@@ -155,17 +183,40 @@ const Tenants = () => {
       }
     }
   };
+  
+  const handleUpdateUnitCount = (newCount: number) => {
+    try {
+      const dbService = DatabaseService.getInstance();
+      dbService.setTotalUnits(newCount);
+      setTotalUnits(newCount);
+      toast.success(`Property updated to ${newCount} units`);
+      setIsUnitModalOpen(false);
+    } catch (error) {
+      console.error("Error updating unit count:", error);
+      toast.error("Failed to update unit count");
+    }
+  };
 
   return (
     <Layout>
       <section className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-semibold tracking-tight">Tenants</h1>
-          {isOffline && (
-            <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-md text-sm">
-              Offline Mode
-            </div>
-          )}
+          <div className="flex gap-2">
+            {isOffline && (
+              <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-md text-sm">
+                Offline Mode
+              </div>
+            )}
+            <Button 
+              variant="outline" 
+              className="gap-1.5"
+              onClick={() => setIsUnitModalOpen(true)}
+            >
+              <Building className="h-4 w-4" />
+              <span>Manage Units</span>
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -177,6 +228,7 @@ const Tenants = () => {
             tenants={tenants}
             onAddTenant={handleAddTenant}
             onEditTenant={handleEditTenant}
+            onDeleteTenant={handleDeleteTenant}
           />
         )}
         <TenantEditForm
@@ -184,6 +236,13 @@ const Tenants = () => {
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onSave={handleSaveTenant}
+        />
+        
+        <UnitManagementModal
+          isOpen={isUnitModalOpen}
+          onClose={() => setIsUnitModalOpen(false)}
+          currentUnitCount={totalUnits}
+          onSave={handleUpdateUnitCount}
         />
       </section>
     </Layout>

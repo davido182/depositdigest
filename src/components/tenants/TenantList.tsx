@@ -5,25 +5,49 @@ import { TenantCard } from "./TenantCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TenantListProps {
   tenants: Tenant[];
   onAddTenant: () => void;
   onEditTenant: (tenant: Tenant) => void;
+  onDeleteTenant?: (tenant: Tenant) => void;
 }
 
 export function TenantList({
   tenants,
   onAddTenant,
   onEditTenant,
+  onDeleteTenant,
 }: TenantListProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
 
   const filteredTenants = tenants.filter((tenant) =>
     tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     tenant.unit.toLowerCase().includes(searchQuery.toLowerCase()) ||
     tenant.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  const handleDeleteClick = (tenant: Tenant) => {
+    setTenantToDelete(tenant);
+  };
+  
+  const confirmDelete = () => {
+    if (tenantToDelete && onDeleteTenant) {
+      onDeleteTenant(tenantToDelete);
+    }
+    setTenantToDelete(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -57,10 +81,29 @@ export function TenantList({
               key={tenant.id}
               tenant={tenant}
               onEdit={onEditTenant}
+              onDelete={onDeleteTenant ? () => handleDeleteClick(tenant) : undefined}
             />
           ))}
         </div>
       )}
+      
+      <AlertDialog open={!!tenantToDelete} onOpenChange={(open) => !open && setTenantToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will permanently delete tenant {tenantToDelete?.name} from unit {tenantToDelete?.unit}.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
