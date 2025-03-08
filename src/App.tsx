@@ -16,19 +16,13 @@ import Maintenance from "./pages/Maintenance";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
-// Create a new query client instance
+// Create a new query client instance with simplified configuration
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-    },
-    mutations: {
-      onSettled: (data, error) => {
-        if (error) {
-          console.error("Mutation error:", error);
-        }
-      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
     },
   },
 });
