@@ -5,7 +5,8 @@ import { mockTenants } from './mockData';
 import { isDemoMode } from '../config/database';
 
 class TenantService extends BaseService {
-  private static instance: TenantService;
+  // Change from private to protected to match the parent class
+  protected static instance: TenantService;
 
   private constructor() {
     super();
