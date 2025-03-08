@@ -1,0 +1,127 @@
+
+import { Tenant, Payment, MaintenanceRequest } from '@/types';
+
+// Mock data for client-side development
+export const mockTenants: Tenant[] = [
+  {
+    id: "1",
+    name: "Alex Johnson",
+    email: "alex.johnson@example.com",
+    phone: "(555) 123-4567",
+    unit: "101",
+    moveInDate: "2023-01-15",
+    leaseEndDate: "2024-01-15",
+    rentAmount: 1500,
+    depositAmount: 1500,
+    status: "active",
+    paymentHistory: [],
+    createdAt: "2023-01-10",
+    updatedAt: "2023-01-10",
+  },
+  {
+    id: "2",
+    name: "Sarah Williams",
+    email: "sarah.williams@example.com",
+    phone: "(555) 987-6543",
+    unit: "205",
+    moveInDate: "2023-03-01",
+    leaseEndDate: "2024-03-01",
+    rentAmount: 1700,
+    depositAmount: 1700,
+    status: "active",
+    paymentHistory: [],
+    createdAt: "2023-02-25",
+    updatedAt: "2023-02-25",
+  },
+  {
+    id: "3",
+    name: "Michael Chen",
+    email: "michael.chen@example.com",
+    phone: "(555) 456-7890",
+    unit: "310",
+    moveInDate: "2022-11-01",
+    leaseEndDate: "2023-11-01",
+    rentAmount: 1600,
+    depositAmount: 1600,
+    status: "late",
+    paymentHistory: [],
+    createdAt: "2022-10-25",
+    updatedAt: "2022-10-25",
+  },
+  {
+    id: "4",
+    name: "Jessica Rodriguez",
+    email: "jessica.rodriguez@example.com",
+    phone: "(555) 789-0123",
+    unit: "402",
+    moveInDate: "2023-02-15",
+    leaseEndDate: "2024-02-15",
+    rentAmount: 1800,
+    depositAmount: 1800,
+    status: "notice",
+    paymentHistory: [],
+    createdAt: "2023-02-10",
+    updatedAt: "2023-02-10",
+  },
+];
+
+export const mockPayments: Payment[] = [
+  {
+    id: "p1",
+    tenantId: "1",
+    amount: 1500,
+    date: "2023-08-01",
+    type: "rent",
+    method: "transfer",
+    status: "completed",
+    createdAt: "2023-08-01",
+  },
+  {
+    id: "p2",
+    tenantId: "2",
+    amount: 1700,
+    date: "2023-08-02",
+    type: "rent",
+    method: "card",
+    status: "completed",
+    createdAt: "2023-08-02",
+  },
+  {
+    id: "p3",
+    tenantId: "3",
+    amount: 1600,
+    date: "2023-07-28",
+    type: "rent",
+    method: "transfer",
+    status: "pending",
+    createdAt: "2023-07-28",
+  },
+];
+
+export const mockMaintenanceRequests: MaintenanceRequest[] = [
+  {
+    id: "mr1",
+    tenantId: "1",
+    unit: "101",
+    title: "Leaking Faucet",
+    description: "The kitchen faucet is leaking water constantly.",
+    category: "plumbing",
+    priority: "medium",
+    status: "pending",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "mr2",
+    tenantId: "2",
+    unit: "205",
+    title: "Broken Heater",
+    description: "The central heating is not working.",
+    category: "heating",
+    priority: "high",
+    status: "in_progress",
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+    assignedTo: "John Technician"
+  }
+];
