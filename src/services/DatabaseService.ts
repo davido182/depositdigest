@@ -1,22 +1,139 @@
-import mysql from 'mysql2/promise';
-import { dbConfig } from '../config/database';
+
+import { dbConfig, isDemoMode } from '../config/database';
 import { Tenant, Payment, MaintenanceRequest } from '@/types';
+
+// Mock data for client-side development
+const mockTenants: Tenant[] = [
+  {
+    id: "1",
+    name: "Alex Johnson",
+    email: "alex.johnson@example.com",
+    phone: "(555) 123-4567",
+    unit: "101",
+    moveInDate: "2023-01-15",
+    leaseEndDate: "2024-01-15",
+    rentAmount: 1500,
+    depositAmount: 1500,
+    status: "active",
+    paymentHistory: [],
+    createdAt: "2023-01-10",
+    updatedAt: "2023-01-10",
+  },
+  {
+    id: "2",
+    name: "Sarah Williams",
+    email: "sarah.williams@example.com",
+    phone: "(555) 987-6543",
+    unit: "205",
+    moveInDate: "2023-03-01",
+    leaseEndDate: "2024-03-01",
+    rentAmount: 1700,
+    depositAmount: 1700,
+    status: "active",
+    paymentHistory: [],
+    createdAt: "2023-02-25",
+    updatedAt: "2023-02-25",
+  },
+  {
+    id: "3",
+    name: "Michael Chen",
+    email: "michael.chen@example.com",
+    phone: "(555) 456-7890",
+    unit: "310",
+    moveInDate: "2022-11-01",
+    leaseEndDate: "2023-11-01",
+    rentAmount: 1600,
+    depositAmount: 1600,
+    status: "late",
+    paymentHistory: [],
+    createdAt: "2022-10-25",
+    updatedAt: "2022-10-25",
+  },
+  {
+    id: "4",
+    name: "Jessica Rodriguez",
+    email: "jessica.rodriguez@example.com",
+    phone: "(555) 789-0123",
+    unit: "402",
+    moveInDate: "2023-02-15",
+    leaseEndDate: "2024-02-15",
+    rentAmount: 1800,
+    depositAmount: 1800,
+    status: "notice",
+    paymentHistory: [],
+    createdAt: "2023-02-10",
+    updatedAt: "2023-02-10",
+  },
+];
+
+const mockPayments: Payment[] = [
+  {
+    id: "p1",
+    tenantId: "1",
+    amount: 1500,
+    date: "2023-08-01",
+    type: "rent",
+    method: "transfer",
+    status: "completed",
+    createdAt: "2023-08-01",
+  },
+  {
+    id: "p2",
+    tenantId: "2",
+    amount: 1700,
+    date: "2023-08-02",
+    type: "rent",
+    method: "card",
+    status: "completed",
+    createdAt: "2023-08-02",
+  },
+  {
+    id: "p3",
+    tenantId: "3",
+    amount: 1600,
+    date: "2023-07-28",
+    type: "rent",
+    method: "transfer",
+    status: "pending",
+    createdAt: "2023-07-28",
+  },
+];
+
+const mockMaintenanceRequests: MaintenanceRequest[] = [
+  {
+    id: "mr1",
+    tenantId: "1",
+    unit: "101",
+    title: "Leaking Faucet",
+    description: "The kitchen faucet is leaking water constantly.",
+    category: "plumbing",
+    priority: "medium",
+    status: "pending",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "mr2",
+    tenantId: "2",
+    unit: "205",
+    title: "Broken Heater",
+    description: "The central heating is not working.",
+    category: "heating",
+    priority: "high",
+    status: "in_progress",
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+    assignedTo: "John Technician"
+  }
+];
 
 class DatabaseService {
   private static instance: DatabaseService;
-  private pool: mysql.Pool;
+  private apiUrl: string;
 
   private constructor() {
-    this.pool = mysql.createPool({
-      host: dbConfig.host,
-      user: dbConfig.user,
-      password: dbConfig.password,
-      database: dbConfig.database,
-      port: dbConfig.port,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0
-    });
+    this.apiUrl = dbConfig.apiUrl;
+    console.log("DatabaseService initialized with API URL:", this.apiUrl);
   }
 
   public static getInstance(): DatabaseService {
@@ -26,205 +143,119 @@ class DatabaseService {
     return DatabaseService.instance;
   }
 
-  // Test database connection
+  // Test connection
   public async testConnection(): Promise<boolean> {
     try {
-      const connection = await this.pool.getConnection();
-      connection.release();
-      console.log('Database connection successful');
+      // In a real app, we would test the API connection here
+      console.log('Testing API connection to:', this.apiUrl);
+      // For demo purposes, we'll just return true
       return true;
     } catch (error) {
-      console.error('Database connection failed:', error);
+      console.error('API connection test failed:', error);
       return false;
+    }
+  }
+
+  // Simulate API request with mock data or fetch
+  private async simulateRequest<T>(
+    endpoint: string, 
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+    data?: any
+  ): Promise<T> {
+    console.log(`${method} request to ${endpoint}`, data || '');
+    
+    if (isDemoMode) {
+      // Return mock data in demo mode
+      await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
+      
+      if (endpoint === 'tenants' && method === 'GET') {
+        return mockTenants as unknown as T;
+      } else if (endpoint.startsWith('tenants/') && method === 'GET') {
+        const id = endpoint.split('/')[1];
+        const tenant = mockTenants.find(t => t.id === id);
+        return (tenant || null) as unknown as T;
+      } else if (endpoint === 'payments' && method === 'GET') {
+        return mockPayments as unknown as T;
+      } else if (endpoint === 'maintenance' && method === 'GET') {
+        return mockMaintenanceRequests as unknown as T;
+      } else if (endpoint === 'tenants' && method === 'POST') {
+        return { id: crypto.randomUUID() } as unknown as T;
+      } else if (endpoint.startsWith('tenants/') && method === 'PUT') {
+        return true as unknown as T;
+      }
+      
+      throw new Error(`Unhandled endpoint in demo mode: ${method} ${endpoint}`);
+    } else {
+      // In a real application, we would make actual API calls here
+      try {
+        const response = await fetch(`${this.apiUrl}/${endpoint}`, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: data ? JSON.stringify(data) : undefined,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('API request failed:', error);
+        throw error;
+      }
     }
   }
 
   // Tenant methods
   public async getTenants(): Promise<Tenant[]> {
-    try {
-      const [rows] = await this.pool.query('SELECT * FROM tenants');
-      return rows as Tenant[];
-    } catch (error) {
-      console.error('Error fetching tenants:', error);
-      throw error;
-    }
+    return this.simulateRequest<Tenant[]>('tenants');
   }
 
   public async getTenantById(id: string): Promise<Tenant | null> {
-    try {
-      const [rows] = await this.pool.query('SELECT * FROM tenants WHERE id = ?', [id]);
-      const tenants = rows as Tenant[];
-      return tenants.length > 0 ? tenants[0] : null;
-    } catch (error) {
-      console.error(`Error fetching tenant with id ${id}:`, error);
-      throw error;
-    }
+    return this.simulateRequest<Tenant | null>(`tenants/${id}`);
   }
 
   public async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    try {
-      const id = crypto.randomUUID();
-      const now = new Date().toISOString();
-      
-      await this.pool.query(
-        `INSERT INTO tenants 
-        (id, name, email, phone, unit, moveInDate, leaseEndDate, rentAmount, depositAmount, status, notes, createdAt, updatedAt) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, tenant.name, tenant.email, tenant.phone, tenant.unit, 
-          tenant.moveInDate, tenant.leaseEndDate, tenant.rentAmount, 
-          tenant.depositAmount, tenant.status, tenant.notes, now, now]
-      );
-      
-      return id;
-    } catch (error) {
-      console.error('Error creating tenant:', error);
-      throw error;
-    }
+    const result = await this.simulateRequest<{ id: string }>('tenants', 'POST', tenant);
+    return result.id;
   }
 
   public async updateTenant(id: string, tenant: Partial<Tenant>): Promise<boolean> {
-    try {
-      const now = new Date().toISOString();
-      
-      // Build the dynamic part of the query
-      const updateFields: string[] = [];
-      const values: any[] = [];
-      
-      Object.entries(tenant).forEach(([key, value]) => {
-        if (key !== 'id' && key !== 'createdAt') {
-          updateFields.push(`${key} = ?`);
-          values.push(value);
-        }
-      });
-      
-      updateFields.push('updatedAt = ?');
-      values.push(now);
-      
-      // Add the ID at the end for the WHERE clause
-      values.push(id);
-      
-      const query = `UPDATE tenants SET ${updateFields.join(', ')} WHERE id = ?`;
-      const [result] = await this.pool.query(query, values);
-      
-      return (result as mysql.ResultSetHeader).affectedRows > 0;
-    } catch (error) {
-      console.error(`Error updating tenant with id ${id}:`, error);
-      throw error;
-    }
+    return this.simulateRequest<boolean>(`tenants/${id}`, 'PUT', tenant);
   }
 
   // Payment methods
   public async getPayments(): Promise<Payment[]> {
-    try {
-      const [rows] = await this.pool.query('SELECT * FROM payments');
-      return rows as Payment[];
-    } catch (error) {
-      console.error('Error fetching payments:', error);
-      throw error;
-    }
+    return this.simulateRequest<Payment[]>('payments');
   }
 
   public async createPayment(payment: Omit<Payment, 'id' | 'createdAt'>): Promise<string> {
-    try {
-      const id = crypto.randomUUID();
-      const now = new Date().toISOString();
-      
-      await this.pool.query(
-        `INSERT INTO payments 
-        (id, tenantId, amount, date, type, method, status, notes, createdAt) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, payment.tenantId, payment.amount, payment.date, 
-          payment.type, payment.method, payment.status, payment.notes, now]
-      );
-      
-      return id;
-    } catch (error) {
-      console.error('Error creating payment:', error);
-      throw error;
-    }
+    const result = await this.simulateRequest<{ id: string }>('payments', 'POST', payment);
+    return result.id;
   }
 
   // Maintenance Request methods
   public async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
-    try {
-      const [rows] = await this.pool.query('SELECT * FROM maintenance_requests');
-      return rows as MaintenanceRequest[];
-    } catch (error) {
-      console.error('Error fetching maintenance requests:', error);
-      throw error;
-    }
+    return this.simulateRequest<MaintenanceRequest[]>('maintenance');
   }
 
   public async getMaintenanceRequestById(id: string): Promise<MaintenanceRequest | null> {
-    try {
-      const [rows] = await this.pool.query('SELECT * FROM maintenance_requests WHERE id = ?', [id]);
-      const requests = rows as MaintenanceRequest[];
-      return requests.length > 0 ? requests[0] : null;
-    } catch (error) {
-      console.error(`Error fetching maintenance request with id ${id}:`, error);
-      throw error;
-    }
+    return this.simulateRequest<MaintenanceRequest | null>(`maintenance/${id}`);
   }
 
   public async getMaintenanceRequestsByTenant(tenantId: string): Promise<MaintenanceRequest[]> {
-    try {
-      const [rows] = await this.pool.query('SELECT * FROM maintenance_requests WHERE tenantId = ?', [tenantId]);
-      return rows as MaintenanceRequest[];
-    } catch (error) {
-      console.error(`Error fetching maintenance requests for tenant ${tenantId}:`, error);
-      throw error;
-    }
+    return this.simulateRequest<MaintenanceRequest[]>(`maintenance?tenantId=${tenantId}`);
   }
 
   public async createMaintenanceRequest(request: Omit<MaintenanceRequest, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    try {
-      const id = crypto.randomUUID();
-      const now = new Date().toISOString();
-      
-      await this.pool.query(
-        `INSERT INTO maintenance_requests 
-        (id, tenantId, unit, title, description, category, priority, status, createdAt, updatedAt) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, request.tenantId, request.unit, request.title, request.description, 
-          request.category, request.priority, request.status, now, now]
-      );
-      
-      return id;
-    } catch (error) {
-      console.error('Error creating maintenance request:', error);
-      throw error;
-    }
+    const result = await this.simulateRequest<{ id: string }>('maintenance', 'POST', request);
+    return result.id;
   }
 
   public async updateMaintenanceRequest(id: string, request: Partial<MaintenanceRequest>): Promise<boolean> {
-    try {
-      const now = new Date().toISOString();
-      
-      // Build the dynamic part of the query
-      const updateFields: string[] = [];
-      const values: any[] = [];
-      
-      Object.entries(request).forEach(([key, value]) => {
-        if (key !== 'id' && key !== 'createdAt') {
-          updateFields.push(`${key} = ?`);
-          values.push(value);
-        }
-      });
-      
-      updateFields.push('updatedAt = ?');
-      values.push(now);
-      
-      // Add the ID at the end for the WHERE clause
-      values.push(id);
-      
-      const query = `UPDATE maintenance_requests SET ${updateFields.join(', ')} WHERE id = ?`;
-      const [result] = await this.pool.query(query, values);
-      
-      return (result as mysql.ResultSetHeader).affectedRows > 0;
-    } catch (error) {
-      console.error(`Error updating maintenance request with id ${id}:`, error);
-      throw error;
-    }
+    return this.simulateRequest<boolean>(`maintenance/${id}`, 'PUT', request);
   }
 }
 
