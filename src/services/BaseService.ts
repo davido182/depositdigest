@@ -2,6 +2,7 @@
 import { dbConfig, isDemoMode } from '../config/database';
 
 class BaseService {
+  // Change from protected to public so child classes can access it
   protected static instance: BaseService;
   protected apiUrl: string;
 

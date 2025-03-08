@@ -1,6 +1,5 @@
-
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tenant } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,32 +36,39 @@ export function TenantEditForm({
   onClose,
   onSave,
 }: TenantEditFormProps) {
-  const [formData, setFormData] = useState<Tenant>(
-    tenant || {
-      id: "",
-      name: "",
-      email: "",
-      phone: "",
-      unit: "",
-      moveInDate: new Date().toISOString().split("T")[0],
-      leaseEndDate: new Date(
-        new Date().setFullYear(new Date().getFullYear() + 1)
-      )
-        .toISOString()
-        .split("T")[0],
-      rentAmount: 0,
-      depositAmount: 0,
-      status: "active",
-      paymentHistory: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-  );
+  const emptyTenant: Tenant = {
+    id: "",
+    name: "",
+    email: "",
+    phone: "",
+    unit: "",
+    moveInDate: new Date().toISOString().split("T")[0],
+    leaseEndDate: new Date(
+      new Date().setFullYear(new Date().getFullYear() + 1)
+    )
+      .toISOString()
+      .split("T")[0],
+    rentAmount: 0,
+    depositAmount: 0,
+    status: "active",
+    paymentHistory: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 
+  const [formData, setFormData] = useState<Tenant>(tenant || emptyTenant);
   const [hasDeposit, setHasDeposit] = useState(
     tenant ? tenant.depositAmount > 0 : false
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(tenant || emptyTenant);
+      setHasDeposit(tenant ? tenant.depositAmount > 0 : false);
+      setErrors({});
+    }
+  }, [tenant, isOpen]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -130,11 +136,8 @@ export function TenantEditForm({
         id: formData.id || `tenant-${Date.now()}`,
       };
       
+      console.log("Submitting tenant data:", updatedTenant);
       onSave(updatedTenant);
-      toast.success(
-        formData.id ? "Tenant updated successfully" : "Tenant added successfully"
-      );
-      onClose();
     }
   };
 
