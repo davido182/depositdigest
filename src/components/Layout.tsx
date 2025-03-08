@@ -16,7 +16,12 @@ export function Layout({ children }: LayoutProps) {
     console.log("Layout component mounted");
   }, []);
 
+  useEffect(() => {
+    console.log("Layout children changed:", children ? "has children" : "no children");
+  }, [children]);
+
   if (!mounted) {
+    console.log("Layout not mounted yet");
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -24,6 +29,7 @@ export function Layout({ children }: LayoutProps) {
     );
   }
 
+  console.log("Layout rendering with children");
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">

@@ -22,13 +22,13 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 1000 * 60 * 5, // 5 minutes
     },
   },
 });
 
 const App = () => {
-  console.log("App component rendering");
+  console.log("App component rendering - updated version");
   
   return (
     <QueryClientProvider client={queryClient}>

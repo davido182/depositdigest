@@ -23,15 +23,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check for stored auth on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem("rentflow_user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    console.log("AuthProvider initializing");
+    try {
+      const storedUser = localStorage.getItem("rentflow_user");
+      if (storedUser) {
+        console.log("Found stored user");
+        setUser(JSON.parse(storedUser));
+      } else {
+        console.log("No stored user found");
+      }
+    } catch (error) {
+      console.error("Error loading stored user:", error);
+    } finally {
+      setIsLoading(false);
+      console.log("AuthProvider initialization complete");
     }
-    setIsLoading(false);
   }, []);
 
   // Mock login function (replace with real auth later)
   const login = async (email: string, password: string) => {
+    console.log("Login attempt:", email);
     setIsLoading(true);
     
     // Simulate API call
@@ -45,31 +56,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: email
       };
       
+      console.log("Login successful");
       setUser(newUser);
       localStorage.setItem("rentflow_user", JSON.stringify(newUser));
       setIsLoading(false);
       return;
     }
     
+    console.log("Login failed");
     setIsLoading(false);
     throw new Error("Invalid email or password");
   };
 
   const logout = () => {
+    console.log("Logging out");
     setUser(null);
     localStorage.removeItem("rentflow_user");
   };
 
+  const value = {
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    logout
+  };
+
+  console.log("AuthProvider rendering, isAuthenticated:", !!user, "isLoading:", isLoading);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        logout
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
