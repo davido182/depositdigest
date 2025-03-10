@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Payment } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -12,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { PaymentForm } from "./PaymentForm";
 
 interface PaymentsListProps {
   payments: Payment[];
@@ -24,6 +26,8 @@ export function PaymentsList({
   tenantNames,
   onAddPayment,
 }: PaymentsListProps) {
+  const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
+  
   const statusColors = {
     completed: "bg-emerald-100 text-emerald-800 border-emerald-200",
     pending: "bg-amber-100 text-amber-800 border-amber-200",
@@ -34,12 +38,16 @@ export function PaymentsList({
   const sortedPayments = [...payments].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
+  
+  const handleOpenPaymentForm = () => {
+    setIsPaymentFormOpen(true);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold tracking-tight">Recent Payments</h2>
-        <Button onClick={onAddPayment} className="gap-1.5">
+        <Button onClick={handleOpenPaymentForm} className="gap-1.5">
           <Plus className="h-4 w-4" />
           <span>Add Payment</span>
         </Button>
@@ -98,6 +106,12 @@ export function PaymentsList({
           </Table>
         </div>
       </div>
+      
+      <PaymentForm 
+        isOpen={isPaymentFormOpen}
+        onClose={() => setIsPaymentFormOpen(false)}
+        onSave={onAddPayment}
+      />
     </div>
   );
 }

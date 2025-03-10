@@ -35,7 +35,7 @@ export function DashboardSummary({ stats }: DashboardSummaryProps) {
         title="Units Status"
         value={`${stats.occupiedUnits}/${stats.totalUnits}`}
         icon={Building}
-        description={`${stats.vacantUnits} vacant units`}
+        description={`${stats.totalUnits - stats.occupiedUnits} vacant units`}
       />
       <StatsCard
         title="Overdue Payments"

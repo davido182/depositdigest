@@ -8,14 +8,72 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { Bell, Mail, MessageSquare, UserCog } from "lucide-react";
+
+interface NotificationSettings {
+  email: boolean;
+  sms: boolean;
+  appNotifications: boolean;
+  latePayments: boolean;
+  maintenanceUpdates: boolean;
+  leaseRenewals: boolean;
+  moveIns: boolean;
+  moveOuts: boolean;
+}
 
 const Settings = () => {
   const [language, setLanguage] = useState("en");
   const [darkMode, setDarkMode] = useState(false);
-  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [timezone, setTimezone] = useState("America/New_York");
+  const [dateFormat, setDateFormat] = useState("MM/DD/YYYY");
+  
+  const [notifications, setNotifications] = useState<NotificationSettings>({
+    email: true,
+    sms: false,
+    appNotifications: true,
+    latePayments: true,
+    maintenanceUpdates: true,
+    leaseRenewals: true,
+    moveIns: true,
+    moveOuts: true,
+  });
+
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("admin@example.com");
   
   const handleSaveGeneralSettings = () => {
-    toast.success("Settings saved successfully");
+    toast.success("General settings saved successfully");
+  };
+  
+  const handleSaveNotificationSettings = () => {
+    if (notifications.sms && !phoneNumber) {
+      toast.error("Please add a phone number for SMS notifications");
+      return;
+    }
+    
+    toast.success("Notification preferences saved successfully");
+  };
+  
+  const handleSaveAccountSettings = () => {
+    toast.success("Account information updated successfully");
+  };
+  
+  const toggleNotification = (key: keyof NotificationSettings) => {
+    setNotifications({
+      ...notifications,
+      [key]: !notifications[key],
+    });
   };
 
   return (
@@ -26,46 +84,82 @@ const Settings = () => {
         <Tabs defaultValue="general">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="account">Account</TabsTrigger>
           </TabsList>
           
           <TabsContent value="general" className="mt-4">
             <Card className="p-6">
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium">Language Settings</h3>
+                  <h3 className="text-lg font-medium">Display Settings</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Choose your preferred language for the application.
+                    Customize your app appearance and preferences.
                   </p>
                   
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="language">Language</Label>
-                    <Select value={language} onValueChange={setLanguage}>
-                      <SelectTrigger id="language" className="w-full sm:w-[250px]">
-                        <SelectValue placeholder="Select language" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="es">Español</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="language">Language</Label>
+                      <Select value={language} onValueChange={setLanguage}>
+                        <SelectTrigger id="language">
+                          <SelectValue placeholder="Select language" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="es">Español</SelectItem>
+                          <SelectItem value="fr">Français</SelectItem>
+                          <SelectItem value="de">Deutsch</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="timezone">Timezone</Label>
+                      <Select value={timezone} onValueChange={setTimezone}>
+                        <SelectTrigger id="timezone">
+                          <SelectValue placeholder="Select timezone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
+                          <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
+                          <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
+                          <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+                          <SelectItem value="Europe/London">London (GMT)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
                 
                 <div>
-                  <h3 className="text-lg font-medium">Theme Settings</h3>
+                  <h3 className="text-lg font-medium">Format Settings</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Customize your display preferences.
+                    Choose how dates and numbers are displayed.
                   </p>
                   
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="dark-mode"
-                      checked={darkMode}
-                      onCheckedChange={setDarkMode}
-                    />
-                    <Label htmlFor="dark-mode">Dark Mode</Label>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="dateFormat">Date Format</Label>
+                      <Select value={dateFormat} onValueChange={setDateFormat}>
+                        <SelectTrigger id="dateFormat">
+                          <SelectValue placeholder="Select date format" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
+                          <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
+                          <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 pt-6">
+                      <Switch
+                        id="dark-mode"
+                        checked={darkMode}
+                        onCheckedChange={setDarkMode}
+                      />
+                      <Label htmlFor="dark-mode">Dark Mode</Label>
+                    </div>
                   </div>
                 </div>
                 
@@ -74,32 +168,201 @@ const Settings = () => {
             </Card>
           </TabsContent>
           
-          <TabsContent value="account" className="mt-4">
+          <TabsContent value="notifications" className="mt-4">
             <Card className="p-6">
-              <h3 className="text-lg font-medium mb-4">Account Settings</h3>
-              <p className="text-muted-foreground">
-                Account settings will be available soon.
-              </p>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium">Notification Methods</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Choose how you want to be notified about important events.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <Label htmlFor="email-notifications" className="cursor-pointer">Email Notifications</Label>
+                      </div>
+                      <Switch
+                        id="email-notifications"
+                        checked={notifications.email}
+                        onCheckedChange={() => toggleNotification('email')}
+                      />
+                    </div>
+                    
+                    {notifications.email && (
+                      <div className="ml-6 pl-2 border-l border-muted">
+                        <div className="space-y-2">
+                          <Label htmlFor="email-address">Email Address</Label>
+                          <Input
+                            id="email-address"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Your email address"
+                            className="max-w-md"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                        <Label htmlFor="sms-notifications" className="cursor-pointer">SMS Notifications</Label>
+                      </div>
+                      <Switch
+                        id="sms-notifications"
+                        checked={notifications.sms}
+                        onCheckedChange={() => toggleNotification('sms')}
+                      />
+                    </div>
+                    
+                    {notifications.sms && (
+                      <div className="ml-6 pl-2 border-l border-muted">
+                        <div className="space-y-2">
+                          <Label htmlFor="phone-number">Phone Number</Label>
+                          <Input
+                            id="phone-number"
+                            type="tel"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            placeholder="Your phone number"
+                            className="max-w-md"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Bell className="h-4 w-4 text-muted-foreground" />
+                        <Label htmlFor="app-notifications" className="cursor-pointer">In-App Notifications</Label>
+                      </div>
+                      <Switch
+                        id="app-notifications"
+                        checked={notifications.appNotifications}
+                        onCheckedChange={() => toggleNotification('appNotifications')}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium">Notification Events</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Select the events you want to be notified about.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="late-payments" className="cursor-pointer">Late Payments</Label>
+                      <Switch
+                        id="late-payments"
+                        checked={notifications.latePayments}
+                        onCheckedChange={() => toggleNotification('latePayments')}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="maintenance-updates" className="cursor-pointer">Maintenance Updates</Label>
+                      <Switch
+                        id="maintenance-updates"
+                        checked={notifications.maintenanceUpdates}
+                        onCheckedChange={() => toggleNotification('maintenanceUpdates')}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="lease-renewals" className="cursor-pointer">Lease Renewals</Label>
+                      <Switch
+                        id="lease-renewals"
+                        checked={notifications.leaseRenewals}
+                        onCheckedChange={() => toggleNotification('leaseRenewals')}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="move-ins" className="cursor-pointer">Move-Ins</Label>
+                      <Switch
+                        id="move-ins"
+                        checked={notifications.moveIns}
+                        onCheckedChange={() => toggleNotification('moveIns')}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="move-outs" className="cursor-pointer">Move-Outs</Label>
+                      <Switch
+                        id="move-outs"
+                        checked={notifications.moveOuts}
+                        onCheckedChange={() => toggleNotification('moveOuts')}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <Button onClick={handleSaveNotificationSettings}>Save Notification Preferences</Button>
+              </div>
             </Card>
           </TabsContent>
           
-          <TabsContent value="notifications" className="mt-4">
+          <TabsContent value="account" className="mt-4">
             <Card className="p-6">
-              <h3 className="text-lg font-medium mb-4">Notification Preferences</h3>
-              
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="email-notifications"
-                    checked={emailNotifications}
-                    onCheckedChange={setEmailNotifications}
-                  />
-                  <Label htmlFor="email-notifications">Email Notifications</Label>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium">Account Information</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Update your account details and preferences.
+                  </p>
+                  
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name</Label>
+                      <Input id="name" placeholder="John Doe" defaultValue="Property Manager" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" type="email" placeholder="john@example.com" defaultValue={email} />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="company">Company</Label>
+                      <Input id="company" placeholder="Your company name" defaultValue="ABC Properties" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input id="phone" placeholder="Your phone number" defaultValue={phoneNumber || "(123) 456-7890"} />
+                    </div>
+                  </div>
                 </div>
                 
-                <p className="text-sm text-muted-foreground">
-                  More notification options will be available soon.
-                </p>
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Security</h3>
+                  
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="current-password">Current Password</Label>
+                      <Input id="current-password" type="password" />
+                    </div>
+                    
+                    <div></div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="new-password">New Password</Label>
+                      <Input id="new-password" type="password" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirm New Password</Label>
+                      <Input id="confirm-password" type="password" />
+                    </div>
+                  </div>
+                </div>
+                
+                <Button onClick={handleSaveAccountSettings}>Save Account Changes</Button>
               </div>
             </Card>
           </TabsContent>

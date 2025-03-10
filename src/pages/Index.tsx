@@ -118,8 +118,17 @@ const Index = () => {
   };
 
   const handleAddPayment = () => {
-    toast.info("Add payment feature coming soon");
+    // We'll implement this in the next step
+    const paymentForm = document.createElement('a');
+    paymentForm.href = '/payments';
+    paymentForm.click();
   };
+
+  // Calculate active tenants (only those with 'active' status)
+  const activeTenants = tenants.filter(t => t.status === 'active');
+  const occupiedUnits = activeTenants.length;
+  const vacantUnits = totalUnits - occupiedUnits;
+  const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
 
   return (
     <Layout>
@@ -138,13 +147,13 @@ const Index = () => {
         
         <DashboardSummary stats={{
           totalUnits: totalUnits,
-          occupiedUnits: tenants.filter(t => t.status === 'active').length,
-          vacantUnits: totalUnits - tenants.filter(t => t.status === 'active').length,
-          occupancyRate: Math.round((tenants.filter(t => t.status === 'active').length / totalUnits) * 100),
+          occupiedUnits: occupiedUnits,
+          vacantUnits: vacantUnits,
+          occupancyRate: occupancyRate,
           totalTenants: tenants.length,
           monthlyRevenue: tenants.reduce((sum, tenant) => sum + tenant.rentAmount, 0),
           overduePayments: tenants.filter(t => t.status === 'late').length,
-          pendingDeposits: 1,
+          pendingDeposits: payments.filter(p => p.status === 'pending' && p.type === 'deposit').length,
           upcomingMoveIns: 1,
           upcomingMoveOuts: tenants.filter(t => t.status === 'notice').length,
         }} />
