@@ -10,14 +10,17 @@ import {
   Wallet,
 } from "lucide-react";
 import { DashboardStats } from "@/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DashboardSummaryProps {
   stats: DashboardStats;
 }
 
 export function DashboardSummary({ stats }: DashboardSummaryProps) {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
       <StatsCard
         title="Monthly Revenue"
         value={`$${stats.monthlyRevenue.toLocaleString()}`}
