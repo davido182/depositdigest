@@ -2,6 +2,8 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Sidebar } from "./Sidebar";
 import { useState, useEffect } from "react";
+import { OfflineBanner } from "./ui/offline-banner";
+import { useDeviceFeatures } from "@/hooks/use-device-features";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,12 +11,20 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [mounted, setMounted] = useState(false);
+  const { isNative, platform } = useDeviceFeatures();
 
   // Prevent hydration mismatch by mounting on client-side only
   useEffect(() => {
     setMounted(true);
     console.log("Layout component mounted");
-  }, []);
+    
+    // Log platform info for debugging
+    if (isNative) {
+      console.log(`Running on native ${platform} platform`);
+    } else {
+      console.log("Running in browser");
+    }
+  }, [isNative, platform]);
 
   useEffect(() => {
     console.log("Layout children changed:", children ? "has children" : "no children");
@@ -35,7 +45,8 @@ export function Layout({ children }: LayoutProps) {
       <div className="min-h-screen flex w-full">
         <Sidebar />
         <main className="flex-1 overflow-auto">
-          <div className="container py-6 space-y-8 animate-fade-in">
+          <OfflineBanner />
+          <div className="container py-4 md:py-6 space-y-6 md:space-y-8 animate-fade-in">
             {children}
           </div>
         </main>

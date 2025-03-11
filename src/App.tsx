@@ -15,6 +15,9 @@ import Settings from "./pages/Settings";
 import Maintenance from "./pages/Maintenance";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
+import { App as CapApp } from "@capacitor/app";
+import { useDeviceFeatures } from "./hooks/use-device-features";
 
 // Create a new query client instance with simplified configuration
 const queryClient = new QueryClient({
@@ -29,6 +32,25 @@ const queryClient = new QueryClient({
 
 const App = () => {
   console.log("App component rendering - updated version");
+  const { isNative } = useDeviceFeatures();
+  
+  // Listen for hardware back button on native apps
+  useEffect(() => {
+    if (isNative) {
+      const backButtonListener = CapApp.addListener('backButton', ({ canGoBack }) => {
+        if (canGoBack) {
+          window.history.back();
+        } else {
+          // Handle exit app confirmation or navigation to home
+          CapApp.exitApp();
+        }
+      });
+      
+      return () => {
+        backButtonListener.remove();
+      };
+    }
+  }, [isNative]);
   
   return (
     <QueryClientProvider client={queryClient}>

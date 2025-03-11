@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
@@ -9,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { useDeviceFeatures } from "@/hooks/use-device-features";
+import { MobileFeatureToggle } from "@/components/settings/MobileFeatureToggle";
 import {
   Form,
   FormControl,
@@ -19,7 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { Bell, Mail, MessageSquare, UserCog } from "lucide-react";
+import { Bell, Mail, MessageSquare, UserCog, Smartphone } from "lucide-react";
 
 interface NotificationSettings {
   email: boolean;
@@ -33,6 +34,8 @@ interface NotificationSettings {
 }
 
 const Settings = () => {
+  const { isNative } = useDeviceFeatures();
+  
   const [language, setLanguage] = useState("en");
   const [darkMode, setDarkMode] = useState(false);
   const [timezone, setTimezone] = useState("America/New_York");
@@ -82,10 +85,11 @@ const Settings = () => {
         <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
         
         <Tabs defaultValue="general">
-          <TabsList>
+          <TabsList className="w-full max-w-md overflow-x-auto">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="account">Account</TabsTrigger>
+            {isNative && <TabsTrigger value="mobile">Mobile</TabsTrigger>}
           </TabsList>
           
           <TabsContent value="general" className="mt-4">
@@ -366,6 +370,76 @@ const Settings = () => {
               </div>
             </Card>
           </TabsContent>
+          
+          {isNative && (
+            <TabsContent value="mobile" className="mt-4">
+              <Card className="p-6">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium">Mobile Settings</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Configure your mobile app experience
+                    </p>
+                    
+                    <MobileFeatureToggle />
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium">Sync Settings</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Control how data syncs between your device and the cloud
+                    </p>
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="auto-sync" className="cursor-pointer">Auto Sync</Label>
+                        <Switch
+                          id="auto-sync"
+                          defaultChecked={true}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="sync-on-wifi" className="cursor-pointer">Only Sync on WiFi</Label>
+                        <Switch
+                          id="sync-on-wifi"
+                          defaultChecked={true}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="background-sync" className="cursor-pointer">Background Sync</Label>
+                        <Switch
+                          id="background-sync"
+                          defaultChecked={false}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <Label htmlFor="sync-frequency">Sync Frequency</Label>
+                      <Select defaultValue="15">
+                        <SelectTrigger id="sync-frequency" className="mt-1">
+                          <SelectValue placeholder="Select frequency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="5">Every 5 minutes</SelectItem>
+                          <SelectItem value="15">Every 15 minutes</SelectItem>
+                          <SelectItem value="30">Every 30 minutes</SelectItem>
+                          <SelectItem value="60">Every hour</SelectItem>
+                          <SelectItem value="manual">Manual only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <Button onClick={() => toast.success("Mobile settings saved")}>
+                    Save Mobile Settings
+                  </Button>
+                </div>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </section>
     </Layout>
