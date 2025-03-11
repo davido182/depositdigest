@@ -27,9 +27,11 @@ export function useDeviceFeatures() {
       }));
     };
 
+    // Initialize platform and online status
     checkPlatform();
     updateOnlineStatus();
 
+    // Set up event listeners
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
 

@@ -15,7 +15,7 @@ import Settings from "./pages/Settings";
 import Maintenance from "./pages/Maintenance";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { App as CapApp } from "@capacitor/app";
 import { useDeviceFeatures } from "./hooks/use-device-features";
 
@@ -33,21 +33,30 @@ const queryClient = new QueryClient({
 const App = () => {
   console.log("App component rendering - updated version");
   const { isNative } = useDeviceFeatures();
+  const listenerRef = useRef<any>(null);
   
   // Listen for hardware back button on native apps
   useEffect(() => {
     if (isNative) {
-      const backButtonListener = CapApp.addListener('backButton', ({ canGoBack }) => {
-        if (canGoBack) {
-          window.history.back();
-        } else {
-          // Handle exit app confirmation or navigation to home
-          CapApp.exitApp();
-        }
-      });
+      const setupListener = async () => {
+        // Store the listener handle in the ref
+        listenerRef.current = await CapApp.addListener('backButton', ({ canGoBack }) => {
+          if (canGoBack) {
+            window.history.back();
+          } else {
+            // Handle exit app confirmation or navigation to home
+            CapApp.exitApp();
+          }
+        });
+      };
+      
+      setupListener();
       
       return () => {
-        backButtonListener.remove();
+        // Clean up the listener when component unmounts
+        if (listenerRef.current) {
+          listenerRef.current.remove();
+        }
       };
     }
   }, [isNative]);
