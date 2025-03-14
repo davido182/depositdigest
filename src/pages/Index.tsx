@@ -223,3 +223,6 @@ const Index = () => {
       />
     </Layout>
   );
+};
+
+export default Index;
