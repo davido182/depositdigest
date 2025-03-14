@@ -80,6 +80,10 @@ class DatabaseService {
   public async createPayment(payment: Omit<Payment, 'id' | 'createdAt'>): Promise<string> {
     return this.paymentService.createPayment(payment);
   }
+  
+  public async updatePayment(id: string, payment: Partial<Payment>): Promise<boolean> {
+    return this.paymentService.updatePayment(id, payment);
+  }
 
   // Maintenance Request methods
   public async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
