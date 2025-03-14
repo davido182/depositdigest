@@ -124,6 +124,31 @@ const Index = () => {
     paymentForm.click();
   };
 
+  const handleUpdatePayment = async (payment: Payment) => {
+    try {
+      const dbService = DatabaseService.getInstance();
+      
+      // Check if this is a new payment or existing one
+      const existingPayment = payments.find(p => p.id === payment.id);
+      
+      if (existingPayment) {
+        // Update existing payment
+        await dbService.updatePayment(payment.id, payment);
+      } else {
+        // Create new payment
+        await dbService.createPayment(payment);
+      }
+      
+      // Reload data
+      const loadedPayments = await dbService.getPayments();
+      setPayments(loadedPayments);
+      toast.success("Payment updated successfully");
+    } catch (error) {
+      console.error("Error updating payment:", error);
+      toast.error("Failed to update payment");
+    }
+  };
+
   // Calculate active tenants (only those with 'active' status)
   const activeTenants = tenants.filter(t => t.status === 'active');
   const occupiedUnits = activeTenants.length;
@@ -175,8 +200,10 @@ const Index = () => {
         <TabsContent value="payments" className="mt-2">
           <PaymentsList
             payments={payments}
+            tenants={tenants}
             tenantNames={tenantNames}
             onAddPayment={handleAddPayment}
+            onUpdatePayment={handleUpdatePayment}
           />
         </TabsContent>
       </Tabs>
@@ -196,6 +223,3 @@ const Index = () => {
       />
     </Layout>
   );
-};
-
-export default Index;

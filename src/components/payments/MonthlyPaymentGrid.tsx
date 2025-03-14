@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { Payment, Tenant } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Calendar, DollarSign } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface MonthlyPaymentGridProps {
   tenants: Tenant[];
@@ -35,13 +35,11 @@ export function MonthlyPaymentGrid({
 }: MonthlyPaymentGridProps) {
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
   
-  // Generate array of years for the dropdown (current year and 3 years back/forward)
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
     return Array.from({ length: 7 }, (_, i) => currentYear - 3 + i);
   }, []);
   
-  // Generate month labels (first letter of each month)
   const months = useMemo(() => {
     return [
       { label: "J", full: "January", index: 0 },
@@ -59,7 +57,6 @@ export function MonthlyPaymentGrid({
     ];
   }, []);
   
-  // Check if tenant has a payment for a specific month and year
   const hasPaymentForMonth = (tenantId: string, monthIndex: number, year: number) => {
     return payments.some(payment => {
       const paymentDate = new Date(payment.date);
@@ -73,7 +70,6 @@ export function MonthlyPaymentGrid({
     });
   };
   
-  // Find payment ID for a specific month if it exists
   const getPaymentForMonth = (tenantId: string, monthIndex: number, year: number) => {
     return payments.find(payment => {
       const paymentDate = new Date(payment.date);
@@ -86,24 +82,19 @@ export function MonthlyPaymentGrid({
     });
   };
   
-  // Handle checkbox change
   const handleCheckboxChange = (
     checked: boolean | "indeterminate", 
     tenantId: string, 
     monthIndex: number,
     monthName: string
   ) => {
-    // Get tenant details
     const tenant = tenants.find(t => t.id === tenantId);
     if (!tenant) return;
     
-    // Check if payment already exists for this month/year
     const existingPayment = getPaymentForMonth(tenantId, monthIndex, selectedYear);
     
     if (checked === true) {
-      // Mark as paid
       if (existingPayment) {
-        // Update existing payment to completed
         if (existingPayment.status !== "completed") {
           const updatedPayment = {
             ...existingPayment,
@@ -113,14 +104,13 @@ export function MonthlyPaymentGrid({
           toast.success(`${monthName} payment for ${tenant.name} marked as paid`);
         }
       } else {
-        // Create new payment
         const newPayment: Payment = {
           id: crypto.randomUUID(),
           tenantId,
           amount: tenant.rentAmount,
           date: new Date(selectedYear, monthIndex, 1).toISOString(),
           type: "rent",
-          method: "transfer", // Default method
+          method: "transfer",
           status: "completed",
           createdAt: new Date().toISOString(),
         };
@@ -128,7 +118,6 @@ export function MonthlyPaymentGrid({
         toast.success(`${monthName} payment for ${tenant.name} marked as paid`);
       }
     } else {
-      // Mark as unpaid/pending
       if (existingPayment && existingPayment.status === "completed") {
         const updatedPayment = {
           ...existingPayment,
