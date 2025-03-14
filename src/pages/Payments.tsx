@@ -59,9 +59,11 @@ const Payments = () => {
       if (existingPayment) {
         // Update existing payment
         await dbService.updatePayment(payment.id, payment);
+        toast.success("Payment updated successfully");
       } else {
         // Create new payment
         await dbService.createPayment(payment);
+        toast.success("Payment added successfully");
       }
       
       // Reload payments

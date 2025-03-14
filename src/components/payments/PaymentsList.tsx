@@ -12,10 +12,19 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, ArrowLeftRight } from "lucide-react";
+import { Plus, Edit, ArrowLeftRight, List, Tags } from "lucide-react";
 import { PaymentForm } from "./PaymentForm";
 import { MonthlyPaymentGrid } from "./MonthlyPaymentGrid";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PaymentsListProps {
   payments: Payment[];
@@ -34,6 +43,8 @@ export function PaymentsList({
 }: PaymentsListProps) {
   const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
   const [currentView, setCurrentView] = useState<"list" | "grid">("list");
+  const [groupBy, setGroupBy] = useState<"none" | "unit">("none");
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   
   const statusColors = {
     completed: "bg-emerald-100 text-emerald-800 border-emerald-200",
@@ -46,8 +57,48 @@ export function PaymentsList({
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
   
+  const getUnitForTenant = (tenantId: string): string => {
+    const tenant = tenants.find(t => t.id === tenantId);
+    return tenant ? tenant.unit : "Unknown";
+  };
+  
+  // Group payments by unit if grouping is enabled
+  const getGroupedPayments = () => {
+    if (groupBy === "none") {
+      return { "": sortedPayments };
+    }
+    
+    return sortedPayments.reduce((groups, payment) => {
+      const unit = getUnitForTenant(payment.tenantId);
+      if (!groups[unit]) {
+        groups[unit] = [];
+      }
+      groups[unit].push(payment);
+      return groups;
+    }, {} as Record<string, Payment[]>);
+  };
+  
+  const groupedPayments = getGroupedPayments();
+  const groupKeys = Object.keys(groupedPayments).sort((a, b) => {
+    // Sort numerically if the units are numbers
+    if (a === "") return -1;
+    if (b === "") return 1;
+    return parseInt(a) - parseInt(b);
+  });
+  
   const handleOpenPaymentForm = () => {
+    setSelectedPayment(null);
     setIsPaymentFormOpen(true);
+  };
+  
+  const handleEditPayment = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setIsPaymentFormOpen(true);
+  };
+  
+  const handleSavePayment = (payment: Payment) => {
+    onUpdatePayment(payment);
+    setIsPaymentFormOpen(false);
   };
 
   const toggleView = () => {
@@ -59,6 +110,23 @@ export function PaymentsList({
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold tracking-tight">Payments</h2>
         <div className="flex gap-2">
+          {currentView === "list" && (
+            <Select
+              value={groupBy}
+              onValueChange={(value) => setGroupBy(value as "none" | "unit")}
+            >
+              <SelectTrigger className="w-[180px]">
+                <div className="flex items-center gap-2">
+                  <Tags className="h-4 w-4" />
+                  <SelectValue placeholder="Group by..." />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No Grouping</SelectItem>
+                <SelectItem value="unit">Group by Unit</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <Button 
             variant="outline" 
             size="sm"
@@ -84,62 +152,142 @@ export function PaymentsList({
         <TabsContent value="list" className="mt-0">
           <div className="glass-card rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Tenant</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[80px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedPayments.length === 0 ? (
+              {groupBy === "unit" && groupKeys.length > 0 ? (
+                <div className="space-y-6">
+                  {groupKeys.map((unit) => (
+                    <div key={unit || "ungrouped"} className="mb-4">
+                      {unit && (
+                        <h3 className="text-lg font-medium px-4 py-2 bg-muted">
+                          Unit {unit}
+                        </h3>
+                      )}
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Tenant</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Method</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="w-[80px]">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {groupedPayments[unit].length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={7}
+                                className="h-24 text-center text-muted-foreground"
+                              >
+                                No payments found
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            groupedPayments[unit].map((payment) => (
+                              <TableRow key={payment.id}>
+                                <TableCell>
+                                  {new Date(payment.date).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell>{tenantNames[payment.tenantId] || "Unknown"}</TableCell>
+                                <TableCell className="font-medium">
+                                  ${payment.amount.toLocaleString()}
+                                </TableCell>
+                                <TableCell className="capitalize">{payment.type}</TableCell>
+                                <TableCell className="capitalize">{payment.method}</TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      "capitalize",
+                                      statusColors[payment.status]
+                                    )}
+                                  >
+                                    {payment.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8"
+                                    onClick={() => handleEditPayment(payment)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                    <span className="sr-only">Edit</span>
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell
-                        colSpan={7}
-                        className="h-24 text-center text-muted-foreground"
-                      >
-                        No payments found
-                      </TableCell>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Tenant</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[80px]">Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    sortedPayments.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell>
-                          {new Date(payment.date).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>{tenantNames[payment.tenantId] || "Unknown"}</TableCell>
-                        <TableCell className="font-medium">
-                          ${payment.amount.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="capitalize">{payment.type}</TableCell>
-                        <TableCell className="capitalize">{payment.method}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "capitalize",
-                              statusColors[payment.status]
-                            )}
-                          >
-                            {payment.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Edit</span>
-                          </Button>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedPayments.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={7}
+                          className="h-24 text-center text-muted-foreground"
+                        >
+                          No payments found
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      sortedPayments.map((payment) => (
+                        <TableRow key={payment.id}>
+                          <TableCell>
+                            {new Date(payment.date).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>{tenantNames[payment.tenantId] || "Unknown"}</TableCell>
+                          <TableCell className="font-medium">
+                            ${payment.amount.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="capitalize">{payment.type}</TableCell>
+                          <TableCell className="capitalize">{payment.method}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "capitalize",
+                                statusColors[payment.status]
+                              )}
+                            >
+                              {payment.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8"
+                              onClick={() => handleEditPayment(payment)}
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </div>
           </div>
         </TabsContent>
@@ -156,7 +304,9 @@ export function PaymentsList({
       <PaymentForm 
         isOpen={isPaymentFormOpen}
         onClose={() => setIsPaymentFormOpen(false)}
-        onSave={onAddPayment}
+        onSave={handleSavePayment}
+        payment={selectedPayment}
+        tenants={tenants}
       />
     </div>
   );
