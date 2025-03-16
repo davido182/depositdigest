@@ -24,18 +24,19 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Tenant, PaymentType, PaymentMethod, PaymentStatus } from "@/types";
+import { Tenant, PaymentType, PaymentMethod, PaymentStatus, Payment } from "@/types";
 import DatabaseService from "@/services/DatabaseService";
 import { toast } from "sonner";
 
 interface PaymentFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => void; // Callback to refresh payments list
+  onSave: (payment: Payment) => void; // Updated type signature to accept a payment parameter
+  payment: Payment | null;
+  tenants: Tenant[];
 }
 
-export function PaymentForm({ isOpen, onClose, onSave }: PaymentFormProps) {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
+export function PaymentForm({ isOpen, onClose, onSave, payment, tenants }: PaymentFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
@@ -54,34 +55,27 @@ export function PaymentForm({ isOpen, onClose, onSave }: PaymentFormProps) {
     amount: "",
   });
   
-  // Load tenants when form opens
+  // Load payment data into form when editing
   useEffect(() => {
-    if (isOpen) {
-      loadTenants();
+    if (payment) {
+      setTenantId(payment.tenantId);
+      setAmount(payment.amount.toString());
+      setDate(new Date(payment.date));
+      setType(payment.type);
+      setMethod(payment.method);
+      setStatus(payment.status);
+      setNotes(payment.notes || "");
+    } else if (tenants.length > 0) {
+      // Set default values for new payment
+      setTenantId(tenants[0].id);
+      setAmount(tenants[0].rentAmount.toString());
+      setDate(new Date());
+      setType("rent");
+      setMethod("transfer");
+      setStatus("completed");
+      setNotes("");
     }
-  }, [isOpen]);
-  
-  const loadTenants = async () => {
-    try {
-      setIsLoading(true);
-      const dbService = DatabaseService.getInstance();
-      const loadedTenants = await dbService.getTenants();
-      setTenants(loadedTenants);
-      
-      // Set default tenant if available
-      if (loadedTenants.length > 0) {
-        setTenantId(loadedTenants[0].id);
-        
-        // Pre-fill amount with rent amount of selected tenant
-        setAmount(loadedTenants[0].rentAmount.toString());
-      }
-    } catch (error) {
-      console.error("Error loading tenants:", error);
-      toast.error("Failed to load tenants");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [payment, tenants, isOpen]);
   
   const validateForm = () => {
     let valid = true;
@@ -114,9 +108,8 @@ export function PaymentForm({ isOpen, onClose, onSave }: PaymentFormProps) {
     try {
       setSubmitting(true);
       
-      const dbService = DatabaseService.getInstance();
-      
-      const paymentData = {
+      const paymentData: Payment = {
+        id: payment?.id || crypto.randomUUID(),
         tenantId,
         amount: Number(amount),
         date: date.toISOString(),
@@ -124,31 +117,16 @@ export function PaymentForm({ isOpen, onClose, onSave }: PaymentFormProps) {
         method,
         status,
         notes,
+        createdAt: payment?.createdAt || new Date().toISOString(),
       };
       
-      await dbService.createPayment(paymentData);
-      
-      toast.success("Payment recorded successfully");
-      resetForm();
-      onSave(); // Notify parent to refresh payments list
-      onClose(); // Close the dialog
+      onSave(paymentData); // Pass the payment data to the parent component
     } catch (error) {
       console.error("Error saving payment:", error);
       toast.error("Failed to record payment");
     } finally {
       setSubmitting(false);
     }
-  };
-  
-  const resetForm = () => {
-    setTenantId(tenants.length > 0 ? tenants[0].id : "");
-    setAmount("");
-    setDate(new Date());
-    setType("rent");
-    setMethod("transfer");
-    setStatus("completed");
-    setNotes("");
-    setErrors({ tenantId: "", amount: "" });
   };
   
   // Handle tenant change and update amount to match rent amount
@@ -187,9 +165,9 @@ export function PaymentForm({ isOpen, onClose, onSave }: PaymentFormProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add New Payment</DialogTitle>
+          <DialogTitle>{payment ? "Edit Payment" : "Add New Payment"}</DialogTitle>
           <DialogDescription>
-            Record a new payment from a tenant.
+            {payment ? "Update payment details." : "Record a new payment from a tenant."}
           </DialogDescription>
         </DialogHeader>
         
