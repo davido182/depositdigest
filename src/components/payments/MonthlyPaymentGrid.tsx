@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { Payment, Tenant } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -83,11 +84,15 @@ export function MonthlyPaymentGrid({
   };
   
   const handleCheckboxChange = (
+    e: React.MouseEvent<HTMLButtonElement> | React.MouseEvent<HTMLDivElement>, 
     checked: boolean | "indeterminate", 
     tenantId: string, 
     monthIndex: number,
     monthName: string
   ) => {
+    // Prevent default browser behavior to avoid page navigation
+    e.preventDefault();
+    
     const tenant = tenants.find(t => t.id === tenantId);
     if (!tenant) return;
     
@@ -208,6 +213,11 @@ export function MonthlyPaymentGrid({
                       return (
                         <TableCell key={month.index} className="text-center">
                           <div 
+                            onClick={(e) => {
+                              // Handle container click to prevent page navigation
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
                             className={cn(
                               "flex items-center justify-center p-1 rounded-md",
                               isPaid ? "bg-emerald-50" : isPending ? "bg-amber-50" : ""
@@ -216,7 +226,14 @@ export function MonthlyPaymentGrid({
                             <Checkbox
                               checked={isPaid}
                               onCheckedChange={(checked) => 
-                                handleCheckboxChange(checked, tenant.id, month.index, month.full)
+                                handleCheckboxChange(
+                                  // Pass the event object
+                                  window.event as unknown as React.MouseEvent<HTMLButtonElement>,
+                                  checked, 
+                                  tenant.id, 
+                                  month.index, 
+                                  month.full
+                                )
                               }
                               className={cn(
                                 isPaid ? "border-emerald-500 data-[state=checked]:bg-emerald-500" : 

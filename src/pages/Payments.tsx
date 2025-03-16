@@ -44,11 +44,6 @@ const Payments = () => {
     {} as Record<string, string>
   );
 
-  const handleAddPayment = async () => {
-    await loadData();
-    toast.success("Payment added successfully");
-  };
-  
   const handleUpdatePayment = async (payment: Payment) => {
     try {
       const dbService = DatabaseService.getInstance();
@@ -59,18 +54,27 @@ const Payments = () => {
       if (existingPayment) {
         // Update existing payment
         await dbService.updatePayment(payment.id, payment);
+        
+        // Update local state without a full reload
+        setPayments(currentPayments => 
+          currentPayments.map(p => p.id === payment.id ? payment : p)
+        );
+        
         toast.success("Payment updated successfully");
       } else {
         // Create new payment
         await dbService.createPayment(payment);
+        
+        // Add to local state without a full reload
+        setPayments(currentPayments => [...currentPayments, payment]);
+        
         toast.success("Payment added successfully");
       }
-      
-      // Reload payments
-      await loadData();
     } catch (error) {
       console.error("Error updating payment:", error);
       toast.error("Failed to update payment");
+      // Reload data if operation failed to ensure UI is in sync
+      await loadData();
     }
   };
 
@@ -87,7 +91,7 @@ const Payments = () => {
             payments={payments}
             tenants={tenants}
             tenantNames={tenantNames}
-            onAddPayment={handleAddPayment}
+            onAddPayment={loadData}
             onUpdatePayment={handleUpdatePayment}
           />
         )}
