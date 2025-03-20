@@ -65,6 +65,17 @@ class PaymentService extends BaseService {
         }
         
         throw new Error(`Payment not found: ${paymentId}`);
+      } else if (endpoint.startsWith('payments/') && method === 'DELETE') {
+        const paymentId = endpoint.split('/')[1];
+        const initialLength = this.localPayments.length;
+        this.localPayments = this.localPayments.filter(p => p.id !== paymentId);
+        
+        if (this.localPayments.length < initialLength) {
+          localStorage.setItem('rentflow_payments', JSON.stringify(this.localPayments));
+          return { success: true } as unknown as T;
+        }
+        
+        throw new Error(`Payment not found: ${paymentId}`);
       }
       
       throw new Error(`Unhandled endpoint in demo mode: ${method} ${endpoint}`);
@@ -88,6 +99,11 @@ class PaymentService extends BaseService {
   
   public async updatePayment(id: string, payment: Partial<Payment>): Promise<boolean> {
     const result = await this.simulateRequest<{ success: boolean }>(`payments/${id}`, 'PUT', payment);
+    return result.success;
+  }
+
+  public async deletePayment(id: string): Promise<boolean> {
+    const result = await this.simulateRequest<{ success: boolean }>(`payments/${id}`, 'DELETE');
     return result.success;
   }
 }
