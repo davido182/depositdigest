@@ -1,4 +1,3 @@
-
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
 import { Tenant, Payment } from "@/types";
-import { FileDown, FilePdf as FilePdfIcon, PieChart, Filter } from "lucide-react";
+import { FileDown, FileText as FilePdfIcon, PieChart, Filter } from "lucide-react";
 import { TenantsPdfReport } from "@/components/reports/TenantsPdfReport";
 import { toPDF } from 'react-to-pdf';
 
@@ -33,7 +32,6 @@ const Reports = () => {
         setPayments(loadedPayments);
         setTotalUnits(units);
         
-        // Calculate rates on load
         calculateOccupancy(loadedTenants, units);
         calculateRentCollection(loadedTenants, loadedPayments);
       } catch (error) {
@@ -67,7 +65,6 @@ const Reports = () => {
     
     toast.success(`Occupancy Report: ${rate}% occupancy rate`);
     
-    // Show more detailed information
     const activeCount = tenants.filter(t => t.status === 'active').length;
     const noticeCount = tenants.filter(t => t.status === 'notice').length;
     const inactiveCount = tenants.filter(t => t.status === 'inactive').length;
@@ -88,7 +85,6 @@ const Reports = () => {
     
     toast.success(`Rent Collection Report: ${rate}% collection rate`);
     
-    // Show more detailed information
     const totalRent = tenants.reduce((sum, tenant) => sum + tenant.rentAmount, 0);
     const collectedRent = payments.filter(p => p.status === 'completed').reduce((sum, payment) => sum + payment.amount, 0);
     const pendingRent = payments.filter(p => p.status === 'pending').reduce((sum, payment) => sum + payment.amount, 0);
@@ -103,10 +99,8 @@ const Reports = () => {
 
   const exportTenantData = () => {
     try {
-      // Get the latest tenant data before export
       const dbService = DatabaseService.getInstance();
       dbService.getTenants().then(latestTenants => {
-        // Create CSV content
         const header = "Name,Email,Unit,Status,Rent Amount,Move In Date,Lease End Date\n";
         const rows = latestTenants.map(tenant => 
           `${tenant.name},${tenant.email || 'N/A'},${tenant.unit || 'N/A'},${tenant.status},${tenant.rentAmount},${tenant.moveInDate || 'N/A'},${tenant.leaseEndDate || 'N/A'}`
@@ -114,14 +108,12 @@ const Reports = () => {
         
         const csvContent = `data:text/csv;charset=utf-8,${header}${rows}`;
         
-        // Create download link
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
         link.setAttribute("download", `tenants_report_${new Date().toISOString().split('T')[0]}.csv`);
         document.body.appendChild(link);
         
-        // Trigger download
         link.click();
         document.body.removeChild(link);
         
@@ -228,7 +220,7 @@ const Reports = () => {
                   variant="outline"
                   className="w-full flex items-center gap-2"
                 >
-                  <FilePdf className="h-4 w-4" />
+                  <FilePdfIcon className="h-4 w-4" />
                   Export Tenant PDF
                 </Button>
               </div>
