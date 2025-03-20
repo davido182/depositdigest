@@ -1,12 +1,13 @@
-
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
 import { Tenant, Payment } from "@/types";
-import { FileDown, PieChart, Filter } from "lucide-react";
+import { FileDown, FilePdf, PieChart, Filter } from "lucide-react";
+import { TenantsPdfReport } from "@/components/reports/TenantsPdfReport";
+import { toPDF } from 'react-to-pdf';
 
 const Reports = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -15,6 +16,8 @@ const Reports = () => {
   const [occupancyRate, setOccupancyRate] = useState<string>("0");
   const [collectionRate, setCollectionRate] = useState<string>("0");
   const [totalUnits, setTotalUnits] = useState(20);
+  
+  const pdfRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -132,6 +135,25 @@ const Reports = () => {
     }
   };
 
+  const exportTenantPdf = async () => {
+    try {
+      if (!pdfRef.current) {
+        toast.error("Could not generate PDF");
+        return;
+      }
+      
+      await toPDF(pdfRef, {
+        filename: `tenant_report_${new Date().toISOString().split('T')[0]}.pdf`,
+        page: { margin: 10 }
+      });
+      
+      toast.success("PDF report generated successfully");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF report");
+    }
+  };
+
   return (
     <Layout>
       <section className="space-y-6">
@@ -191,16 +213,31 @@ const Reports = () => {
                 </div>
                 <FileDown className="h-6 w-6 text-primary" />
               </div>
-              <Button 
-                onClick={exportTenantData} 
-                className="w-full mt-4"
-                variant="outline"
-              >
-                Export Tenant Data
-              </Button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <Button 
+                  onClick={exportTenantData} 
+                  variant="outline"
+                  className="w-full flex items-center gap-2"
+                >
+                  <FileDown className="h-4 w-4" />
+                  Export Tenant CSV
+                </Button>
+                <Button 
+                  onClick={exportTenantPdf}
+                  variant="outline"
+                  className="w-full flex items-center gap-2"
+                >
+                  <FilePdf className="h-4 w-4" />
+                  Export Tenant PDF
+                </Button>
+              </div>
             </Card>
           </div>
         )}
+        
+        <div className="hidden">
+          <TenantsPdfReport ref={pdfRef} tenants={tenants} payments={payments} />
+        </div>
       </section>
     </Layout>
   );

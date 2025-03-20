@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useState, useEffect } from "react";
 import { Tenant } from "@/types";
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar, DollarSign, Home, Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
+import DatabaseService from "@/services/DatabaseService";
 
 interface TenantEditFormProps {
   tenant: Tenant | null;
@@ -61,14 +63,49 @@ export function TenantEditForm({
     tenant ? tenant.depositAmount > 0 : false
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [availableUnits, setAvailableUnits] = useState<string[]>([]);
+  const [totalUnits, setTotalUnits] = useState(20);
 
   useEffect(() => {
     if (isOpen) {
       setFormData(tenant || emptyTenant);
       setHasDeposit(tenant ? tenant.depositAmount > 0 : false);
       setErrors({});
+      loadAvailableUnits();
     }
   }, [tenant, isOpen]);
+
+  const loadAvailableUnits = async () => {
+    try {
+      const dbService = DatabaseService.getInstance();
+      const tenants = await dbService.getTenants();
+      const units = dbService.getTotalUnits();
+      setTotalUnits(units);
+      
+      // Generate array of all possible units
+      const allUnits = Array.from({ length: units }, (_, i) => (i + 1).toString());
+      
+      // Filter out units that are already occupied by active tenants
+      // Exclude the current tenant's unit if editing
+      const occupiedUnits = tenants
+        .filter(t => t.status === 'active' && (tenant ? t.id !== tenant.id : true))
+        .map(t => t.unit);
+        
+      const available = allUnits.filter(unit => !occupiedUnits.includes(unit));
+      
+      // If editing, add the current tenant's unit to available units
+      if (tenant && tenant.unit) {
+        if (!available.includes(tenant.unit)) {
+          available.push(tenant.unit);
+        }
+      }
+      
+      setAvailableUnits(available.sort((a, b) => parseInt(a) - parseInt(b)));
+    } catch (error) {
+      console.error("Error loading available units:", error);
+      toast.error("Failed to load available units");
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -92,6 +129,13 @@ export function TenantEditForm({
     setFormData({
       ...formData,
       status: value as Tenant["status"],
+    });
+  };
+  
+  const handleUnitChange = (value: string) => {
+    setFormData({
+      ...formData,
+      unit: value,
     });
   };
 
@@ -118,6 +162,10 @@ export function TenantEditForm({
     
     if (hasDeposit && formData.depositAmount <= 0) {
       newErrors.depositAmount = "Deposit amount must be greater than 0";
+    }
+    
+    if (!formData.unit) {
+      newErrors.unit = "Unit is required";
     }
     
     setErrors(newErrors);
@@ -203,16 +251,36 @@ export function TenantEditForm({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="unit">Unit</Label>
+                <Label htmlFor="unit" className="flex items-center gap-1">
+                  Unit <span className="text-destructive">*</span>
+                </Label>
                 <div className="flex items-center">
                   <Home className="w-4 h-4 mr-2 text-muted-foreground" />
-                  <Input
-                    id="unit"
-                    name="unit"
-                    value={formData.unit}
-                    onChange={handleChange}
-                  />
+                  <Select 
+                    value={formData.unit} 
+                    onValueChange={handleUnitChange}
+                  >
+                    <SelectTrigger className={errors.unit ? "border-destructive" : ""}>
+                      <SelectValue placeholder="Select unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableUnits.length > 0 ? (
+                        availableUnits.map(unit => (
+                          <SelectItem key={unit} value={unit}>
+                            Unit {unit}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          No units available
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
+                {errors.unit && (
+                  <p className="text-xs text-destructive">{errors.unit}</p>
+                )}
               </div>
               
               <div className="grid gap-2">

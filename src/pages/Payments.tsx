@@ -77,6 +77,31 @@ const Payments = () => {
       await loadData();
     }
   };
+  
+  const handleDeletePayment = async (paymentId: string) => {
+    try {
+      const dbService = DatabaseService.getInstance();
+      const success = await dbService.deletePayment(paymentId);
+      
+      if (success) {
+        // Update local state without a full reload
+        setPayments(currentPayments => 
+          currentPayments.filter(p => p.id !== paymentId)
+        );
+        
+        toast.success("Payment deleted successfully");
+      } else {
+        toast.error("Failed to delete payment");
+        // Reload data to ensure UI is in sync
+        await loadData();
+      }
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+      toast.error("Failed to delete payment");
+      // Reload data if operation failed to ensure UI is in sync
+      await loadData();
+    }
+  };
 
   return (
     <Layout>
@@ -93,6 +118,7 @@ const Payments = () => {
             tenantNames={tenantNames}
             onAddPayment={loadData}
             onUpdatePayment={handleUpdatePayment}
+            onDeletePayment={handleDeletePayment}
           />
         )}
       </section>

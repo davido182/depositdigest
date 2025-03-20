@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Payment, Tenant } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, ArrowLeftRight, List, Tags } from "lucide-react";
+import { Plus, Edit, ArrowLeftRight, List, Tags, Trash2 } from "lucide-react";
 import { PaymentForm } from "./PaymentForm";
 import { MonthlyPaymentGrid } from "./MonthlyPaymentGrid";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +24,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface PaymentsListProps {
   payments: Payment[];
@@ -32,6 +42,7 @@ interface PaymentsListProps {
   tenantNames: Record<string, string>;
   onAddPayment: () => void;
   onUpdatePayment: (payment: Payment) => void;
+  onDeletePayment?: (paymentId: string) => void;
 }
 
 export function PaymentsList({
@@ -40,11 +51,13 @@ export function PaymentsList({
   tenantNames,
   onAddPayment,
   onUpdatePayment,
+  onDeletePayment,
 }: PaymentsListProps) {
   const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
   const [currentView, setCurrentView] = useState<"list" | "grid">("list");
   const [groupBy, setGroupBy] = useState<"none" | "unit">("none");
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
   
   const statusColors = {
     completed: "bg-emerald-100 text-emerald-800 border-emerald-200",
@@ -62,7 +75,6 @@ export function PaymentsList({
     return tenant ? tenant.unit : "Unknown";
   };
   
-  // Group payments by unit if grouping is enabled
   const getGroupedPayments = () => {
     if (groupBy === "none") {
       return { "": sortedPayments };
@@ -80,7 +92,6 @@ export function PaymentsList({
   
   const groupedPayments = getGroupedPayments();
   const groupKeys = Object.keys(groupedPayments).sort((a, b) => {
-    // Sort numerically if the units are numbers
     if (a === "") return -1;
     if (b === "") return 1;
     return parseInt(a) - parseInt(b);
@@ -99,6 +110,13 @@ export function PaymentsList({
   const handleSavePayment = (payment: Payment) => {
     onUpdatePayment(payment);
     setIsPaymentFormOpen(false);
+  };
+
+  const handleDeletePayment = (paymentId: string) => {
+    if (onDeletePayment) {
+      onDeletePayment(paymentId);
+      setPaymentToDelete(null);
+    }
   };
 
   const toggleView = () => {
@@ -170,7 +188,7 @@ export function PaymentsList({
                             <TableHead>Type</TableHead>
                             <TableHead>Method</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead className="w-[80px]">Actions</TableHead>
+                            <TableHead className="w-[100px]">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -207,15 +225,47 @@ export function PaymentsList({
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="h-8 w-8"
-                                    onClick={() => handleEditPayment(payment)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                    <span className="sr-only">Edit</span>
-                                  </Button>
+                                  <div className="flex gap-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-8 w-8"
+                                      onClick={() => handleEditPayment(payment)}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                      <span className="sr-only">Edit</span>
+                                    </Button>
+                                    
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="icon" 
+                                          className="h-8 w-8 text-destructive hover:text-destructive/90"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                          <span className="sr-only">Delete</span>
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Delete Payment</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Are you sure you want to delete this payment? This action cannot be undone.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction 
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            onClick={() => handleDeletePayment(payment.id)}
+                                          >
+                                            Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             ))
@@ -235,7 +285,7 @@ export function PaymentsList({
                       <TableHead>Type</TableHead>
                       <TableHead>Method</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="w-[80px]">Actions</TableHead>
+                      <TableHead className="w-[100px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -272,15 +322,47 @@ export function PaymentsList({
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8"
-                              onClick={() => handleEditPayment(payment)}
-                            >
-                              <Edit className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={() => handleEditPayment(payment)}
+                              >
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">Edit</span>
+                              </Button>
+                              
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 text-destructive hover:text-destructive/90"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">Delete</span>
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Payment</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete this payment? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      onClick={() => handleDeletePayment(payment.id)}
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))

@@ -84,6 +84,10 @@ class DatabaseService {
   public async updatePayment(id: string, payment: Partial<Payment>): Promise<boolean> {
     return this.paymentService.updatePayment(id, payment);
   }
+  
+  public async deletePayment(id: string): Promise<boolean> {
+    return this.paymentService.deletePayment(id);
+  }
 
   // Maintenance Request methods
   public async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
