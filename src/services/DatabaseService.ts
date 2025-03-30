@@ -13,7 +13,7 @@ class DatabaseService {
   private tenantService: TenantService;
   private paymentService: PaymentService;
   private maintenanceService: MaintenanceService;
-  private totalUnits: number = 20; // Default units count
+  private totalUnits: number = 30; // Updated to 30 units by default
 
   private constructor() {
     this.tenantService = TenantService.getInstance();
@@ -24,6 +24,9 @@ class DatabaseService {
     const savedUnits = localStorage.getItem('propertyTotalUnits');
     if (savedUnits) {
       this.totalUnits = parseInt(savedUnits, 10);
+    } else {
+      // If no saved units, set default to 30 and save it
+      localStorage.setItem('propertyTotalUnits', this.totalUnits.toString());
     }
   }
 
