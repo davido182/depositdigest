@@ -13,7 +13,7 @@ class DatabaseService {
   private tenantService: TenantService;
   private paymentService: PaymentService;
   private maintenanceService: MaintenanceService;
-  private totalUnits: number = 30; // Updated to 30 units by default
+  private totalUnits: number = 30; // Establecido en 30 unidades
 
   private constructor() {
     this.tenantService = TenantService.getInstance();
