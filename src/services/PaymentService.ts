@@ -1,4 +1,3 @@
-
 import BaseService from './BaseService';
 import { Payment } from '@/types';
 import { mockPayments } from './mockData';
@@ -11,21 +10,7 @@ class PaymentService extends BaseService {
 
   private constructor() {
     super();
-    // Initialize local cache for demo mode
-    if (isDemoMode) {
-      try {
-        const savedPayments = localStorage.getItem('rentflow_payments');
-        if (savedPayments) {
-          this.localPayments = JSON.parse(savedPayments);
-        } else {
-          this.localPayments = [...mockPayments];
-          localStorage.setItem('rentflow_payments', JSON.stringify(this.localPayments));
-        }
-      } catch (error) {
-        console.error('Error initializing local payments:', error);
-        this.localPayments = [...mockPayments];
-      }
-    }
+    this.initLocalStorage();
   }
 
   public static getInstance(): PaymentService {
@@ -33,6 +18,28 @@ class PaymentService extends BaseService {
       PaymentService.instance = new PaymentService();
     }
     return PaymentService.instance;
+  }
+  
+  // Add public initLocalStorage method to match TenantService
+  public initLocalStorage(force: boolean = false): void {
+    if ((isDemoMode && !localStorage.getItem('payments')) || force) {
+      console.log('PaymentService: Initializing localStorage with mock payments data');
+      localStorage.setItem('payments', JSON.stringify(mockPayments));
+      this.localPayments = [...mockPayments];
+    } else if (isDemoMode) {
+      try {
+        const savedPayments = localStorage.getItem('payments');
+        if (savedPayments) {
+          this.localPayments = JSON.parse(savedPayments);
+        } else {
+          this.localPayments = [...mockPayments];
+          localStorage.setItem('payments', JSON.stringify(this.localPayments));
+        }
+      } catch (error) {
+        console.error('Error initializing local payments:', error);
+        this.localPayments = [...mockPayments];
+      }
+    }
   }
 
   // Override simulateRequest for payment-specific mock data
@@ -52,7 +59,7 @@ class PaymentService extends BaseService {
       } else if (endpoint === 'payments' && method === 'POST') {
         const newPayment = { ...data, id: crypto.randomUUID() };
         this.localPayments.push(newPayment);
-        localStorage.setItem('rentflow_payments', JSON.stringify(this.localPayments));
+        localStorage.setItem('payments', JSON.stringify(this.localPayments));
         return { id: newPayment.id } as unknown as T;
       } else if (endpoint.startsWith('payments/') && method === 'PUT') {
         const paymentId = endpoint.split('/')[1];
@@ -60,7 +67,7 @@ class PaymentService extends BaseService {
         
         if (paymentIndex !== -1) {
           this.localPayments[paymentIndex] = { ...this.localPayments[paymentIndex], ...data };
-          localStorage.setItem('rentflow_payments', JSON.stringify(this.localPayments));
+          localStorage.setItem('payments', JSON.stringify(this.localPayments));
           return { success: true } as unknown as T;
         }
         
@@ -71,7 +78,7 @@ class PaymentService extends BaseService {
         this.localPayments = this.localPayments.filter(p => p.id !== paymentId);
         
         if (this.localPayments.length < initialLength) {
-          localStorage.setItem('rentflow_payments', JSON.stringify(this.localPayments));
+          localStorage.setItem('payments', JSON.stringify(this.localPayments));
           return { success: true } as unknown as T;
         }
         

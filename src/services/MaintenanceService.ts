@@ -10,6 +10,7 @@ class MaintenanceService extends BaseService {
 
   private constructor() {
     super();
+    this.initLocalStorage();
   }
 
   public static getInstance(): MaintenanceService {
@@ -17,6 +18,14 @@ class MaintenanceService extends BaseService {
       MaintenanceService.instance = new MaintenanceService();
     }
     return MaintenanceService.instance;
+  }
+  
+  // Add public initLocalStorage method to match TenantService
+  public initLocalStorage(force: boolean = false): void {
+    if ((isDemoMode && !localStorage.getItem('maintenanceRequests')) || force) {
+      console.log('MaintenanceService: Initializing localStorage with mock maintenance requests data');
+      localStorage.setItem('maintenanceRequests', JSON.stringify(mockMaintenanceRequests));
+    }
   }
 
   // Override simulateRequest for maintenance-specific mock data
@@ -32,19 +41,52 @@ class MaintenanceService extends BaseService {
       await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
       
       if (endpoint === 'maintenance' && method === 'GET') {
-        return mockMaintenanceRequests as unknown as T;
+        const maintenanceJson = localStorage.getItem('maintenanceRequests');
+        const maintenanceRequests = maintenanceJson ? JSON.parse(maintenanceJson) : mockMaintenanceRequests;
+        return maintenanceRequests as unknown as T;
       } else if (endpoint.startsWith('maintenance/') && method === 'GET') {
         const id = endpoint.split('/')[1];
-        const request = mockMaintenanceRequests.find(r => r.id === id);
+        const maintenanceJson = localStorage.getItem('maintenanceRequests');
+        const maintenanceRequests = maintenanceJson ? JSON.parse(maintenanceJson) : mockMaintenanceRequests;
+        const request = maintenanceRequests.find((r: MaintenanceRequest) => r.id === id);
         return (request || null) as unknown as T;
       } else if (endpoint.startsWith('maintenance?tenantId=') && method === 'GET') {
         const tenantId = endpoint.split('=')[1];
-        const requests = mockMaintenanceRequests.filter(r => r.tenantId === tenantId);
+        const maintenanceJson = localStorage.getItem('maintenanceRequests');
+        const maintenanceRequests = maintenanceJson ? JSON.parse(maintenanceJson) : mockMaintenanceRequests;
+        const requests = maintenanceRequests.filter((r: MaintenanceRequest) => r.tenantId === tenantId);
         return requests as unknown as T;
       } else if (endpoint === 'maintenance' && method === 'POST') {
-        return { id: crypto.randomUUID() } as unknown as T;
+        const newRequest = {
+          ...data,
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        const maintenanceJson = localStorage.getItem('maintenanceRequests');
+        const maintenanceRequests = maintenanceJson ? JSON.parse(maintenanceJson) : mockMaintenanceRequests;
+        maintenanceRequests.push(newRequest);
+        localStorage.setItem('maintenanceRequests', JSON.stringify(maintenanceRequests));
+        
+        return { id: newRequest.id } as unknown as T;
       } else if (endpoint.startsWith('maintenance/') && method === 'PUT') {
-        return true as unknown as T;
+        const id = endpoint.split('/')[1];
+        
+        const maintenanceJson = localStorage.getItem('maintenanceRequests');
+        const maintenanceRequests = maintenanceJson ? JSON.parse(maintenanceJson) : mockMaintenanceRequests;
+        const index = maintenanceRequests.findIndex((r: MaintenanceRequest) => r.id === id);
+        
+        if (index !== -1) {
+          maintenanceRequests[index] = {
+            ...maintenanceRequests[index],
+            ...data,
+            updatedAt: new Date().toISOString()
+          };
+          localStorage.setItem('maintenanceRequests', JSON.stringify(maintenanceRequests));
+          return true as unknown as T;
+        }
+        return false as unknown as T;
       }
       
       throw new Error(`Unhandled endpoint in demo mode: ${method} ${endpoint}`);
