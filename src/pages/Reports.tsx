@@ -1,3 +1,4 @@
+
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
@@ -7,7 +8,7 @@ import DatabaseService from "@/services/DatabaseService";
 import { Tenant, Payment } from "@/types";
 import { FileDown, FileText as FilePdfIcon, PieChart, Filter } from "lucide-react";
 import { TenantsPdfReport } from "@/components/reports/TenantsPdfReport";
-import { toPDF } from 'react-to-pdf';
+import { generatePDF } from "react-to-pdf";
 
 const Reports = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -135,7 +136,7 @@ const Reports = () => {
         return;
       }
       
-      await toPDF(pdfRef, {
+      await generatePDF(pdfRef, {
         filename: `tenant_report_${new Date().toISOString().split('T')[0]}.pdf`,
         page: { margin: 10 }
       });
