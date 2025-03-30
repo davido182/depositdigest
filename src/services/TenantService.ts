@@ -20,8 +20,10 @@ class TenantService extends BaseService {
     return TenantService.instance;
   }
   
-  private initLocalStorage(): void {
-    if (isDemoMode && !localStorage.getItem('tenants')) {
+  // Make this method public so DatabaseService can call it and pass force parameter
+  public initLocalStorage(force: boolean = false): void {
+    if ((isDemoMode && !localStorage.getItem('tenants')) || force) {
+      console.log('TenantService: Initializing localStorage with mock tenants data');
       localStorage.setItem('tenants', JSON.stringify(mockTenants));
     }
   }
@@ -49,7 +51,10 @@ class TenantService extends BaseService {
       
       if (endpoint === 'tenants' && method === 'GET') {
         // Return from localStorage for persistence
-        return this.getLocalTenants() as unknown as T;
+        console.log('TenantService: Retrieving tenants from localStorage');
+        const tenants = this.getLocalTenants();
+        console.log(`TenantService: Retrieved ${tenants.length} tenants`);
+        return tenants as unknown as T;
       } else if (endpoint.startsWith('tenants/') && method === 'GET') {
         const id = endpoint.split('/')[1];
         const tenants = this.getLocalTenants();

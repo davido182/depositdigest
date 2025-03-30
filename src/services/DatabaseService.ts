@@ -13,7 +13,7 @@ class DatabaseService {
   private tenantService: TenantService;
   private paymentService: PaymentService;
   private maintenanceService: MaintenanceService;
-  private totalUnits: number = 30; // Establecido en 30 unidades
+  private totalUnits: number = 30; // Set to 30 units
 
   private constructor() {
     this.tenantService = TenantService.getInstance();
@@ -28,6 +28,9 @@ class DatabaseService {
       // If no saved units, set default to 30 and save it
       localStorage.setItem('propertyTotalUnits', this.totalUnits.toString());
     }
+    
+    // Force reset tenant data to ensure we have all 27 occupied units
+    this.resetMockData();
   }
 
   public static getInstance(): DatabaseService {
@@ -35,6 +38,19 @@ class DatabaseService {
       DatabaseService.instance = new DatabaseService();
     }
     return DatabaseService.instance;
+  }
+  
+  // New method to reset mock data to initial state
+  private resetMockData(): void {
+    // Clear any existing tenant data in localStorage
+    localStorage.removeItem('tenants');
+    localStorage.removeItem('payments');
+    localStorage.removeItem('maintenanceRequests');
+    
+    // Reinitialize services which will load the default mock data
+    this.tenantService.initLocalStorage(true);
+    this.paymentService.initLocalStorage(true);
+    this.maintenanceService.initLocalStorage(true);
   }
 
   // Test connection

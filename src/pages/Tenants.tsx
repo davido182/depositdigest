@@ -17,16 +17,19 @@ const Tenants = () => {
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
-  const [totalUnits, setTotalUnits] = useState(20);
+  const [totalUnits, setTotalUnits] = useState(30);
 
   useEffect(() => {
     const loadTenants = async () => {
       try {
+        setIsLoading(true);
         const dbService = DatabaseService.getInstance();
         const isConnected = await dbService.testConnection();
         
         if (isConnected) {
+          console.log('Loading tenants from database service');
           const loadedTenants = await dbService.getTenants();
+          console.log(`Loaded ${loadedTenants.length} tenants`);
           setTenants(loadedTenants);
           setTotalUnits(dbService.getTotalUnits());
           setIsOffline(false);
