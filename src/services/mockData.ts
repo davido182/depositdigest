@@ -537,7 +537,7 @@ export const mockMaintenanceRequests: MaintenanceRequest[] = [
     unit: "301",
     title: "Broken Window",
     description: "The bedroom window doesn't close properly.",
-    category: "windows",
+    category: "structural", // Cambiado de "windows" a "structural"
     priority: "medium",
     status: "in_progress",
     createdAt: new Date(Date.now() - 259200000).toISOString(),
