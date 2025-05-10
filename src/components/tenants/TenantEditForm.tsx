@@ -271,7 +271,7 @@ export function TenantEditForm({
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="no-units" disabled>
                           No units available
                         </SelectItem>
                       )}
