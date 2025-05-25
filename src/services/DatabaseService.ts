@@ -2,7 +2,9 @@
 import TenantService from './TenantService';
 import PaymentService from './PaymentService';
 import MaintenanceService from './MaintenanceService';
+import { SupabaseTenantService } from './SupabaseTenantService';
 import { Tenant, Payment, MaintenanceRequest } from '@/types';
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * DatabaseService acts as a façade for all the individual services.
@@ -13,24 +15,22 @@ class DatabaseService {
   private tenantService: TenantService;
   private paymentService: PaymentService;
   private maintenanceService: MaintenanceService;
-  private totalUnits: number = 30; // Set to 30 units
+  private supabaseTenantService: SupabaseTenantService;
+  private totalUnits: number = 30;
 
   private constructor() {
     this.tenantService = TenantService.getInstance();
     this.paymentService = PaymentService.getInstance();
     this.maintenanceService = MaintenanceService.getInstance();
+    this.supabaseTenantService = new SupabaseTenantService();
     
     // Try to load saved unit count from localStorage
     const savedUnits = localStorage.getItem('propertyTotalUnits');
     if (savedUnits) {
       this.totalUnits = parseInt(savedUnits, 10);
     } else {
-      // If no saved units, set default to 30 and save it
       localStorage.setItem('propertyTotalUnits', this.totalUnits.toString());
     }
-    
-    // Force reset tenant data to ensure we have all 27 occupied units
-    this.resetMockData();
   }
 
   public static getInstance(): DatabaseService {
@@ -39,18 +39,10 @@ class DatabaseService {
     }
     return DatabaseService.instance;
   }
-  
-  // New method to reset mock data to initial state
-  private resetMockData(): void {
-    // Clear any existing tenant data in localStorage
-    localStorage.removeItem('tenants');
-    localStorage.removeItem('payments');
-    localStorage.removeItem('maintenanceRequests');
-    
-    // Reinitialize services which will load the default mock data
-    this.tenantService.initLocalStorage(true);
-    this.paymentService.initLocalStorage(true);
-    this.maintenanceService.initLocalStorage(true);
+
+  private async isAuthenticated(): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    return !!user;
   }
 
   // Test connection
@@ -68,30 +60,43 @@ class DatabaseService {
     localStorage.setItem('propertyTotalUnits', units.toString());
   }
 
-  // Tenant methods
+  // Tenant methods - use Supabase if authenticated, otherwise fallback to mock
   public async getTenants(): Promise<Tenant[]> {
+    if (await this.isAuthenticated()) {
+      return this.supabaseTenantService.getTenants();
+    }
     return this.tenantService.getTenants();
   }
 
   public async getTenantById(id: string): Promise<Tenant | null> {
+    if (await this.isAuthenticated()) {
+      return this.supabaseTenantService.getTenantById(id);
+    }
     return this.tenantService.getTenantById(id);
   }
 
   public async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    if (await this.isAuthenticated()) {
+      return this.supabaseTenantService.createTenant(tenant);
+    }
     return this.tenantService.createTenant(tenant);
   }
 
   public async updateTenant(id: string, tenant: Partial<Tenant>): Promise<boolean> {
-    // Ensure changes are persisted to localStorage in demo mode
-    const result = await this.tenantService.updateTenant(id, tenant);
-    return result;
+    if (await this.isAuthenticated()) {
+      return this.supabaseTenantService.updateTenant(id, tenant);
+    }
+    return this.tenantService.updateTenant(id, tenant);
   }
   
   public async deleteTenant(id: string): Promise<boolean> {
+    if (await this.isAuthenticated()) {
+      return this.supabaseTenantService.deleteTenant(id);
+    }
     return this.tenantService.deleteTenant(id);
   }
 
-  // Payment methods
+  // Payment methods - use mock service for now (will implement Supabase payments later)
   public async getPayments(): Promise<Payment[]> {
     return this.paymentService.getPayments();
   }
@@ -108,7 +113,7 @@ class DatabaseService {
     return this.paymentService.deletePayment(id);
   }
 
-  // Maintenance Request methods
+  // Maintenance Request methods - use mock service for now (will implement Supabase maintenance later)
   public async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
     return this.maintenanceService.getMaintenanceRequests();
   }

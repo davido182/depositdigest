@@ -1,125 +1,122 @@
 
-import {
-  BarChart3,
-  Users,
-  Wallet,
-  FileText,
-  Settings,
-  Home,
-  LogOut,
-  Menu,
-  Wrench,
-} from "lucide-react";
-import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  Sidebar as SidebarComponent,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
 import { toast } from "sonner";
+import {
+  LayoutDashboard,
+  Users,
+  CreditCard,
+  FileText,
+  BarChart3,
+  Settings,
+  Wrench,
+  LogOut
+} from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
-export function Sidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const { logout } = useAuth();
+const navigationItems = [
+  {
+    title: "Dashboard",
+    href: "/",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Tenants",
+    href: "/tenants",
+    icon: Users,
+  },
+  {
+    title: "Payments",
+    href: "/payments",
+    icon: CreditCard,
+  },
+  {
+    title: "Maintenance",
+    href: "/maintenance",
+    icon: Wrench,
+  },
+  {
+    title: "Reports",
+    href: "/reports",
+    icon: FileText,
+  },
+  {
+    title: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
+  },
+  {
+    title: "Settings",
+    href: "/settings",
+    icon: Settings,
+  },
+];
+
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+export function Sidebar({ className }: SidebarProps) {
+  const location = useLocation();
   const navigate = useNavigate();
+  const { signOut, user } = useAuth();
 
-  const menuItems = [
-    {
-      title: "Dashboard",
-      icon: Home,
-      path: "/",
-    },
-    {
-      title: "Tenants",
-      icon: Users,
-      path: "/tenants",
-    },
-    {
-      title: "Payments",
-      icon: Wallet,
-      path: "/payments",
-    },
-    {
-      title: "Maintenance",
-      icon: Wrench,
-      path: "/maintenance",
-    },
-    {
-      title: "Reports",
-      icon: FileText,
-      path: "/reports",
-    },
-    {
-      title: "Analytics",
-      icon: BarChart3,
-      path: "/analytics",
-    },
-    {
-      title: "Settings",
-      icon: Settings,
-      path: "/settings",
-    },
-  ];
-
-  const handleLogout = () => {
-    logout();
-    toast.success("Logged out successfully");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("Sesión cerrada exitosamente");
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Error al cerrar sesión");
+    }
   };
 
   return (
-    <SidebarComponent>
-      <SidebarHeader className="p-4 flex items-center gap-2 border-b border-sidebar-border">
-        <div className="flex items-center justify-between w-full">
-          {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-md bg-primary"></div>
-              <h1 className="text-lg font-semibold tracking-tight">RentFlow</h1>
-            </div>
-          )}
-          <SidebarTrigger
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 rounded-md hover:bg-sidebar-accent transition-colors duration-200"
-          >
-            <Menu className="h-5 w-5" />
-          </SidebarTrigger>
+    <div className={cn("pb-12 min-h-screen", className)}>
+      <div className="space-y-4 py-4">
+        <div className="px-3 py-2">
+          <div className="flex items-center mb-2 px-4">
+            <div className="h-8 w-8 rounded-md bg-primary mr-2"></div>
+            <h2 className="text-lg font-semibold tracking-tight">RentFlow</h2>
+          </div>
+          <div className="px-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              {user?.email || 'Usuario'}
+            </p>
+          </div>
         </div>
-      </SidebarHeader>
-      <SidebarContent className="px-2 py-4">
-        <nav className="space-y-1">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200",
-                  isActive
-                    ? "bg-sidebar-accent text-white"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                )
-              }
-            >
-              <item.icon className="h-5 w-5" />
-              {!isCollapsed && <span>{item.title}</span>}
-            </NavLink>
-          ))}
-        </nav>
-      </SidebarContent>
-      <SidebarFooter className="p-4 border-t border-sidebar-border">
-        <button 
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200 w-full"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-5 w-5" />
-          {!isCollapsed && <span>Logout</span>}
-        </button>
-      </SidebarFooter>
-    </SidebarComponent>
+        <div className="px-3">
+          <ScrollArea className="h-[calc(100vh-200px)]">
+            <div className="space-y-1">
+              {navigationItems.map((item) => (
+                <Button
+                  key={item.href}
+                  variant={location.pathname === item.href ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start",
+                    location.pathname === item.href && "bg-secondary"
+                  )}
+                  onClick={() => navigate(item.href)}
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.title}
+                </Button>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+        <div className="px-3">
+          <Button
+            variant="outline"
+            className="w-full justify-start"
+            onClick={handleLogout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Cerrar Sesión
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
