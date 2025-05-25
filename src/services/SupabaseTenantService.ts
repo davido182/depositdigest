@@ -125,9 +125,9 @@ export class SupabaseTenantService extends SupabaseService {
       moveInDate: data.lease_start_date,
       leaseEndDate: data.lease_end_date,
       rentAmount: parseFloat(data.rent_amount),
-      depositAmount: 0, // This field doesn't exist in the new schema
+      depositAmount: 0,
       status: data.status as Tenant['status'],
-      paymentHistory: [], // Will be loaded separately
+      paymentHistory: [],
       notes: '',
       createdAt: data.created_at,
       updatedAt: data.updated_at

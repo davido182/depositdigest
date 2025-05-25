@@ -1,7 +1,6 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
@@ -12,9 +11,11 @@ import {
   BarChart3,
   Settings,
   Wrench,
-  LogOut
+  LogOut,
+  Menu
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 const navigationItems = [
   {
@@ -23,22 +24,22 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Tenants",
+    title: "Inquilinos",
     href: "/tenants",
     icon: Users,
   },
   {
-    title: "Payments",
+    title: "Pagos",
     href: "/payments",
     icon: CreditCard,
   },
   {
-    title: "Maintenance",
+    title: "Mantenimiento",
     href: "/maintenance",
     icon: Wrench,
   },
   {
-    title: "Reports",
+    title: "Reportes",
     href: "/reports",
     icon: FileText,
   },
@@ -48,7 +49,7 @@ const navigationItems = [
     icon: BarChart3,
   },
   {
-    title: "Settings",
+    title: "Configuración",
     href: "/settings",
     icon: Settings,
   },
@@ -60,6 +61,7 @@ export function Sidebar({ className }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -73,47 +75,75 @@ export function Sidebar({ className }: SidebarProps) {
   };
 
   return (
-    <div className={cn("pb-12 min-h-screen", className)}>
-      <div className="space-y-4 py-4">
-        <div className="px-3 py-2">
-          <div className="flex items-center mb-2 px-4">
-            <div className="h-8 w-8 rounded-md bg-primary mr-2"></div>
-            <h2 className="text-lg font-semibold tracking-tight">RentFlow</h2>
-          </div>
-          <div className="px-4 py-2">
-            <p className="text-sm text-muted-foreground">
+    <div className={cn(
+      "transition-all duration-300 ease-in-out border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+      isCollapsed ? "w-16" : "w-64",
+      "min-h-screen",
+      className
+    )}>
+      <div className="flex h-full flex-col">
+        {/* Header */}
+        <div className="flex h-14 items-center border-b px-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="h-8 w-8"
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+          {!isCollapsed && (
+            <div className="flex items-center ml-2">
+              <div className="h-6 w-6 rounded bg-primary mr-2"></div>
+              <h2 className="text-lg font-semibold">RentFlow</h2>
+            </div>
+          )}
+        </div>
+
+        {/* User info */}
+        {!isCollapsed && (
+          <div className="px-3 py-2 border-b">
+            <p className="text-sm text-muted-foreground truncate">
               {user?.email || 'Usuario'}
             </p>
           </div>
+        )}
+
+        {/* Navigation */}
+        <div className="flex-1 overflow-auto py-2">
+          <nav className="space-y-1 px-2">
+            {navigationItems.map((item) => (
+              <Button
+                key={item.href}
+                variant={location.pathname === item.href ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start h-9",
+                  isCollapsed ? "px-2" : "px-3",
+                  location.pathname === item.href && "bg-secondary"
+                )}
+                onClick={() => navigate(item.href)}
+                title={isCollapsed ? item.title : undefined}
+              >
+                <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+                {!isCollapsed && <span className="truncate">{item.title}</span>}
+              </Button>
+            ))}
+          </nav>
         </div>
-        <div className="px-3">
-          <ScrollArea className="h-[calc(100vh-200px)]">
-            <div className="space-y-1">
-              {navigationItems.map((item) => (
-                <Button
-                  key={item.href}
-                  variant={location.pathname === item.href ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start",
-                    location.pathname === item.href && "bg-secondary"
-                  )}
-                  onClick={() => navigate(item.href)}
-                >
-                  <item.icon className="mr-2 h-4 w-4" />
-                  {item.title}
-                </Button>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
-        <div className="px-3">
+
+        {/* Logout button */}
+        <div className="border-t p-2">
           <Button
             variant="outline"
-            className="w-full justify-start"
+            className={cn(
+              "w-full justify-start h-9",
+              isCollapsed ? "px-2" : "px-3"
+            )}
             onClick={handleLogout}
+            title={isCollapsed ? "Cerrar Sesión" : undefined}
           >
-            <LogOut className="mr-2 h-4 w-4" />
-            Cerrar Sesión
+            <LogOut className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+            {!isCollapsed && <span>Cerrar Sesión</span>}
           </Button>
         </div>
       </div>
