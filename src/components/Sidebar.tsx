@@ -12,7 +12,8 @@ import {
   Settings,
   Wrench,
   LogOut,
-  Menu
+  Menu,
+  Calculator
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -32,6 +33,11 @@ const navigationItems = [
     title: "Pagos",
     href: "/payments",
     icon: CreditCard,
+  },
+  {
+    title: "Contabilidad",
+    href: "/accounting",
+    icon: Calculator,
   },
   {
     title: "Mantenimiento",
@@ -77,7 +83,7 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <div className={cn(
       "transition-all duration-300 ease-in-out border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-      isCollapsed ? "w-16" : "w-64",
+      isCollapsed ? "w-16" : "w-56",
       "min-h-screen",
       className
     )}>

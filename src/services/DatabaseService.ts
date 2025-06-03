@@ -3,6 +3,7 @@ import TenantService from './TenantService';
 import PaymentService from './PaymentService';
 import MaintenanceService from './MaintenanceService';
 import { SupabaseTenantService } from './SupabaseTenantService';
+import { SupabasePaymentService } from './SupabasePaymentService';
 import { Tenant, Payment, MaintenanceRequest } from '@/types';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,6 +17,7 @@ class DatabaseService {
   private paymentService: PaymentService;
   private maintenanceService: MaintenanceService;
   private supabaseTenantService: SupabaseTenantService;
+  private supabasePaymentService: SupabasePaymentService;
   private totalUnits: number = 30;
 
   private constructor() {
@@ -23,6 +25,7 @@ class DatabaseService {
     this.paymentService = PaymentService.getInstance();
     this.maintenanceService = MaintenanceService.getInstance();
     this.supabaseTenantService = new SupabaseTenantService();
+    this.supabasePaymentService = new SupabasePaymentService();
     
     // Try to load saved unit count from localStorage
     const savedUnits = localStorage.getItem('propertyTotalUnits');
@@ -96,20 +99,32 @@ class DatabaseService {
     return this.tenantService.deleteTenant(id);
   }
 
-  // Payment methods - use mock service for now (will implement Supabase payments later)
+  // Payment methods - use Supabase if authenticated, otherwise mock service
   public async getPayments(): Promise<Payment[]> {
+    if (await this.isAuthenticated()) {
+      return this.supabasePaymentService.getPayments();
+    }
     return this.paymentService.getPayments();
   }
 
   public async createPayment(payment: Omit<Payment, 'id' | 'createdAt'>): Promise<string> {
+    if (await this.isAuthenticated()) {
+      return this.supabasePaymentService.createPayment(payment);
+    }
     return this.paymentService.createPayment(payment);
   }
   
   public async updatePayment(id: string, payment: Partial<Payment>): Promise<boolean> {
+    if (await this.isAuthenticated()) {
+      return this.supabasePaymentService.updatePayment(id, payment);
+    }
     return this.paymentService.updatePayment(id, payment);
   }
   
   public async deletePayment(id: string): Promise<boolean> {
+    if (await this.isAuthenticated()) {
+      return this.supabasePaymentService.deletePayment(id);
+    }
     return this.paymentService.deletePayment(id);
   }
 
