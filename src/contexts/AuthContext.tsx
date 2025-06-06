@@ -11,6 +11,8 @@ type AuthContextType = {
   signUp: (email: string, password: string, fullName?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -55,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/`,
         data: {
           full_name: fullName || email.split('@')[0]
         }
@@ -67,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     console.log("SignUp successful:", data.user?.email);
-    // Note: User will be automatically set via onAuthStateChange
+    setIsLoading(false);
   };
 
   const signIn = async (email: string, password: string) => {
@@ -81,11 +84,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       console.error("SignIn error:", error);
+      setIsLoading(false);
       throw error;
     }
 
     console.log("SignIn successful:", data.user?.email);
-    // Note: User will be automatically set via onAuthStateChange
   };
 
   const signOut = async () => {
@@ -98,7 +101,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     console.log("SignOut successful");
-    // Note: User will be automatically cleared via onAuthStateChange
+  };
+
+  const resetPassword = async (email: string) => {
+    console.log("Password reset attempt for:", email);
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login?reset=true`
+    });
+
+    if (error) {
+      console.error("Password reset error:", error);
+      throw error;
+    }
+
+    console.log("Password reset email sent successfully");
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    console.log("Password update attempt");
+    
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) {
+      console.error("Password update error:", error);
+      throw error;
+    }
+
+    console.log("Password updated successfully");
   };
 
   const value = {
@@ -108,7 +140,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     signUp,
     signIn,
-    signOut
+    signOut,
+    resetPassword,
+    updatePassword
   };
 
   console.log("AuthProvider rendering, isAuthenticated:", !!user, "isLoading:", isLoading);

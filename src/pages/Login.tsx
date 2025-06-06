@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,10 +12,26 @@ import { toast } from "sonner";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const { signIn, signUp, resetPassword, updatePassword } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Check if this is a password reset redirect
+  const isPasswordReset = searchParams.get('reset') === 'true';
+
+  useEffect(() => {
+    if (isPasswordReset) {
+      setShowResetForm(false);
+      setIsResetting(true);
+      toast.info("Ahora puedes establecer tu nueva contraseña");
+    }
+  }, [isPasswordReset]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +91,177 @@ const Login = () => {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast.error("Por favor ingresa tu email");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      await resetPassword(email);
+      toast.success("Se ha enviado un enlace de recuperación a tu email. Revisa tu bandeja de entrada.");
+      setShowResetForm(false);
+    } catch (error: any) {
+      console.error("Password reset error:", error);
+      toast.error("Error al enviar email de recuperación: " + (error.message || "Error desconocido"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newPassword || !confirmPassword) {
+      toast.error("Por favor completa ambos campos de contraseña");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Las contraseñas no coinciden");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      await updatePassword(newPassword);
+      toast.success("Contraseña actualizada exitosamente");
+      setIsResetting(false);
+      navigate("/");
+    } catch (error: any) {
+      console.error("Password update error:", error);
+      toast.error("Error al actualizar contraseña: " + (error.message || "Error desconocido"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (showResetForm) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
+        <div className="w-full max-w-md">
+          <div className="mb-8 text-center">
+            <div className="flex items-center justify-center mb-4">
+              <div className="h-8 w-8 rounded-md bg-primary"></div>
+              <h1 className="ml-2 text-2xl font-bold tracking-tight">RentFlow</h1>
+            </div>
+            <p className="text-muted-foreground">Recuperar contraseña</p>
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Recuperar Contraseña</CardTitle>
+              <CardDescription>
+                Ingresa tu email para recibir un enlace de recuperación
+              </CardDescription>
+            </CardHeader>
+            
+            <form onSubmit={handlePasswordReset}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="tu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-2">
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Enviando..." : "Enviar Enlace de Recuperación"}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="w-full"
+                  onClick={() => setShowResetForm(false)}
+                >
+                  Volver al Login
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (isResetting) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
+        <div className="w-full max-w-md">
+          <div className="mb-8 text-center">
+            <div className="flex items-center justify-center mb-4">
+              <div className="h-8 w-8 rounded-md bg-primary"></div>
+              <h1 className="ml-2 text-2xl font-bold tracking-tight">RentFlow</h1>
+            </div>
+            <p className="text-muted-foreground">Establecer nueva contraseña</p>
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Nueva Contraseña</CardTitle>
+              <CardDescription>
+                Ingresa tu nueva contraseña
+              </CardDescription>
+            </CardHeader>
+            
+            <form onSubmit={handlePasswordUpdate}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">Nueva Contraseña</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  La contraseña debe tener al menos 6 caracteres.
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Actualizando..." : "Actualizar Contraseña"}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
       <div className="w-full max-w-md">
@@ -124,6 +311,16 @@ const Login = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
+                  </div>
+                  <div className="text-center">
+                    <Button 
+                      type="button" 
+                      variant="link" 
+                      className="text-sm"
+                      onClick={() => setShowResetForm(true)}
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </Button>
                   </div>
                 </CardContent>
                 <CardFooter>
