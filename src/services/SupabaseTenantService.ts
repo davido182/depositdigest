@@ -49,7 +49,7 @@ export class SupabaseTenantService extends SupabaseService {
       user_id: user.id,
       name: tenant.name,
       email: tenant.email,
-      phone: tenant.phone,
+      phone: tenant.phone || null,
       unit_number: tenant.unit,
       rent_amount: tenant.rentAmount,
       lease_start_date: tenant.moveInDate,
@@ -68,7 +68,7 @@ export class SupabaseTenantService extends SupabaseService {
       throw error;
     }
 
-    return data.id;
+    return data!.id;
   }
 
   async updateTenant(id: string, updates: Partial<Tenant>): Promise<boolean> {

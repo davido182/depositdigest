@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { SupabaseService } from "./SupabaseService";
-import { Payment } from "@/types";
+import { Payment, PaymentMethod } from "@/types";
 
 export class SupabasePaymentService extends SupabaseService {
   async getPayments(): Promise<Payment[]> {
@@ -31,7 +31,7 @@ export class SupabasePaymentService extends SupabaseService {
       payment_date: payment.date,
       payment_method: this.mapPaymentMethodToDb(payment.method),
       status: payment.status,
-      notes: payment.notes
+      notes: payment.notes || null
     };
 
     const { data, error } = await supabase
@@ -45,7 +45,7 @@ export class SupabasePaymentService extends SupabaseService {
       throw error;
     }
 
-    return data.id;
+    return data!.id;
   }
 
   async updatePayment(id: string, updates: Partial<Payment>): Promise<boolean> {
@@ -89,8 +89,8 @@ export class SupabasePaymentService extends SupabaseService {
     return true;
   }
 
-  private mapPaymentMethodToDb(method: string): string {
-    const methodMap: Record<string, string> = {
+  private mapPaymentMethodToDb(method: PaymentMethod): string {
+    const methodMap: Record<PaymentMethod, string> = {
       'transfer': 'bank_transfer',
       'card': 'credit_card',
       'cash': 'cash',
@@ -100,14 +100,14 @@ export class SupabasePaymentService extends SupabaseService {
     return methodMap[method] || 'cash';
   }
 
-  private mapDbPaymentMethodToApp(dbMethod: string): string {
-    const methodMap: Record<string, string> = {
+  private mapDbPaymentMethodToApp(dbMethod: string): PaymentMethod {
+    const methodMap: Record<string, PaymentMethod> = {
       'bank_transfer': 'transfer',
       'credit_card': 'card',
       'cash': 'cash',
       'check': 'check'
     };
-    return methodMap[dbMethod] || 'cash';
+    return methodMap[dbMethod] as PaymentMethod || 'cash';
   }
 
   private mapSupabasePaymentToPayment(data: any): Payment {
