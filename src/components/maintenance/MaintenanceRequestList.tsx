@@ -3,6 +3,7 @@ import { MaintenanceRequest } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { 
   Table, 
   TableBody, 
@@ -11,15 +12,31 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatDistanceToNow } from "date-fns";
+import { Trash2 } from "lucide-react";
 
 interface MaintenanceRequestListProps {
   requests: MaintenanceRequest[];
   isLoading: boolean;
   error?: string;
+  onStatusChange: (id: string, newStatus: MaintenanceRequest['status']) => void;
+  onDelete: (id: string) => void;
 }
 
-export function MaintenanceRequestList({ requests, isLoading, error }: MaintenanceRequestListProps) {
+export function MaintenanceRequestList({ 
+  requests, 
+  isLoading, 
+  error,
+  onStatusChange,
+  onDelete 
+}: MaintenanceRequestListProps) {
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -67,15 +84,15 @@ export function MaintenanceRequestList({ requests, isLoading, error }: Maintenan
   const priorityColors = {
     emergency: "destructive",
     high: "destructive", 
-    medium: "warning",
+    medium: "default",
     low: "secondary"
   };
 
   const statusColors = {
     pending: "secondary",
-    assigned: "warning",
-    in_progress: "primary",
-    completed: "success",
+    assigned: "default",
+    in_progress: "default",
+    completed: "secondary",
     cancelled: "destructive"
   };
 
@@ -90,11 +107,12 @@ export function MaintenanceRequestList({ requests, isLoading, error }: Maintenan
             <TableHead>Priority</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Created</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {requests.map(request => (
-            <TableRow key={request.id} className="cursor-pointer hover:bg-muted/50">
+            <TableRow key={request.id} className="hover:bg-muted/50">
               <TableCell className="font-medium">{request.title}</TableCell>
               <TableCell>{request.unit}</TableCell>
               <TableCell className="capitalize">{request.category.replace('_', ' ')}</TableCell>
@@ -104,12 +122,38 @@ export function MaintenanceRequestList({ requests, isLoading, error }: Maintenan
                 </Badge>
               </TableCell>
               <TableCell>
-                <Badge variant={statusColors[request.status] as any}>
-                  {request.status.replace('_', ' ')}
-                </Badge>
+                <Select 
+                  value={request.status} 
+                  onValueChange={(value) => onStatusChange(request.id, value as MaintenanceRequest['status'])}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue>
+                      <Badge variant={statusColors[request.status] as any}>
+                        {request.status.replace('_', ' ')}
+                      </Badge>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pendiente</SelectItem>
+                    <SelectItem value="assigned">Asignado</SelectItem>
+                    <SelectItem value="in_progress">En Progreso</SelectItem>
+                    <SelectItem value="completed">Completado</SelectItem>
+                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })}
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete(request.id)}
+                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
