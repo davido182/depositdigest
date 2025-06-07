@@ -1,9 +1,11 @@
+
 import TenantService from './TenantService';
 import PaymentService from './PaymentService';
 import MaintenanceService from './MaintenanceService';
 import { SupabaseTenantService } from './SupabaseTenantService';
 import { SupabasePaymentService } from './SupabasePaymentService';
 import { SupabaseAccountingService } from './SupabaseAccountingService';
+import { SupabaseMaintenanceService } from './SupabaseMaintenanceService';
 import { Tenant, Payment, MaintenanceRequest, Account, AccountingEntry, TaxEntry } from '@/types';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,6 +21,7 @@ class DatabaseService {
   private supabaseTenantService: SupabaseTenantService;
   private supabasePaymentService: SupabasePaymentService;
   private supabaseAccountingService: SupabaseAccountingService;
+  private supabaseMaintenanceService: SupabaseMaintenanceService;
   private totalUnits: number = 30;
 
   private constructor() {
@@ -28,6 +31,7 @@ class DatabaseService {
     this.supabaseTenantService = new SupabaseTenantService();
     this.supabasePaymentService = new SupabasePaymentService();
     this.supabaseAccountingService = new SupabaseAccountingService();
+    this.supabaseMaintenanceService = new SupabaseMaintenanceService();
     
     // Try to load saved unit count from localStorage
     const savedUnits = localStorage.getItem('propertyTotalUnits');
@@ -130,25 +134,47 @@ class DatabaseService {
     return this.paymentService.deletePayment(id);
   }
 
-  // Maintenance Request methods - use mock service for now (will implement Supabase maintenance later)
+  // Maintenance Request methods - use Supabase if authenticated, otherwise mock service
   public async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
+    if (await this.isAuthenticated()) {
+      return this.supabaseMaintenanceService.getMaintenanceRequests();
+    }
     return this.maintenanceService.getMaintenanceRequests();
   }
 
   public async getMaintenanceRequestById(id: string): Promise<MaintenanceRequest | null> {
+    if (await this.isAuthenticated()) {
+      return this.supabaseMaintenanceService.getMaintenanceRequestById(id);
+    }
     return this.maintenanceService.getMaintenanceRequestById(id);
   }
 
   public async getMaintenanceRequestsByTenant(tenantId: string): Promise<MaintenanceRequest[]> {
+    if (await this.isAuthenticated()) {
+      return this.supabaseMaintenanceService.getMaintenanceRequestsByTenant(tenantId);
+    }
     return this.maintenanceService.getMaintenanceRequestsByTenant(tenantId);
   }
 
   public async createMaintenanceRequest(request: Omit<MaintenanceRequest, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    if (await this.isAuthenticated()) {
+      return this.supabaseMaintenanceService.createMaintenanceRequest(request);
+    }
     return this.maintenanceService.createMaintenanceRequest(request);
   }
 
   public async updateMaintenanceRequest(id: string, request: Partial<MaintenanceRequest>): Promise<boolean> {
+    if (await this.isAuthenticated()) {
+      return this.supabaseMaintenanceService.updateMaintenanceRequest(id, request);
+    }
     return this.maintenanceService.updateMaintenanceRequest(id, request);
+  }
+
+  public async deleteMaintenanceRequest(id: string): Promise<boolean> {
+    if (await this.isAuthenticated()) {
+      return this.supabaseMaintenanceService.deleteMaintenanceRequest(id);
+    }
+    return this.maintenanceService.deleteMaintenanceRequest(id);
   }
 
   // Accounting methods - new functionality
