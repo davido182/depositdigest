@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -17,43 +16,25 @@ const Login = () => {
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showResetForm, setShowResetForm] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
-  const { signIn, signUp, resetPassword, updatePassword, user, isAuthenticated } = useAuth();
+  const { signIn, signUp, resetPassword, updatePassword, user, isAuthenticated, isPasswordRecovery } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Check if this is a password reset redirect or if user is already authenticated
+  // Handle navigation based on auth state
   useEffect(() => {
-    // If user is already authenticated and not resetting password, redirect to home
-    if (isAuthenticated && !isResetting) {
+    // If user is authenticated and not in password recovery, redirect to home
+    if (isAuthenticated && !isPasswordRecovery) {
+      console.log("User authenticated, redirecting to home");
       navigate("/");
       return;
     }
 
-    // Check for various reset indicators
-    const isPasswordReset = searchParams.get('reset') === 'true' || 
-                           searchParams.get('type') === 'recovery' ||
-                           window.location.hash.includes('type=recovery');
-    
-    // Check if we have a session but user needs to reset password
-    const checkPasswordRecovery = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session && (isPasswordReset || window.location.hash.includes('access_token'))) {
-        console.log("Password recovery session detected");
-        setIsResetting(true);
-        setShowResetForm(false);
-        toast.info("Ahora puedes establecer tu nueva contraseña");
-      } else if (isPasswordReset) {
-        console.log("Password reset URL detected but no session");
-        setIsResetting(true);
-        setShowResetForm(false);
-        toast.info("Por favor establece tu nueva contraseña");
-      }
-    };
-
-    checkPasswordRecovery();
-  }, [isAuthenticated, navigate, searchParams, isResetting]);
+    // If we have a password recovery session, show password update form
+    if (isPasswordRecovery && user) {
+      console.log("Password recovery session active");
+      toast.info("Ahora puedes establecer tu nueva contraseña");
+    }
+  }, [isAuthenticated, isPasswordRecovery, user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,7 +139,6 @@ const Login = () => {
     try {
       await updatePassword(newPassword);
       toast.success("Contraseña actualizada exitosamente");
-      setIsResetting(false);
       navigate("/");
     } catch (error: any) {
       console.error("Password update error:", error);
@@ -168,6 +148,7 @@ const Login = () => {
     }
   };
 
+  // Show password reset form if requested
   if (showResetForm) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
@@ -222,7 +203,8 @@ const Login = () => {
     );
   }
 
-  if (isResetting) {
+  // Show password update form if in recovery mode
+  if (isPasswordRecovery && user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
         <div className="w-full max-w-md">
@@ -238,7 +220,7 @@ const Login = () => {
             <CardHeader>
               <CardTitle>Nueva Contraseña</CardTitle>
               <CardDescription>
-                Ingresa tu nueva contraseña
+                Ingresa tu nueva contraseña para {user.email}
               </CardDescription>
             </CardHeader>
             

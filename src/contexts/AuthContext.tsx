@@ -8,6 +8,7 @@ type AuthContextType = {
   session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isPasswordRecovery: boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
     console.log("AuthProvider: Setting up Supabase auth listener");
@@ -33,11 +35,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Handle password recovery flow
         if (event === 'PASSWORD_RECOVERY') {
           console.log("Password recovery event detected");
-          // Don't set the session yet, just the user for password update
+          setIsPasswordRecovery(true);
           setUser(session?.user ?? null);
           setSession(session);
           setIsLoading(false);
           return;
+        }
+        
+        // Handle other auth events
+        if (event === 'SIGNED_IN') {
+          setIsPasswordRecovery(false);
+        }
+        
+        if (event === 'SIGNED_OUT') {
+          setIsPasswordRecovery(false);
         }
         
         setSession(session);
@@ -49,6 +60,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("Initial session check:", session?.user?.email);
+      
+      // Check if this is a password recovery session
+      const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const isRecoveryUrl = urlParams.get('type') === 'recovery' || 
+                           hashParams.get('type') === 'recovery' ||
+                           urlParams.get('reset') === 'true';
+      
+      if (session && isRecoveryUrl) {
+        console.log("Initial password recovery session detected");
+        setIsPasswordRecovery(true);
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -142,13 +166,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     console.log("Password updated successfully");
+    
+    // Clear password recovery state after successful update
+    setIsPasswordRecovery(false);
   };
 
   const value = {
     user,
     session,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !isPasswordRecovery,
     isLoading,
+    isPasswordRecovery,
     signUp,
     signIn,
     signOut,
@@ -156,7 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updatePassword
   };
 
-  console.log("AuthProvider rendering, isAuthenticated:", !!user, "isLoading:", isLoading);
+  console.log("AuthProvider rendering, isAuthenticated:", !!user && !isPasswordRecovery, "isLoading:", isLoading, "isPasswordRecovery:", isPasswordRecovery);
 
   return (
     <AuthContext.Provider value={value}>
