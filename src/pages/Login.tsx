@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -18,20 +18,42 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showResetForm, setShowResetForm] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const { signIn, signUp, resetPassword, updatePassword } = useAuth();
+  const { signIn, signUp, resetPassword, updatePassword, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Check if this is a password reset redirect
-  const isPasswordReset = searchParams.get('reset') === 'true';
-
+  // Check if this is a password reset redirect or if user is already authenticated
   useEffect(() => {
-    if (isPasswordReset) {
-      setShowResetForm(false);
-      setIsResetting(true);
-      toast.info("Ahora puedes establecer tu nueva contraseña");
+    // If user is already authenticated and not resetting password, redirect to home
+    if (isAuthenticated && !isResetting) {
+      navigate("/");
+      return;
     }
-  }, [isPasswordReset]);
+
+    // Check for various reset indicators
+    const isPasswordReset = searchParams.get('reset') === 'true' || 
+                           searchParams.get('type') === 'recovery' ||
+                           window.location.hash.includes('type=recovery');
+    
+    // Check if we have a session but user needs to reset password
+    const checkPasswordRecovery = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session && (isPasswordReset || window.location.hash.includes('access_token'))) {
+        console.log("Password recovery session detected");
+        setIsResetting(true);
+        setShowResetForm(false);
+        toast.info("Ahora puedes establecer tu nueva contraseña");
+      } else if (isPasswordReset) {
+        console.log("Password reset URL detected but no session");
+        setIsResetting(true);
+        setShowResetForm(false);
+        toast.info("Por favor establece tu nueva contraseña");
+      }
+    };
+
+    checkPasswordRecovery();
+  }, [isAuthenticated, navigate, searchParams, isResetting]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
