@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useState, useEffect } from "react";
 import { Tenant } from "@/types";
@@ -65,6 +64,7 @@ export function TenantEditForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [availableUnits, setAvailableUnits] = useState<string[]>([]);
   const [totalUnits, setTotalUnits] = useState(20);
+  const [isLoadingUnits, setIsLoadingUnits] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -77,6 +77,7 @@ export function TenantEditForm({
 
   const loadAvailableUnits = async () => {
     try {
+      setIsLoadingUnits(true);
       const dbService = DatabaseService.getInstance();
       const tenants = await dbService.getTenants();
       const units = dbService.getTotalUnits();
@@ -101,9 +102,15 @@ export function TenantEditForm({
       }
       
       setAvailableUnits(available.sort((a, b) => parseInt(a) - parseInt(b)));
+      console.log(`Loaded ${available.length} available units out of ${units} total units`);
     } catch (error) {
       console.error("Error loading available units:", error);
-      toast.error("Failed to load available units");
+      // Don't show error toast, just log it and continue with fallback
+      // Generate a fallback list of units 1-20
+      const fallbackUnits = Array.from({ length: 20 }, (_, i) => (i + 1).toString());
+      setAvailableUnits(fallbackUnits);
+    } finally {
+      setIsLoadingUnits(false);
     }
   };
 
@@ -176,16 +183,21 @@ export function TenantEditForm({
     e.preventDefault();
     
     if (validateForm()) {
-      // Update the tenant with the current timestamp
-      const updatedTenant = {
-        ...formData,
-        updatedAt: new Date().toISOString(),
-        // If it's a new tenant, generate an ID
-        id: formData.id || `tenant-${Date.now()}`,
-      };
-      
-      console.log("Submitting tenant data:", updatedTenant);
-      onSave(updatedTenant);
+      try {
+        // Update the tenant with the current timestamp
+        const updatedTenant = {
+          ...formData,
+          updatedAt: new Date().toISOString(),
+          // If it's a new tenant, generate an ID
+          id: formData.id || `tenant-${Date.now()}`,
+        };
+        
+        console.log("Submitting tenant data:", updatedTenant);
+        onSave(updatedTenant);
+      } catch (error) {
+        console.error("Error submitting tenant:", error);
+        toast.error("Error al guardar el tenant. Por favor intenta de nuevo.");
+      }
     }
   };
 
@@ -259,12 +271,17 @@ export function TenantEditForm({
                   <Select 
                     value={formData.unit} 
                     onValueChange={handleUnitChange}
+                    disabled={isLoadingUnits}
                   >
                     <SelectTrigger className={errors.unit ? "border-destructive" : ""}>
-                      <SelectValue placeholder="Select unit" />
+                      <SelectValue placeholder={isLoadingUnits ? "Cargando..." : "Select unit"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableUnits.length > 0 ? (
+                      {isLoadingUnits ? (
+                        <SelectItem value="loading" disabled>
+                          Cargando unidades...
+                        </SelectItem>
+                      ) : availableUnits.length > 0 ? (
                         availableUnits.map(unit => (
                           <SelectItem key={unit} value={unit}>
                             Unit {unit}
@@ -272,7 +289,7 @@ export function TenantEditForm({
                         ))
                       ) : (
                         <SelectItem value="no-units" disabled>
-                          No units available
+                          No hay unidades disponibles
                         </SelectItem>
                       )}
                     </SelectContent>
@@ -415,7 +432,9 @@ export function TenantEditForm({
             >
               Cancel
             </Button>
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit" disabled={isLoadingUnits}>
+              Save Changes
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
