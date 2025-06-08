@@ -106,6 +106,53 @@ export type Database = {
           },
         ]
       }
+      lease_contracts: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          tenant_id: string
+          updated_at: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          tenant_id: string
+          updated_at?: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lease_contracts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_requests: {
         Row: {
           created_at: string
@@ -280,7 +327,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
-          lease_end_date: string
+          lease_end_date: string | null
           lease_start_date: string
           name: string
           phone: string | null
@@ -294,7 +341,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
-          lease_end_date: string
+          lease_end_date?: string | null
           lease_start_date: string
           name: string
           phone?: string | null
@@ -308,7 +355,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
-          lease_end_date?: string
+          lease_end_date?: string | null
           lease_start_date?: string
           name?: string
           phone?: string | null

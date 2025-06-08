@@ -1,85 +1,135 @@
 
 import React from "react";
-import { Tenant, Payment } from "@/types";
+import { Button } from "@/components/ui/button";
+import { FileDown } from "lucide-react";
+import { Tenant } from "@/types";
+import { toast } from "sonner";
 
 interface TenantsPdfReportProps {
   tenants: Tenant[];
-  payments: Payment[];
 }
 
-export const TenantsPdfReport = React.forwardRef<HTMLDivElement, TenantsPdfReportProps>(
-  ({ tenants, payments }, ref) => {
-    // Calculate total rent
-    const totalRent = tenants.reduce((sum, tenant) => sum + tenant.rentAmount, 0);
-    
-    // Calculate total collected rent (from completed payments)
-    const totalCollected = payments
-      .filter(p => p.status === 'completed')
-      .reduce((sum, payment) => sum + payment.amount, 0);
+export function TenantsPdfReport({ tenants }: TenantsPdfReportProps) {
+  const generatePDF = () => {
+    try {
+      // Create a new window for printing
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast.error("Please allow popups to generate PDF");
+        return;
+      }
 
-    return (
-      <div ref={ref} className="p-8 bg-white">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold">Tenant Report</h1>
-          <p className="text-gray-500">Generated on {new Date().toLocaleDateString()}</p>
-        </div>
-        
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Summary</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 border rounded">
-              <p className="text-sm text-gray-500">Total Tenants</p>
-              <p className="text-2xl font-bold">{tenants.length}</p>
-            </div>
-            <div className="p-4 border rounded">
-              <p className="text-sm text-gray-500">Total Monthly Rent</p>
-              <p className="text-2xl font-bold">${totalRent.toLocaleString()}</p>
-            </div>
-            <div className="p-4 border rounded">
-              <p className="text-sm text-gray-500">Total Collected</p>
-              <p className="text-2xl font-bold">${totalCollected.toLocaleString()}</p>
-            </div>
-            <div className="p-4 border rounded">
-              <p className="text-sm text-gray-500">Occupancy Rate</p>
-              <p className="text-2xl font-bold">
-                {tenants.filter(t => t.status === 'active').length} / {tenants.length}
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <h2 className="text-xl font-semibold mb-2">Tenant Details</h2>
-        <table className="min-w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2 text-left">Name</th>
-              <th className="border p-2 text-left">Unit</th>
-              <th className="border p-2 text-left">Status</th>
-              <th className="border p-2 text-left">Rent</th>
-              <th className="border p-2 text-left">Move In</th>
-              <th className="border p-2 text-left">Lease End</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tenants.map((tenant) => (
-              <tr key={tenant.id}>
-                <td className="border p-2">{tenant.name}</td>
-                <td className="border p-2">{tenant.unit}</td>
-                <td className="border p-2 capitalize">{tenant.status}</td>
-                <td className="border p-2">${tenant.rentAmount.toLocaleString()}</td>
-                <td className="border p-2">{tenant.moveInDate}</td>
-                <td className="border p-2">{tenant.leaseEndDate}</td>
+      // Generate HTML content for the PDF
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Tenants Report</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+              font-size: 12px;
+            }
+            h1 {
+              color: #333;
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+              font-weight: bold;
+            }
+            .status {
+              padding: 2px 6px;
+              border-radius: 3px;
+              font-size: 10px;
+              font-weight: bold;
+            }
+            .status-active { background-color: #d4edda; color: #155724; }
+            .status-late { background-color: #f8d7da; color: #721c24; }
+            .status-notice { background-color: #fff3cd; color: #856404; }
+            .status-inactive { background-color: #e2e3e5; color: #383d41; }
+            .footer {
+              margin-top: 30px;
+              text-align: center;
+              font-size: 10px;
+              color: #666;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Tenants Report</h1>
+          <p><strong>Generated on:</strong> ${new Date().toLocaleDateString()}</p>
+          <p><strong>Total Tenants:</strong> ${tenants.length}</p>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Unit</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Rent Amount</th>
+                <th>Move In Date</th>
+                <th>Lease End Date</th>
+                <th>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        
-        <div className="mt-8 text-xs text-gray-500 text-center">
-          <p>This report is generated automatically and is confidential.</p>
-        </div>
-      </div>
-    );
-  }
-);
+            </thead>
+            <tbody>
+              ${tenants.map(tenant => `
+                <tr>
+                  <td>${tenant.name}</td>
+                  <td>${tenant.unit}</td>
+                  <td>${tenant.email}</td>
+                  <td>${tenant.phone || 'N/A'}</td>
+                  <td>$${tenant.rentAmount.toFixed(2)}</td>
+                  <td>${new Date(tenant.moveInDate).toLocaleDateString()}</td>
+                  <td>${tenant.leaseEndDate ? new Date(tenant.leaseEndDate).toLocaleDateString() : 'No End Date'}</td>
+                  <td><span class="status status-${tenant.status}">${tenant.status.toUpperCase()}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="footer">
+            <p>This report was generated by RentFlow Property Management System</p>
+          </div>
+        </body>
+        </html>
+      `;
 
-TenantsPdfReport.displayName = "TenantsPdfReport";
+      // Write content to the new window
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+
+      // Wait a moment then trigger print
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+
+      toast.success("PDF report generated successfully");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Error generating PDF report");
+    }
+  };
+
+  return (
+    <Button onClick={generatePDF} className="gap-2">
+      <FileDown className="h-4 w-4" />
+      Export Tenants PDF
+    </Button>
+  );
+}

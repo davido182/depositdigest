@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useState, useEffect } from "react";
 import { Tenant } from "@/types";
@@ -20,9 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, DollarSign, Home, Mail, Phone } from "lucide-react";
+import { Calendar, DollarSign, Home, Mail, Phone, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TenantEditFormProps {
   tenant: Tenant | null;
@@ -44,11 +46,7 @@ export function TenantEditForm({
     phone: "",
     unit: "",
     moveInDate: new Date().toISOString().split("T")[0],
-    leaseEndDate: new Date(
-      new Date().setFullYear(new Date().getFullYear() + 1)
-    )
-      .toISOString()
-      .split("T")[0],
+    leaseEndDate: "", // Make it optional
     rentAmount: 0,
     depositAmount: 0,
     status: "active",
@@ -65,15 +63,44 @@ export function TenantEditForm({
   const [availableUnits, setAvailableUnits] = useState<string[]>([]);
   const [totalUnits, setTotalUnits] = useState(20);
   const [isLoadingUnits, setIsLoadingUnits] = useState(false);
+  const [contractFile, setContractFile] = useState<File | null>(null);
+  const [isUploadingContract, setIsUploadingContract] = useState(false);
+  const [existingContract, setExistingContract] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setFormData(tenant || emptyTenant);
       setHasDeposit(tenant ? tenant.depositAmount > 0 : false);
       setErrors({});
+      setContractFile(null);
+      setExistingContract(null);
       loadAvailableUnits();
+      if (tenant) {
+        loadExistingContract(tenant.id);
+      }
     }
   }, [tenant, isOpen]);
+
+  const loadExistingContract = async (tenantId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('lease_contracts')
+        .select('file_name')
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error loading existing contract:', error);
+        return;
+      }
+
+      if (data) {
+        setExistingContract(data.file_name);
+      }
+    } catch (error) {
+      console.error('Error loading existing contract:', error);
+    }
+  };
 
   const loadAvailableUnits = async () => {
     try {
@@ -83,34 +110,87 @@ export function TenantEditForm({
       const units = dbService.getTotalUnits();
       setTotalUnits(units);
       
-      // Generate array of all possible units
       const allUnits = Array.from({ length: units }, (_, i) => (i + 1).toString());
       
-      // Filter out units that are already occupied by active tenants
-      // Exclude the current tenant's unit if editing
+      // For editing, include current tenant's unit in available units
       const occupiedUnits = tenants
         .filter(t => t.status === 'active' && (tenant ? t.id !== tenant.id : true))
         .map(t => t.unit);
         
       const available = allUnits.filter(unit => !occupiedUnits.includes(unit));
       
-      // If editing, add the current tenant's unit to available units
-      if (tenant && tenant.unit) {
-        if (!available.includes(tenant.unit)) {
-          available.push(tenant.unit);
-        }
+      // Always include current tenant's unit when editing
+      if (tenant && tenant.unit && !available.includes(tenant.unit)) {
+        available.push(tenant.unit);
       }
       
       setAvailableUnits(available.sort((a, b) => parseInt(a) - parseInt(b)));
       console.log(`Loaded ${available.length} available units out of ${units} total units`);
     } catch (error) {
       console.error("Error loading available units:", error);
-      // Don't show error toast, just log it and continue with fallback
-      // Generate a fallback list of units 1-20
       const fallbackUnits = Array.from({ length: 20 }, (_, i) => (i + 1).toString());
       setAvailableUnits(fallbackUnits);
     } finally {
       setIsLoadingUnits(false);
+    }
+  };
+
+  const handleContractUpload = async (file: File) => {
+    if (!formData.id) {
+      toast.error("Please save the tenant first before uploading a contract");
+      return;
+    }
+
+    try {
+      setIsUploadingContract(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("User not authenticated");
+        return;
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${formData.id}/contract_${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('lease-contracts')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        toast.error("Error uploading contract");
+        return;
+      }
+
+      const { error: dbError } = await supabase
+        .from('lease_contracts')
+        .insert({
+          user_id: user.id,
+          tenant_id: formData.id,
+          file_name: file.name,
+          file_size: file.size,
+          file_type: file.type,
+          file_path: fileName
+        });
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        // Clean up uploaded file
+        await supabase.storage
+          .from('lease-contracts')
+          .remove([fileName]);
+        toast.error("Error saving contract information");
+        return;
+      }
+
+      setExistingContract(file.name);
+      toast.success("Contract uploaded successfully");
+    } catch (error) {
+      console.error('Error uploading contract:', error);
+      toast.error("Error uploading contract");
+    } finally {
+      setIsUploadingContract(false);
     }
   };
 
@@ -175,35 +255,40 @@ export function TenantEditForm({
       newErrors.unit = "Unit is required";
     }
     
+    // Lease end date is now optional - no validation needed
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
       try {
-        // Update the tenant with the current timestamp
         const updatedTenant = {
           ...formData,
           updatedAt: new Date().toISOString(),
-          // If it's a new tenant, generate an ID
           id: formData.id || `tenant-${Date.now()}`,
         };
         
         console.log("Submitting tenant data:", updatedTenant);
         onSave(updatedTenant);
+
+        // Handle contract upload after saving if there's a new file
+        if (contractFile && updatedTenant.id) {
+          await handleContractUpload(contractFile);
+        }
       } catch (error) {
         console.error("Error submitting tenant:", error);
-        toast.error("Error al guardar el tenant. Por favor intenta de nuevo.");
+        toast.error("Error saving tenant. Please try again.");
       }
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {tenant ? "Edit Tenant" : "Add New Tenant"}
@@ -274,12 +359,12 @@ export function TenantEditForm({
                     disabled={isLoadingUnits}
                   >
                     <SelectTrigger className={errors.unit ? "border-destructive" : ""}>
-                      <SelectValue placeholder={isLoadingUnits ? "Cargando..." : "Select unit"} />
+                      <SelectValue placeholder={isLoadingUnits ? "Loading..." : "Select unit"} />
                     </SelectTrigger>
                     <SelectContent>
                       {isLoadingUnits ? (
                         <SelectItem value="loading" disabled>
-                          Cargando unidades...
+                          Loading units...
                         </SelectItem>
                       ) : availableUnits.length > 0 ? (
                         availableUnits.map(unit => (
@@ -289,7 +374,7 @@ export function TenantEditForm({
                         ))
                       ) : (
                         <SelectItem value="no-units" disabled>
-                          No hay unidades disponibles
+                          No units available
                         </SelectItem>
                       )}
                     </SelectContent>
@@ -335,14 +420,14 @@ export function TenantEditForm({
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="leaseEndDate">Lease End Date</Label>
+                <Label htmlFor="leaseEndDate">Lease End Date (Optional)</Label>
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
                   <Input
                     id="leaseEndDate"
                     name="leaseEndDate"
                     type="date"
-                    value={formData.leaseEndDate}
+                    value={formData.leaseEndDate || ""}
                     onChange={handleChange}
                   />
                 </div>
@@ -408,6 +493,40 @@ export function TenantEditForm({
                 )}
               </div>
             )}
+
+            {/* Contract Upload Section */}
+            <div className="grid gap-2">
+              <Label>Lease Contract (Optional)</Label>
+              {existingContract && (
+                <div className="flex items-center gap-2 p-2 bg-muted rounded">
+                  <FileText className="w-4 h-4" />
+                  <span className="text-sm">{existingContract}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <Input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => setContractFile(e.target.files?.[0] || null)}
+                  className="flex-1"
+                />
+                {tenant && contractFile && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => contractFile && handleContractUpload(contractFile)}
+                    disabled={isUploadingContract}
+                  >
+                    <Upload className="w-4 h-4 mr-1" />
+                    {isUploadingContract ? "Uploading..." : "Upload"}
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Supported formats: PDF, JPG, PNG (Max 10MB)
+              </p>
+            </div>
 
             <div className="grid gap-2">
               <Label htmlFor="notes">Notes</Label>

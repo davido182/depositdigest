@@ -53,7 +53,7 @@ export class SupabaseTenantService extends SupabaseService {
       unit_number: tenant.unit,
       rent_amount: tenant.rentAmount,
       lease_start_date: tenant.moveInDate,
-      lease_end_date: tenant.leaseEndDate,
+      lease_end_date: tenant.leaseEndDate || null, // Allow null values
       status: tenant.status
     };
 
@@ -81,7 +81,7 @@ export class SupabaseTenantService extends SupabaseService {
     if (updates.unit) updateData.unit_number = updates.unit;
     if (updates.rentAmount !== undefined) updateData.rent_amount = updates.rentAmount;
     if (updates.moveInDate) updateData.lease_start_date = updates.moveInDate;
-    if (updates.leaseEndDate) updateData.lease_end_date = updates.leaseEndDate;
+    if (updates.leaseEndDate !== undefined) updateData.lease_end_date = updates.leaseEndDate || null; // Handle empty string as null
     if (updates.status) updateData.status = updates.status;
 
     const { error } = await supabase
@@ -123,7 +123,7 @@ export class SupabaseTenantService extends SupabaseService {
       phone: data.phone || '',
       unit: data.unit_number,
       moveInDate: data.lease_start_date,
-      leaseEndDate: data.lease_end_date,
+      leaseEndDate: data.lease_end_date || '', // Handle null as empty string
       rentAmount: parseFloat(data.rent_amount),
       depositAmount: 0,
       status: data.status as Tenant['status'],
