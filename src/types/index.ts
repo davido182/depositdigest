@@ -58,7 +58,7 @@ export type MaintenanceCategory = 'plumbing' | 'electrical' | 'heating' | 'appli
 export type MaintenancePriority = 'emergency' | 'high' | 'medium' | 'low';
 export type MaintenanceStatus = 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
 
-// Accounting Types - New for accounting functionality
+// Accounting Types - Updated for consistency
 export interface AccountingEntry {
   id: string;
   date: string;
@@ -117,6 +117,19 @@ export type TaxType =
   | 'other';
 
 export type TaxStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
+
+// Lease Contract Types
+export interface LeaseContract {
+  id: string;
+  tenantId: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  filePath: string;
+  uploadedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 // Analytics Types
 export interface DashboardStats {

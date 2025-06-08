@@ -1,14 +1,13 @@
 
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
 import { Tenant, Payment } from "@/types";
 import { FileDown, FileText as FilePdfIcon, PieChart, Filter } from "lucide-react";
 import { TenantsPdfReport } from "@/components/reports/TenantsPdfReport";
-import { generatePDF } from "react-to-pdf";
 
 const Reports = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -17,8 +16,6 @@ const Reports = () => {
   const [occupancyRate, setOccupancyRate] = useState<string>("0");
   const [collectionRate, setCollectionRate] = useState<string>("0");
   const [totalUnits, setTotalUnits] = useState(20);
-  
-  const pdfRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -129,25 +126,6 @@ const Reports = () => {
     }
   };
 
-  const exportTenantPdf = async () => {
-    try {
-      if (!pdfRef.current) {
-        toast.error("Could not generate PDF");
-        return;
-      }
-      
-      await generatePDF(pdfRef, {
-        filename: `tenant_report_${new Date().toISOString().split('T')[0]}.pdf`,
-        page: { margin: 10 }
-      });
-      
-      toast.success("PDF report generated successfully");
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF report");
-    }
-  };
-
   return (
     <Layout>
       <section className="space-y-6">
@@ -216,22 +194,11 @@ const Reports = () => {
                   <FileDown className="h-4 w-4" />
                   Export Tenant CSV
                 </Button>
-                <Button 
-                  onClick={exportTenantPdf}
-                  variant="outline"
-                  className="w-full flex items-center gap-2"
-                >
-                  <FilePdfIcon className="h-4 w-4" />
-                  Export Tenant PDF
-                </Button>
+                <TenantsPdfReport tenants={tenants} />
               </div>
             </Card>
           </div>
         )}
-        
-        <div className="hidden">
-          <TenantsPdfReport ref={pdfRef} tenants={tenants} payments={payments} />
-        </div>
       </section>
     </Layout>
   );

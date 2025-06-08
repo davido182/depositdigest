@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,7 @@ interface BalanceSheetItem {
 interface IncomeStatementItem {
   name: string;
   amount: number;
-  type: 'revenue' | 'expense';
+  type: 'income' | 'expense';
 }
 
 export function FinancialStatements() {
@@ -88,9 +87,9 @@ export function FinancialStatements() {
     const balanceSheet: BalanceSheetItem[] = [];
     
     accounts.forEach(account => {
-      const accountEntries = entries.filter(entry => entry.account_id === account.id);
-      const totalDebits = accountEntries.reduce((sum, entry) => sum + (entry.debit_amount || 0), 0);
-      const totalCredits = accountEntries.reduce((sum, entry) => sum + (entry.credit_amount || 0), 0);
+      const accountEntries = entries.filter(entry => entry.accountId === account.id);
+      const totalDebits = accountEntries.reduce((sum, entry) => sum + (entry.debitAmount || 0), 0);
+      const totalCredits = accountEntries.reduce((sum, entry) => sum + (entry.creditAmount || 0), 0);
       
       let balance = 0;
       if (account.type === 'asset') {
@@ -115,13 +114,13 @@ export function FinancialStatements() {
     const incomeStatement: IncomeStatementItem[] = [];
     
     accounts.forEach(account => {
-      if (account.type === 'revenue' || account.type === 'expense') {
-        const accountEntries = entries.filter(entry => entry.account_id === account.id);
-        const totalCredits = accountEntries.reduce((sum, entry) => sum + (entry.credit_amount || 0), 0);
-        const totalDebits = accountEntries.reduce((sum, entry) => sum + (entry.debit_amount || 0), 0);
+      if (account.type === 'income' || account.type === 'expense') {
+        const accountEntries = entries.filter(entry => entry.accountId === account.id);
+        const totalCredits = accountEntries.reduce((sum, entry) => sum + (entry.creditAmount || 0), 0);
+        const totalDebits = accountEntries.reduce((sum, entry) => sum + (entry.debitAmount || 0), 0);
         
         let amount = 0;
-        if (account.type === 'revenue') {
+        if (account.type === 'income') {
           amount = totalCredits - totalDebits;
         } else {
           amount = totalDebits - totalCredits;
@@ -131,7 +130,7 @@ export function FinancialStatements() {
           incomeStatement.push({
             name: account.name,
             amount: amount,
-            type: account.type as 'revenue' | 'expense'
+            type: account.type as 'income' | 'expense'
           });
         }
       }
@@ -238,7 +237,7 @@ export function FinancialStatements() {
 
   const exportIncomeStatement = () => {
     const incomeStatement = calculateIncomeStatement();
-    const revenues = incomeStatement.filter(item => item.type === 'revenue');
+    const revenues = incomeStatement.filter(item => item.type === 'income');
     const expenses = incomeStatement.filter(item => item.type === 'expense');
     
     const totalRevenue = revenues.reduce((sum, item) => sum + item.amount, 0);
@@ -329,7 +328,7 @@ export function FinancialStatements() {
   const liabilities = balanceSheet.filter(item => item.type === 'liability');
   const equity = balanceSheet.filter(item => item.type === 'equity');
   
-  const revenues = incomeStatement.filter(item => item.type === 'revenue');
+  const revenues = incomeStatement.filter(item => item.type === 'income');
   const expenses = incomeStatement.filter(item => item.type === 'expense');
   
   const totalAssets = assets.reduce((sum, item) => sum + item.amount, 0);
