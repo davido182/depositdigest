@@ -22,15 +22,30 @@ class TenantService extends BaseService {
   
   // Make this method public so DatabaseService can call it and pass force parameter
   public initLocalStorage(force: boolean = false): void {
-    if ((isDemoMode && !localStorage.getItem('tenants')) || force) {
+    // Only initialize with mock data if there's no existing data AND we're in demo mode
+    if (isDemoMode && (!localStorage.getItem('tenants') || force)) {
       console.log('TenantService: Initializing localStorage with mock tenants data');
       localStorage.setItem('tenants', JSON.stringify(mockTenants));
+    } else if (isDemoMode) {
+      // Don't reinitialize if data already exists
+      const existingTenants = localStorage.getItem('tenants');
+      if (existingTenants) {
+        console.log('TenantService: Using existing tenant data from localStorage');
+      }
     }
   }
   
   private getLocalTenants(): Tenant[] {
     const tenantsJson = localStorage.getItem('tenants');
-    return tenantsJson ? JSON.parse(tenantsJson) : [];
+    if (tenantsJson) {
+      try {
+        return JSON.parse(tenantsJson);
+      } catch (error) {
+        console.error('Error parsing tenant data:', error);
+        return [];
+      }
+    }
+    return [];
   }
   
   private saveLocalTenants(tenants: Tenant[]): void {
