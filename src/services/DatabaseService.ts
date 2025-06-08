@@ -1,19 +1,23 @@
-import { Tenant, Payment, MaintenanceRequest } from "@/types";
+
+import { Tenant, Payment, MaintenanceRequest, Account, AccountingEntry, TaxEntry } from "@/types";
 import TenantService from "./TenantService";
 import PaymentService from "./PaymentService";
 import MaintenanceService from "./MaintenanceService";
+import AccountingService from "./AccountingService";
 
 export default class DatabaseService {
   private static instance: DatabaseService;
   private tenantService: TenantService;
   private paymentService: PaymentService;
   private maintenanceService: MaintenanceService;
+  private accountingService: AccountingService;
   private totalUnits: number = 20; // Default value
 
   private constructor() {
-    this.tenantService = new TenantService();
-    this.paymentService = new PaymentService();
-    this.maintenanceService = new MaintenanceService();
+    this.tenantService = TenantService.getInstance();
+    this.paymentService = PaymentService.getInstance();
+    this.maintenanceService = MaintenanceService.getInstance();
+    this.accountingService = AccountingService.getInstance();
     
     // Load saved total units from localStorage
     const savedUnits = localStorage.getItem('totalUnits');
@@ -91,6 +95,55 @@ export default class DatabaseService {
 
   public async deleteMaintenanceRequest(id: string): Promise<boolean> {
     return this.maintenanceService.deleteMaintenanceRequest(id);
+  }
+
+  // Accounting methods
+  public async getAccounts(): Promise<Account[]> {
+    return this.accountingService.getAccounts();
+  }
+
+  public async createAccount(account: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    return this.accountingService.createAccount(account);
+  }
+
+  public async updateAccount(id: string, updates: Partial<Account>): Promise<boolean> {
+    return this.accountingService.updateAccount(id, updates);
+  }
+
+  public async deleteAccount(id: string): Promise<boolean> {
+    return this.accountingService.deleteAccount(id);
+  }
+
+  public async getAccountingEntries(): Promise<AccountingEntry[]> {
+    return this.accountingService.getAccountingEntries();
+  }
+
+  public async createAccountingEntry(entry: Omit<AccountingEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    return this.accountingService.createAccountingEntry(entry);
+  }
+
+  public async updateAccountingEntry(id: string, updates: Partial<AccountingEntry>): Promise<boolean> {
+    return this.accountingService.updateAccountingEntry(id, updates);
+  }
+
+  public async deleteAccountingEntry(id: string): Promise<boolean> {
+    return this.accountingService.deleteAccountingEntry(id);
+  }
+
+  public async getTaxEntries(): Promise<TaxEntry[]> {
+    return this.accountingService.getTaxEntries();
+  }
+
+  public async createTaxEntry(entry: Omit<TaxEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    return this.accountingService.createTaxEntry(entry);
+  }
+
+  public async updateTaxEntry(id: string, updates: Partial<TaxEntry>): Promise<boolean> {
+    return this.accountingService.updateTaxEntry(id, updates);
+  }
+
+  public async deleteTaxEntry(id: string): Promise<boolean> {
+    return this.accountingService.deleteTaxEntry(id);
   }
 
   public getTotalUnits(): number {

@@ -1,3 +1,4 @@
+
 import BaseService from './BaseService';
 import { Payment } from '@/types';
 import { mockPayments } from './mockData';
@@ -56,6 +57,10 @@ class PaymentService extends BaseService {
       
       if (endpoint === 'payments' && method === 'GET') {
         return this.localPayments as unknown as T;
+      } else if (endpoint.startsWith('payments/') && method === 'GET') {
+        const paymentId = endpoint.split('/')[1];
+        const payment = this.localPayments.find(p => p.id === paymentId);
+        return (payment || null) as unknown as T;
       } else if (endpoint === 'payments' && method === 'POST') {
         const newPayment = { ...data, id: crypto.randomUUID() };
         this.localPayments.push(newPayment);
@@ -93,6 +98,11 @@ class PaymentService extends BaseService {
 
   public async getPayments(): Promise<Payment[]> {
     return this.simulateRequest<Payment[]>('payments');
+  }
+
+  public async getPaymentById(id: string): Promise<Payment | undefined> {
+    const payment = await this.simulateRequest<Payment | null>(`payments/${id}`);
+    return payment || undefined;
   }
 
   public async createPayment(payment: Omit<Payment, 'id' | 'createdAt'>): Promise<string> {
