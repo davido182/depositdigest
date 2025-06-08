@@ -1,135 +1,133 @@
-
-import React from "react";
+import React, { useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { FileDown } from "lucide-react";
-import { Tenant } from "@/types";
+import { FileText as FilePdfIcon } from "lucide-react";
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import { toast } from "sonner";
+import { Tenant } from '@/types';
 
 interface TenantsPdfReportProps {
   tenants: Tenant[];
 }
 
 export function TenantsPdfReport({ tenants }: TenantsPdfReportProps) {
-  const generatePDF = () => {
-    try {
-      // Create a new window for printing
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        toast.error("Please allow popups to generate PDF");
-        return;
-      }
+  const reportRef = useRef<HTMLDivElement>(null);
 
-      // Generate HTML content for the PDF
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Tenants Report</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 20px;
-              font-size: 12px;
-            }
-            h1 {
-              color: #333;
-              text-align: center;
-              margin-bottom: 30px;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-bottom: 20px;
-            }
-            th, td {
-              border: 1px solid #ddd;
-              padding: 8px;
-              text-align: left;
-            }
-            th {
-              background-color: #f2f2f2;
-              font-weight: bold;
-            }
-            .status {
-              padding: 2px 6px;
-              border-radius: 3px;
-              font-size: 10px;
-              font-weight: bold;
-            }
-            .status-active { background-color: #d4edda; color: #155724; }
-            .status-late { background-color: #f8d7da; color: #721c24; }
-            .status-notice { background-color: #fff3cd; color: #856404; }
-            .status-inactive { background-color: #e2e3e5; color: #383d41; }
-            .footer {
-              margin-top: 30px;
-              text-align: center;
-              font-size: 10px;
-              color: #666;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>Tenants Report</h1>
-          <p><strong>Generated on:</strong> ${new Date().toLocaleDateString()}</p>
-          <p><strong>Total Tenants:</strong> ${tenants.length}</p>
+  const generatePDF = async () => {
+    if (!reportRef.current) return;
+
+    try {
+      // Sort tenants by unit number before generating PDF
+      const sortedTenants = [...tenants].sort((a, b) => {
+        const unitA = parseInt(a.unit) || 0;
+        const unitB = parseInt(b.unit) || 0;
+        return unitA - unitB;
+      });
+
+      const pdf = new jsPDF();
+      const element = reportRef.current;
+      
+      // Create a temporary element with sorted data
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = `
+        <div style="padding: 20px; font-family: Arial, sans-serif;">
+          <h1 style="color: #333; text-align: center; margin-bottom: 30px;">Tenants Report</h1>
+          <p style="text-align: center; color: #666; margin-bottom: 30px;">Generated on ${new Date().toLocaleDateString()}</p>
           
-          <table>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
             <thead>
-              <tr>
-                <th>Name</th>
-                <th>Unit</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Rent Amount</th>
-                <th>Move In Date</th>
-                <th>Lease End Date</th>
-                <th>Status</th>
+              <tr style="background-color: #f5f5f5;">
+                <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Unit</th>
+                <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Name</th>
+                <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Email</th>
+                <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Status</th>
+                <th style="border: 1px solid #ddd; padding: 12px; text-align: right;">Rent</th>
+                <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Move In</th>
+                <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Lease End</th>
               </tr>
             </thead>
             <tbody>
-              ${tenants.map(tenant => `
+              ${sortedTenants.map(tenant => `
                 <tr>
-                  <td>${tenant.name}</td>
-                  <td>${tenant.unit}</td>
-                  <td>${tenant.email}</td>
-                  <td>${tenant.phone || 'N/A'}</td>
-                  <td>$${tenant.rentAmount.toFixed(2)}</td>
-                  <td>${new Date(tenant.moveInDate).toLocaleDateString()}</td>
-                  <td>${tenant.leaseEndDate ? new Date(tenant.leaseEndDate).toLocaleDateString() : 'No End Date'}</td>
-                  <td><span class="status status-${tenant.status}">${tenant.status.toUpperCase()}</span></td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${tenant.unit}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${tenant.name}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${tenant.email}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">
+                    <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; 
+                      background-color: ${tenant.status === 'active' ? '#dcfce7' : 
+                                        tenant.status === 'late' ? '#fef3c7' : 
+                                        tenant.status === 'notice' ? '#fde68a' : '#f3f4f6'};
+                      color: ${tenant.status === 'active' ? '#166534' : 
+                               tenant.status === 'late' ? '#92400e' : 
+                               tenant.status === 'notice' ? '#92400e' : '#374151'};">
+                      ${tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1)}
+                    </span>
+                  </td>
+                  <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">$${tenant.rentAmount.toLocaleString()}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${new Date(tenant.moveInDate).toLocaleDateString()}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${tenant.leaseEndDate ? new Date(tenant.leaseEndDate).toLocaleDateString() : 'N/A'}</td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
           
-          <div class="footer">
-            <p>This report was generated by RentFlow Property Management System</p>
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <h3 style="color: #333; margin-bottom: 15px;">Summary</h3>
+            <p><strong>Total Tenants:</strong> ${sortedTenants.length}</p>
+            <p><strong>Active:</strong> ${sortedTenants.filter(t => t.status === 'active').length}</p>
+            <p><strong>Late:</strong> ${sortedTenants.filter(t => t.status === 'late').length}</p>
+            <p><strong>Notice:</strong> ${sortedTenants.filter(t => t.status === 'notice').length}</p>
+            <p><strong>Total Monthly Revenue:</strong> $${sortedTenants.reduce((sum, t) => sum + t.rentAmount, 0).toLocaleString()}</p>
           </div>
-        </body>
-        </html>
+        </div>
       `;
-
-      // Write content to the new window
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-
-      // Wait a moment then trigger print
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
-
+      
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      pdf.save(`tenants_report_${new Date().toISOString().split('T')[0]}.pdf`);
       toast.success("PDF report generated successfully");
     } catch (error) {
       console.error("Error generating PDF:", error);
-      toast.error("Error generating PDF report");
+      toast.error("Failed to generate PDF report");
     }
   };
 
   return (
-    <Button onClick={generatePDF} className="gap-2">
-      <FileDown className="h-4 w-4" />
-      Export Tenants PDF
-    </Button>
+    <>
+      <Button 
+        onClick={generatePDF} 
+        variant="outline"
+        className="w-full flex items-center gap-2"
+      >
+        <FilePdfIcon className="h-4 w-4" />
+        Export Tenants PDF
+      </Button>
+      
+      <div ref={reportRef} style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+        {/* Hidden content for PDF generation */}
+      </div>
+    </>
   );
 }

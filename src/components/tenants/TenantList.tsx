@@ -1,11 +1,18 @@
-
 import { useState } from "react";
-import { Tenant } from "@/types";
-import { TenantCard } from "./TenantCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search } from "lucide-react";
-import { 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tenant, TenantStatus } from "@/types";
+import { Edit, Trash2, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -14,13 +21,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface TenantListProps {
   tenants: Tenant[];
   onAddTenant: () => void;
   onEditTenant: (tenant: Tenant) => void;
-  onDeleteTenant?: (tenant: Tenant) => void;
+  onDeleteTenant: (tenant: Tenant) => void;
 }
 
 export function TenantList({
@@ -29,81 +39,132 @@ export function TenantList({
   onEditTenant,
   onDeleteTenant,
 }: TenantListProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<TenantStatus | "all">("all");
 
-  const filteredTenants = tenants.filter((tenant) =>
-    tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tenant.unit.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tenant.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  const handleDeleteClick = (tenant: Tenant) => {
-    setTenantToDelete(tenant);
-  };
-  
-  const confirmDelete = () => {
-    if (tenantToDelete && onDeleteTenant) {
-      onDeleteTenant(tenantToDelete);
-    }
-    setTenantToDelete(null);
-  };
+  // Sort tenants by unit number
+  const sortedTenants = [...tenants].sort((a, b) => {
+    const unitA = parseInt(a.unit) || 0;
+    const unitB = parseInt(b.unit) || 0;
+    return unitA - unitB;
+  });
+
+  const filteredTenants = sortedTenants.filter((tenant) => {
+    const matchesSearch = tenant.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase()) ||
+      tenant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tenant.unit.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || tenant.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h2 className="text-2xl font-semibold tracking-tight">Tenants</h2>
-        <div className="flex items-center w-full sm:w-auto gap-3">
-          <div className="relative w-full sm:w-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search tenants..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-full sm:w-[250px]"
-            />
-          </div>
-          <Button onClick={onAddTenant} className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            <span>Add Tenant</span>
-          </Button>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-semibold">Tenants</h2>
+          <p className="text-muted-foreground">
+            Manage your property tenants and their details
+          </p>
+        </div>
+        <Button onClick={onAddTenant} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add Tenant
+        </Button>
+      </div>
+
+      <div className="flex items-center space-x-4">
+        <Input
+          type="text"
+          placeholder="Search tenants..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <div className="space-y-2">
+          <Label htmlFor="status">Status</Label>
+          <Select value={statusFilter} onValueChange={(value: TenantStatus | "all") => setStatusFilter(value)}>
+            <SelectTrigger id="status">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="late">Late</SelectItem>
+              <SelectItem value="notice">Notice</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {filteredTenants.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No tenants found</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTenants.map((tenant) => (
-            <TenantCard
-              key={tenant.id}
-              tenant={tenant}
-              onEdit={onEditTenant}
-              onDelete={onDeleteTenant ? () => handleDeleteClick(tenant) : undefined}
-            />
-          ))}
-        </div>
-      )}
-      
-      <AlertDialog open={!!tenantToDelete} onOpenChange={(open) => !open && setTenantToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action will permanently delete tenant {tenantToDelete?.name} from unit {tenantToDelete?.unit}.
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <div className="glass-card rounded-xl overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Unit</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Rent</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredTenants.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  No tenants found. Add one to get started.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredTenants.map((tenant) => (
+                <TableRow key={tenant.id}>
+                  <TableCell>{tenant.unit}</TableCell>
+                  <TableCell>{tenant.name}</TableCell>
+                  <TableCell>{tenant.email}</TableCell>
+                  <TableCell>{tenant.phone}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{tenant.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-mono">
+                    ${tenant.rentAmount.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => onEditTenant(tenant)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/5">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the tenant from our servers.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDeleteTenant(tenant)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

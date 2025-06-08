@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
 import {
@@ -12,9 +12,24 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { TaxEntry } from "@/types";
+import { TaxEntryForm } from "./TaxEntryForm";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function TaxEntriesList() {
   const [taxEntries, setTaxEntries] = useState<TaxEntry[]>([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [currentEntry, setCurrentEntry] = useState<TaxEntry | null>(null);
 
   // Mock tax entries for demonstration
   const mockTaxEntries: TaxEntry[] = [
@@ -46,22 +61,39 @@ export function TaxEntriesList() {
       reference: "MUN-2024-Q1",
       createdAt: "2024-01-15T00:00:00Z",
       updatedAt: "2024-01-18T00:00:00Z"
-    },
-    {
-      id: "3",
-      date: "2024-01-10",
-      description: "Retención en la Fuente",
-      taxType: "withholding_tax",
-      baseAmount: 5000,
-      taxRate: 10,
-      taxAmount: 500,
-      status: "pending",
-      dueDate: "2024-02-10",
-      reference: "RET-2024-001",
-      createdAt: "2024-01-10T00:00:00Z",
-      updatedAt: "2024-01-10T00:00:00Z"
     }
   ];
+
+  useEffect(() => {
+    setTaxEntries(mockTaxEntries);
+  }, []);
+
+  const handleAddEntry = () => {
+    setCurrentEntry(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditEntry = (entry: TaxEntry) => {
+    setCurrentEntry(entry);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteEntry = (entryId: string) => {
+    setTaxEntries(prev => prev.filter(e => e.id !== entryId));
+    toast.success("Impuesto eliminado");
+  };
+
+  const handleSaveEntry = (entry: TaxEntry) => {
+    if (currentEntry) {
+      setTaxEntries(prev => prev.map(e => e.id === entry.id ? entry : e));
+      toast.success("Impuesto actualizado");
+    } else {
+      setTaxEntries(prev => [...prev, entry]);
+      toast.success("Impuesto creado");
+    }
+    setIsFormOpen(false);
+    setCurrentEntry(null);
+  };
 
   const getTaxTypeLabel = (type: string) => {
     const labels = {
@@ -99,7 +131,7 @@ export function TaxEntriesList() {
             Controla todos los impuestos, tasas y retenciones
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={handleAddEntry}>
           <Plus className="h-4 w-4" />
           Nuevo Impuesto
         </Button>
@@ -121,14 +153,14 @@ export function TaxEntriesList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockTaxEntries.length === 0 ? (
+            {taxEntries.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                   No hay impuestos registrados
                 </TableCell>
               </TableRow>
             ) : (
-              mockTaxEntries.map((entry) => (
+              taxEntries.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell>
                     {new Date(entry.date).toLocaleDateString()}
@@ -171,16 +203,39 @@ export function TaxEntriesList() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Edit className="h-4 w-4" />
-                      </Button>
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8 text-destructive hover:text-destructive/90"
+                        className="h-8 w-8"
+                        onClick={() => handleEditEntry(entry)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Edit className="h-4 w-4" />
                       </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive hover:text-destructive/90"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar impuesto?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción no se puede deshacer. El impuesto será eliminado permanentemente.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteEntry(entry.id)}>
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -189,6 +244,16 @@ export function TaxEntriesList() {
           </TableBody>
         </Table>
       </div>
+
+      <TaxEntryForm
+        entry={currentEntry}
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setCurrentEntry(null);
+        }}
+        onSave={handleSaveEntry}
+      />
     </div>
   );
 }

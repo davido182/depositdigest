@@ -1,7 +1,6 @@
 
 import { Layout } from "@/components/Layout";
 import { MobileFeatureToggle } from "@/components/settings/MobileFeatureToggle";
-import { LanguageSettings } from "@/components/settings/LanguageSettings";
 
 const Settings = () => {
   return (
@@ -12,7 +11,6 @@ const Settings = () => {
         </div>
         
         <div className="grid gap-6">
-          <LanguageSettings />
           <MobileFeatureToggle />
         </div>
       </section>
