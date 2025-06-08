@@ -1,4 +1,3 @@
-
 import { Tenant, Payment, MaintenanceRequest, Account, AccountingEntry, TaxEntry } from "@/types";
 import TenantService from "./TenantService";
 import PaymentService from "./PaymentService";
@@ -11,7 +10,7 @@ export default class DatabaseService {
   private paymentService: PaymentService;
   private maintenanceService: MaintenanceService;
   private accountingService: AccountingService;
-  private totalUnits: number = 20; // Default value
+  private totalUnits: number = 9; // Cambiar valor por defecto a 9
 
   private constructor() {
     this.tenantService = TenantService.getInstance();
@@ -19,10 +18,15 @@ export default class DatabaseService {
     this.maintenanceService = MaintenanceService.getInstance();
     this.accountingService = AccountingService.getInstance();
     
-    // Load saved total units from localStorage
+    // Cargar unidades guardadas, si no hay nada usar 9 como default
     const savedUnits = localStorage.getItem('totalUnits');
     if (savedUnits) {
       this.totalUnits = parseInt(savedUnits, 10);
+      console.log(`DatabaseService: Loaded saved unit count: ${this.totalUnits}`);
+    } else {
+      console.log(`DatabaseService: Using default unit count: ${this.totalUnits}`);
+      // Guardar el valor por defecto
+      localStorage.setItem('totalUnits', this.totalUnits.toString());
     }
   }
 
@@ -97,7 +101,6 @@ export default class DatabaseService {
     return this.maintenanceService.deleteMaintenanceRequest(id);
   }
 
-  // Accounting methods
   public async getAccounts(): Promise<Account[]> {
     return this.accountingService.getAccounts();
   }
@@ -153,5 +156,6 @@ export default class DatabaseService {
   public setTotalUnits(count: number): void {
     this.totalUnits = count;
     localStorage.setItem('totalUnits', count.toString());
+    console.log(`DatabaseService: Updated unit count to ${count}`);
   }
 }

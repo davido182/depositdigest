@@ -1,16 +1,15 @@
-
 import BaseService from './BaseService';
 import { Tenant } from '@/types';
 import { mockTenants } from './mockData';
 import { isDemoMode } from '../config/database';
 
 class TenantService extends BaseService {
-  // Change from private to protected to match the parent class
   protected static instance: TenantService;
 
   private constructor() {
     super();
-    this.initLocalStorage();
+    // Solo inicializar si NO hay datos existentes
+    this.initLocalStorageIfEmpty();
   }
 
   public static getInstance(): TenantService {
@@ -20,18 +19,24 @@ class TenantService extends BaseService {
     return TenantService.instance;
   }
   
-  // Make this method public so DatabaseService can call it and pass force parameter
-  public initLocalStorage(force: boolean = false): void {
-    // Only initialize with mock data if there's no existing data AND we're in demo mode
-    if (isDemoMode && (!localStorage.getItem('tenants') || force)) {
-      console.log('TenantService: Initializing localStorage with mock tenants data');
+  // Cambio importante: solo inicializar si no hay datos
+  private initLocalStorageIfEmpty(): void {
+    const existingTenants = localStorage.getItem('tenants');
+    
+    // Solo usar mock data si NO hay datos existentes y estamos en demo mode
+    if (isDemoMode && !existingTenants) {
+      console.log('TenantService: No existing data found, initializing with mock data');
       localStorage.setItem('tenants', JSON.stringify(mockTenants));
-    } else if (isDemoMode) {
-      // Don't reinitialize if data already exists
-      const existingTenants = localStorage.getItem('tenants');
-      if (existingTenants) {
-        console.log('TenantService: Using existing tenant data from localStorage');
-      }
+    } else if (existingTenants) {
+      console.log('TenantService: Found existing tenant data, preserving it');
+    }
+  }
+  
+  // Método público para forzar reset solo si es necesario
+  public resetToMockData(): void {
+    if (isDemoMode) {
+      console.log('TenantService: Force resetting to mock data');
+      localStorage.setItem('tenants', JSON.stringify(mockTenants));
     }
   }
   
@@ -39,17 +44,21 @@ class TenantService extends BaseService {
     const tenantsJson = localStorage.getItem('tenants');
     if (tenantsJson) {
       try {
-        return JSON.parse(tenantsJson);
+        const tenants = JSON.parse(tenantsJson);
+        console.log(`TenantService: Retrieved ${tenants.length} tenants from localStorage`);
+        return tenants;
       } catch (error) {
         console.error('Error parsing tenant data:', error);
         return [];
       }
     }
+    console.log('TenantService: No tenant data found in localStorage');
     return [];
   }
   
   private saveLocalTenants(tenants: Tenant[]): void {
     localStorage.setItem('tenants', JSON.stringify(tenants));
+    console.log(`TenantService: Saved ${tenants.length} tenants to localStorage`);
   }
 
   // Override simulateRequest for tenant-specific mock data
@@ -61,14 +70,10 @@ class TenantService extends BaseService {
     console.log(`TenantService: ${method} request to ${endpoint}`, data || '');
     
     if (isDemoMode) {
-      // Return mock data in demo mode
-      await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       if (endpoint === 'tenants' && method === 'GET') {
-        // Return from localStorage for persistence
-        console.log('TenantService: Retrieving tenants from localStorage');
         const tenants = this.getLocalTenants();
-        console.log(`TenantService: Retrieved ${tenants.length} tenants`);
         return tenants as unknown as T;
       } else if (endpoint.startsWith('tenants/') && method === 'GET') {
         const id = endpoint.split('/')[1];

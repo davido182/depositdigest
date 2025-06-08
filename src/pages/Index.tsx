@@ -1,7 +1,7 @@
 
 import { Layout } from "@/components/Layout";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
-import { TenantList } from "@/components/tenants/TenantList";
+import { TenantsGrid } from "@/components/dashboard/TenantsGrid";
 import { PaymentsList } from "@/components/payments/PaymentsList";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import { UnitManagementModal } from "@/components/units/UnitManagementModal";
@@ -20,19 +20,24 @@ const Index = () => {
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [totalUnits, setTotalUnits] = useState(20);
+  const [totalUnits, setTotalUnits] = useState(9); // Valor por defecto a 9
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
         const dbService = DatabaseService.getInstance();
+        
+        // Cargar la configuración guardada de unidades primero
+        const savedUnits = dbService.getTotalUnits();
+        setTotalUnits(savedUnits);
+        
         const loadedTenants = await dbService.getTenants();
         const loadedPayments = await dbService.getPayments();
         
+        console.log(`Dashboard: Loaded ${loadedTenants.length} tenants`);
         setTenants(loadedTenants);
         setPayments(loadedPayments);
-        setTotalUnits(dbService.getTotalUnits());
       } catch (error) {
         console.error("Error loading data:", error);
         toast.error("Failed to load data");
@@ -118,7 +123,6 @@ const Index = () => {
   };
 
   const handleAddPayment = () => {
-    // We'll implement this in the next step
     const paymentForm = document.createElement('a');
     paymentForm.href = '/payments';
     paymentForm.click();
@@ -128,18 +132,14 @@ const Index = () => {
     try {
       const dbService = DatabaseService.getInstance();
       
-      // Check if this is a new payment or existing one
       const existingPayment = payments.find(p => p.id === payment.id);
       
       if (existingPayment) {
-        // Update existing payment
         await dbService.updatePayment(payment.id, payment);
       } else {
-        // Create new payment
         await dbService.createPayment(payment);
       }
       
-      // Reload data
       const loadedPayments = await dbService.getPayments();
       setPayments(loadedPayments);
       toast.success("Payment updated successfully");
@@ -149,7 +149,7 @@ const Index = () => {
     }
   };
 
-  // Calculate active tenants (only those with 'active' status)
+  // Calcular estadísticas basadas en el total de unidades configurado
   const activeTenants = tenants.filter(t => t.status === 'active');
   const occupiedUnits = activeTenants.length;
   const vacantUnits = totalUnits - occupiedUnits;
@@ -160,14 +160,20 @@ const Index = () => {
       <section className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-          <Button 
-            variant="outline" 
-            className="gap-1.5"
-            onClick={() => setIsUnitModalOpen(true)}
-          >
-            <Building className="h-4 w-4" />
-            <span>Manage Units</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              className="gap-1.5"
+              onClick={() => setIsUnitModalOpen(true)}
+            >
+              <Building className="h-4 w-4" />
+              <span>Manage Units ({totalUnits})</span>
+            </Button>
+            <Button onClick={handleAddTenant} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Tenant
+            </Button>
+          </div>
         </div>
         
         <DashboardSummary stats={{
@@ -190,12 +196,17 @@ const Index = () => {
           <TabsTrigger value="payments">Payments</TabsTrigger>
         </TabsList>
         <TabsContent value="tenants" className="mt-2">
-          <TenantList
-            tenants={tenants}
-            onAddTenant={handleAddTenant}
-            onEditTenant={handleEditTenant}
-            onDeleteTenant={handleDeleteTenant}
-          />
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            </div>
+          ) : (
+            <TenantsGrid
+              tenants={tenants}
+              onEditTenant={handleEditTenant}
+              onDeleteTenant={handleDeleteTenant}
+            />
+          )}
         </TabsContent>
         <TabsContent value="payments" className="mt-2">
           <PaymentsList
