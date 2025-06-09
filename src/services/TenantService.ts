@@ -1,6 +1,6 @@
+
 import BaseService from './BaseService';
 import { Tenant } from '@/types';
-import { mockTenants } from './mockData';
 import { isDemoMode } from '../config/database';
 
 class TenantService extends BaseService {
@@ -8,8 +8,8 @@ class TenantService extends BaseService {
 
   private constructor() {
     super();
-    // Solo inicializar si NO hay datos existentes
-    this.initLocalStorageIfEmpty();
+    // NO inicializar con datos mock automáticamente
+    this.ensureDataIntegrity();
   }
 
   public static getInstance(): TenantService {
@@ -19,25 +19,32 @@ class TenantService extends BaseService {
     return TenantService.instance;
   }
   
-  // Cambio importante: solo inicializar si no hay datos
-  private initLocalStorageIfEmpty(): void {
+  // Verificar que no haya datos corruptos o de demostración
+  private ensureDataIntegrity(): void {
     const existingTenants = localStorage.getItem('tenants');
     
-    // Solo usar mock data si NO hay datos existentes y estamos en demo mode
-    if (isDemoMode && !existingTenants) {
-      console.log('TenantService: No existing data found, initializing with mock data');
-      localStorage.setItem('tenants', JSON.stringify(mockTenants));
-    } else if (existingTenants) {
-      console.log('TenantService: Found existing tenant data, preserving it');
+    if (existingTenants) {
+      try {
+        const tenants = JSON.parse(existingTenants);
+        
+        // Verificar si hay datos sospechosos (más de 15 tenants probablemente son datos de demo)
+        if (tenants.length > 15) {
+          console.warn('TenantService: Detected suspicious data, clearing localStorage');
+          localStorage.removeItem('tenants');
+        } else {
+          console.log(`TenantService: Found ${tenants.length} tenants, keeping user data`);
+        }
+      } catch (error) {
+        console.error('TenantService: Error parsing tenant data, clearing localStorage');
+        localStorage.removeItem('tenants');
+      }
     }
   }
   
-  // Método público para forzar reset solo si es necesario
-  public resetToMockData(): void {
-    if (isDemoMode) {
-      console.log('TenantService: Force resetting to mock data');
-      localStorage.setItem('tenants', JSON.stringify(mockTenants));
-    }
+  // Método para limpiar datos completamente (solo usar en emergencias)
+  public clearAllData(): void {
+    console.log('TenantService: Clearing all tenant data');
+    localStorage.removeItem('tenants');
   }
   
   private getLocalTenants(): Tenant[] {

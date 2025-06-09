@@ -10,7 +10,7 @@ export default class DatabaseService {
   private paymentService: PaymentService;
   private maintenanceService: MaintenanceService;
   private accountingService: AccountingService;
-  private totalUnits: number = 9; // Cambiar valor por defecto a 9
+  private totalUnits: number = 9; // Valor por defecto correcto
 
   private constructor() {
     this.tenantService = TenantService.getInstance();
@@ -21,8 +21,16 @@ export default class DatabaseService {
     // Cargar unidades guardadas, si no hay nada usar 9 como default
     const savedUnits = localStorage.getItem('totalUnits');
     if (savedUnits) {
-      this.totalUnits = parseInt(savedUnits, 10);
-      console.log(`DatabaseService: Loaded saved unit count: ${this.totalUnits}`);
+      const unitCount = parseInt(savedUnits, 10);
+      // Validar que no sea un número absurdo
+      if (unitCount > 0 && unitCount <= 50) {
+        this.totalUnits = unitCount;
+        console.log(`DatabaseService: Loaded saved unit count: ${this.totalUnits}`);
+      } else {
+        console.log(`DatabaseService: Invalid unit count ${unitCount}, using default: ${this.totalUnits}`);
+        // Corregir valor inválido
+        localStorage.setItem('totalUnits', this.totalUnits.toString());
+      }
     } else {
       console.log(`DatabaseService: Using default unit count: ${this.totalUnits}`);
       // Guardar el valor por defecto
@@ -154,8 +162,13 @@ export default class DatabaseService {
   }
 
   public setTotalUnits(count: number): void {
-    this.totalUnits = count;
-    localStorage.setItem('totalUnits', count.toString());
-    console.log(`DatabaseService: Updated unit count to ${count}`);
+    // Validar que sea un número razonable
+    if (count > 0 && count <= 50) {
+      this.totalUnits = count;
+      localStorage.setItem('totalUnits', count.toString());
+      console.log(`DatabaseService: Updated unit count to ${count}`);
+    } else {
+      console.error(`DatabaseService: Invalid unit count ${count}, keeping current value ${this.totalUnits}`);
+    }
   }
 }

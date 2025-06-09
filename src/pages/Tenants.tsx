@@ -1,3 +1,4 @@
+
 import { Layout } from "@/components/Layout";
 import { TenantList } from "@/components/tenants/TenantList";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
@@ -6,8 +7,20 @@ import { Tenant, TenantStatus } from "@/types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
+import TenantService from "@/services/TenantService";
 import { Button } from "@/components/ui/button";
-import { Building } from "lucide-react";
+import { Building, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Tenants = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -16,7 +29,7 @@ const Tenants = () => {
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
-  const [totalUnits, setTotalUnits] = useState(20);
+  const [totalUnits, setTotalUnits] = useState(9);
 
   useEffect(() => {
     const loadTenants = async () => {
@@ -50,6 +63,29 @@ const Tenants = () => {
 
     loadTenants();
   }, []);
+
+  const handleClearCorruptedData = async () => {
+    try {
+      const tenantService = TenantService.getInstance();
+      tenantService.clearAllData();
+      
+      // También limpiar el localStorage directamente por seguridad
+      localStorage.removeItem('tenants');
+      localStorage.removeItem('totalUnits');
+      
+      // Reestablecer valores por defecto
+      const dbService = DatabaseService.getInstance();
+      dbService.setTotalUnits(9);
+      
+      setTenants([]);
+      setTotalUnits(9);
+      
+      toast.success("Datos limpiados exitosamente. Ahora puedes agregar tus tenants nuevamente.");
+    } catch (error) {
+      console.error("Error clearing data:", error);
+      toast.error("Error al limpiar los datos");
+    }
+  };
 
   const handleAddTenant = () => {
     setCurrentTenant(null);
@@ -150,6 +186,32 @@ const Tenants = () => {
                 Offline Mode
               </div>
             )}
+            {tenants.length > 15 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="gap-1.5">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span>Limpiar Datos Corruptos</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Limpiar todos los datos?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Se detectaron {tenants.length} tenants, lo cual parece ser datos de demostración mezclados con tus datos reales.
+                      Esto eliminará TODOS los datos actuales y te permitirá empezar limpio.
+                      Solo haz esto si estás seguro de que los datos actuales no son correctos.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearCorruptedData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Sí, limpiar todo
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
             <Button 
               variant="outline" 
               className="gap-1.5"
@@ -160,6 +222,19 @@ const Tenants = () => {
             </Button>
           </div>
         </div>
+
+        {tenants.length > 15 && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-red-800">
+              <AlertTriangle className="h-5 w-5" />
+              <strong>Advertencia: Datos Sospechosos Detectados</strong>
+            </div>
+            <p className="text-red-700 mt-1">
+              Se encontraron {tenants.length} tenants, lo cual sugiere que se mezclaron datos de demostración con tus datos reales.
+              Usa el botón "Limpiar Datos Corruptos" para empezar limpio si estos no son tus datos.
+            </p>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="flex justify-center p-8">
