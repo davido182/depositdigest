@@ -4,6 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -11,306 +18,320 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, DollarSign } from "lucide-react";
-import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { Tenant, PaymentType, PaymentMethod, PaymentStatus, Payment } from "@/types";
-import DatabaseService from "@/services/DatabaseService";
+import { Payment, PaymentMethod, PaymentStatus, PaymentType, Tenant } from "@/types";
+import { DollarSign, Calendar, CreditCard } from "lucide-react";
 import { toast } from "sonner";
+import { ValidationService } from "@/services/ValidationService";
+import { sanitizeInput } from "@/utils/validation";
 
 interface PaymentFormProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (payment: Payment) => void; // Updated type signature to accept a payment parameter
   payment: Payment | null;
   tenants: Tenant[];
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (payment: Payment) => void;
 }
 
-export function PaymentForm({ isOpen, onClose, onSave, payment, tenants }: PaymentFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  
-  // Form state
-  const [tenantId, setTenantId] = useState("");
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState<Date>(new Date());
-  const [type, setType] = useState<PaymentType>("rent");
-  const [method, setMethod] = useState<PaymentMethod>("transfer");
-  const [status, setStatus] = useState<PaymentStatus>("completed");
-  const [notes, setNotes] = useState("");
-  
-  // Form validation
-  const [errors, setErrors] = useState({
+export function PaymentForm({
+  payment,
+  tenants,
+  isOpen,
+  onClose,
+  onSave,
+}: PaymentFormProps) {
+  const emptyPayment: Omit<Payment, 'id' | 'createdAt'> = {
     tenantId: "",
-    amount: "",
-  });
-  
-  // Load payment data into form when editing
-  useEffect(() => {
-    if (payment) {
-      setTenantId(payment.tenantId);
-      setAmount(payment.amount.toString());
-      setDate(new Date(payment.date));
-      setType(payment.type);
-      setMethod(payment.method);
-      setStatus(payment.status);
-      setNotes(payment.notes || "");
-    } else if (tenants.length > 0) {
-      // Set default values for new payment
-      setTenantId(tenants[0].id);
-      setAmount(tenants[0].rentAmount.toString());
-      setDate(new Date());
-      setType("rent");
-      setMethod("transfer");
-      setStatus("completed");
-      setNotes("");
-    }
-  }, [payment, tenants, isOpen]);
-  
-  const validateForm = () => {
-    let valid = true;
-    const newErrors = {
-      tenantId: "",
-      amount: "",
-    };
-    
-    if (!tenantId) {
-      newErrors.tenantId = "Tenant is required";
-      valid = false;
-    }
-    
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      newErrors.amount = "Amount must be a positive number";
-      valid = false;
-    }
-    
-    setErrors(newErrors);
-    return valid;
+    amount: 0,
+    date: new Date().toISOString().split("T")[0],
+    type: "rent",
+    method: "transfer",
+    status: "completed",
+    notes: "",
   };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
+
+  const [formData, setFormData] = useState<Omit<Payment, 'id' | 'createdAt'>>(
+    payment || emptyPayment
+  );
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (payment) {
+        setFormData(payment);
+        const tenant = tenants.find(t => t.id === payment.tenantId);
+        setSelectedTenant(tenant || null);
+      } else {
+        setFormData(emptyPayment);
+        setSelectedTenant(null);
+      }
+      setErrors({});
     }
+  }, [payment, isOpen, tenants]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    
+    if (name === "amount") {
+      const numValue = parseFloat(value) || 0;
+      setFormData({ ...formData, [name]: numValue });
+    } else if (name === "notes") {
+      setFormData({ ...formData, [name]: sanitizeInput(value) });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleTenantChange = (tenantId: string) => {
+    const tenant = tenants.find(t => t.id === tenantId);
+    setSelectedTenant(tenant || null);
+    
+    // Auto-fill rent amount for rent payments
+    if (tenant && formData.type === "rent") {
+      setFormData({
+        ...formData,
+        tenantId,
+        amount: tenant.rentAmount,
+      });
+    } else {
+      setFormData({
+        ...formData,
+        tenantId,
+      });
+    }
+    
+    // Clear tenant error
+    if (errors.tenantId) {
+      setErrors(prev => ({ ...prev, tenantId: '' }));
+    }
+  };
+
+  const handleTypeChange = (type: PaymentType) => {
+    // Auto-fill amount based on type and selected tenant
+    let newAmount = formData.amount;
+    if (selectedTenant) {
+      if (type === "rent") {
+        newAmount = selectedTenant.rentAmount;
+      } else if (type === "deposit") {
+        newAmount = selectedTenant.depositAmount;
+      }
+    }
+    
+    setFormData({
+      ...formData,
+      type,
+      amount: newAmount,
+    });
+  };
+
+  const handleMethodChange = (method: PaymentMethod) => {
+    setFormData({ ...formData, method });
+  };
+
+  const handleStatusChange = (status: PaymentStatus) => {
+    setFormData({ ...formData, status });
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
     
     try {
-      setSubmitting(true);
+      const validationService = ValidationService.getInstance();
+      validationService.validatePayment(formData, tenants);
+      return true;
+    } catch (error: any) {
+      if (error.message.includes('tenant')) {
+        newErrors.tenantId = error.message;
+      } else if (error.message.includes('amount')) {
+        newErrors.amount = error.message;
+      } else if (error.message.includes('date')) {
+        newErrors.date = error.message;
+      } else {
+        toast.error(error.message);
+      }
       
+      setErrors(newErrors);
+      return false;
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (validateForm()) {
       const paymentData: Payment = {
+        ...formData,
         id: payment?.id || crypto.randomUUID(),
-        tenantId,
-        amount: Number(amount),
-        date: date.toISOString(),
-        type,
-        method,
-        status,
-        notes,
         createdAt: payment?.createdAt || new Date().toISOString(),
       };
       
-      onSave(paymentData); // Pass the payment data to the parent component
-    } catch (error) {
-      console.error("Error saving payment:", error);
-      toast.error("Failed to record payment");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-  
-  // Handle tenant change and update amount to match rent amount
-  const handleTenantChange = (newTenantId: string) => {
-    setTenantId(newTenantId);
-    
-    if (type === "rent") {
-      // Find tenant and set amount to rent amount
-      const selectedTenant = tenants.find(t => t.id === newTenantId);
-      if (selectedTenant) {
-        setAmount(selectedTenant.rentAmount.toString());
-      }
-    }
-  };
-  
-  // Handle payment type change
-  const handleTypeChange = (newType: PaymentType) => {
-    setType(newType);
-    
-    // If changing to rent, update amount to match selected tenant's rent
-    if (newType === "rent" && tenantId) {
-      const selectedTenant = tenants.find(t => t.id === tenantId);
-      if (selectedTenant) {
-        setAmount(selectedTenant.rentAmount.toString());
-      }
-    } else if (newType === "deposit" && tenantId) {
-      // For deposit, use security deposit amount if available
-      const selectedTenant = tenants.find(t => t.id === tenantId);
-      if (selectedTenant && selectedTenant.depositAmount) {
-        setAmount(selectedTenant.depositAmount.toString());
-      }
+      onSave(paymentData);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{payment ? "Edit Payment" : "Add New Payment"}</DialogTitle>
+          <DialogTitle>
+            {payment ? "Edit Payment" : "Record New Payment"}
+          </DialogTitle>
           <DialogDescription>
-            {payment ? "Update payment details." : "Record a new payment from a tenant."}
+            {payment
+              ? "Update the payment information below."
+              : "Enter the payment details below."}
           </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          {/* Tenant Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="tenant">Tenant</Label>
-            <Select
-              value={tenantId}
-              onValueChange={handleTenantChange}
-              disabled={isLoading || tenants.length === 0}
-            >
-              <SelectTrigger id="tenant" className={errors.tenantId ? "border-destructive" : ""}>
-                <SelectValue placeholder="Select a tenant" />
-              </SelectTrigger>
-              <SelectContent>
-                {tenants.map((tenant) => (
-                  <SelectItem key={tenant.id} value={tenant.id}>
-                    {tenant.name} - Unit {tenant.unit}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.tenantId && (
-              <p className="text-xs text-destructive">{errors.tenantId}</p>
-            )}
-          </div>
 
-          {/* Payment Amount */}
-          <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
-            <div className="relative">
-              <DollarSign className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="amount"
-                type="text"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className={`pl-8 ${errors.amount ? "border-destructive" : ""}`}
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="tenantId" className="flex items-center gap-1">
+                Tenant <span className="text-destructive">*</span>
+              </Label>
+              <Select value={formData.tenantId} onValueChange={handleTenantChange}>
+                <SelectTrigger className={errors.tenantId ? "border-destructive" : ""}>
+                  <SelectValue placeholder="Select tenant" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tenants.map((tenant) => (
+                    <SelectItem key={tenant.id} value={tenant.id}>
+                      {tenant.name} - Unit {tenant.unit}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.tenantId && (
+                <p className="text-xs text-destructive">{errors.tenantId}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="type">Payment Type</Label>
+                <Select value={formData.type} onValueChange={handleTypeChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rent">Rent</SelectItem>
+                    <SelectItem value="deposit">Deposit</SelectItem>
+                    <SelectItem value="fee">Fee</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="amount" className="flex items-center gap-1">
+                  Amount <span className="text-destructive">*</span>
+                </Label>
+                <div className="flex items-center">
+                  <DollarSign className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <Input
+                    id="amount"
+                    name="amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.amount}
+                    onChange={handleChange}
+                    className={errors.amount ? "border-destructive" : ""}
+                  />
+                </div>
+                {errors.amount && (
+                  <p className="text-xs text-destructive">{errors.amount}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="date">Payment Date</Label>
+              <div className="flex items-center">
+                <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
+                <Input
+                  id="date"
+                  name="date"
+                  type="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  className={errors.date ? "border-destructive" : ""}
+                />
+              </div>
+              {errors.date && (
+                <p className="text-xs text-destructive">{errors.date}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="method">Payment Method</Label>
+                <div className="flex items-center">
+                  <CreditCard className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <Select value={formData.method} onValueChange={handleMethodChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="check">Check</SelectItem>
+                      <SelectItem value="transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="card">Credit/Debit Card</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={formData.status} onValueChange={handleStatusChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {selectedTenant && formData.type === "rent" && (
+              <div className="bg-muted p-3 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Expected rent for {selectedTenant.name}: ${selectedTenant.rentAmount.toLocaleString()}
+                </p>
+              </div>
+            )}
+
+            <div className="grid gap-2">
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <textarea
+                id="notes"
+                name="notes"
+                value={formData.notes || ""}
+                onChange={handleChange}
+                className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                placeholder="Add any additional notes..."
               />
             </div>
-            {errors.amount && (
-              <p className="text-xs text-destructive">{errors.amount}</p>
-            )}
-          </div>
-
-          {/* Payment Date */}
-          <div className="space-y-2">
-            <Label htmlFor="date">Payment Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                  id="date"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : "Select a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(newDate) => newDate && setDate(newDate)}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Payment Type */}
-          <div className="space-y-2">
-            <Label htmlFor="type">Payment Type</Label>
-            <Select value={type} onValueChange={(value) => handleTypeChange(value as PaymentType)}>
-              <SelectTrigger id="type">
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="rent">Rent</SelectItem>
-                <SelectItem value="deposit">Security Deposit</SelectItem>
-                <SelectItem value="fee">Fee</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Payment Method */}
-          <div className="space-y-2">
-            <Label htmlFor="method">Payment Method</Label>
-            <Select value={method} onValueChange={(value) => setMethod(value as PaymentMethod)}>
-              <SelectTrigger id="method">
-                <SelectValue placeholder="Select method" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="check">Check</SelectItem>
-                <SelectItem value="transfer">Bank Transfer</SelectItem>
-                <SelectItem value="card">Credit/Debit Card</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Payment Status */}
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={(value) => setStatus(value as PaymentStatus)}>
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-                <SelectItem value="refunded">Refunded</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes (Optional)</Label>
-            <Textarea
-              id="notes"
-              placeholder="Add any additional notes about this payment"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-            />
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting || isLoading}>
-              {submitting ? "Saving..." : "Save Payment"}
-            </Button>
+            <Button type="submit">Save Payment</Button>
           </DialogFooter>
         </form>
       </DialogContent>

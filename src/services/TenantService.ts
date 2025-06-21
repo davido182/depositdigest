@@ -2,13 +2,13 @@
 import BaseService from './BaseService';
 import { Tenant } from '@/types';
 import { isDemoMode } from '../config/database';
+import { ValidationService } from './ValidationService';
 
 class TenantService extends BaseService {
   protected static instance: TenantService;
 
   private constructor() {
     super();
-    // NO inicializar con datos mock automáticamente
     this.ensureDataIntegrity();
   }
 
@@ -19,7 +19,6 @@ class TenantService extends BaseService {
     return TenantService.instance;
   }
   
-  // Verificar que no haya datos corruptos o de demostración
   private ensureDataIntegrity(): void {
     const existingTenants = localStorage.getItem('tenants');
     
@@ -27,7 +26,6 @@ class TenantService extends BaseService {
       try {
         const tenants = JSON.parse(existingTenants);
         
-        // Verificar si hay datos sospechosos (más de 15 tenants probablemente son datos de demo)
         if (tenants.length > 15) {
           console.warn('TenantService: Detected suspicious data, clearing localStorage');
           localStorage.removeItem('tenants');
@@ -41,7 +39,6 @@ class TenantService extends BaseService {
     }
   }
   
-  // Método para limpiar datos completamente (solo usar en emergencias)
   public clearAllData(): void {
     console.log('TenantService: Clearing all tenant data');
     localStorage.removeItem('tenants');
@@ -68,6 +65,16 @@ class TenantService extends BaseService {
     console.log(`TenantService: Saved ${tenants.length} tenants to localStorage`);
   }
 
+  private validateTenantData(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt'>, existingTenants: Tenant[] = []): void {
+    const validationService = ValidationService.getInstance();
+    validationService.validateTenant(tenant, existingTenants);
+  }
+
+  private validateTenantUpdate(tenant: Tenant, existingTenants: Tenant[] = []): void {
+    const validationService = ValidationService.getInstance();
+    validationService.validateTenantUpdate(tenant, existingTenants);
+  }
+
   // Override simulateRequest for tenant-specific mock data
   protected async simulateRequest<T>(
     endpoint: string, 
@@ -88,6 +95,11 @@ class TenantService extends BaseService {
         const tenant = tenants.find(t => t.id === id);
         return (tenant || null) as unknown as T;
       } else if (endpoint === 'tenants' && method === 'POST') {
+        const existingTenants = this.getLocalTenants();
+        
+        // Validate before creating
+        this.validateTenantData(data, existingTenants);
+        
         const newId = crypto.randomUUID();
         const tenants = this.getLocalTenants();
         
@@ -108,11 +120,16 @@ class TenantService extends BaseService {
         const index = tenants.findIndex(t => t.id === id);
         
         if (index !== -1) {
-          tenants[index] = {
+          const updatedTenant = {
             ...tenants[index],
             ...data,
             updatedAt: new Date().toISOString(),
           };
+          
+          // Validate update
+          this.validateTenantUpdate(updatedTenant, tenants);
+          
+          tenants[index] = updatedTenant;
           this.saveLocalTenants(tenants);
           return true as unknown as T;
         }

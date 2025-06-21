@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
 import TenantService from "@/services/TenantService";
+import { ValidationService } from "@/services/ValidationService";
 import { Button } from "@/components/ui/button";
 import { Building, AlertTriangle } from "lucide-react";
 import {
@@ -44,7 +45,6 @@ const Tenants = () => {
           console.log(`Loaded ${loadedTenants.length} tenants`);
           setTenants(loadedTenants);
           
-          // Load saved unit count
           const savedUnits = dbService.getTotalUnits();
           setTotalUnits(savedUnits);
           setIsOffline(false);
@@ -69,11 +69,9 @@ const Tenants = () => {
       const tenantService = TenantService.getInstance();
       tenantService.clearAllData();
       
-      // También limpiar el localStorage directamente por seguridad
       localStorage.removeItem('tenants');
       localStorage.removeItem('totalUnits');
       
-      // Reestablecer valores por defecto
       const dbService = DatabaseService.getInstance();
       dbService.setTotalUnits(9);
       
@@ -164,14 +162,17 @@ const Tenants = () => {
   
   const handleUpdateUnitCount = (newCount: number) => {
     try {
+      const validationService = ValidationService.getInstance();
+      validationService.validateUnitCount(newCount, tenants);
+      
       const dbService = DatabaseService.getInstance();
       dbService.setTotalUnits(newCount);
       setTotalUnits(newCount);
       toast.success(`Property updated to ${newCount} units`);
       setIsUnitModalOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating unit count:", error);
-      toast.error("Failed to update unit count");
+      toast.error(error.message || "Failed to update unit count");
     }
   };
 

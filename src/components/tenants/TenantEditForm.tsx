@@ -24,6 +24,8 @@ import {
 import { Calendar, DollarSign, Home, Mail, Phone, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
+import { ValidationService } from "@/services/ValidationService";
+import { validatePhone, sanitizeInput } from "@/utils/validation";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TenantEditFormProps {
@@ -46,7 +48,7 @@ export function TenantEditForm({
     phone: "",
     unit: "",
     moveInDate: new Date().toISOString().split("T")[0],
-    leaseEndDate: "", // Make it optional
+    leaseEndDate: "",
     rentAmount: 0,
     depositAmount: 0,
     status: "active",
@@ -66,6 +68,7 @@ export function TenantEditForm({
   const [contractFile, setContractFile] = useState<File | null>(null);
   const [isUploadingContract, setIsUploadingContract] = useState(false);
   const [existingContract, setExistingContract] = useState<string | null>(null);
+  const [allTenants, setAllTenants] = useState<Tenant[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -107,6 +110,7 @@ export function TenantEditForm({
       setIsLoadingUnits(true);
       const dbService = DatabaseService.getInstance();
       const tenants = await dbService.getTenants();
+      setAllTenants(tenants);
       const units = dbService.getTotalUnits();
       setTotalUnits(units);
       
@@ -176,7 +180,6 @@ export function TenantEditForm({
 
       if (dbError) {
         console.error('Database error:', dbError);
-        // Clean up uploaded file
         await supabase.storage
           .from('lease-contracts')
           .remove([fileName]);
@@ -199,10 +202,29 @@ export function TenantEditForm({
   ) => {
     const { name, value } = e.target;
     
+    // Clear any existing error for this field
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    
     if (name === "rentAmount" || name === "depositAmount") {
+      const numValue = parseFloat(value) || 0;
       setFormData({
         ...formData,
-        [name]: parseFloat(value) || 0,
+        [name]: numValue,
+      });
+    } else if (name === "name" || name === "email") {
+      // Sanitize text inputs
+      setFormData({
+        ...formData,
+        [name]: sanitizeInput(value),
+      });
+    } else if (name === "phone") {
+      // Format phone number
+      const formatted = validatePhone(value);
+      setFormData({
+        ...formData,
+        [name]: formatted,
       });
     } else {
       setFormData({
@@ -220,6 +242,11 @@ export function TenantEditForm({
   };
   
   const handleUnitChange = (value: string) => {
+    // Clear unit error when changing
+    if (errors.unit) {
+      setErrors(prev => ({ ...prev, unit: '' }));
+    }
+    
     setFormData({
       ...formData,
       unit: value,
@@ -239,26 +266,32 @@ export function TenantEditForm({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+    try {
+      const validationService = ValidationService.getInstance();
+      
+      if (tenant) {
+        // Editing existing tenant
+        validationService.validateTenantUpdate(formData, allTenants);
+      } else {
+        // Creating new tenant
+        validationService.validateTenant(formData, allTenants);
+      }
+      
+      return true;
+    } catch (error: any) {
+      if (error.message.includes('name')) newErrors.name = error.message;
+      else if (error.message.includes('email')) newErrors.email = error.message;
+      else if (error.message.includes('rent')) newErrors.rentAmount = error.message;
+      else if (error.message.includes('deposit')) newErrors.depositAmount = error.message;
+      else if (error.message.includes('unit') || error.message.includes('occupied')) newErrors.unit = error.message;
+      else if (error.message.includes('date')) newErrors.moveInDate = error.message;
+      else {
+        toast.error(error.message);
+      }
+      
+      setErrors(newErrors);
+      return false;
     }
-    
-    if (formData.rentAmount <= 0) {
-      newErrors.rentAmount = "Rent amount must be greater than 0";
-    }
-    
-    if (hasDeposit && formData.depositAmount <= 0) {
-      newErrors.depositAmount = "Deposit amount must be greater than 0";
-    }
-    
-    if (!formData.unit) {
-      newErrors.unit = "Unit is required";
-    }
-    
-    // Lease end date is now optional - no validation needed
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -275,7 +308,6 @@ export function TenantEditForm({
         console.log("Submitting tenant data:", updatedTenant);
         onSave(updatedTenant);
 
-        // Handle contract upload after saving if there's a new file
         if (contractFile && updatedTenant.id) {
           await handleContractUpload(contractFile);
         }
@@ -326,10 +358,15 @@ export function TenantEditForm({
                   <Input
                     id="email"
                     name="email"
+                    type="email"
                     value={formData.email}
                     onChange={handleChange}
+                    className={errors.email ? "border-destructive" : ""}
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-xs text-destructive">{errors.email}</p>
+                )}
               </div>
               
               <div className="grid gap-2">
@@ -341,6 +378,7 @@ export function TenantEditForm({
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
+                    placeholder="(555) 123-4567"
                   />
                 </div>
               </div>
@@ -415,8 +453,12 @@ export function TenantEditForm({
                     type="date"
                     value={formData.moveInDate}
                     onChange={handleChange}
+                    className={errors.moveInDate ? "border-destructive" : ""}
                   />
                 </div>
+                {errors.moveInDate && (
+                  <p className="text-xs text-destructive">{errors.moveInDate}</p>
+                )}
               </div>
               
               <div className="grid gap-2">
@@ -535,7 +577,7 @@ export function TenantEditForm({
                 name="notes"
                 value={formData.notes || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, notes: e.target.value })
+                  setFormData({ ...formData, notes: sanitizeInput(e.target.value) })
                 }
                 className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               ></textarea>
