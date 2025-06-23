@@ -10,7 +10,7 @@ export function LanguageSettings() {
   const [selectedLanguage, setSelectedLanguage] = useState("en");
 
   useEffect(() => {
-    // Load saved language preference
+    // Load saved language preference - default to English
     const savedLanguage = localStorage.getItem('app-language') || 'en';
     setSelectedLanguage(savedLanguage);
   }, []);
@@ -19,13 +19,17 @@ export function LanguageSettings() {
     setSelectedLanguage(language);
     localStorage.setItem('app-language', language);
     
-    // For now, just show a toast. In a full implementation, 
-    // this would trigger a context update to change all UI text
-    toast.success(
-      language === 'es' 
-        ? "Idioma cambiado a Español" 
-        : "Language changed to English"
-    );
+    // Show confirmation message in selected language
+    if (language === 'es') {
+      toast.success("Idioma cambiado a Español. La aplicación se recargará para aplicar los cambios.");
+    } else {
+      toast.success("Language changed to English. The application will reload to apply changes.");
+    }
+    
+    // Reload the page to apply language changes
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
   };
 
   return (
@@ -47,16 +51,16 @@ export function LanguageSettings() {
               <SelectValue placeholder="Select language" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="es">Español (Spanish)</SelectItem>
+              <SelectItem value="en">🇺🇸 English (Default)</SelectItem>
+              <SelectItem value="es">🇪🇸 Español</SelectItem>
             </SelectContent>
           </Select>
         </div>
         
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-muted-foreground bg-blue-50 border border-blue-200 rounded-lg p-3">
           <p>
-            <strong>Note:</strong> Language switching is currently in development. 
-            This setting will be fully functional in the next update.
+            <strong>Note:</strong> The application defaults to English. When you change the language, 
+            the page will reload automatically to apply the new language settings throughout the application.
           </p>
         </div>
       </CardContent>

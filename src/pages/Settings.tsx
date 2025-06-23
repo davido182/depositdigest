@@ -1,6 +1,10 @@
 
 import { Layout } from "@/components/Layout";
 import { MobileFeatureToggle } from "@/components/settings/MobileFeatureToggle";
+import { LanguageSettings } from "@/components/settings/LanguageSettings";
+import { ThemeSettings } from "@/components/settings/ThemeSettings";
+import { AccountSettings } from "@/components/settings/AccountSettings";
+import { DataSettings } from "@/components/settings/DataSettings";
 
 const Settings = () => {
   return (
@@ -11,6 +15,10 @@ const Settings = () => {
         </div>
         
         <div className="grid gap-6">
+          <DataSettings />
+          <AccountSettings />
+          <ThemeSettings />
+          <LanguageSettings />
           <MobileFeatureToggle />
         </div>
       </section>

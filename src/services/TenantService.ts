@@ -1,4 +1,3 @@
-
 import BaseService from './BaseService';
 import { Tenant } from '@/types';
 import { isDemoMode } from '../config/database';
@@ -22,19 +21,16 @@ class TenantService extends BaseService {
   private ensureDataIntegrity(): void {
     const existingTenants = localStorage.getItem('tenants');
     
-    if (existingTenants) {
+    if (!existingTenants) {
+      console.log('TenantService: No existing tenant data, starting fresh');
+      localStorage.setItem('tenants', JSON.stringify([]));
+    } else {
       try {
         const tenants = JSON.parse(existingTenants);
-        
-        if (tenants.length > 15) {
-          console.warn('TenantService: Detected suspicious data, clearing localStorage');
-          localStorage.removeItem('tenants');
-        } else {
-          console.log(`TenantService: Found ${tenants.length} tenants, keeping user data`);
-        }
+        console.log(`TenantService: Found ${tenants.length} tenants, keeping user data`);
       } catch (error) {
         console.error('TenantService: Error parsing tenant data, clearing localStorage');
-        localStorage.removeItem('tenants');
+        localStorage.setItem('tenants', JSON.stringify([]));
       }
     }
   }
@@ -97,7 +93,6 @@ class TenantService extends BaseService {
       } else if (endpoint === 'tenants' && method === 'POST') {
         const existingTenants = this.getLocalTenants();
         
-        // Validate before creating
         this.validateTenantData(data, existingTenants);
         
         const newId = crypto.randomUUID();
@@ -126,7 +121,6 @@ class TenantService extends BaseService {
             updatedAt: new Date().toISOString(),
           };
           
-          // Validate update
           this.validateTenantUpdate(updatedTenant, tenants);
           
           tenants[index] = updatedTenant;

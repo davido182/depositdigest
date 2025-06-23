@@ -5,7 +5,6 @@ import { mockPayments } from './mockData';
 import { isDemoMode } from '../config/database';
 
 class PaymentService extends BaseService {
-  // Change from private to protected to match the parent class
   protected static instance: PaymentService;
   private localPayments: Payment[] = [];
 
@@ -21,24 +20,30 @@ class PaymentService extends BaseService {
     return PaymentService.instance;
   }
   
-  // Add public initLocalStorage method to match TenantService
   public initLocalStorage(force: boolean = false): void {
-    if ((isDemoMode && !localStorage.getItem('payments')) || force) {
-      console.log('PaymentService: Initializing localStorage with mock payments data');
+    // Only initialize with mock data if explicitly forced or if no data exists
+    const existingPayments = localStorage.getItem('payments');
+    
+    if (force && isDemoMode) {
+      console.log('PaymentService: Force initializing localStorage with mock payments data');
       localStorage.setItem('payments', JSON.stringify(mockPayments));
       this.localPayments = [...mockPayments];
-    } else if (isDemoMode) {
+    } else if (!existingPayments) {
+      console.log('PaymentService: No existing data, starting with empty payments');
+      this.localPayments = [];
+      localStorage.setItem('payments', JSON.stringify([]));
+    } else {
       try {
         const savedPayments = localStorage.getItem('payments');
         if (savedPayments) {
           this.localPayments = JSON.parse(savedPayments);
         } else {
-          this.localPayments = [...mockPayments];
-          localStorage.setItem('payments', JSON.stringify(this.localPayments));
+          this.localPayments = [];
         }
       } catch (error) {
-        console.error('Error initializing local payments:', error);
-        this.localPayments = [...mockPayments];
+        console.error('Error parsing payment data:', error);
+        this.localPayments = [];
+        localStorage.setItem('payments', JSON.stringify([]));
       }
     }
   }
@@ -52,8 +57,7 @@ class PaymentService extends BaseService {
     console.log(`PaymentService: ${method} request to ${endpoint}`, data || '');
     
     if (isDemoMode) {
-      // Return mock data in demo mode
-      await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       if (endpoint === 'payments' && method === 'GET') {
         return this.localPayments as unknown as T;
