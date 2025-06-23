@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function AccountSettings() {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -49,7 +49,7 @@ export function AccountSettings() {
 
   const handleSignOut = async () => {
     try {
-      await logout();
+      await signOut();
       toast.success("Signed out successfully");
     } catch (error) {
       console.error('Error signing out:', error);
