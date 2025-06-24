@@ -6,7 +6,7 @@ class MaintenanceService {
   private maintenanceRequests: MaintenanceRequest[] = [];
 
   private constructor() {
-    this.loadMockData();
+    this.loadDataFromStorage();
   }
 
   public static getInstance(): MaintenanceService {
@@ -16,36 +16,25 @@ class MaintenanceService {
     return MaintenanceService.instance;
   }
 
-  private loadMockData(): void {
-    const mockRequests: MaintenanceRequest[] = [
-      {
-        id: 'maint-1',
-        tenantId: 'tenant-1',
-        unit: '101',
-        title: 'Fuga en el baño',
-        description: 'Hay una pequeña fuga en la tubería del lavabo',
-        category: 'plumbing',
-        priority: 'high',
-        status: 'pending',
-        createdAt: '2024-01-15T10:00:00Z',
-        updatedAt: '2024-01-15T10:00:00Z'
-      },
-      {
-        id: 'maint-2',
-        tenantId: 'tenant-2',
-        unit: '203',
-        title: 'Problema eléctrico',
-        description: 'Se va la luz en la cocina frecuentemente',
-        category: 'electrical',
-        priority: 'medium',
-        status: 'in_progress',
-        assignedTo: 'Electricista Juan',
-        createdAt: '2024-01-14T14:30:00Z',
-        updatedAt: '2024-01-16T09:15:00Z'
+  private loadDataFromStorage(): void {
+    const storedData = localStorage.getItem('maintenance_requests');
+    if (storedData) {
+      try {
+        this.maintenanceRequests = JSON.parse(storedData);
+        console.log(`MaintenanceService: Loaded ${this.maintenanceRequests.length} maintenance requests from storage`);
+      } catch (error) {
+        console.error('Error parsing maintenance requests data:', error);
+        this.maintenanceRequests = [];
       }
-    ];
+    } else {
+      console.log('MaintenanceService: No stored data found, starting with empty array');
+      this.maintenanceRequests = [];
+    }
+  }
 
-    this.maintenanceRequests = mockRequests;
+  private saveDataToStorage(): void {
+    localStorage.setItem('maintenance_requests', JSON.stringify(this.maintenanceRequests));
+    console.log(`MaintenanceService: Saved ${this.maintenanceRequests.length} maintenance requests to storage`);
   }
 
   public async testConnection(): Promise<boolean> {
@@ -73,6 +62,7 @@ class MaintenanceService {
     };
 
     this.maintenanceRequests.push(newRequest);
+    this.saveDataToStorage();
     return newRequest.id;
   }
 
@@ -86,6 +76,7 @@ class MaintenanceService {
       updatedAt: new Date().toISOString()
     };
 
+    this.saveDataToStorage();
     return true;
   }
 
@@ -94,7 +85,14 @@ class MaintenanceService {
     if (index === -1) return false;
 
     this.maintenanceRequests.splice(index, 1);
+    this.saveDataToStorage();
     return true;
+  }
+
+  public clearAllData(): void {
+    console.log('MaintenanceService: Clearing all maintenance request data');
+    this.maintenanceRequests = [];
+    localStorage.removeItem('maintenance_requests');
   }
 }
 
