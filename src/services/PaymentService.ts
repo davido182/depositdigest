@@ -21,15 +21,15 @@ class PaymentService extends BaseService {
   }
   
   public initLocalStorage(force: boolean = false): void {
-    // Only initialize with mock data if explicitly forced or if no data exists
+    // Solo inicializar con datos de demostración si se fuerza explícitamente o si no existen datos
     const existingPayments = localStorage.getItem('payments');
     
     if (force && isDemoMode) {
-      console.log('PaymentService: Force initializing localStorage with mock payments data');
+      console.log('PaymentService: Inicializando localStorage forzadamente con datos de demostración de pagos');
       localStorage.setItem('payments', JSON.stringify(mockPayments));
       this.localPayments = [...mockPayments];
     } else if (!existingPayments) {
-      console.log('PaymentService: No existing data, starting with empty payments');
+      console.log('PaymentService: No hay datos existentes, comenzando con pagos vacíos');
       this.localPayments = [];
       localStorage.setItem('payments', JSON.stringify([]));
     } else {
@@ -41,20 +41,20 @@ class PaymentService extends BaseService {
           this.localPayments = [];
         }
       } catch (error) {
-        console.error('Error parsing payment data:', error);
+        console.error('Error al analizar datos de pagos:', error);
         this.localPayments = [];
         localStorage.setItem('payments', JSON.stringify([]));
       }
     }
   }
 
-  // Override simulateRequest for payment-specific mock data
+  // Anular simulateRequest para datos específicos de pagos de demostración
   protected async simulateRequest<T>(
     endpoint: string, 
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
     data?: any
   ): Promise<T> {
-    console.log(`PaymentService: ${method} request to ${endpoint}`, data || '');
+    console.log(`PaymentService: ${method} solicitud a ${endpoint}`, data || '');
     
     if (isDemoMode) {
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -80,7 +80,7 @@ class PaymentService extends BaseService {
           return { success: true } as unknown as T;
         }
         
-        throw new Error(`Payment not found: ${paymentId}`);
+        throw new Error(`Pago no encontrado: ${paymentId}`);
       } else if (endpoint.startsWith('payments/') && method === 'DELETE') {
         const paymentId = endpoint.split('/')[1];
         const initialLength = this.localPayments.length;
@@ -91,10 +91,10 @@ class PaymentService extends BaseService {
           return { success: true } as unknown as T;
         }
         
-        throw new Error(`Payment not found: ${paymentId}`);
+        throw new Error(`Pago no encontrado: ${paymentId}`);
       }
       
-      throw new Error(`Unhandled endpoint in demo mode: ${method} ${endpoint}`);
+      throw new Error(`Endpoint no manejado en modo de demostración: ${method} ${endpoint}`);
     }
     
     return super.simulateRequest<T>(endpoint, method, data);
@@ -126,6 +126,12 @@ class PaymentService extends BaseService {
   public async deletePayment(id: string): Promise<boolean> {
     const result = await this.simulateRequest<{ success: boolean }>(`payments/${id}`, 'DELETE');
     return result.success;
+  }
+
+  public clearAllData(): void {
+    console.log('PaymentService: Eliminando todos los datos de pagos');
+    this.localPayments = [];
+    localStorage.removeItem('payments');
   }
 }
 

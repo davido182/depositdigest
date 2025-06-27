@@ -1,0 +1,279 @@
+
+import React, { useState, useRef } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Upload, FileText, Check, X, Edit } from "lucide-react";
+import { toast } from "sonner";
+import { Tenant, Payment } from "@/types";
+
+interface ExtractedData {
+  amount?: number;
+  date?: string;
+  description?: string;
+  reference?: string;
+}
+
+interface ReceiptProcessorProps {
+  tenants: Tenant[];
+  onPaymentCreated: (payment: Payment) => void;
+}
+
+export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessorProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [verificationData, setVerificationData] = useState({
+    tenantId: '',
+    amount: '',
+    date: '',
+    month: '',
+    description: 'rent'
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      processReceipt(file);
+    }
+  };
+
+  const processReceipt = async (file: File) => {
+    setIsProcessing(true);
+    
+    try {
+      // Simular procesamiento OCR (en una aplicación real usarías un servicio como Tesseract.js o una API)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Datos simulados extraídos del comprobante
+      const mockExtractedData: ExtractedData = {
+        amount: Math.floor(Math.random() * 2000) + 500, // Cantidad aleatoria entre 500-2500
+        date: new Date().toISOString().split('T')[0],
+        description: 'Depósito bancario',
+        reference: `REF${Math.floor(Math.random() * 100000)}`
+      };
+      
+      setExtractedData(mockExtractedData);
+      setVerificationData(prev => ({
+        ...prev,
+        amount: mockExtractedData.amount?.toString() || '',
+        date: mockExtractedData.date || ''
+      }));
+      
+      toast.success("Comprobante procesado exitosamente");
+    } catch (error) {
+      console.error('Error processing receipt:', error);
+      toast.error("Error al procesar el comprobante");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleConfirmPayment = () => {
+    if (!verificationData.tenantId || !verificationData.amount || !verificationData.date) {
+      toast.error("Por favor completa todos los campos requeridos");
+      return;
+    }
+
+    const selectedTenant = tenants.find(t => t.id === verificationData.tenantId);
+    if (!selectedTenant) {
+      toast.error("Inquilino no encontrado");
+      return;
+    }
+
+    const newPayment: Payment = {
+      id: `payment-${Date.now()}`,
+      tenantId: verificationData.tenantId,
+      amount: parseFloat(verificationData.amount),
+      date: verificationData.date,
+      type: verificationData.description as Payment['type'],
+      method: 'transfer',
+      status: 'completed',
+      notes: `Procesado desde comprobante. ${verificationData.month ? `Mes: ${verificationData.month}` : ''}${extractedData?.reference ? ` Referencia: ${extractedData.reference}` : ''}`,
+      createdAt: new Date().toISOString()
+    };
+
+    onPaymentCreated(newPayment);
+    
+    // Limpiar formulario
+    setExtractedData(null);
+    setSelectedFile(null);
+    setVerificationData({
+      tenantId: '',
+      amount: '',
+      date: '',
+      month: '',
+      description: 'rent'
+    });
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
+    toast.success(`Pago registrado para ${selectedTenant.name}`);
+  };
+
+  const handleReject = () => {
+    setExtractedData(null);
+    setSelectedFile(null);
+    setVerificationData({
+      tenantId: '',
+      amount: '',
+      date: '',
+      month: '',
+      description: 'rent'
+    });
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
+    toast.info("Procesamiento cancelado");
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          Procesador de Comprobantes
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!selectedFile && (
+          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              variant="outline"
+              className="mb-2"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Subir Comprobante
+            </Button>
+            <p className="text-sm text-muted-foreground">
+              Sube una imagen o PDF del comprobante de depósito
+            </p>
+          </div>
+        )}
+
+        {isProcessing && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-sm text-muted-foreground">
+              Procesando comprobante...
+            </p>
+          </div>
+        )}
+
+        {extractedData && !isProcessing && (
+          <div className="space-y-4">
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <h4 className="font-medium mb-2">Datos Extraídos del Comprobante:</h4>
+              <div className="text-sm space-y-1">
+                <p><strong>Cantidad:</strong> ${extractedData.amount?.toLocaleString()}</p>
+                <p><strong>Fecha:</strong> {extractedData.date}</p>
+                <p><strong>Descripción:</strong> {extractedData.description}</p>
+                {extractedData.reference && (
+                  <p><strong>Referencia:</strong> {extractedData.reference}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tenant-select">Inquilino</Label>
+                <Select
+                  value={verificationData.tenantId}
+                  onValueChange={(value) => setVerificationData(prev => ({ ...prev, tenantId: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar inquilino" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tenants.map((tenant) => (
+                      <SelectItem key={tenant.id} value={tenant.id}>
+                        {tenant.name} - Unidad {tenant.unit}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amount-input">Cantidad</Label>
+                <Input
+                  id="amount-input"
+                  type="number"
+                  value={verificationData.amount}
+                  onChange={(e) => setVerificationData(prev => ({ ...prev, amount: e.target.value }))}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="date-input">Fecha del Pago</Label>
+                <Input
+                  id="date-input"
+                  type="date"
+                  value={verificationData.date}
+                  onChange={(e) => setVerificationData(prev => ({ ...prev, date: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="month-input">Mes Correspondiente</Label>
+                <Input
+                  id="month-input"
+                  type="text"
+                  value={verificationData.month}
+                  onChange={(e) => setVerificationData(prev => ({ ...prev, month: e.target.value }))}
+                  placeholder="Ej: Enero 2024"
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="description-select">Tipo de Pago</Label>
+                <Select
+                  value={verificationData.description}
+                  onValueChange={(value) => setVerificationData(prev => ({ ...prev, description: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rent">Alquiler</SelectItem>
+                    <SelectItem value="deposit">Depósito</SelectItem>
+                    <SelectItem value="fee">Tarifa</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button onClick={handleConfirmPayment} className="flex-1">
+                <Check className="h-4 w-4 mr-2" />
+                Confirmar Pago
+              </Button>
+              <Button onClick={handleReject} variant="outline">
+                <X className="h-4 w-4 mr-2" />
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

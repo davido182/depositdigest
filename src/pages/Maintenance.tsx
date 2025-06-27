@@ -16,10 +16,6 @@ const Maintenance = () => {
   const queryClient = useQueryClient();
   const dbService = DatabaseService.getInstance();
   
-  // Get language preference
-  const language = localStorage.getItem('app-language') || 'en';
-  const isSpanish = language === 'es';
-  
   const { data: maintenanceRequests, isLoading, error } = useQuery({
     queryKey: ["maintenance-requests"],
     queryFn: () => dbService.getMaintenanceRequests(),
@@ -30,13 +26,10 @@ const Maintenance = () => {
       dbService.updateMaintenanceRequest(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["maintenance-requests"] });
-      toast.success(isSpanish ? "Solicitud actualizada exitosamente" : "Request updated successfully");
+      toast.success("Solicitud actualizada exitosamente");
     },
     onError: (error: any) => {
-      toast.error(isSpanish 
-        ? "Error al actualizar: " + (error.message || "Error desconocido")
-        : "Update error: " + (error.message || "Unknown error")
-      );
+      toast.error("Error al actualizar: " + (error.message || "Error desconocido"));
     }
   });
 
@@ -44,13 +37,10 @@ const Maintenance = () => {
     mutationFn: (id: string) => dbService.deleteMaintenanceRequest(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["maintenance-requests"] });
-      toast.success(isSpanish ? "Solicitud eliminada exitosamente" : "Request deleted successfully");
+      toast.success("Solicitud eliminada exitosamente");
     },
     onError: (error: any) => {
-      toast.error(isSpanish 
-        ? "Error al eliminar: " + (error.message || "Error desconocido")
-        : "Delete error: " + (error.message || "Unknown error")
-      );
+      toast.error("Error al eliminar: " + (error.message || "Error desconocido"));
     }
   });
 
@@ -65,11 +55,7 @@ const Maintenance = () => {
   };
 
   const handleDelete = (id: string) => {
-    const confirmMessage = isSpanish 
-      ? '¿Estás seguro de que quieres eliminar esta solicitud?'
-      : 'Are you sure you want to delete this request?';
-    
-    if (window.confirm(confirmMessage)) {
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta solicitud?')) {
       deleteMaintenanceMutation.mutate(id);
     }
   };
@@ -84,18 +70,18 @@ const Maintenance = () => {
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">
-            {isSpanish ? 'Solicitudes de Mantenimiento' : 'Maintenance Requests'}
+            Solicitudes de Mantenimiento
           </h1>
           <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
             <PlusCircle className="h-4 w-4" />
-            {isSpanish ? 'Nueva Solicitud' : 'New Request'}
+            Nueva Solicitud
           </Button>
         </div>
         
         {showForm ? (
           <div className="bg-card p-6 rounded-lg shadow-sm border">
             <h2 className="text-xl font-semibold mb-4">
-              {isSpanish ? 'Crear Solicitud de Mantenimiento' : 'Create Maintenance Request'}
+              Crear Solicitud de Mantenimiento
             </h2>
             <MaintenanceRequestForm 
               onSubmit={handleFormSubmit}
@@ -105,10 +91,10 @@ const Maintenance = () => {
         ) : (
           <Tabs defaultValue="all" className="w-full">
             <TabsList>
-              <TabsTrigger value="all">{isSpanish ? 'Todas' : 'All'}</TabsTrigger>
-              <TabsTrigger value="pending">{isSpanish ? 'Pendientes' : 'Pending'}</TabsTrigger>
-              <TabsTrigger value="in_progress">{isSpanish ? 'En Progreso' : 'In Progress'}</TabsTrigger>
-              <TabsTrigger value="completed">{isSpanish ? 'Completadas' : 'Completed'}</TabsTrigger>
+              <TabsTrigger value="all">Todas</TabsTrigger>
+              <TabsTrigger value="pending">Pendientes</TabsTrigger>
+              <TabsTrigger value="in_progress">En Progreso</TabsTrigger>
+              <TabsTrigger value="completed">Completadas</TabsTrigger>
             </TabsList>
             <TabsContent value="all">
               <MaintenanceRequestList 

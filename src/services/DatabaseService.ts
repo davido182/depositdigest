@@ -1,41 +1,22 @@
-import { Tenant, Payment, MaintenanceRequest, Account, AccountingEntry, TaxEntry } from "@/types";
-import TenantService from "./TenantService";
-import PaymentService from "./PaymentService";
-import MaintenanceService from "./MaintenanceService";
-import AccountingService from "./AccountingService";
 
-export default class DatabaseService {
+import TenantService from './TenantService';
+import PaymentService from './PaymentService';
+import MaintenanceService from './MaintenanceService';
+import AccountingService from './AccountingService';
+import { Tenant, Payment, MaintenanceRequest, Account, AccountingEntry, TaxEntry } from '@/types';
+
+class DatabaseService {
   private static instance: DatabaseService;
   private tenantService: TenantService;
   private paymentService: PaymentService;
   private maintenanceService: MaintenanceService;
   private accountingService: AccountingService;
-  private totalUnits: number = 9; // Valor por defecto correcto
 
   private constructor() {
     this.tenantService = TenantService.getInstance();
     this.paymentService = PaymentService.getInstance();
     this.maintenanceService = MaintenanceService.getInstance();
     this.accountingService = AccountingService.getInstance();
-    
-    // Cargar unidades guardadas, si no hay nada usar 9 como default
-    const savedUnits = localStorage.getItem('totalUnits');
-    if (savedUnits) {
-      const unitCount = parseInt(savedUnits, 10);
-      // Validar que no sea un número absurdo
-      if (unitCount > 0 && unitCount <= 50) {
-        this.totalUnits = unitCount;
-        console.log(`DatabaseService: Loaded saved unit count: ${this.totalUnits}`);
-      } else {
-        console.log(`DatabaseService: Invalid unit count ${unitCount}, using default: ${this.totalUnits}`);
-        // Corregir valor inválido
-        localStorage.setItem('totalUnits', this.totalUnits.toString());
-      }
-    } else {
-      console.log(`DatabaseService: Using default unit count: ${this.totalUnits}`);
-      // Guardar el valor por defecto
-      localStorage.setItem('totalUnits', this.totalUnits.toString());
-    }
   }
 
   public static getInstance(): DatabaseService {
@@ -45,10 +26,7 @@ export default class DatabaseService {
     return DatabaseService.instance;
   }
 
-  public async testConnection(): Promise<boolean> {
-    return true;
-  }
-
+  // Métodos de inquilinos
   public async getTenants(): Promise<Tenant[]> {
     return this.tenantService.getTenants();
   }
@@ -57,18 +35,19 @@ export default class DatabaseService {
     return this.tenantService.getTenantById(id);
   }
 
-  public async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt' >): Promise<string> {
+  public async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     return this.tenantService.createTenant(tenant);
   }
 
-  public async updateTenant(id: string, updates: Partial<Tenant>): Promise<boolean> {
-    return this.tenantService.updateTenant(id, updates);
+  public async updateTenant(id: string, tenant: Partial<Tenant>): Promise<boolean> {
+    return this.tenantService.updateTenant(id, tenant);
   }
 
   public async deleteTenant(id: string): Promise<boolean> {
     return this.tenantService.deleteTenant(id);
   }
 
+  // Métodos de pagos
   public async getPayments(): Promise<Payment[]> {
     return this.paymentService.getPayments();
   }
@@ -81,23 +60,24 @@ export default class DatabaseService {
     return this.paymentService.createPayment(payment);
   }
 
-  public async updatePayment(id: string, updates: Partial<Payment>): Promise<boolean> {
-    return this.paymentService.updatePayment(id, updates);
+  public async updatePayment(id: string, payment: Partial<Payment>): Promise<boolean> {
+    return this.paymentService.updatePayment(id, payment);
   }
 
   public async deletePayment(id: string): Promise<boolean> {
     return this.paymentService.deletePayment(id);
   }
 
+  // Métodos de mantenimiento
   public async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
     return this.maintenanceService.getMaintenanceRequests();
   }
 
-  public async getMaintenanceRequestById(id: string): Promise<MaintenanceRequest | undefined> {
+  public async getMaintenanceRequestById(id: string): Promise<MaintenanceRequest | null> {
     return this.maintenanceService.getMaintenanceRequestById(id);
   }
 
-  public async createMaintenanceRequest(request: Omit<MaintenanceRequest, 'id' | 'createdAt' | 'updatedAt' >): Promise<string> {
+  public async createMaintenanceRequest(request: Omit<MaintenanceRequest, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     return this.maintenanceService.createMaintenanceRequest(request);
   }
 
@@ -109,6 +89,7 @@ export default class DatabaseService {
     return this.maintenanceService.deleteMaintenanceRequest(id);
   }
 
+  // Métodos de contabilidad
   public async getAccounts(): Promise<Account[]> {
     return this.accountingService.getAccounts();
   }
@@ -157,18 +138,29 @@ export default class DatabaseService {
     return this.accountingService.deleteTaxEntry(id);
   }
 
-  public getTotalUnits(): number {
-    return this.totalUnits;
+  // Método para limpiar todos los datos
+  public clearAllData(): void {
+    console.log('DatabaseService: Iniciando limpieza completa de datos');
+    this.tenantService.clearAllData();
+    this.paymentService.clearAllData();
+    this.maintenanceService.clearAllData();
+    this.accountingService.clearAllData();
+    console.log('DatabaseService: Limpieza completa de datos finalizada');
   }
 
-  public setTotalUnits(count: number): void {
-    // Validar que sea un número razonable
-    if (count > 0 && count <= 50) {
-      this.totalUnits = count;
-      localStorage.setItem('totalUnits', count.toString());
-      console.log(`DatabaseService: Updated unit count to ${count}`);
-    } else {
-      console.error(`DatabaseService: Invalid unit count ${count}, keeping current value ${this.totalUnits}`);
+  public async testConnection(): Promise<boolean> {
+    try {
+      await Promise.all([
+        this.tenantService.testConnection(),
+        this.paymentService.testConnection(),
+        this.maintenanceService.testConnection()
+      ]);
+      return true;
+    } catch (error) {
+      console.error('Error de conexión de base de datos:', error);
+      return false;
     }
   }
 }
+
+export default DatabaseService;
