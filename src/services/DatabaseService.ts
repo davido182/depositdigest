@@ -1,4 +1,3 @@
-
 import TenantService from './TenantService';
 import PaymentService from './PaymentService';
 import MaintenanceService from './MaintenanceService';
@@ -136,6 +135,16 @@ class DatabaseService {
 
   public async deleteTaxEntry(id: string): Promise<boolean> {
     return this.accountingService.deleteTaxEntry(id);
+  }
+
+  // Unit management methods
+  public getTotalUnits(): number {
+    const stored = localStorage.getItem('totalUnits');
+    return stored ? parseInt(stored, 10) : 20;
+  }
+
+  public setTotalUnits(count: number): void {
+    localStorage.setItem('totalUnits', count.toString());
   }
 
   // Método para limpiar todos los datos
