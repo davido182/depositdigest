@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, Bot, User } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface Message {
   id: string;
@@ -17,7 +15,6 @@ interface Message {
 }
 
 export function ChatAssistant() {
-  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -157,16 +154,6 @@ export function ChatAssistant() {
       // Procesar la consulta localmente
       const response = processQuery(inputValue);
       
-      // Guardar la conversación si el usuario está autenticado
-      if (user?.id) {
-        await supabase.from('chat_conversations').insert({
-          user_id: user.id,
-          message: inputValue,
-          response: response,
-          context_data: getApplicationData()
-        });
-      }
-
       // Simular un pequeño delay para mejorar la experiencia
       setTimeout(() => {
         const botMessage: Message = {

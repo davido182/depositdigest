@@ -8,7 +8,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Trash2, Database, Mail, Shield, Clock, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 
 export function DataSettings() {
   const { user } = useAuth();
@@ -17,8 +16,7 @@ export function DataSettings() {
   const [showCodeVerification, setShowCodeVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
-  const [backups, setBackups] = useState([]);
-  const [isLoadingBackups, setIsLoadingBackups] = useState(false);
+  const [backups, setBackups] = useState<any[]>([]);
 
   const generateSecureVerificationCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -29,26 +27,18 @@ export function DataSettings() {
     return result;
   };
 
-  const loadBackups = async () => {
-    if (!user?.id) return;
-    
-    setIsLoadingBackups(true);
-    try {
-      const { data, error } = await supabase
-        .from('data_backups')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_restored', false)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setBackups(data || []);
-    } catch (error) {
-      console.error('Error loading backups:', error);
-      toast.error("Error al cargar respaldos");
-    } finally {
-      setIsLoadingBackups(false);
+  const loadBackups = () => {
+    // Cargar respaldos desde localStorage (simulando 24 horas)
+    const savedBackups = localStorage.getItem('data_backups');
+    if (savedBackups) {
+      const parsedBackups = JSON.parse(savedBackups);
+      const validBackups = parsedBackups.filter((backup: any) => {
+        const expirationTime = new Date(backup.created_at).getTime() + (24 * 60 * 60 * 1000);
+        return Date.now() < expirationTime;
+      });
+      setBackups(validBackups);
+      // Limpiar respaldos expirados
+      localStorage.setItem('data_backups', JSON.stringify(validBackups));
     }
   };
 
@@ -78,9 +68,7 @@ export function DataSettings() {
     }
   };
 
-  const createDataBackup = async () => {
-    if (!user?.id) return null;
-
+  const createDataBackup = () => {
     try {
       // Recopilar todos los datos actuales
       const allData = {
@@ -92,20 +80,22 @@ export function DataSettings() {
         tax_entries: JSON.parse(localStorage.getItem('tax_entries') || '[]'),
         unitCount: localStorage.getItem('unit-count'),
         totalUnits: localStorage.getItem('totalUnits'),
-        timestamp: new Date().toISOString()
       };
 
-      const { data, error } = await supabase
-        .from('data_backups')
-        .insert({
-          user_id: user.id,
-          backup_data: allData
-        })
-        .select()
-        .single();
+      const backup = {
+        id: crypto.randomUUID(),
+        backup_data: allData,
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        is_restored: false
+      };
 
-      if (error) throw error;
-      return data;
+      // Guardar respaldo en localStorage
+      const existingBackups = JSON.parse(localStorage.getItem('data_backups') || '[]');
+      existingBackups.push(backup);
+      localStorage.setItem('data_backups', JSON.stringify(existingBackups));
+
+      return backup;
     } catch (error) {
       console.error('Error creating backup:', error);
       throw error;
@@ -121,7 +111,7 @@ export function DataSettings() {
     setIsClearing(true);
     try {
       // Crear respaldo antes de borrar
-      await createDataBackup();
+      createDataBackup();
       
       // Limpiar todos los datos de localStorage incluyendo contabilidad
       const keysToRemove = [
@@ -162,15 +152,15 @@ export function DataSettings() {
     }
   };
 
-  const restoreBackup = async (backupId: string) => {
+  const restoreBackup = (backupId: string) => {
     try {
-      const { data: backup, error } = await supabase
-        .from('data_backups')
-        .select('*')
-        .eq('id', backupId)
-        .single();
+      const savedBackups = JSON.parse(localStorage.getItem('data_backups') || '[]');
+      const backup = savedBackups.find((b: any) => b.id === backupId);
 
-      if (error) throw error;
+      if (!backup) {
+        toast.error("Respaldo no encontrado");
+        return;
+      }
 
       const backupData = backup.backup_data;
       
@@ -185,10 +175,8 @@ export function DataSettings() {
       if (backupData.totalUnits) localStorage.setItem('totalUnits', backupData.totalUnits);
 
       // Marcar respaldo como restaurado
-      await supabase
-        .from('data_backups')
-        .update({ is_restored: true })
-        .eq('id', backupId);
+      backup.is_restored = true;
+      localStorage.setItem('data_backups', JSON.stringify(savedBackups));
 
       toast.success("Datos restaurados exitosamente. La página se recargará.");
       
@@ -203,7 +191,7 @@ export function DataSettings() {
 
   React.useEffect(() => {
     loadBackups();
-  }, [user?.id]);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -319,9 +307,10 @@ export function DataSettings() {
                     onClick={() => restoreBackup(backup.id)}
                     size="sm"
                     variant="outline"
+                    disabled={backup.is_restored}
                   >
                     <Undo2 className="h-4 w-4 mr-2" />
-                    Restaurar
+                    {backup.is_restored ? "Restaurado" : "Restaurar"}
                   </Button>
                 </div>
               ))}
