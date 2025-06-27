@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +21,7 @@ import { useState } from "react";
 
 const navigationItems = [
   {
-    title: "Dashboard",
+    title: "Inicio",
     href: "/",
     icon: LayoutDashboard,
   },
@@ -55,7 +56,7 @@ const navigationItems = [
     icon: FileText,
   },
   {
-    title: "Analytics",
+    title: "Análisis",
     href: "/analytics",
     icon: BarChart3,
   },

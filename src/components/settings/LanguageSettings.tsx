@@ -10,22 +10,21 @@ export function LanguageSettings() {
   const [selectedLanguage, setSelectedLanguage] = useState("es");
 
   useEffect(() => {
-    // Load saved language preference - default to Spanish
-    const savedLanguage = localStorage.getItem('app-language') || 'es';
+    // Forzar español por defecto
+    const savedLanguage = 'es';
+    localStorage.setItem('app-language', savedLanguage);
     setSelectedLanguage(savedLanguage);
+    console.log('Idioma configurado a español por defecto');
   }, []);
 
   const handleLanguageChange = (language: string) => {
     setSelectedLanguage(language);
     localStorage.setItem('app-language', language);
     
-    // Show confirmation message in selected language
     if (language === 'es') {
       toast.success("Idioma configurado en Español");
     } else {
-      toast.success("Language changed to English. The application will reload to apply changes.");
-      
-      // Reload the page to apply language changes only for English
+      toast.success("Language changed to English. La aplicación se recargará para aplicar los cambios.");
       setTimeout(() => {
         window.location.reload();
       }, 1500);
@@ -51,7 +50,7 @@ export function LanguageSettings() {
               <SelectValue placeholder="Seleccionar idioma" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="es">🇪🇸 Español (Por defecto)</SelectItem>
+              <SelectItem value="es">🇪🇸 Español (Predeterminado)</SelectItem>
               <SelectItem value="en">🇺🇸 English</SelectItem>
             </SelectContent>
           </Select>
@@ -59,9 +58,9 @@ export function LanguageSettings() {
         
         <div className="text-sm text-muted-foreground bg-blue-50 border border-blue-200 rounded-lg p-3">
           <p>
-            <strong>Nota:</strong> La aplicación está configurada por defecto en Español. 
-            Al cambiar al inglés, la página se recargará automáticamente para aplicar 
-            la nueva configuración de idioma en toda la aplicación.
+            <strong>Nota:</strong> La aplicación está configurada en Español por defecto. 
+            Todos los textos y títulos aparecen en español. Al cambiar al inglés, 
+            la página se recargará automáticamente para aplicar los cambios.
           </p>
         </div>
       </CardContent>

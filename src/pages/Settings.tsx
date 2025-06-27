@@ -11,7 +11,7 @@ const Settings = () => {
     <Layout>
       <section className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Configuración</h1>
         </div>
         
         <div className="grid gap-6">
