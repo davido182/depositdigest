@@ -7,11 +7,11 @@ import { Globe } from "lucide-react";
 import { toast } from "sonner";
 
 export function LanguageSettings() {
-  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [selectedLanguage, setSelectedLanguage] = useState("es");
 
   useEffect(() => {
-    // Load saved language preference - default to English
-    const savedLanguage = localStorage.getItem('app-language') || 'en';
+    // Load saved language preference - default to Spanish
+    const savedLanguage = localStorage.getItem('app-language') || 'es';
     setSelectedLanguage(savedLanguage);
   }, []);
 
@@ -21,15 +21,15 @@ export function LanguageSettings() {
     
     // Show confirmation message in selected language
     if (language === 'es') {
-      toast.success("Idioma cambiado a Español. La aplicación se recargará para aplicar los cambios.");
+      toast.success("Idioma configurado en Español");
     } else {
       toast.success("Language changed to English. The application will reload to apply changes.");
+      
+      // Reload the page to apply language changes only for English
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     }
-    
-    // Reload the page to apply language changes
-    setTimeout(() => {
-      window.location.reload();
-    }, 1500);
   };
 
   return (
@@ -37,30 +37,31 @@ export function LanguageSettings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Globe className="h-5 w-5" />
-          Language Settings
+          Configuración de Idioma
         </CardTitle>
         <CardDescription>
-          Choose your preferred language for the application
+          Elige tu idioma preferido para la aplicación
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="language">Application Language</Label>
+          <Label htmlFor="language">Idioma de la Aplicación</Label>
           <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
             <SelectTrigger id="language">
-              <SelectValue placeholder="Select language" />
+              <SelectValue placeholder="Seleccionar idioma" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="en">🇺🇸 English (Default)</SelectItem>
-              <SelectItem value="es">🇪🇸 Español</SelectItem>
+              <SelectItem value="es">🇪🇸 Español (Por defecto)</SelectItem>
+              <SelectItem value="en">🇺🇸 English</SelectItem>
             </SelectContent>
           </Select>
         </div>
         
         <div className="text-sm text-muted-foreground bg-blue-50 border border-blue-200 rounded-lg p-3">
           <p>
-            <strong>Note:</strong> The application defaults to English. When you change the language, 
-            the page will reload automatically to apply the new language settings throughout the application.
+            <strong>Nota:</strong> La aplicación está configurada por defecto en Español. 
+            Al cambiar al inglés, la página se recargará automáticamente para aplicar 
+            la nueva configuración de idioma en toda la aplicación.
           </p>
         </div>
       </CardContent>

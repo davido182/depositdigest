@@ -1,4 +1,3 @@
-
 import { Account, AccountingEntry, TaxEntry } from '@/types';
 
 class AccountingService {
@@ -20,22 +19,36 @@ class AccountingService {
 
   private loadDataFromStorage(): void {
     try {
+      // Inicializar arrays vacíos por defecto para evitar datos fantasma
+      this.accounts = [];
+      this.accountingEntries = [];
+      this.taxEntries = [];
+
       const storedAccounts = localStorage.getItem('accounts');
-      if (storedAccounts) {
-        this.accounts = JSON.parse(storedAccounts);
-        console.log(`AccountingService: Cargadas ${this.accounts.length} cuentas desde el almacenamiento`);
+      if (storedAccounts && storedAccounts !== 'null' && storedAccounts !== 'undefined') {
+        const parsedAccounts = JSON.parse(storedAccounts);
+        if (Array.isArray(parsedAccounts)) {
+          this.accounts = parsedAccounts;
+          console.log(`AccountingService: Cargadas ${this.accounts.length} cuentas desde el almacenamiento`);
+        }
       }
 
       const storedEntries = localStorage.getItem('accounting_entries');
-      if (storedEntries) {
-        this.accountingEntries = JSON.parse(storedEntries);
-        console.log(`AccountingService: Cargadas ${this.accountingEntries.length} entradas contables desde el almacenamiento`);
+      if (storedEntries && storedEntries !== 'null' && storedEntries !== 'undefined') {
+        const parsedEntries = JSON.parse(storedEntries);
+        if (Array.isArray(parsedEntries)) {
+          this.accountingEntries = parsedEntries;
+          console.log(`AccountingService: Cargadas ${this.accountingEntries.length} entradas contables desde el almacenamiento`);
+        }
       }
 
       const storedTaxEntries = localStorage.getItem('tax_entries');
-      if (storedTaxEntries) {
-        this.taxEntries = JSON.parse(storedTaxEntries);
-        console.log(`AccountingService: Cargadas ${this.taxEntries.length} entradas fiscales desde el almacenamiento`);
+      if (storedTaxEntries && storedTaxEntries !== 'null' && storedTaxEntries !== 'undefined') {
+        const parsedTaxEntries = JSON.parse(storedTaxEntries);
+        if (Array.isArray(parsedTaxEntries)) {
+          this.taxEntries = parsedTaxEntries;
+          console.log(`AccountingService: Cargadas ${this.taxEntries.length} entradas fiscales desde el almacenamiento`);
+        }
       }
     } catch (error) {
       console.error('Error al cargar datos contables:', error);

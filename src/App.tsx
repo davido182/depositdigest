@@ -14,6 +14,7 @@ import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import Maintenance from "./pages/Maintenance";
 import Accounting from "./pages/Accounting";
+import Assistant from "./pages/Assistant";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { useEffect, useRef } from "react";
@@ -75,6 +76,7 @@ const App = () => {
                 <Route path="/payments" element={<Payments />} />
                 <Route path="/maintenance" element={<Maintenance />} />
                 <Route path="/accounting" element={<Accounting />} />
+                <Route path="/assistant" element={<Assistant />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/settings" element={<Settings />} />

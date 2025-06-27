@@ -1,4 +1,3 @@
-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,7 +12,8 @@ import {
   Wrench,
   LogOut,
   Menu,
-  Calculator
+  Calculator,
+  MessageCircle
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -43,6 +43,11 @@ const navigationItems = [
     title: "Mantenimiento",
     href: "/maintenance",
     icon: Wrench,
+  },
+  {
+    title: "Asistente",
+    href: "/assistant",
+    icon: MessageCircle,
   },
   {
     title: "Reportes",
