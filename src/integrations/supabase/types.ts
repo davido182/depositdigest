@@ -158,6 +158,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          landlord_id: string | null
           priority: string
           status: string
           tenant_id: string
@@ -170,6 +171,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          landlord_id?: string | null
           priority?: string
           status?: string
           tenant_id: string
@@ -182,6 +184,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          landlord_id?: string | null
           priority?: string
           status?: string
           tenant_id?: string
@@ -205,6 +208,7 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          landlord_id: string | null
           notes: string | null
           payment_date: string
           payment_method: string
@@ -216,6 +220,7 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
+          landlord_id?: string | null
           notes?: string | null
           payment_date: string
           payment_method?: string
@@ -227,6 +232,7 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          landlord_id?: string | null
           notes?: string | null
           payment_date?: string
           payment_method?: string
@@ -265,6 +271,42 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          plan: Database["public"]["Enums"]["app_plan"]
+          stripe_customer_id: string | null
+          subscribed: boolean
+          subscription_end: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          plan?: Database["public"]["Enums"]["app_plan"]
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          plan?: Database["public"]["Enums"]["app_plan"]
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -322,11 +364,48 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_invitations: {
+        Row: {
+          created_at: string
+          email: string | null
+          expires_at: string
+          id: string
+          invitation_code: string
+          landlord_id: string
+          unit_number: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          expires_at: string
+          id?: string
+          invitation_code: string
+          landlord_id: string
+          unit_number: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          id?: string
+          invitation_code?: string
+          landlord_id?: string
+          unit_number?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       tenants: {
         Row: {
           created_at: string
           email: string
           id: string
+          landlord_id: string | null
           lease_end_date: string | null
           lease_start_date: string
           name: string
@@ -341,6 +420,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          landlord_id?: string | null
           lease_end_date?: string | null
           lease_start_date: string
           name: string
@@ -355,6 +435,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          landlord_id?: string | null
           lease_end_date?: string | null
           lease_start_date?: string
           name?: string
@@ -367,15 +448,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          landlord_id: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          unit_code: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          landlord_id?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          unit_code?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          landlord_id?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          unit_code?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_invitation_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      has_premium: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_plan: "free" | "premium"
+      user_role: "landlord_free" | "landlord_premium" | "tenant"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -490,6 +613,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_plan: ["free", "premium"],
+      user_role: ["landlord_free", "landlord_premium", "tenant"],
+    },
   },
 } as const

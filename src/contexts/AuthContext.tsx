@@ -3,9 +3,17 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
 
+type UserRole = 'landlord_free' | 'landlord_premium' | 'tenant';
+type AppPlan = 'free' | 'premium';
+
 type AuthContextType = {
   user: User | null;
   session: Session | null;
+  userRole: UserRole | null;
+  isLandlord: boolean;
+  isTenant: boolean;
+  isPremium: boolean;
+  subscriptionPlan: AppPlan | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isPasswordRecovery: boolean;
@@ -14,6 +22,11 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
+  checkSubscription: () => Promise<void>;
+  createCheckoutSession: () => Promise<string>;
+  createTenantInvitation: (unitNumber: string, email?: string) => Promise<any>;
+  acceptTenantInvitation: (invitationCode: string) => Promise<any>;
+  refreshUserRole: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,18 +34,62 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<AppPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+
+  // Computed properties
+  const isLandlord = userRole === 'landlord_free' || userRole === 'landlord_premium';
+  const isTenant = userRole === 'tenant';
+  const isPremium = userRole === 'landlord_premium' || subscriptionPlan === 'premium';
+
+  const refreshUserRole = async () => {
+    if (!user) return;
+    
+    try {
+      console.log("Refreshing user role for:", user.email);
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (roleData) {
+        setUserRole(roleData.role);
+        console.log("User role updated:", roleData.role);
+      }
+    } catch (error) {
+      console.error("Error refreshing user role:", error);
+    }
+  };
+
+  const checkSubscription = async () => {
+    if (!user) return;
+    
+    try {
+      console.log("Checking subscription for:", user.email);
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      
+      if (error) throw error;
+      
+      if (data) {
+        setSubscriptionPlan(data.plan);
+        console.log("Subscription checked:", data);
+        await refreshUserRole();
+      }
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+    }
+  };
 
   useEffect(() => {
     console.log("AuthProvider: Setting up Supabase auth listener");
     
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
-        // Handle password recovery flow
         if (event === 'PASSWORD_RECOVERY') {
           console.log("Password recovery event detected");
           setIsPasswordRecovery(true);
@@ -42,13 +99,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         
-        // Handle other auth events
         if (event === 'SIGNED_IN') {
           setIsPasswordRecovery(false);
+          
+          // Check subscription and role after sign in
+          setTimeout(async () => {
+            if (session?.user) {
+              await checkSubscription();
+              await refreshUserRole();
+            }
+          }, 0);
         }
         
         if (event === 'SIGNED_OUT') {
           setIsPasswordRecovery(false);
+          setUserRole(null);
+          setSubscriptionPlan(null);
         }
         
         setSession(session);
@@ -57,11 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("Initial session check:", session?.user?.email);
       
-      // Check if this is a password recovery session
       const urlParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const isRecoveryUrl = urlParams.get('type') === 'recovery' || 
@@ -69,17 +133,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                            urlParams.get('reset') === 'true';
       
       if (session && isRecoveryUrl) {
-        console.log("Initial password recovery session detected");
         setIsPasswordRecovery(true);
       }
       
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
+
+      // Initial role and subscription check
+      if (session?.user) {
+        setTimeout(async () => {
+          await checkSubscription();
+          await refreshUserRole();
+        }, 0);
+      }
     });
 
     return () => {
-      console.log("AuthProvider: Cleaning up auth listener");
       subscription.unsubscribe();
     };
   }, []);
@@ -166,14 +236,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     console.log("Password updated successfully");
-    
-    // Clear password recovery state after successful update
     setIsPasswordRecovery(false);
+  };
+
+  const createCheckoutSession = async (): Promise<string> => {
+    const { data, error } = await supabase.functions.invoke('create-checkout');
+    
+    if (error) throw error;
+    return data.url;
+  };
+
+  const createTenantInvitation = async (unitNumber: string, email?: string) => {
+    const { data, error } = await supabase.functions.invoke('create-tenant-invitation', {
+      body: { unit_number: unitNumber, email }
+    });
+    
+    if (error) throw error;
+    return data;
+  };
+
+  const acceptTenantInvitation = async (invitationCode: string) => {
+    const { data, error } = await supabase.functions.invoke('accept-tenant-invitation', {
+      body: { invitation_code: invitationCode }
+    });
+    
+    if (error) throw error;
+    return data;
   };
 
   const value = {
     user,
     session,
+    userRole,
+    isLandlord,
+    isTenant,
+    isPremium,
+    subscriptionPlan,
     isAuthenticated: !!user && !isPasswordRecovery,
     isLoading,
     isPasswordRecovery,
@@ -181,10 +279,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     resetPassword,
-    updatePassword
+    updatePassword,
+    checkSubscription,
+    createCheckoutSession,
+    createTenantInvitation,
+    acceptTenantInvitation,
+    refreshUserRole
   };
-
-  console.log("AuthProvider rendering, isAuthenticated:", !!user && !isPasswordRecovery, "isLoading:", isLoading, "isPasswordRecovery:", isPasswordRecovery);
 
   return (
     <AuthContext.Provider value={value}>
