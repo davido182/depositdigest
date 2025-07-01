@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import TenantSignup from "./pages/TenantSignup";
 import InviteTenant from "./pages/InviteTenant";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
+import Landing from "./pages/Landing";
 import { useEffect, useRef } from "react";
 import { App as CapApp } from "@capacitor/app";
 import { useDeviceFeatures } from "./hooks/use-device-features";
@@ -72,6 +73,7 @@ const App = () => {
         <TooltipProvider>
           <BrowserRouter>
             <Routes>
+              <Route path="/landing" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/tenant-signup" element={<TenantSignup />} />
               <Route element={<ProtectedRoute />}>
