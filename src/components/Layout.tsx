@@ -1,5 +1,5 @@
 
-import { Sidebar } from "./Sidebar";
+import Sidebar from "./Sidebar";
 import { useState, useEffect } from "react";
 import { OfflineBanner } from "./ui/offline-banner";
 import { useDeviceFeatures } from "@/hooks/use-device-features";

@@ -1,63 +1,27 @@
 
-import { dbConfig, isDemoMode } from '../config/database';
+import { supabase } from "@/integrations/supabase/client";
 
-class BaseService {
-  // This will be the proper base class instance property
-  protected static instance: any;
-  protected apiUrl: string;
+export class BaseService {
+  protected supabase = supabase;
 
-  protected constructor() {
-    this.apiUrl = dbConfig.apiUrl;
-    console.log(`Service initialized with API URL: ${this.apiUrl}`);
+  protected async getCurrentUser() {
+    const { data: { user } } = await this.supabase.auth.getUser();
+    return user;
   }
 
-  // Test connection
-  public async testConnection(): Promise<boolean> {
-    try {
-      // In a real app, we would test the API connection here
-      console.log('Testing API connection to:', this.apiUrl);
-      // For demo purposes, we'll just return true
-      return true;
-    } catch (error) {
-      console.error('API connection test failed:', error);
-      return false;
+  protected async getUserId(): Promise<string> {
+    const user = await this.getCurrentUser();
+    if (!user) {
+      throw new Error("User not authenticated");
     }
+    return user.id;
   }
 
-  // Simulate API request with mock data or fetch
-  protected async simulateRequest<T>(
-    endpoint: string, 
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
-    data?: any
-  ): Promise<T> {
-    console.log(`${method} request to ${endpoint}`, data || '');
-    
-    if (isDemoMode) {
-      // Return mock data in demo mode
-      await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
-      return null as T; // This will be overridden by child classes
-    } else {
-      // In a real application, we would make actual API calls here
-      try {
-        const response = await fetch(`${this.apiUrl}/${endpoint}`, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: data ? JSON.stringify(data) : undefined,
-        });
-        
-        if (!response.ok) {
-          throw new Error(`API request failed with status ${response.status}`);
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('API request failed:', error);
-        throw error;
-      }
+  protected async ensureAuthenticated() {
+    const { data: { user }, error } = await this.supabase.auth.getUser();
+    if (error || !user) {
+      throw new Error("User not authenticated");
     }
+    return user;
   }
 }
-
-export default BaseService;

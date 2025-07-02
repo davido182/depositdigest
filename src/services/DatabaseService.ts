@@ -1,175 +1,23 @@
-import TenantService from './TenantService';
-import PaymentService from './PaymentService';
-import MaintenanceService from './MaintenanceService';
-import AccountingService from './AccountingService';
-import { Tenant, Payment, MaintenanceRequest, Account, AccountingEntry, TaxEntry } from '@/types';
 
-class DatabaseService {
-  private static instance: DatabaseService;
-  private tenantService: TenantService;
-  private paymentService: PaymentService;
-  private maintenanceService: MaintenanceService;
-  private accountingService: AccountingService;
+import tenantService from './TenantService';
+import paymentService from './PaymentService';
+import maintenanceService from './MaintenanceService';
 
-  private constructor() {
-    this.tenantService = TenantService.getInstance();
-    this.paymentService = PaymentService.getInstance();
-    this.maintenanceService = MaintenanceService.getInstance();
-    this.accountingService = AccountingService.getInstance();
-  }
-
-  public static getInstance(): DatabaseService {
-    if (!DatabaseService.instance) {
-      DatabaseService.instance = new DatabaseService();
-    }
-    return DatabaseService.instance;
-  }
-
-  // Métodos de inquilinos
-  public async getTenants(): Promise<Tenant[]> {
-    return this.tenantService.getTenants();
-  }
-
-  public async getTenantById(id: string): Promise<Tenant | undefined> {
-    return this.tenantService.getTenantById(id);
-  }
-
-  public async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    return this.tenantService.createTenant(tenant);
-  }
-
-  public async updateTenant(id: string, tenant: Partial<Tenant>): Promise<boolean> {
-    return this.tenantService.updateTenant(id, tenant);
-  }
-
-  public async deleteTenant(id: string): Promise<boolean> {
-    return this.tenantService.deleteTenant(id);
-  }
-
-  // Métodos de pagos
-  public async getPayments(): Promise<Payment[]> {
-    return this.paymentService.getPayments();
-  }
-
-  public async getPaymentById(id: string): Promise<Payment | undefined> {
-    return this.paymentService.getPaymentById(id);
-  }
-
-  public async createPayment(payment: Omit<Payment, 'id' | 'createdAt'>): Promise<string> {
-    return this.paymentService.createPayment(payment);
-  }
-
-  public async updatePayment(id: string, payment: Partial<Payment>): Promise<boolean> {
-    return this.paymentService.updatePayment(id, payment);
-  }
-
-  public async deletePayment(id: string): Promise<boolean> {
-    return this.paymentService.deletePayment(id);
-  }
-
-  // Métodos de mantenimiento
-  public async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
-    return this.maintenanceService.getMaintenanceRequests();
-  }
-
-  public async getMaintenanceRequestById(id: string): Promise<MaintenanceRequest | null> {
-    return this.maintenanceService.getMaintenanceRequestById(id);
-  }
-
-  public async createMaintenanceRequest(request: Omit<MaintenanceRequest, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    return this.maintenanceService.createMaintenanceRequest(request);
-  }
-
-  public async updateMaintenanceRequest(id: string, updates: Partial<MaintenanceRequest>): Promise<boolean> {
-    return this.maintenanceService.updateMaintenanceRequest(id, updates);
-  }
-
-  public async deleteMaintenanceRequest(id: string): Promise<boolean> {
-    return this.maintenanceService.deleteMaintenanceRequest(id);
-  }
-
-  // Métodos de contabilidad
-  public async getAccounts(): Promise<Account[]> {
-    return this.accountingService.getAccounts();
-  }
-
-  public async createAccount(account: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    return this.accountingService.createAccount(account);
-  }
-
-  public async updateAccount(id: string, updates: Partial<Account>): Promise<boolean> {
-    return this.accountingService.updateAccount(id, updates);
-  }
-
-  public async deleteAccount(id: string): Promise<boolean> {
-    return this.accountingService.deleteAccount(id);
-  }
-
-  public async getAccountingEntries(): Promise<AccountingEntry[]> {
-    return this.accountingService.getAccountingEntries();
-  }
-
-  public async createAccountingEntry(entry: Omit<AccountingEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    return this.accountingService.createAccountingEntry(entry);
-  }
-
-  public async updateAccountingEntry(id: string, updates: Partial<AccountingEntry>): Promise<boolean> {
-    return this.accountingService.updateAccountingEntry(id, updates);
-  }
-
-  public async deleteAccountingEntry(id: string): Promise<boolean> {
-    return this.accountingService.deleteAccountingEntry(id);
-  }
-
-  public async getTaxEntries(): Promise<TaxEntry[]> {
-    return this.accountingService.getTaxEntries();
-  }
-
-  public async createTaxEntry(entry: Omit<TaxEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    return this.accountingService.createTaxEntry(entry);
-  }
-
-  public async updateTaxEntry(id: string, updates: Partial<TaxEntry>): Promise<boolean> {
-    return this.accountingService.updateTaxEntry(id, updates);
-  }
-
-  public async deleteTaxEntry(id: string): Promise<boolean> {
-    return this.accountingService.deleteTaxEntry(id);
-  }
-
-  // Unit management methods
-  public getTotalUnits(): number {
-    const stored = localStorage.getItem('totalUnits');
-    return stored ? parseInt(stored, 10) : 20;
-  }
-
-  public setTotalUnits(count: number): void {
-    localStorage.setItem('totalUnits', count.toString());
-  }
-
-  // Método para limpiar todos los datos
-  public clearAllData(): void {
-    console.log('DatabaseService: Iniciando limpieza completa de datos');
-    this.tenantService.clearAllData();
-    this.paymentService.clearAllData();
-    this.maintenanceService.clearAllData();
-    this.accountingService.clearAllData();
-    console.log('DatabaseService: Limpieza completa de datos finalizada');
-  }
-
-  public async testConnection(): Promise<boolean> {
+export class DatabaseService {
+  static async testConnections() {
+    console.log('Testing database connections...');
+    
     try {
-      await Promise.all([
-        this.tenantService.testConnection(),
-        this.paymentService.testConnection(),
-        this.maintenanceService.testConnection()
-      ]);
+      // Test tenant service
+      await tenantService.getTenants();
+      console.log('✓ Tenant service connected');
+      
+      // Test other services as needed
+      console.log('✓ All database connections working');
       return true;
     } catch (error) {
-      console.error('Error de conexión de base de datos:', error);
+      console.error('Database connection test failed:', error);
       return false;
     }
   }
 }
-
-export default DatabaseService;

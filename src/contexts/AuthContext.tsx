@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,7 @@ type AuthContextType = {
   isLandlord: boolean;
   isTenant: boolean;
   isPremium: boolean;
+  hasActivePremium: boolean;
   subscriptionPlan: AppPlan | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isLandlord = userRole === 'landlord_free' || userRole === 'landlord_premium';
   const isTenant = userRole === 'tenant';
   const isPremium = userRole === 'landlord_premium' || subscriptionPlan === 'premium';
+  const hasActivePremium = userRole === 'landlord_premium' || subscriptionPlan === 'premium';
 
   const refreshUserRole = async () => {
     if (!user) return;
@@ -271,6 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLandlord,
     isTenant,
     isPremium,
+    hasActivePremium,
     subscriptionPlan,
     isAuthenticated: !!user && !isPasswordRecovery,
     isLoading,
