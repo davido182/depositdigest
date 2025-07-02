@@ -1,4 +1,3 @@
-
 import { Layout } from "@/components/Layout";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { TenantsGrid } from "@/components/dashboard/TenantsGrid";
@@ -9,7 +8,7 @@ import { Payment, Tenant } from "@/types";
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import DatabaseService from "@/services/DatabaseService";
+import { DatabaseService } from "@/services/DatabaseService";
 import { Button } from "@/components/ui/button";
 import { Building, Plus } from "lucide-react";
 
@@ -20,7 +19,7 @@ const Index = () => {
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [totalUnits, setTotalUnits] = useState(9); // Valor por defecto a 9
+  const [totalUnits, setTotalUnits] = useState(9);
 
   useEffect(() => {
     const loadData = async () => {

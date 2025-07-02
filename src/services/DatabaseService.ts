@@ -4,7 +4,16 @@ import paymentService from './PaymentService';
 import maintenanceService from './MaintenanceService';
 
 export class DatabaseService {
-  static async testConnections() {
+  private static instance: DatabaseService;
+
+  static getInstance(): DatabaseService {
+    if (!DatabaseService.instance) {
+      DatabaseService.instance = new DatabaseService();
+    }
+    return DatabaseService.instance;
+  }
+
+  async testConnections() {
     console.log('Testing database connections...');
     
     try {
@@ -20,4 +29,71 @@ export class DatabaseService {
       return false;
     }
   }
+
+  // Tenant methods
+  async getTenants() {
+    return await tenantService.getTenants();
+  }
+
+  async createTenant(tenant: any) {
+    return await tenantService.createTenant(tenant);
+  }
+
+  async updateTenant(id: string, tenant: any) {
+    return await tenantService.updateTenant(id, tenant);
+  }
+
+  async deleteTenant(id: string) {
+    return await tenantService.deleteTenant(id);
+  }
+
+  // Payment methods
+  async getPayments() {
+    return await paymentService.getPayments();
+  }
+
+  async createPayment(payment: any) {
+    return await paymentService.createPayment(payment);
+  }
+
+  async updatePayment(id: string, payment: any) {
+    return await paymentService.updatePayment(id, payment);
+  }
+
+  async deletePayment(id: string) {
+    return await paymentService.deletePayment(id);
+  }
+
+  // Maintenance methods
+  async getMaintenanceRequests() {
+    return await maintenanceService.getMaintenanceRequests();
+  }
+
+  async createMaintenanceRequest(request: any) {
+    return await maintenanceService.createMaintenanceRequest(request);
+  }
+
+  async updateMaintenanceRequest(id: string, updates: any) {
+    return await maintenanceService.updateMaintenanceRequest(id, updates);
+  }
+
+  async deleteMaintenanceRequest(id: string) {
+    return await maintenanceService.deleteMaintenanceRequest(id);
+  }
+
+  // Unit management methods
+  private totalUnits: number = 9;
+
+  getTotalUnits(): number {
+    const saved = localStorage.getItem('totalUnits');
+    return saved ? parseInt(saved, 10) : this.totalUnits;
+  }
+
+  setTotalUnits(count: number): void {
+    this.totalUnits = count;
+    localStorage.setItem('totalUnits', count.toString());
+  }
 }
+
+// Export both named and default exports for backward compatibility
+export default DatabaseService;

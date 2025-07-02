@@ -1,11 +1,10 @@
-
 import { Layout } from "@/components/Layout";
 import { PaymentsList } from "@/components/payments/PaymentsList";
 import { ReceiptProcessor } from "@/components/payments/ReceiptProcessor";
 import { Payment, Tenant } from "@/types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import DatabaseService from "@/services/DatabaseService";
+import { DatabaseService } from "@/services/DatabaseService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Payments = () => {

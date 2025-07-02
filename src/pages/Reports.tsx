@@ -1,10 +1,9 @@
-
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import DatabaseService from "@/services/DatabaseService";
+import { DatabaseService } from "@/services/DatabaseService";
 import { Tenant, Payment } from "@/types";
 import { FileDown, FileText as FilePdfIcon, PieChart, Filter } from "lucide-react";
 import { TenantsPdfReport } from "@/components/reports/TenantsPdfReport";
