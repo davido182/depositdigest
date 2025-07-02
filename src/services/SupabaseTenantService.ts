@@ -1,121 +1,68 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { SupabaseService } from "./SupabaseService";
-import { Tenant } from "@/types";
+import { BaseService } from './BaseService';
+import { Tenant } from '@/types';
 
-export class SupabaseTenantService extends SupabaseService {
+export class SupabaseTenantService extends BaseService {
   async getTenants(): Promise<Tenant[]> {
-    const user = await this.ensureAuthenticated();
+    console.log('Fetching tenants from Supabase...');
     
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from('tenants')
       .select('*')
-      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching tenants:', error);
-      throw error;
+      throw new Error(`Failed to fetch tenants: ${error.message}`);
     }
 
-    return data.map(this.mapSupabaseTenantToTenant);
-  }
-
-  async getTenantById(id: string): Promise<Tenant | null> {
-    const user = await this.ensureAuthenticated();
+    console.log('Fetched tenants:', data);
     
-    const { data, error } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return null;
-      }
-      console.error('Error fetching tenant:', error);
-      throw error;
-    }
-
-    return this.mapSupabaseTenantToTenant(data);
-  }
-
-  async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    const user = await this.ensureAuthenticated();
-    
-    const tenantData = {
-      user_id: user.id,
+    // Transform database format to app format
+    return (data || []).map(tenant => ({
+      id: tenant.id,
       name: tenant.name,
       email: tenant.email,
-      phone: tenant.phone || null,
-      unit_number: tenant.unit,
-      rent_amount: tenant.rentAmount,
-      lease_start_date: tenant.moveInDate,
-      lease_end_date: tenant.leaseEndDate || null, // Allow null values
-      status: tenant.status
-    };
+      phone: tenant.phone || '',
+      unit: tenant.unit_number,
+      moveInDate: tenant.lease_start_date,
+      leaseEndDate: tenant.lease_end_date || '',
+      rentAmount: Number(tenant.rent_amount),
+      depositAmount: Number(tenant.rent_amount), // Assuming deposit equals rent
+      status: tenant.status as 'active' | 'inactive',
+      paymentHistory: [],
+      createdAt: tenant.created_at,
+      updatedAt: tenant.updated_at,
+    }));
+  }
 
-    const { data, error } = await supabase
+  async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt' | 'paymentHistory'>): Promise<Tenant> {
+    console.log('Creating tenant in Supabase:', tenant);
+    
+    const { data, error } = await this.supabase
       .from('tenants')
-      .insert(tenantData)
-      .select('id')
+      .insert({
+        name: tenant.name,
+        email: tenant.email,
+        phone: tenant.phone || null,
+        unit_number: tenant.unit,
+        lease_start_date: tenant.moveInDate,
+        lease_end_date: tenant.leaseEndDate || null,
+        rent_amount: tenant.rentAmount,
+        status: tenant.status,
+        user_id: (await this.supabase.auth.getUser()).data.user?.id!,
+        landlord_id: (await this.supabase.auth.getUser()).data.user?.id!,
+      })
+      .select()
       .single();
 
     if (error) {
       console.error('Error creating tenant:', error);
-      throw error;
+      throw new Error(`Failed to create tenant: ${error.message}`);
     }
 
-    return data!.id;
-  }
+    console.log('Created tenant:', data);
 
-  async updateTenant(id: string, updates: Partial<Tenant>): Promise<boolean> {
-    const user = await this.ensureAuthenticated();
-    
-    const updateData: any = {};
-    if (updates.name) updateData.name = updates.name;
-    if (updates.email) updateData.email = updates.email;
-    if (updates.phone !== undefined) updateData.phone = updates.phone;
-    if (updates.unit) updateData.unit_number = updates.unit;
-    if (updates.rentAmount !== undefined) updateData.rent_amount = updates.rentAmount;
-    if (updates.moveInDate) updateData.lease_start_date = updates.moveInDate;
-    if (updates.leaseEndDate !== undefined) updateData.lease_end_date = updates.leaseEndDate || null; // Handle empty string as null
-    if (updates.status) updateData.status = updates.status;
-
-    const { error } = await supabase
-      .from('tenants')
-      .update(updateData)
-      .eq('id', id)
-      .eq('user_id', user.id);
-
-    if (error) {
-      console.error('Error updating tenant:', error);
-      throw error;
-    }
-
-    return true;
-  }
-
-  async deleteTenant(id: string): Promise<boolean> {
-    const user = await this.ensureAuthenticated();
-    
-    const { error } = await supabase
-      .from('tenants')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
-
-    if (error) {
-      console.error('Error deleting tenant:', error);
-      throw error;
-    }
-
-    return true;
-  }
-
-  private mapSupabaseTenantToTenant(data: any): Tenant {
     return {
       id: data.id,
       name: data.name,
@@ -123,14 +70,68 @@ export class SupabaseTenantService extends SupabaseService {
       phone: data.phone || '',
       unit: data.unit_number,
       moveInDate: data.lease_start_date,
-      leaseEndDate: data.lease_end_date || '', // Handle null as empty string
-      rentAmount: parseFloat(data.rent_amount),
-      depositAmount: 0,
-      status: data.status as Tenant['status'],
+      leaseEndDate: data.lease_end_date || '',
+      rentAmount: Number(data.rent_amount),
+      depositAmount: Number(data.rent_amount),
+      status: data.status as 'active' | 'inactive',
       paymentHistory: [],
-      notes: '',
       createdAt: data.created_at,
-      updatedAt: data.updated_at
+      updatedAt: data.updated_at,
     };
+  }
+
+  async updateTenant(id: string, updates: Partial<Tenant>): Promise<Tenant> {
+    console.log('Updating tenant in Supabase:', id, updates);
+    
+    const { data, error } = await this.supabase
+      .from('tenants')
+      .update({
+        name: updates.name,
+        email: updates.email,
+        phone: updates.phone || null,
+        unit_number: updates.unit,
+        lease_start_date: updates.moveInDate,
+        lease_end_date: updates.leaseEndDate || null,
+        rent_amount: updates.rentAmount,
+        status: updates.status,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating tenant:', error);
+      throw new Error(`Failed to update tenant: ${error.message}`);
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone || '',
+      unit: data.unit_number,
+      moveInDate: data.lease_start_date,
+      leaseEndDate: data.lease_end_date || '',
+      rentAmount: Number(data.rent_amount),
+      depositAmount: Number(data.rent_amount),
+      status: data.status as 'active' | 'inactive',
+      paymentHistory: [],
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  }
+
+  async deleteTenant(id: string): Promise<void> {
+    console.log('Deleting tenant from Supabase:', id);
+    
+    const { error } = await this.supabase
+      .from('tenants')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting tenant:', error);
+      throw new Error(`Failed to delete tenant: ${error.message}`);
+    }
   }
 }

@@ -13,7 +13,8 @@ import {
   Smartphone, 
   Crown, 
   Check,
-  ArrowRight
+  ArrowRight,
+  UserPlus
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -25,6 +26,7 @@ const Landing = () => {
       "Gestión básica de inquilinos",
       "Registro de pagos",
       "Solicitudes de mantenimiento",
+      "Invitaciones a inquilinos",
       "Reportes básicos",
       "Hasta 5 unidades"
     ],
@@ -43,6 +45,20 @@ const Landing = () => {
       "Solicitar mantenimiento",
       "Comunicación con propietario"
     ]
+  };
+
+  const handleDemoClick = () => {
+    window.open("https://depositdigest.lovable.app/", "_blank");
+  };
+
+  const handleMobileDownload = (platform: 'ios' | 'android') => {
+    if (platform === 'ios') {
+      // Redirect to App Store when available
+      window.open("https://apps.apple.com/search?term=rentflow", "_blank");
+    } else {
+      // Redirect to Google Play when available
+      window.open("https://play.google.com/store/search?q=rentflow", "_blank");
+    }
   };
 
   return (
@@ -83,7 +99,7 @@ const Landing = () => {
             <Button size="lg" onClick={() => navigate("/login")} className="bg-blue-600 hover:bg-blue-700">
               Comenzar Gratis <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button size="lg" variant="outline">
+            <Button size="lg" variant="outline" onClick={handleDemoClick}>
               Ver Demo
             </Button>
           </div>
@@ -252,7 +268,10 @@ const Landing = () => {
             Gestiona tus propiedades desde cualquier lugar con nuestras apps nativas
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Card className="p-6 min-w-[200px]">
+            <Card 
+              className="p-6 min-w-[200px] cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => handleMobileDownload('ios')}
+            >
               <div className="flex items-center gap-4">
                 <div className="bg-black rounded-lg p-2">
                   <Smartphone className="h-8 w-8 text-white" />
@@ -263,7 +282,10 @@ const Landing = () => {
                 </div>
               </div>
             </Card>
-            <Card className="p-6 min-w-[200px]">
+            <Card 
+              className="p-6 min-w-[200px] cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => handleMobileDownload('android')}
+            >
               <div className="flex items-center gap-4">
                 <div className="bg-green-600 rounded-lg p-2">
                   <Smartphone className="h-8 w-8 text-white" />
@@ -296,7 +318,7 @@ const Landing = () => {
               <ul className="space-y-2 text-gray-400">
                 <li>Características</li>
                 <li>Precios</li>
-                <li>Demo</li>
+                <li className="cursor-pointer hover:text-white" onClick={handleDemoClick}>Demo</li>
               </ul>
             </div>
             <div>
