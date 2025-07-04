@@ -1,3 +1,4 @@
+
 import { Layout } from "@/components/Layout";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { TenantsGrid } from "@/components/dashboard/TenantsGrid";
@@ -96,9 +97,13 @@ const Index = () => {
         toast.success("Tenant updated successfully");
       } else {
         const newId = await dbService.createTenant(updatedTenant);
-        const newTenant = { ...updatedTenant, id: newId };
-        setTenants([...tenants, newTenant]);
-        toast.success("Tenant added successfully");
+        if (typeof newId === 'string') {
+          const newTenant = { ...updatedTenant, id: newId };
+          setTenants([...tenants, newTenant]);
+          toast.success("Tenant added successfully");
+        } else {
+          toast.error("Failed to create tenant");
+        }
       }
       
       setIsEditModalOpen(false);

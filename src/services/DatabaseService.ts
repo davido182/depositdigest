@@ -2,6 +2,7 @@
 import tenantService from './TenantService';
 import paymentService from './PaymentService';
 import maintenanceService from './MaintenanceService';
+import accountingService from './AccountingService';
 
 export class DatabaseService {
   private static instance: DatabaseService;
@@ -28,6 +29,11 @@ export class DatabaseService {
       console.error('Database connection test failed:', error);
       return false;
     }
+  }
+
+  // Alias for backwards compatibility
+  async testConnection() {
+    return await this.testConnections();
   }
 
   // Tenant methods
@@ -79,6 +85,23 @@ export class DatabaseService {
 
   async deleteMaintenanceRequest(id: string) {
     return await maintenanceService.deleteMaintenanceRequest(id);
+  }
+
+  // Accounting methods
+  async getAccounts() {
+    return await accountingService.getAccounts();
+  }
+
+  async getAccountingEntries() {
+    return await accountingService.getAccountingEntries();
+  }
+
+  async createAccount(account: any) {
+    return await accountingService.createAccount(account);
+  }
+
+  async createAccountingEntry(entry: any) {
+    return await accountingService.createAccountingEntry(entry);
   }
 
   // Unit management methods

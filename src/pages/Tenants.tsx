@@ -7,7 +7,6 @@ import { Tenant, TenantStatus } from "@/types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
-import TenantService from "@/services/TenantService";
 import { ValidationService } from "@/services/ValidationService";
 import { Button } from "@/components/ui/button";
 import { Building, AlertTriangle } from "lucide-react";
@@ -37,7 +36,7 @@ const Tenants = () => {
       try {
         setIsLoading(true);
         const dbService = DatabaseService.getInstance();
-        const isConnected = await dbService.testConnection();
+        const isConnected = await dbService.testConnections();
         
         if (isConnected) {
           console.log('Loading tenants from database service');
@@ -66,9 +65,6 @@ const Tenants = () => {
 
   const handleClearCorruptedData = async () => {
     try {
-      const tenantService = TenantService.getInstance();
-      tenantService.clearAllData();
-      
       localStorage.removeItem('tenants');
       localStorage.removeItem('totalUnits');
       
@@ -129,9 +125,13 @@ const Tenants = () => {
         toast.success("Tenant updated successfully");
       } else {
         const newId = await dbService.createTenant(updatedTenant);
-        const newTenant = { ...updatedTenant, id: newId };
-        setTenants([...tenants, newTenant]);
-        toast.success("Tenant added successfully");
+        if (typeof newId === 'string') {
+          const newTenant = { ...updatedTenant, id: newId };
+          setTenants([...tenants, newTenant]);
+          toast.success("Tenant added successfully");
+        } else {
+          toast.error("Failed to create tenant");
+        }
       }
       
       setIsEditModalOpen(false);
