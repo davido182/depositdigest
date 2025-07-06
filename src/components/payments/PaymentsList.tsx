@@ -277,36 +277,23 @@ Generado: ${new Date().toLocaleString()}`;
         </div>
       )}
 
-      {/* Modal para agregar pago */}
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Agregar Nuevo Pago</DialogTitle>
-          </DialogHeader>
-          <PaymentForm
-            tenants={tenants}
-            onSubmit={handleAddPayment}
-            onCancel={() => setIsAddModalOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Payment Form for adding new payments */}
+      <PaymentForm
+        payment={null}
+        tenants={tenants}
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSave={handleAddPayment}
+      />
 
-      {/* Modal para editar pago */}
-      <Dialog open={!!editingPayment} onOpenChange={() => setEditingPayment(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar Pago</DialogTitle>
-          </DialogHeader>
-          {editingPayment && (
-            <PaymentForm
-              tenants={tenants}
-              payment={editingPayment}
-              onSubmit={handleUpdatePayment}
-              onCancel={() => setEditingPayment(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Payment Form for editing existing payments */}
+      <PaymentForm
+        payment={editingPayment}
+        tenants={tenants}
+        isOpen={!!editingPayment}
+        onClose={() => setEditingPayment(null)}
+        onSave={handleUpdatePayment}
+      />
     </div>
   );
 }
