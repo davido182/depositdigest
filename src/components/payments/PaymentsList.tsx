@@ -1,6 +1,10 @@
+
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { PaymentForm } from "./PaymentForm";
+import { Plus, Download, Eye, Trash2 } from "lucide-react";
 import { Payment, Tenant } from "@/types";
-import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -9,21 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Plus, Edit, ArrowLeftRight, List, Tags, Trash2 } from "lucide-react";
-import { PaymentForm } from "./PaymentForm";
-import { MonthlyPaymentGrid } from "./MonthlyPaymentGrid";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,356 +36,277 @@ interface PaymentsListProps {
   payments: Payment[];
   tenants: Tenant[];
   tenantNames: Record<string, string>;
-  onAddPayment: () => void;
+  onAddPayment?: () => void;
   onUpdatePayment: (payment: Payment) => void;
   onDeletePayment?: (paymentId: string) => void;
 }
 
-export function PaymentsList({
-  payments,
-  tenants,
-  tenantNames,
-  onAddPayment,
+export function PaymentsList({ 
+  payments, 
+  tenants, 
+  tenantNames, 
+  onAddPayment, 
   onUpdatePayment,
-  onDeletePayment,
+  onDeletePayment 
 }: PaymentsListProps) {
-  const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
-  const [currentView, setCurrentView] = useState<"list" | "grid">("list");
-  const [groupBy, setGroupBy] = useState<"none" | "unit">("none");
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
-  const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
-  
-  const statusColors = {
-    completed: "bg-emerald-100 text-emerald-800 border-emerald-200",
-    pending: "bg-amber-100 text-amber-800 border-amber-200",
-    failed: "bg-red-100 text-red-800 border-red-200",
-    refunded: "bg-blue-100 text-blue-800 border-blue-200",
-  };
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+  const [viewingPayment, setViewingPayment] = useState<Payment | null>(null);
 
-  const sortedPayments = [...payments].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
-  
-  const getUnitForTenant = (tenantId: string): string => {
-    const tenant = tenants.find(t => t.id === tenantId);
-    return tenant ? tenant.unit : "Unknown";
-  };
-  
-  const getGroupedPayments = () => {
-    if (groupBy === "none") {
-      return { "": sortedPayments };
-    }
-    
-    return sortedPayments.reduce((groups, payment) => {
-      const unit = getUnitForTenant(payment.tenantId);
-      if (!groups[unit]) {
-        groups[unit] = [];
-      }
-      groups[unit].push(payment);
-      return groups;
-    }, {} as Record<string, Payment[]>);
-  };
-  
-  const groupedPayments = getGroupedPayments();
-  const groupKeys = Object.keys(groupedPayments).sort((a, b) => {
-    if (a === "") return -1;
-    if (b === "") return 1;
-    return parseInt(a) - parseInt(b);
-  });
-  
-  const handleOpenPaymentForm = () => {
-    setSelectedPayment(null);
-    setIsPaymentFormOpen(true);
-  };
-  
-  const handleEditPayment = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setIsPaymentFormOpen(true);
-  };
-  
-  const handleSavePayment = (payment: Payment) => {
+  const handleAddPayment = (payment: Payment) => {
+    console.log('Agregando nuevo pago:', payment);
     onUpdatePayment(payment);
-    setIsPaymentFormOpen(false);
+    setIsAddModalOpen(false);
+    toast.success("Pago agregado exitosamente");
   };
 
-  const handleDeletePayment = (paymentId: string) => {
+  const handleUpdatePayment = (payment: Payment) => {
+    console.log('Actualizando pago:', payment);
+    onUpdatePayment(payment);
+    setEditingPayment(null);
+    toast.success("Pago actualizado exitosamente");
+  };
+
+  const handleDeletePayment = async (paymentId: string) => {
     if (onDeletePayment) {
-      onDeletePayment(paymentId);
-      setPaymentToDelete(null);
+      try {
+        await onDeletePayment(paymentId);
+      } catch (error) {
+        console.error('Error al eliminar pago:', error);
+      }
     }
   };
 
-  const toggleView = () => {
-    setCurrentView(currentView === "list" ? "grid" : "list");
+  const handleDownloadPayment = (payment: Payment) => {
+    const tenant = tenants.find(t => t.id === payment.tenantId);
+    const content = `Comprobante de Pago
+ID: ${payment.id}
+Inquilino: ${tenant?.name || 'No encontrado'}
+Unidad: ${tenant?.unit || 'N/A'}
+Monto: $${payment.amount.toLocaleString()}
+Fecha: ${payment.date}
+Tipo: ${payment.type}
+Método: ${payment.method}
+Estado: ${payment.status}
+Notas: ${payment.notes || 'Sin notas'}
+Generado: ${new Date().toLocaleString()}`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pago-${payment.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Comprobante descargado');
   };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN'
+    }).format(amount);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-600 bg-green-100';
+      case 'pending':
+        return 'text-yellow-600 bg-yellow-100';
+      case 'failed':
+        return 'text-red-600 bg-red-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      'rent': 'Alquiler',
+      'deposit': 'Depósito',
+      'fee': 'Tarifa',
+      'other': 'Otro'
+    };
+    return labels[type] || type;
+  };
+
+  const getMethodLabel = (method: string) => {
+    const labels: Record<string, string> = {
+      'cash': 'Efectivo',
+      'transfer': 'Transferencia',
+      'card': 'Tarjeta',
+      'check': 'Cheque',
+      'other': 'Otro'
+    };
+    return labels[method] || method;
+  };
+
+  const sortedPayments = [...payments].sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Payments</h2>
-        <div className="flex gap-2">
-          {currentView === "list" && (
-            <Select
-              value={groupBy}
-              onValueChange={(value) => setGroupBy(value as "none" | "unit")}
-            >
-              <SelectTrigger className="w-[180px]">
-                <div className="flex items-center gap-2">
-                  <Tags className="h-4 w-4" />
-                  <SelectValue placeholder="Group by..." />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No Grouping</SelectItem>
-                <SelectItem value="unit">Group by Unit</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={toggleView}
-            className="gap-1.5"
-          >
-            <ArrowLeftRight className="h-4 w-4" />
-            <span>{currentView === "list" ? "Monthly Grid" : "List View"}</span>
-          </Button>
-          <Button onClick={handleOpenPaymentForm} className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            <span>Add Payment</span>
-          </Button>
-        </div>
+        <h3 className="text-lg font-semibold">Pagos Registrados ({payments.length})</h3>
+        <Button onClick={() => setIsAddModalOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Agregar Pago
+        </Button>
       </div>
 
-      <Tabs defaultValue="list" value={currentView} onValueChange={(value) => setCurrentView(value as "list" | "grid")}>
-        <TabsList className="hidden">
-          <TabsTrigger value="list">List</TabsTrigger>
-          <TabsTrigger value="grid">Grid</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="list" className="mt-0">
-          <div className="glass-card rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              {groupBy === "unit" && groupKeys.length > 0 ? (
-                <div className="space-y-6">
-                  {groupKeys.map((unit) => (
-                    <div key={unit || "ungrouped"} className="mb-4">
-                      {unit && (
-                        <h3 className="text-lg font-medium px-4 py-2 bg-muted">
-                          Unit {unit}
-                        </h3>
-                      )}
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Tenant</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Method</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="w-[100px]">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {groupedPayments[unit].length === 0 ? (
-                            <TableRow>
-                              <TableCell
-                                colSpan={7}
-                                className="h-24 text-center text-muted-foreground"
-                              >
-                                No payments found
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            groupedPayments[unit].map((payment) => (
-                              <TableRow key={payment.id}>
-                                <TableCell>
-                                  {new Date(payment.date).toLocaleDateString()}
-                                </TableCell>
-                                <TableCell>{tenantNames[payment.tenantId] || "Unknown"}</TableCell>
-                                <TableCell className="font-medium">
-                                  ${payment.amount.toLocaleString()}
-                                </TableCell>
-                                <TableCell className="capitalize">{payment.type}</TableCell>
-                                <TableCell className="capitalize">{payment.method}</TableCell>
-                                <TableCell>
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      "capitalize",
-                                      statusColors[payment.status]
-                                    )}
-                                  >
-                                    {payment.status}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex gap-1">
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="h-8 w-8"
-                                      onClick={() => handleEditPayment(payment)}
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                      <span className="sr-only">Edit</span>
-                                    </Button>
-                                    
-                                    <AlertDialog>
-                                      <AlertDialogTrigger asChild>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="icon" 
-                                          className="h-8 w-8 text-destructive hover:text-destructive/90"
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                          <span className="sr-only">Delete</span>
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>Delete Payment</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            Are you sure you want to delete this payment? This action cannot be undone.
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction 
-                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                            onClick={() => handleDeletePayment(payment.id)}
-                                          >
-                                            Delete
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Tenant</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedPayments.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={7}
-                          className="h-24 text-center text-muted-foreground"
-                        >
-                          No payments found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      sortedPayments.map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell>
-                            {new Date(payment.date).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>{tenantNames[payment.tenantId] || "Unknown"}</TableCell>
-                          <TableCell className="font-medium">
-                            ${payment.amount.toLocaleString()}
-                          </TableCell>
-                          <TableCell className="capitalize">{payment.type}</TableCell>
-                          <TableCell className="capitalize">{payment.method}</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "capitalize",
-                                statusColors[payment.status]
+      {payments.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          <p>No hay pagos registrados</p>
+          <p className="text-sm mt-1">Agrega tu primer pago o procesa un comprobante</p>
+        </div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Inquilino</TableHead>
+                <TableHead>Monto</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Método</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedPayments.map((payment) => (
+                <TableRow key={payment.id}>
+                  <TableCell className="font-medium">
+                    {tenantNames[payment.tenantId] || 'Inquilino no encontrado'}
+                  </TableCell>
+                  <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                  <TableCell>{payment.date}</TableCell>
+                  <TableCell>{getTypeLabel(payment.type)}</TableCell>
+                  <TableCell>{getMethodLabel(payment.method)}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
+                      {payment.status === 'completed' ? 'Completado' : 
+                       payment.status === 'pending' ? 'Pendiente' : 
+                       payment.status === 'failed' ? 'Fallido' : payment.status}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm" onClick={() => setViewingPayment(payment)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Detalles del Pago</DialogTitle>
+                          </DialogHeader>
+                          {viewingPayment && (
+                            <div className="space-y-3">
+                              <div><strong>ID:</strong> {viewingPayment.id}</div>
+                              <div><strong>Inquilino:</strong> {tenantNames[viewingPayment.tenantId]}</div>
+                              <div><strong>Monto:</strong> {formatCurrency(viewingPayment.amount)}</div>
+                              <div><strong>Fecha:</strong> {viewingPayment.date}</div>
+                              <div><strong>Tipo:</strong> {getTypeLabel(viewingPayment.type)}</div>
+                              <div><strong>Método:</strong> {getMethodLabel(viewingPayment.method)}</div>
+                              <div><strong>Estado:</strong> {viewingPayment.status}</div>
+                              {viewingPayment.notes && (
+                                <div><strong>Notas:</strong> {viewingPayment.notes}</div>
                               )}
-                            >
-                              {payment.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8"
-                                onClick={() => handleEditPayment(payment)}
-                              >
-                                <Edit className="h-4 w-4" />
-                                <span className="sr-only">Edit</span>
-                              </Button>
-                              
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="h-8 w-8 text-destructive hover:text-destructive/90"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Delete</span>
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete Payment</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete this payment? This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction 
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      onClick={() => handleDeletePayment(payment.id)}
-                                    >
-                                      Delete
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                              <div><strong>Creado:</strong> {new Date(viewingPayment.createdAt).toLocaleString()}</div>
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="grid" className="mt-0">
-          <MonthlyPaymentGrid 
-            tenants={tenants} 
-            payments={payments}
-            onUpdatePayment={onUpdatePayment}
+                          )}
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleDownloadPayment(payment)}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setEditingPayment(payment)}
+                      >
+                        Editar
+                      </Button>
+                      
+                      {onDeletePayment && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Eliminar pago?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta acción no se puede deshacer. Se eliminará permanentemente este pago
+                                de ${formatCurrency(payment.amount)}.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeletePayment(payment.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Eliminar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Modal para agregar pago */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Agregar Nuevo Pago</DialogTitle>
+          </DialogHeader>
+          <PaymentForm
+            tenants={tenants}
+            onSubmit={handleAddPayment}
+            onCancel={() => setIsAddModalOpen(false)}
           />
-        </TabsContent>
-      </Tabs>
-      
-      <PaymentForm 
-        isOpen={isPaymentFormOpen}
-        onClose={() => setIsPaymentFormOpen(false)}
-        onSave={handleSavePayment}
-        payment={selectedPayment}
-        tenants={tenants}
-      />
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para editar pago */}
+      <Dialog open={!!editingPayment} onOpenChange={() => setEditingPayment(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Pago</DialogTitle>
+          </DialogHeader>
+          {editingPayment && (
+            <PaymentForm
+              tenants={tenants}
+              payment={editingPayment}
+              onSubmit={handleUpdatePayment}
+              onCancel={() => setEditingPayment(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
