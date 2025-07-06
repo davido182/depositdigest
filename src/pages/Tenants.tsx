@@ -1,4 +1,5 @@
 
+
 import { Layout } from "@/components/Layout";
 import { TenantList } from "@/components/tenants/TenantList";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
@@ -94,14 +95,10 @@ const Tenants = () => {
   const handleDeleteTenant = async (tenant: Tenant) => {
     try {
       const dbService = DatabaseService.getInstance();
-      const success = await dbService.deleteTenant(tenant.id);
+      await dbService.deleteTenant(tenant.id);
       
-      if (success) {
-        setTenants(tenants.filter(t => t.id !== tenant.id));
-        toast.success(`Tenant ${tenant.name} removed successfully`);
-      } else {
-        toast.error("Failed to remove tenant");
-      }
+      setTenants(tenants.filter(t => t.id !== tenant.id));
+      toast.success(`Tenant ${tenant.name} removed successfully`);
     } catch (error) {
       console.error("Error removing tenant:", error);
       toast.error("Failed to remove tenant");
@@ -268,3 +265,4 @@ const Tenants = () => {
 };
 
 export default Tenants;
+

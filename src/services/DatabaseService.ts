@@ -1,4 +1,5 @@
 
+
 import tenantService from './TenantService';
 import paymentService from './PaymentService';
 import maintenanceService from './MaintenanceService';
@@ -89,19 +90,23 @@ export class DatabaseService {
 
   // Accounting methods
   async getAccounts() {
-    return await accountingService.getAccounts();
+    const accountingInstance = accountingService.getInstance();
+    return await accountingInstance.getAccounts();
   }
 
   async getAccountingEntries() {
-    return await accountingService.getAccountingEntries();
+    const accountingInstance = accountingService.getInstance();
+    return await accountingInstance.getAccountingEntries();
   }
 
   async createAccount(account: any) {
-    return await accountingService.createAccount(account);
+    const accountingInstance = accountingService.getInstance();
+    return await accountingInstance.createAccount(account);
   }
 
   async createAccountingEntry(entry: any) {
-    return await accountingService.createAccountingEntry(entry);
+    const accountingInstance = accountingService.getInstance();
+    return await accountingInstance.createAccountingEntry(entry);
   }
 
   // Unit management methods
@@ -120,3 +125,4 @@ export class DatabaseService {
 
 // Export both named and default exports for backward compatibility
 export default DatabaseService;
+

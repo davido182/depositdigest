@@ -1,4 +1,5 @@
 
+
 import { Layout } from "@/components/Layout";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { TenantsGrid } from "@/components/dashboard/TenantsGrid";
@@ -71,14 +72,10 @@ const Index = () => {
   const handleDeleteTenant = async (tenant: Tenant) => {
     try {
       const dbService = DatabaseService.getInstance();
-      const success = await dbService.deleteTenant(tenant.id);
+      await dbService.deleteTenant(tenant.id);
       
-      if (success) {
-        setTenants(tenants.filter(t => t.id !== tenant.id));
-        toast.success(`Tenant ${tenant.name} removed successfully`);
-      } else {
-        toast.error("Failed to remove tenant");
-      }
+      setTenants(tenants.filter(t => t.id !== tenant.id));
+      toast.success(`Tenant ${tenant.name} removed successfully`);
     } catch (error) {
       console.error("Error removing tenant:", error);
       toast.error("Failed to remove tenant");
@@ -241,3 +238,4 @@ const Index = () => {
 };
 
 export default Index;
+
