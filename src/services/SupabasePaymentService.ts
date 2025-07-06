@@ -18,7 +18,7 @@ export class SupabasePaymentService extends SupabaseService {
       throw error;
     }
 
-    return data.map(this.mapSupabasePaymentToPayment);
+    return data.map(payment => this.mapSupabasePaymentToPayment(payment));
   }
 
   async createPayment(payment: Omit<Payment, 'id' | 'createdAt'>): Promise<string> {

@@ -12,17 +12,18 @@ import { useAuth } from "@/contexts/AuthContext";
 export function AccountSettings() {
   const { user, signOut } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const handlePasswordUpdate = async () => {
     if (!newPassword || newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters long");
+      toast.error("La contraseña debe tener al menos 6 caracteres");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error("Las contraseñas no coinciden");
       return;
     }
 
@@ -33,27 +34,31 @@ export function AccountSettings() {
       });
 
       if (error) {
-        toast.error("Error updating password: " + error.message);
+        toast.error("Error al actualizar contraseña: " + error.message);
       } else {
-        toast.success("Password updated successfully");
+        toast.success("Contraseña actualizada exitosamente");
         setNewPassword("");
         setConfirmPassword("");
       }
     } catch (error) {
       console.error('Error updating password:', error);
-      toast.error("Failed to update password");
+      toast.error("Error al actualizar contraseña");
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handleSignOut = async () => {
+    setIsSigningOut(true);
     try {
+      console.log('Iniciando cierre de sesión...');
       await signOut();
-      toast.success("Signed out successfully");
+      toast.success("Sesión cerrada exitosamente");
     } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error("Failed to sign out");
+      console.error('Error al cerrar sesión:', error);
+      toast.error("Error al cerrar sesión");
+    } finally {
+      setIsSigningOut(false);
     }
   };
 
@@ -62,10 +67,10 @@ export function AccountSettings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5" />
-          Account Settings
+          Configuración de Cuenta
         </CardTitle>
         <CardDescription>
-          Manage your account information and security
+          Gestiona tu información de cuenta y seguridad
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -74,8 +79,8 @@ export function AccountSettings() {
           <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
             <Mail className="h-4 w-4 text-muted-foreground" />
             <div>
-              <div className="text-sm font-medium">Email Address</div>
-              <div className="text-sm text-muted-foreground">{user?.email || 'Not available'}</div>
+              <div className="text-sm font-medium">Dirección de Email</div>
+              <div className="text-sm text-muted-foreground">{user?.email || 'No disponible'}</div>
             </div>
           </div>
         </div>
@@ -84,30 +89,30 @@ export function AccountSettings() {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Lock className="h-4 w-4" />
-            <h4 className="font-medium">Change Password</h4>
+            <h4 className="font-medium">Cambiar Contraseña</h4>
           </div>
           
           <div className="space-y-3">
             <div>
-              <Label htmlFor="new-password">New Password</Label>
+              <Label htmlFor="new-password">Nueva Contraseña</Label>
               <Input
                 id="new-password"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder="Ingresa nueva contraseña"
                 minLength={6}
               />
             </div>
             
             <div>
-              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
               <Input
                 id="confirm-password"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
+                placeholder="Confirma nueva contraseña"
                 minLength={6}
               />
             </div>
@@ -117,7 +122,7 @@ export function AccountSettings() {
               disabled={isUpdating || !newPassword || !confirmPassword}
               className="w-full"
             >
-              {isUpdating ? "Updating..." : "Update Password"}
+              {isUpdating ? "Actualizando..." : "Actualizar Contraseña"}
             </Button>
           </div>
         </div>
@@ -126,11 +131,12 @@ export function AccountSettings() {
         <div className="pt-4 border-t">
           <Button 
             onClick={handleSignOut}
+            disabled={isSigningOut}
             variant="outline"
             className="w-full flex items-center gap-2"
           >
             <LogOut className="h-4 w-4" />
-            Sign Out
+            {isSigningOut ? "Cerrando sesión..." : "Cerrar Sesión"}
           </Button>
         </div>
       </CardContent>

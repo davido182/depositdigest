@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
@@ -199,14 +200,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     console.log("SignOut initiated");
-    const { error } = await supabase.auth.signOut();
+    setIsLoading(true);
     
-    if (error) {
-      console.error("SignOut error:", error);
-      throw error;
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("SignOut error:", error);
+        throw error;
+      }
+      
+      // Clear all state immediately
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
+      setSubscriptionPlan(null);
+      setIsPasswordRecovery(false);
+      
+      console.log("SignOut successful");
+    } finally {
+      setIsLoading(false);
     }
-    
-    console.log("SignOut successful");
   };
 
   const resetPassword = async (email: string) => {

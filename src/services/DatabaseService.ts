@@ -1,5 +1,4 @@
 
-
 import tenantService from './TenantService';
 import paymentService from './PaymentService';
 import maintenanceService from './MaintenanceService';
@@ -23,7 +22,10 @@ export class DatabaseService {
       await tenantService.getTenants();
       console.log('✓ Tenant service connected');
       
-      // Test other services as needed
+      // Test payment service
+      await paymentService.getPayments();
+      console.log('✓ Payment service connected');
+      
       console.log('✓ All database connections working');
       return true;
     } catch (error) {
@@ -125,4 +127,3 @@ export class DatabaseService {
 
 // Export both named and default exports for backward compatibility
 export default DatabaseService;
-
