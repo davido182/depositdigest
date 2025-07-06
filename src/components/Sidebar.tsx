@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Crown,
   UserPlus,
+  ExternalLink,
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -66,6 +67,10 @@ const Sidebar = () => {
 
   const navigationItems = getNavigationItems();
 
+  const handleLandingPageClick = () => {
+    window.open('/landing', '_blank');
+  };
+
   return (
     <div className="bg-white border-r border-gray-200 w-64 min-h-screen p-4">
       <div className="mb-8">
@@ -113,14 +118,34 @@ const Sidebar = () => {
           {userRole === 'tenant' && 'Inquilino'}
           {!userRole && 'Cargando...'}
         </div>
-        {userRole?.startsWith('landlord') && !hasActivePremium && (
-          <div className="mt-2">
-            <NavLink
-              to="/subscription-success"
-              className="text-xs text-blue-600 hover:text-blue-800 underline"
+        
+        {/* Upgrade section for free users */}
+        {userRole === 'landlord_free' && (
+          <div className="mt-3 space-y-2">
+            <button
+              onClick={handleLandingPageClick}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
+              <Crown className="h-3 w-3" />
               Actualizar a Premium
-            </NavLink>
+              <ExternalLink className="h-3 w-3" />
+            </button>
+            <div className="text-xs text-gray-500 text-center">
+              Accede a todas las funciones avanzadas
+            </div>
+          </div>
+        )}
+
+        {/* Landing page access for premium users too */}
+        {userRole === 'landlord_premium' && (
+          <div className="mt-2">
+            <button
+              onClick={handleLandingPageClick}
+              className="text-xs text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+            >
+              Ver Landing Page
+              <ExternalLink className="h-3 w-3" />
+            </button>
           </div>
         )}
       </div>

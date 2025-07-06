@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
@@ -47,22 +46,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasActivePremium = userRole === 'landlord_premium' || subscriptionPlan === 'premium';
 
   const refreshUserRole = async () => {
-    if (!user) return;
+    if (!user) {
+      setUserRole(null);
+      return;
+    }
     
     try {
       console.log("Refreshing user role for:", user.email);
-      const { data: roleData } = await supabase
+      
+      // Try to get existing role
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
         .single();
       
+      if (roleError && roleError.code !== 'PGRST116') {
+        console.error("Error fetching user role:", roleError);
+        return;
+      }
+      
       if (roleData) {
         setUserRole(roleData.role);
-        console.log("User role updated:", roleData.role);
+        console.log("User role found:", roleData.role);
+      } else {
+        // If no role exists, create a default one
+        console.log("No role found, creating default landlord_free role");
+        const { data: newRoleData, error: createError } = await supabase
+          .from('user_roles')
+          .insert([{
+            user_id: user.id,
+            role: 'landlord_free' as UserRole
+          }])
+          .select('role')
+          .single();
+        
+        if (createError) {
+          console.error("Error creating user role:", createError);
+        } else if (newRoleData) {
+          setUserRole(newRoleData.role);
+          console.log("Default role created:", newRoleData.role);
+        }
       }
     } catch (error) {
-      console.error("Error refreshing user role:", error);
+      console.error("Error in refreshUserRole:", error);
     }
   };
 
@@ -104,13 +131,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'SIGNED_IN') {
           setIsPasswordRecovery(false);
           
-          // Check subscription and role after sign in
+          // Check subscription and role after sign in with a small delay
           setTimeout(async () => {
             if (session?.user) {
               await checkSubscription();
               await refreshUserRole();
             }
-          }, 0);
+          }, 100);
         }
         
         if (event === 'SIGNED_OUT') {
@@ -147,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(async () => {
           await checkSubscription();
           await refreshUserRole();
-        }, 0);
+        }, 100);
       }
     });
 
