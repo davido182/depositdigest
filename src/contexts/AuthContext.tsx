@@ -213,7 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    console.log("SignUp attempt:", email);
+    console.log("SignUp attempt:", email, "with name:", fullName);
     setIsLoading(true);
     
     const { data, error } = await supabase.auth.signUp({
@@ -222,7 +222,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       options: {
         emailRedirectTo: `${window.location.origin}/login?reset=true`,
         data: {
-          full_name: fullName || email.split('@')[0]
+          full_name: fullName || email.split('@')[0],
+          name: fullName || email.split('@')[0]
         }
       }
     });
@@ -232,7 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
 
-    console.log("SignUp successful:", data.user?.email);
+    console.log("SignUp successful:", data.user?.email, "with metadata:", data.user?.user_metadata);
     setIsLoading(false);
   };
 

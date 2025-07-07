@@ -49,9 +49,14 @@ export default function TenantSignup() {
       return;
     }
 
+    if (fullName.trim().length < 2) {
+      toast.error("El nombre debe tener al menos 2 caracteres");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await signUp(email, password, fullName);
+      await signUp(email, password, fullName.trim());
       // After successful signup, sign in immediately
       await signIn(email, password);
       
@@ -147,34 +152,37 @@ export default function TenantSignup() {
           ) : (
             <>
               <div className="space-y-2">
-                <Label htmlFor="fullName">Nombre Completo</Label>
+                <Label htmlFor="fullName">Nombre Completo *</Label>
                 <Input
                   id="fullName"
-                  placeholder="Tu nombre completo"
+                  placeholder="Ej: Juan Pérez"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  required
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Correo Electrónico *</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="tu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password">Contraseña *</Label>
                 <Input
                   id="password"
                   type="password"
                   placeholder="Mínimo 6 caracteres"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
               </div>
               
