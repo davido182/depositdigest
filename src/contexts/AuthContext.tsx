@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
@@ -42,11 +43,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Computed properties
   const isLandlord = userRole === 'landlord_free' || userRole === 'landlord_premium';
   const isTenant = userRole === 'tenant';
-  const isPremium = userRole === 'landlord_premium' || subscriptionPlan === 'premium';
-  const hasActivePremium = userRole === 'landlord_premium' || subscriptionPlan === 'premium';
+  const isPremium = userRole === 'landlord_premium';
+  const hasActivePremium = userRole === 'landlord_premium';
 
   const refreshUserRole = async () => {
     if (!user) {
+      console.log("No user, clearing role");
       setUserRole(null);
       return;
     }
@@ -54,68 +56,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log("Refreshing user role for:", user.email);
       
-      // Try to get existing role - handle both old and new schema
+      // Get user role from database
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
         .single();
       
-      if (roleError && roleError.code !== 'PGRST116') {
+      if (roleError) {
         console.error("Error fetching user role:", roleError);
-        return;
-      }
-      
-      if (roleData) {
-        setUserRole(roleData.role);
-        console.log("User role found:", roleData.role);
         
-        // Try to update email if column exists (new schema)
-        try {
-          await supabase
-            .from('user_roles')
-            .update({ email: user.email, updated_at: new Date().toISOString() })
-            .eq('user_id', user.id);
-        } catch (emailUpdateError) {
-          // Ignore if email column doesn't exist yet
-          console.log("Email column not available yet, skipping update");
-        }
-      } else {
-        // If no role exists, create a default one
-        console.log("No role found, creating default landlord_free role");
-        const roleInsert: any = {
-          user_id: user.id,
-          role: 'landlord_free' as UserRole
-        };
-        
-        // Try to add email if the column exists
-        try {
+        // If no role exists, create default landlord_free
+        if (roleError.code === 'PGRST116') {
+          console.log("No role found, creating default landlord_free role");
           const { data: newRoleData, error: createError } = await supabase
             .from('user_roles')
-            .insert([{ ...roleInsert, email: user.email }])
-            .select('role')
-            .single();
-          
-          if (createError) throw createError;
-          if (newRoleData) {
-            setUserRole(newRoleData.role);
-            console.log("Default role created with email:", newRoleData.role);
-          }
-        } catch (withEmailError) {
-          // Fallback without email column
-          const { data: newRoleData, error: createError } = await supabase
-            .from('user_roles')
-            .insert([roleInsert])
+            .insert([{
+              user_id: user.id,
+              role: 'landlord_free' as UserRole,
+              email: user.email
+            }])
             .select('role')
             .single();
           
           if (createError) {
             console.error("Error creating user role:", createError);
-          } else if (newRoleData) {
+            return;
+          }
+          
+          if (newRoleData) {
+            console.log("Default role created:", newRoleData.role);
             setUserRole(newRoleData.role);
-            console.log("Default role created without email:", newRoleData.role);
           }
         }
+        return;
+      }
+      
+      if (roleData) {
+        console.log("User role found:", roleData.role);
+        setUserRole(roleData.role);
+        
+        // Update email if needed
+        await supabase
+          .from('user_roles')
+          .update({ 
+            email: user.email, 
+            updated_at: new Date().toISOString() 
+          })
+          .eq('user_id', user.id);
       }
     } catch (error) {
       console.error("Error in refreshUserRole:", error);
@@ -129,12 +117,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("Checking subscription for:", user.email);
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Subscription check error:", error);
+        return;
+      }
       
       if (data) {
+        console.log("Subscription data:", data);
         setSubscriptionPlan(data.plan);
-        console.log("Subscription checked:", data);
-        await refreshUserRole();
+        
+        // Update user role based on subscription
+        if (data.plan === 'premium' && userRole === 'landlord_free') {
+          const { error: updateError } = await supabase
+            .from('user_roles')
+            .update({ role: 'landlord_premium' })
+            .eq('user_id', user.id);
+          
+          if (!updateError) {
+            setUserRole('landlord_premium');
+          }
+        }
       }
     } catch (error) {
       console.error("Error checking subscription:", error);
@@ -159,28 +161,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (event === 'SIGNED_IN') {
           setIsPasswordRecovery(false);
+          setUser(session?.user ?? null);
+          setSession(session);
           
-          // Check subscription and role after sign in with a small delay
-          setTimeout(async () => {
-            if (session?.user) {
-              await checkSubscription();
-              await refreshUserRole();
-            }
-          }, 100);
+          // Check subscription and role after sign in
+          if (session?.user) {
+            await checkSubscription();
+            await refreshUserRole();
+          }
         }
         
         if (event === 'SIGNED_OUT') {
           setIsPasswordRecovery(false);
           setUserRole(null);
           setSubscriptionPlan(null);
+          setUser(null);
+          setSession(null);
         }
         
-        setSession(session);
-        setUser(session?.user ?? null);
         setIsLoading(false);
       }
     );
 
+    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("Initial session check:", session?.user?.email);
       
@@ -196,7 +199,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       setSession(session);
       setUser(session?.user ?? null);
-      setIsLoading(false);
 
       // Initial role and subscription check
       if (session?.user) {
@@ -204,6 +206,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await checkSubscription();
           await refreshUserRole();
         }, 100);
+      } else {
+        setIsLoading(false);
       }
     });
 
@@ -230,10 +234,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       console.error("SignUp error:", error);
+      setIsLoading(false);
       throw error;
     }
 
-    console.log("SignUp successful:", data.user?.email, "with metadata:", data.user?.user_metadata);
+    console.log("SignUp successful:", data.user?.email);
     setIsLoading(false);
   };
 
@@ -266,13 +271,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("SignOut error:", error);
         throw error;
       }
-      
-      // Clear all state immediately
-      setUser(null);
-      setSession(null);
-      setUserRole(null);
-      setSubscriptionPlan(null);
-      setIsPasswordRecovery(false);
       
       console.log("SignOut successful");
     } finally {

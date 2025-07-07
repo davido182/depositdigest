@@ -16,7 +16,6 @@ import {
   Crown,
   UserPlus,
   ExternalLink,
-  User,
   LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -71,7 +70,7 @@ const Sidebar = () => {
       ];
 
       // Premium-only features
-      if (hasActivePremium) {
+      if (userRole === 'landlord_premium') {
         landlordItems.splice(-1, 0, // Insert before Reports
           { name: "Contabilidad", href: "/accounting", icon: Calculator },
           { name: "Asistente IA", href: "/assistant", icon: MessageCircle },
@@ -106,13 +105,13 @@ const Sidebar = () => {
   };
 
   const getRoleDisplayText = () => {
-    if (!userRole) return "Cargando rol...";
+    if (!userRole) return "Cargando...";
     
     switch (userRole) {
       case 'landlord_free':
-        return 'Propietario - Plan Gratuito';
+        return 'Plan Gratuito';
       case 'landlord_premium':
-        return 'Propietario - Plan Premium';
+        return 'Plan Premium';
       case 'tenant':
         return 'Inquilino';
       default:
@@ -123,7 +122,7 @@ const Sidebar = () => {
   return (
     <div className="bg-white border-r border-gray-200 w-64 min-h-screen p-4 flex flex-col">
       <div className="mb-8">
-        <div className="flex items-center space-x-2 mb-3">
+        <div className="flex items-center space-x-2 mb-4">
           <Building2 className="h-8 w-8 text-blue-600" />
           <div>
             <h1 className="text-xl font-bold text-gray-900">RentFlow</h1>
@@ -136,12 +135,14 @@ const Sidebar = () => {
           </div>
         </div>
         
-        {/* User name display */}
-        <div className="text-sm font-medium text-gray-700 mb-1">
-          Hola, {getUserDisplayName()}
-        </div>
-        <div className="text-xs text-gray-500">
-          {getRoleDisplayText()}
+        {/* User greeting */}
+        <div className="space-y-1">
+          <div className="text-sm font-medium text-gray-700">
+            Hola, {getUserDisplayName()}
+          </div>
+          <div className="text-xs text-gray-500">
+            {getRoleDisplayText()}
+          </div>
         </div>
       </div>
 
@@ -166,25 +167,8 @@ const Sidebar = () => {
         })}
       </nav>
 
-      {/* User info and actions */}
+      {/* Bottom actions */}
       <div className="mt-auto space-y-3">
-        {/* User info card */}
-        {user && (
-          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center space-x-2 mb-2">
-              <User className="h-4 w-4 text-blue-600" />
-              <div className="text-sm font-medium text-blue-900">Cuenta activa</div>
-            </div>
-            <div className="text-xs text-blue-700 mb-1">{user.email}</div>
-            <div className="text-xs text-blue-600">
-              {userRole === 'landlord_free' && 'Plan Gratuito'}
-              {userRole === 'landlord_premium' && 'Plan Premium'}
-              {userRole === 'tenant' && 'Inquilino'}
-              {!userRole && 'Cargando rol...'}
-            </div>
-          </div>
-        )}
-
         {/* Upgrade section for free users */}
         {userRole === 'landlord_free' && (
           <div className="p-3 bg-gray-50 rounded-lg">
