@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Try to get existing role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
-        .select('role')
+        .select('role, email')
         .eq('user_id', user.id)
         .single();
       
@@ -69,6 +69,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (roleData) {
         setUserRole(roleData.role);
         console.log("User role found:", roleData.role);
+        
+        // Update email if it's missing or different
+        if (!roleData.email || roleData.email !== user.email) {
+          console.log("Updating email in user_roles");
+          await supabase
+            .from('user_roles')
+            .update({ email: user.email, updated_at: new Date().toISOString() })
+            .eq('user_id', user.id);
+        }
       } else {
         // If no role exists, create a default one
         console.log("No role found, creating default landlord_free role");
@@ -76,7 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('user_roles')
           .insert([{
             user_id: user.id,
-            role: 'landlord_free' as UserRole
+            role: 'landlord_free' as UserRole,
+            email: user.email
           }])
           .select('role')
           .single();

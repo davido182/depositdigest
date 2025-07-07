@@ -16,11 +16,12 @@ import {
   Crown,
   UserPlus,
   ExternalLink,
+  User,
 } from "lucide-react";
 
 const Sidebar = () => {
   const location = useLocation();
-  const { userRole, hasActivePremium } = useAuth();
+  const { userRole, hasActivePremium, user } = useAuth();
 
   // Define navigation items based on user role
   const getNavigationItems = () => {
@@ -109,9 +110,26 @@ const Sidebar = () => {
         })}
       </nav>
 
-      {/* Role indicator */}
-      <div className="mt-8 p-3 bg-gray-50 rounded-lg">
-        <div className="text-xs text-gray-500 mb-1">Rol actual:</div>
+      {/* User info */}
+      {user && (
+        <div className="mt-8 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center space-x-2 mb-2">
+            <User className="h-4 w-4 text-blue-600" />
+            <div className="text-sm font-medium text-blue-900">Usuario actual</div>
+          </div>
+          <div className="text-xs text-blue-700 mb-1">{user.email}</div>
+          <div className="text-xs text-blue-600">
+            {userRole === 'landlord_free' && 'Plan Gratuito'}
+            {userRole === 'landlord_premium' && 'Plan Premium'}
+            {userRole === 'tenant' && 'Inquilino'}
+            {!userRole && 'Cargando rol...'}
+          </div>
+        </div>
+      )}
+
+      {/* Role indicator and upgrade section */}
+      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+        <div className="text-xs text-gray-500 mb-1">Estado de cuenta:</div>
         <div className="text-sm font-medium">
           {userRole === 'landlord_free' && 'Propietario (Gratuito)'}
           {userRole === 'landlord_premium' && 'Propietario (Premium)'}

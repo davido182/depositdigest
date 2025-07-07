@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tenant, TenantStatus } from "@/types";
-import { Edit, Trash2, Plus } from "lucide-react";
+import { Edit, Trash2, Plus, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -25,6 +26,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface TenantListProps {
   tenants: Tenant[];
@@ -41,6 +44,8 @@ export function TenantList({
 }: TenantListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<TenantStatus | "all">("all");
+  const [invitingTenant, setInvitingTenant] = useState<string | null>(null);
+  const { createTenantInvitation } = useAuth();
 
   // Sort tenants by unit number
   const sortedTenants = [...tenants].sort((a, b) => {
@@ -60,6 +65,31 @@ export function TenantList({
     
     return matchesSearch && matchesStatus;
   });
+
+  const handleInviteTenant = async (tenant: Tenant) => {
+    setInvitingTenant(tenant.id);
+    try {
+      const result = await createTenantInvitation(tenant.unit, tenant.email);
+      
+      toast.success("Invitación creada", {
+        description: `Código de invitación: ${result.invitation_code}`,
+        duration: 10000,
+        action: {
+          label: "Copiar código",
+          onClick: () => navigator.clipboard.writeText(result.invitation_code)
+        }
+      });
+      
+      console.log("Invitation created:", result);
+    } catch (error) {
+      console.error("Error creating invitation:", error);
+      toast.error("Error al crear invitación", {
+        description: error instanceof Error ? error.message : "Error desconocido"
+      });
+    } finally {
+      setInvitingTenant(null);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -110,7 +140,7 @@ export function TenantList({
               <TableHead>Phone</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Rent</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className="w-[140px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -134,7 +164,16 @@ export function TenantList({
                     ${tenant.rentAmount.toLocaleString()}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleInviteTenant(tenant)}
+                        disabled={invitingTenant === tenant.id}
+                        title="Enviar invitación"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => onEditTenant(tenant)}>
                         <Edit className="h-4 w-4" />
                       </Button>
