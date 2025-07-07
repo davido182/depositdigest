@@ -24,7 +24,7 @@ import { toast } from "sonner";
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { userRole, hasActivePremium, user, signOut } = useAuth();
+  const { userRole, hasActivePremium, user, signOut, isLoading } = useAuth();
 
   // Get user display name
   const getUserDisplayName = () => {
@@ -105,7 +105,8 @@ const Sidebar = () => {
   };
 
   const getRoleDisplayText = () => {
-    if (!userRole) return "Cargando...";
+    if (isLoading) return "Cargando...";
+    if (!userRole) return "Sin rol asignado";
     
     switch (userRole) {
       case 'landlord_free':
@@ -118,6 +119,21 @@ const Sidebar = () => {
         return "Rol desconocido";
     }
   };
+
+  // Show loading state if still loading
+  if (isLoading) {
+    return (
+      <div className="bg-white border-r border-gray-200 w-64 min-h-screen p-4 flex flex-col">
+        <div className="mb-8">
+          <div className="flex items-center space-x-2 mb-4">
+            <Building2 className="h-8 w-8 text-blue-600" />
+            <h1 className="text-xl font-bold text-gray-900">RentFlow</h1>
+          </div>
+          <div className="text-sm text-gray-500">Cargando...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white border-r border-gray-200 w-64 min-h-screen p-4 flex flex-col">

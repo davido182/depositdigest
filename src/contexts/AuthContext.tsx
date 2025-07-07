@@ -50,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) {
       console.log("No user, clearing role");
       setUserRole(null);
+      setIsLoading(false);
       return;
     }
     
@@ -61,38 +62,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
       if (roleError) {
         console.error("Error fetching user role:", roleError);
+        // If error, create default landlord_free role
+        const { data: newRoleData, error: createError } = await supabase
+          .from('user_roles')
+          .insert([{
+            user_id: user.id,
+            role: 'landlord_free' as UserRole,
+            email: user.email
+          }])
+          .select('role')
+          .single();
         
-        // If no role exists, create default landlord_free
-        if (roleError.code === 'PGRST116') {
-          console.log("No role found, creating default landlord_free role");
-          const { data: newRoleData, error: createError } = await supabase
-            .from('user_roles')
-            .insert([{
-              user_id: user.id,
-              role: 'landlord_free' as UserRole,
-              email: user.email
-            }])
-            .select('role')
-            .single();
-          
-          if (createError) {
-            console.error("Error creating user role:", createError);
-            return;
-          }
-          
-          if (newRoleData) {
-            console.log("Default role created:", newRoleData.role);
-            setUserRole(newRoleData.role);
-          }
+        if (createError) {
+          console.error("Error creating user role:", createError);
+          setIsLoading(false);
+          return;
         }
-        return;
-      }
-      
-      if (roleData) {
+        
+        if (newRoleData) {
+          console.log("Default role created:", newRoleData.role);
+          setUserRole(newRoleData.role);
+        }
+      } else if (roleData) {
         console.log("User role found:", roleData.role);
         setUserRole(roleData.role);
         
@@ -104,9 +99,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             updated_at: new Date().toISOString() 
           })
           .eq('user_id', user.id);
+      } else {
+        // No role found, create default
+        console.log("No role found, creating default landlord_free role");
+        const { data: newRoleData, error: createError } = await supabase
+          .from('user_roles')
+          .insert([{
+            user_id: user.id,
+            role: 'landlord_free' as UserRole,
+            email: user.email
+          }])
+          .select('role')
+          .single();
+        
+        if (createError) {
+          console.error("Error creating user role:", createError);
+        } else if (newRoleData) {
+          console.log("Default role created:", newRoleData.role);
+          setUserRole(newRoleData.role);
+        }
       }
     } catch (error) {
       console.error("Error in refreshUserRole:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -164,10 +180,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(session?.user ?? null);
           setSession(session);
           
-          // Check subscription and role after sign in
+          // Refresh role after sign in
           if (session?.user) {
-            await checkSubscription();
-            await refreshUserRole();
+            setTimeout(async () => {
+              await checkSubscription();
+              await refreshUserRole();
+            }, 100);
           }
         }
         
@@ -177,39 +195,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSubscriptionPlan(null);
           setUser(null);
           setSession(null);
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
     // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session?.user?.email);
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const isRecoveryUrl = urlParams.get('type') === 'recovery' || 
-                           hashParams.get('type') === 'recovery' ||
-                           urlParams.get('reset') === 'true';
-      
-      if (session && isRecoveryUrl) {
-        setIsPasswordRecovery(true);
-      }
-      
-      setSession(session);
-      setUser(session?.user ?? null);
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Initial session check:", session?.user?.email);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const isRecoveryUrl = urlParams.get('type') === 'recovery' || 
+                             hashParams.get('type') === 'recovery' ||
+                             urlParams.get('reset') === 'true';
+        
+        if (session && isRecoveryUrl) {
+          setIsPasswordRecovery(true);
+        }
+        
+        setSession(session);
+        setUser(session?.user ?? null);
 
-      // Initial role and subscription check
-      if (session?.user) {
-        setTimeout(async () => {
+        // Initial role and subscription check
+        if (session?.user) {
           await checkSubscription();
           await refreshUserRole();
-        }, 100);
-      } else {
+        } else {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
         setIsLoading(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     return () => {
       subscription.unsubscribe();
