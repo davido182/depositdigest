@@ -27,7 +27,7 @@ type AuthContextType = {
   createCheckoutSession: () => Promise<string>;
   createTenantInvitation: (unitNumber: string, email?: string) => Promise<any>;
   acceptTenantInvitation: (invitationCode: string) => Promise<any>;
-  refreshUserRole: () => Promise<void>;
+  refreshUserRole: (currentUser?: User) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,10 +46,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isPremium = userRole === 'landlord_premium';
   const hasActivePremium = userRole === 'landlord_premium';
 
-  const refreshUserRole = async () => {
+  const refreshUserRole = async (currentUser?: User) => {
     console.log("=== REFRESH USER ROLE START ===");
     
-    if (!user) {
+    const userToCheck = currentUser || user;
+    
+    if (!userToCheck) {
       console.log("No user found, setting role to null");
       setUserRole(null);
       setIsLoading(false);
@@ -57,13 +59,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      console.log("Refreshing user role for user:", user.id, user.email);
+      console.log("Refreshing user role for user:", userToCheck.id, userToCheck.email);
       
       // Get user role from database - prioritize premium, then free, then tenant
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq('user_id', userToCheck.id)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -78,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { data: newRoleData, error: createError } = await supabase
             .from('user_roles')
             .insert([{
-              user_id: user.id,
+              user_id: userToCheck.id,
               role: 'landlord_free' as UserRole
             }])
             .select('role')
@@ -111,10 +113,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const checkSubscription = async () => {
-    if (!user) return;
+    const currentUser = user;
+    if (!currentUser) return;
     
     try {
-      console.log("Checking subscription for:", user.email);
+      console.log("Checking subscription for:", currentUser.email);
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
@@ -131,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { error: updateError } = await supabase
             .from('user_roles')
             .update({ role: 'landlord_premium' })
-            .eq('user_id', user.id);
+            .eq('user_id', currentUser.id);
           
           if (!updateError) {
             setUserRole('landlord_premium');
@@ -168,10 +171,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Don't set loading to false here, let refreshUserRole handle it
           if (session?.user) {
             console.log("Calling refreshUserRole after sign in");
-            // Use setTimeout to avoid any potential race conditions
-            setTimeout(async () => {
-              await refreshUserRole();
-            }, 100);
+            // Pass the user directly to avoid timing issues
+            await refreshUserRole(session.user);
+          } else {
+            setIsLoading(false);
           }
         }
         
@@ -209,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (session?.user) {
           console.log("Found session, refreshing user role");
-          await refreshUserRole();
+          await refreshUserRole(session.user);
         } else {
           console.log("No session found, setting loading to false");
           setIsLoading(false);
@@ -231,7 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user && !isLoading) {
       console.log("User changed, refreshing role");
-      refreshUserRole();
+      refreshUserRole(user);
     }
   }, [user?.id]);
 
