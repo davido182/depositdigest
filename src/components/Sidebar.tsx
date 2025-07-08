@@ -97,7 +97,7 @@ const Sidebar = () => {
     try {
       await signOut();
       toast.success("Sesión cerrada exitosamente");
-      navigate('/landing');
+      navigate('/login');
     } catch (error) {
       console.error("Error signing out:", error);
       toast.error("Error al cerrar sesión");
@@ -106,7 +106,7 @@ const Sidebar = () => {
 
   const getRoleDisplayText = () => {
     if (isLoading) return "Cargando...";
-    if (!userRole) return "Sin rol asignado";
+    if (!userRole) return "Configurando cuenta...";
     
     switch (userRole) {
       case 'landlord_free':
@@ -116,7 +116,7 @@ const Sidebar = () => {
       case 'tenant':
         return 'Inquilino';
       default:
-        return "Rol desconocido";
+        return "Configurando...";
     }
   };
 
@@ -129,7 +129,7 @@ const Sidebar = () => {
             <Building2 className="h-8 w-8 text-blue-600" />
             <h1 className="text-xl font-bold text-gray-900">RentFlow</h1>
           </div>
-          <div className="text-sm text-gray-500">Cargando...</div>
+          <div className="text-sm text-gray-500">Iniciando...</div>
         </div>
       </div>
     );
@@ -187,17 +187,17 @@ const Sidebar = () => {
       <div className="mt-auto space-y-3">
         {/* Upgrade section for free users */}
         {userRole === 'landlord_free' && (
-          <div className="p-3 bg-gray-50 rounded-lg">
+          <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
             <button
               onClick={handleLandingPageClick}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mb-2"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md mb-2"
             >
-              <Crown className="h-3 w-3" />
+              <Crown className="h-4 w-4" />
               Actualizar a Premium
               <ExternalLink className="h-3 w-3" />
             </button>
-            <div className="text-xs text-gray-500 text-center">
-              Accede a todas las funciones avanzadas
+            <div className="text-xs text-gray-600 text-center">
+              🚀 Desbloquea todas las funciones avanzadas
             </div>
           </div>
         )}

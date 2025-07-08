@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
@@ -66,61 +65,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (roleError) {
         console.error("Error fetching user role:", roleError);
-        // If error, create default landlord_free role
-        const { data: newRoleData, error: createError } = await supabase
-          .from('user_roles')
-          .insert([{
-            user_id: user.id,
-            role: 'landlord_free' as UserRole,
-            email: user.email
-          }])
-          .select('role')
-          .single();
-        
-        if (createError) {
-          console.error("Error creating user role:", createError);
-          setIsLoading(false);
-          return;
-        }
-        
-        if (newRoleData) {
-          console.log("Default role created:", newRoleData.role);
-          setUserRole(newRoleData.role);
+        // If error, try to create default landlord_free role
+        try {
+          const { data: newRoleData, error: createError } = await supabase
+            .from('user_roles')
+            .insert([{
+              user_id: user.id,
+              role: 'landlord_free' as UserRole
+            }])
+            .select('role')
+            .single();
+          
+          if (createError) {
+            console.error("Error creating user role:", createError);
+            setUserRole('landlord_free'); // Default fallback
+          } else if (newRoleData) {
+            console.log("Default role created:", newRoleData.role);
+            setUserRole(newRoleData.role);
+          }
+        } catch (createErr) {
+          console.error("Failed to create role:", createErr);
+          setUserRole('landlord_free'); // Fallback
         }
       } else if (roleData) {
         console.log("User role found:", roleData.role);
         setUserRole(roleData.role);
-        
-        // Update email if needed
-        await supabase
-          .from('user_roles')
-          .update({ 
-            email: user.email, 
-            updated_at: new Date().toISOString() 
-          })
-          .eq('user_id', user.id);
       } else {
         // No role found, create default
         console.log("No role found, creating default landlord_free role");
-        const { data: newRoleData, error: createError } = await supabase
-          .from('user_roles')
-          .insert([{
-            user_id: user.id,
-            role: 'landlord_free' as UserRole,
-            email: user.email
-          }])
-          .select('role')
-          .single();
-        
-        if (createError) {
-          console.error("Error creating user role:", createError);
-        } else if (newRoleData) {
-          console.log("Default role created:", newRoleData.role);
-          setUserRole(newRoleData.role);
+        try {
+          const { data: newRoleData, error: createError } = await supabase
+            .from('user_roles')
+            .insert([{
+              user_id: user.id,
+              role: 'landlord_free' as UserRole
+            }])
+            .select('role')
+            .single();
+          
+          if (createError) {
+            console.error("Error creating user role:", createError);
+            setUserRole('landlord_free'); // Default fallback
+          } else if (newRoleData) {
+            console.log("Default role created:", newRoleData.role);
+            setUserRole(newRoleData.role);
+          }
+        } catch (createErr) {
+          console.error("Failed to create role:", createErr);
+          setUserRole('landlord_free'); // Fallback
         }
       }
     } catch (error) {
       console.error("Error in refreshUserRole:", error);
+      setUserRole('landlord_free'); // Fallback
     } finally {
       setIsLoading(false);
     }
@@ -180,12 +177,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(session?.user ?? null);
           setSession(session);
           
-          // Refresh role after sign in
+          // Refresh role after sign in with a small delay
           if (session?.user) {
             setTimeout(async () => {
               await checkSubscription();
               await refreshUserRole();
-            }, 100);
+            }, 500);
           }
         }
         
@@ -208,9 +205,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const isRecoveryUrl = urlParams.get('type') === 'recovery' || 
-                             hashParams.get('type') === 'recovery' ||
-                             urlParams.get('reset') === 'true';
+        const isRecoveryUrl = urlParams.has('type') && urlParams.get('type') === 'recovery' || 
+                             hashParams.has('type') && hashParams.get('type') === 'recovery' ||
+                             urlParams.has('reset') && urlParams.get('reset') === 'true';
         
         if (session && isRecoveryUrl) {
           setIsPasswordRecovery(true);
@@ -221,8 +218,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Initial role and subscription check
         if (session?.user) {
-          await checkSubscription();
-          await refreshUserRole();
+          setTimeout(async () => {
+            await checkSubscription();
+            await refreshUserRole();
+          }, 100);
         } else {
           setIsLoading(false);
         }
