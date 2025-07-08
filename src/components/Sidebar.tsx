@@ -26,15 +26,15 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const { userRole, hasActivePremium, user, signOut, isLoading } = useAuth();
 
+  console.log("Sidebar render - userRole:", userRole, "isLoading:", isLoading);
+
   // Get user display name
   const getUserDisplayName = () => {
     if (!user) return "Usuario";
     
-    // Try to get full_name from user metadata first
     const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
     if (fullName) return fullName;
     
-    // Fallback to email without @ part
     if (user.email) {
       return user.email.split('@')[0];
     }
@@ -44,6 +44,8 @@ const Sidebar = () => {
 
   // Define navigation items based on user role
   const getNavigationItems = () => {
+    console.log("Getting navigation items for role:", userRole);
+    
     const baseItems = [
       { name: "Dashboard", href: "/", icon: Building2 },
     ];
@@ -59,7 +61,7 @@ const Sidebar = () => {
     }
 
     // Landlord items - available for both free and premium
-    if (userRole?.startsWith('landlord')) {
+    if (userRole === 'landlord_free' || userRole === 'landlord_premium') {
       const landlordItems = [
         ...baseItems,
         { name: "Inquilinos", href: "/tenants", icon: Users },
@@ -81,9 +83,11 @@ const Sidebar = () => {
       // Add settings at the end
       landlordItems.push({ name: "Configuración", href: "/settings", icon: Settings });
       
+      console.log("Landlord items:", landlordItems);
       return landlordItems;
     }
 
+    console.log("Returning base items:", baseItems);
     return baseItems;
   };
 
@@ -106,7 +110,7 @@ const Sidebar = () => {
 
   const getRoleDisplayText = () => {
     if (isLoading) return "Cargando...";
-    if (!userRole) return "Configurando cuenta...";
+    if (!userRole) return "Asignando rol...";
     
     switch (userRole) {
       case 'landlord_free':
@@ -116,7 +120,7 @@ const Sidebar = () => {
       case 'tenant':
         return 'Inquilino';
       default:
-        return "Configurando...";
+        return "Plan Gratuito";
     }
   };
 

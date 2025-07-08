@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
@@ -46,27 +47,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasActivePremium = userRole === 'landlord_premium';
 
   const refreshUserRole = async () => {
+    console.log("=== REFRESH USER ROLE START ===");
+    
     if (!user) {
-      console.log("No user, clearing role");
+      console.log("No user found, setting role to null");
       setUserRole(null);
       setIsLoading(false);
       return;
     }
-    
+
     try {
-      console.log("Refreshing user role for:", user.email);
+      console.log("Refreshing user role for user:", user.id, user.email);
       
       // Get user role from database
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .single();
       
+      console.log("Role query result:", { roleData, roleError });
+
       if (roleError) {
-        console.error("Error fetching user role:", roleError);
-        // If error, try to create default landlord_free role
-        try {
+        if (roleError.code === 'PGRST116') {
+          // No role found, create default landlord_free role
+          console.log("No role found, creating default landlord_free role");
+          
           const { data: newRoleData, error: createError } = await supabase
             .from('user_roles')
             .insert([{
@@ -76,49 +82,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .select('role')
             .single();
           
+          console.log("Role creation result:", { newRoleData, createError });
+          
           if (createError) {
             console.error("Error creating user role:", createError);
-            setUserRole('landlord_free'); // Default fallback
-          } else if (newRoleData) {
-            console.log("Default role created:", newRoleData.role);
+            setUserRole('landlord_free'); // Fallback
+          } else {
+            console.log("Successfully created default role:", newRoleData.role);
             setUserRole(newRoleData.role);
           }
-        } catch (createErr) {
-          console.error("Failed to create role:", createErr);
+        } else {
+          console.error("Error fetching user role:", roleError);
           setUserRole('landlord_free'); // Fallback
         }
-      } else if (roleData) {
-        console.log("User role found:", roleData.role);
-        setUserRole(roleData.role);
       } else {
-        // No role found, create default
-        console.log("No role found, creating default landlord_free role");
-        try {
-          const { data: newRoleData, error: createError } = await supabase
-            .from('user_roles')
-            .insert([{
-              user_id: user.id,
-              role: 'landlord_free' as UserRole
-            }])
-            .select('role')
-            .single();
-          
-          if (createError) {
-            console.error("Error creating user role:", createError);
-            setUserRole('landlord_free'); // Default fallback
-          } else if (newRoleData) {
-            console.log("Default role created:", newRoleData.role);
-            setUserRole(newRoleData.role);
-          }
-        } catch (createErr) {
-          console.error("Failed to create role:", createErr);
-          setUserRole('landlord_free'); // Fallback
-        }
+        console.log("Found existing role:", roleData.role);
+        setUserRole(roleData.role);
       }
     } catch (error) {
-      console.error("Error in refreshUserRole:", error);
+      console.error("Exception in refreshUserRole:", error);
       setUserRole('landlord_free'); // Fallback
     } finally {
+      console.log("=== REFRESH USER ROLE END ===");
       setIsLoading(false);
     }
   };
@@ -161,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.email);
+        console.log("=== AUTH STATE CHANGE ===", event, session?.user?.email);
         
         if (event === 'PASSWORD_RECOVERY') {
           console.log("Password recovery event detected");
@@ -173,20 +158,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         
         if (event === 'SIGNED_IN') {
+          console.log("User signed in, setting up user state");
           setIsPasswordRecovery(false);
           setUser(session?.user ?? null);
           setSession(session);
           
-          // Refresh role after sign in with a small delay
+          // Don't set loading to false here, let refreshUserRole handle it
           if (session?.user) {
+            console.log("Calling refreshUserRole after sign in");
+            // Use setTimeout to avoid any potential race conditions
             setTimeout(async () => {
-              await checkSubscription();
               await refreshUserRole();
-            }, 500);
+            }, 100);
           }
         }
         
         if (event === 'SIGNED_OUT') {
+          console.log("User signed out, clearing state");
           setIsPasswordRecovery(false);
           setUserRole(null);
           setSubscriptionPlan(null);
@@ -199,9 +187,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Initial session check
     const initializeAuth = async () => {
+      console.log("=== INITIALIZING AUTH ===");
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        console.log("Initial session check:", session?.user?.email);
+        console.log("Initial session:", session?.user?.email);
         
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -216,13 +205,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Initial role and subscription check
         if (session?.user) {
-          setTimeout(async () => {
-            await checkSubscription();
-            await refreshUserRole();
-          }, 100);
+          console.log("Found session, refreshing user role");
+          await refreshUserRole();
         } else {
+          console.log("No session found, setting loading to false");
           setIsLoading(false);
         }
       } catch (error) {
@@ -237,6 +224,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Update refreshUserRole when user changes
+  useEffect(() => {
+    if (user && !isLoading) {
+      console.log("User changed, refreshing role");
+      refreshUserRole();
+    }
+  }, [user?.id]);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     console.log("SignUp attempt:", email, "with name:", fullName);
@@ -280,6 +275,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     console.log("SignIn successful:", data.user?.email);
+    // Don't set loading to false here, let the auth state change handle it
   };
 
   const signOut = async () => {
