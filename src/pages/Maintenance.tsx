@@ -4,16 +4,33 @@ import { MaintenanceRequest } from "@/types";
 import { Layout } from "@/components/Layout";
 import { MaintenanceRequestList } from "@/components/maintenance/MaintenanceRequestList";
 import { MaintenanceRequestForm } from "@/components/maintenance/MaintenanceRequestForm";
+import TenantMaintenanceList from "@/components/maintenance/TenantMaintenanceList";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle } from "lucide-react";
 import { DatabaseService } from "@/services/DatabaseService";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Maintenance = () => {
+  const { userRole } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const queryClient = useQueryClient();
   const dbService = DatabaseService.getInstance();
+
+  // Show tenant maintenance view for tenant users
+  if (userRole === 'tenant') {
+    return (
+      <Layout>
+        <section className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-semibold tracking-tight">Mantenimiento</h1>
+          </div>
+          <TenantMaintenanceList />
+        </section>
+      </Layout>
+    );
+  }
   
   const { data: maintenanceRequests, isLoading, error } = useQuery({
     queryKey: ["maintenance-requests"],

@@ -206,15 +206,15 @@ const Sidebar = () => {
           </div>
         )}
 
-        {/* Landing page access for premium users */}
-        {userRole === 'landlord_premium' && (
+        {/* Website access for all users */}
+        {(userRole === 'landlord_premium' || userRole === 'tenant') && (
           <div className="p-3 bg-gray-50 rounded-lg">
             <button
               onClick={handleLandingPageClick}
-              className="text-xs text-blue-600 hover:text-blue-800 underline flex items-center gap-1 w-full justify-center"
+              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
-              Ver Landing Page
               <ExternalLink className="h-3 w-3" />
+              Ir a Sitio Web
             </button>
           </div>
         )}

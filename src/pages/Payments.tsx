@@ -1,16 +1,33 @@
 import { Layout } from "@/components/Layout";
 import { PaymentsList } from "@/components/payments/PaymentsList";
 import { ReceiptProcessor } from "@/components/payments/ReceiptProcessor";
+import TenantPaymentsList from "@/components/payments/TenantPaymentsList";
 import { Payment, Tenant } from "@/types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { DatabaseService } from "@/services/DatabaseService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Payments = () => {
+  const { userRole } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Show tenant payments view for tenant users
+  if (userRole === 'tenant') {
+    return (
+      <Layout>
+        <section className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-semibold tracking-tight">Mis Pagos</h1>
+          </div>
+          <TenantPaymentsList />
+        </section>
+      </Layout>
+    );
+  }
 
   // Cargar pagos e inquilinos al montar el componente
   useEffect(() => {

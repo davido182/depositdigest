@@ -61,14 +61,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log("Refreshing user role for user:", userToCheck.id, userToCheck.email);
       
-      // Get user role from database - prioritize premium, then free, then tenant
+      // Get user role from database with optimized query - only get the most recent role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userToCheck.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .maybeSingle();
+        .single();
       
       console.log("Role query result:", { roleData, roleError });
 

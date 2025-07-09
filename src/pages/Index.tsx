@@ -6,6 +6,7 @@ import { TenantsGrid } from "@/components/dashboard/TenantsGrid";
 import { PaymentsList } from "@/components/payments/PaymentsList";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import { UnitManagementModal } from "@/components/units/UnitManagementModal";
+import TenantDashboard from "@/components/tenant/TenantDashboard";
 import { Payment, Tenant } from "@/types";
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,8 +14,10 @@ import { toast } from "sonner";
 import { DatabaseService } from "@/services/DatabaseService";
 import { Button } from "@/components/ui/button";
 import { Building, Plus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { userRole } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -22,6 +25,11 @@ const Index = () => {
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [totalUnits, setTotalUnits] = useState(9);
+
+  // Show tenant dashboard for tenant users
+  if (userRole === 'tenant') {
+    return <TenantDashboard />;
+  }
 
   useEffect(() => {
     const loadData = async () => {
