@@ -112,7 +112,7 @@ export class DatabaseService {
   }
 
   // Unit management methods
-  private totalUnits: number = 9;
+  private totalUnits: number = 0;
 
   getTotalUnits(): number {
     const saved = localStorage.getItem('totalUnits');

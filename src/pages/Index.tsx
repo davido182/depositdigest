@@ -1,7 +1,7 @@
 
 
 import { Layout } from "@/components/Layout";
-import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
+import { IntelligentDashboard } from "@/components/dashboard/IntelligentDashboard";
 import { TenantsGrid } from "@/components/dashboard/TenantsGrid";
 import { PaymentsList } from "@/components/payments/PaymentsList";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
@@ -24,7 +24,7 @@ const Index = () => {
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [totalUnits, setTotalUnits] = useState(9);
+  const [totalUnits, setTotalUnits] = useState(0);
 
   // Show tenant dashboard for tenant users
   if (userRole === 'tenant') {
@@ -37,9 +37,9 @@ const Index = () => {
         setIsLoading(true);
         const dbService = DatabaseService.getInstance();
         
-        // Cargar la configuración guardada de unidades primero
+        // Cargar la configuración guardada de unidades primero (default 0 para usuarios nuevos)
         const savedUnits = dbService.getTotalUnits();
-        setTotalUnits(savedUnits);
+        setTotalUnits(savedUnits || 0);
         
         const loadedTenants = await dbService.getTenants();
         const loadedPayments = await dbService.getPayments();
@@ -185,7 +185,7 @@ const Index = () => {
           </div>
         </div>
         
-        <DashboardSummary stats={{
+        <IntelligentDashboard stats={{
           totalUnits: totalUnits,
           occupiedUnits: occupiedUnits,
           vacantUnits: vacantUnits,

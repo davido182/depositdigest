@@ -111,7 +111,7 @@ export function UnitManagementModal({
             <Input
               id="unitCount"
               type="number"
-              min="1"
+              min="0"
               max="100"
               value={unitCount}
               onChange={handleUnitCountChange}
