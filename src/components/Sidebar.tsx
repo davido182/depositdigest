@@ -68,15 +68,16 @@ const Sidebar = () => {
         { name: "Pagos", href: "/payments", icon: CreditCard },
         { name: "Mantenimiento", href: "/maintenance", icon: Wrench },
         { name: "Invitar Inquilino", href: "/invite-tenant", icon: UserPlus },
-        { name: "Reportes", href: "/reports", icon: FileText },
+        
       ];
 
       // Premium-only features
       if (userRole === 'landlord_premium') {
-        landlordItems.splice(-1, 0, // Insert before Reports
+        landlordItems.push(
           { name: "Contabilidad", href: "/accounting", icon: Calculator },
           { name: "Asistente IA", href: "/assistant", icon: MessageCircle },
-          { name: "Análisis", href: "/analytics", icon: BarChart3 }
+          { name: "Análisis", href: "/analytics", icon: BarChart3 },
+          { name: "Reportes", href: "/reports", icon: FileText }
         );
       }
 

@@ -95,13 +95,43 @@ const Landing = () => {
             RentFlow es la plataforma completa para propietarios e inquilinos. 
             Gestiona pagos, mantenimiento, contabilidad y más desde tu móvil o web.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate("/login")} className="bg-blue-600 hover:bg-blue-700">
-              Comenzar Gratis <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button size="lg" variant="outline" onClick={handleDemoClick}>
-              Ver Demo
-            </Button>
+          <div className="flex flex-col lg:flex-row gap-8 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button size="lg" onClick={() => navigate("/login")} className="bg-blue-600 hover:bg-blue-700">
+                Comenzar Gratis <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <Button size="lg" variant="outline" onClick={handleDemoClick}>
+                Ver Demo
+              </Button>
+            </div>
+            
+            {/* Dashboard Preview Box */}
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-6 w-80 shadow-lg">
+              <div className="text-sm font-semibold text-gray-600 mb-4">Vista previa del Dashboard</div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                  <div>
+                    <div className="text-xs text-blue-600">Ingresos Mensuales</div>
+                    <div className="text-lg font-bold text-blue-800 animate-pulse">€12,450</div>
+                  </div>
+                  <div className="w-8 h-8 bg-blue-200 rounded-full animate-bounce"></div>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                  <div>
+                    <div className="text-xs text-green-600">Ocupación</div>
+                    <div className="text-lg font-bold text-green-800 animate-pulse">92%</div>
+                  </div>
+                  <div className="w-8 h-8 bg-green-200 rounded-full animate-spin"></div>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                  <div>
+                    <div className="text-xs text-purple-600">Propiedades</div>
+                    <div className="text-lg font-bold text-purple-800 animate-pulse">15</div>
+                  </div>
+                  <div className="w-8 h-8 bg-purple-200 rounded-full animate-ping"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -209,7 +239,7 @@ const Landing = () => {
                   <Crown className="h-5 w-5 text-yellow-500" />
                 </CardTitle>
                 <CardDescription>
-                  <span className="text-3xl font-bold">$9.99</span>
+                  <span className="text-3xl font-bold">€3.99</span>
                   <span className="text-gray-600">/mes</span>
                 </CardDescription>
               </CardHeader>

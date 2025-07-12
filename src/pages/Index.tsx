@@ -176,7 +176,7 @@ const Index = () => {
               onClick={() => setIsUnitModalOpen(true)}
             >
               <Building className="h-4 w-4" />
-              <span>Manage Units ({totalUnits})</span>
+              <span>Administrar Unidades ({totalUnits})</span>
             </Button>
             <Button onClick={handleAddTenant} className="gap-2">
               <Plus className="h-4 w-4" />
@@ -201,8 +201,8 @@ const Index = () => {
 
       <Tabs defaultValue="tenants" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="tenants">Tenants</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="tenants">Inquilinos</TabsTrigger>
+          <TabsTrigger value="properties">Propiedades</TabsTrigger>
         </TabsList>
         <TabsContent value="tenants" className="mt-2">
           {isLoading ? (
@@ -217,14 +217,39 @@ const Index = () => {
             />
           )}
         </TabsContent>
-        <TabsContent value="payments" className="mt-2">
-          <PaymentsList
-            payments={payments}
-            tenants={tenants}
-            tenantNames={tenantNames}
-            onAddPayment={handleAddPayment}
-            onUpdatePayment={handleUpdatePayment}
-          />
+        <TabsContent value="properties" className="mt-2">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-semibold">Administrar Propiedades</h3>
+                <p className="text-sm text-muted-foreground">
+                  Gestiona el número total de unidades en tu propiedad
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                className="gap-1.5"
+                onClick={() => setIsUnitModalOpen(true)}
+              >
+                <Building className="h-4 w-4" />
+                <span>Administrar Unidades ({totalUnits})</span>
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{totalUnits}</div>
+                <div className="text-sm text-blue-700">Total de Unidades</div>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{occupiedUnits}</div>
+                <div className="text-sm text-green-700">Unidades Ocupadas</div>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-gray-600">{vacantUnits}</div>
+                <div className="text-sm text-gray-700">Unidades Disponibles</div>
+              </div>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 
