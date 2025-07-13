@@ -112,17 +112,22 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
   return (
     <div className="space-y-6">
       {/* Métricas Principales */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3">
         <motion.div
           initial="hidden"
           animate="visible"
           variants={cardVariants}
           transition={{ delay: 0, duration: 0.6 }}
         >
-          <Card className="relative overflow-hidden">
+          <Card className="relative overflow-hidden h-40">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Ingresos Mensuales</CardTitle>
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
+              <motion.div
+                animate={{ y: [-2, 2, -2] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+              >
+                <TrendingUp className="h-6 w-6 text-emerald-500" />
+              </motion.div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-emerald-500">
@@ -142,16 +147,27 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
           variants={cardVariants}
           transition={{ delay: 0.1, duration: 0.6 }}
         >
-          <Card className="relative overflow-hidden">
+          <Card className="relative overflow-hidden h-40">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Ocupación</CardTitle>
-              <Building2 className="h-4 w-4 text-blue-500" />
+              <motion.div
+                animate={{ scaleX: [1, 0.8, 1] }}
+                transition={{ repeat: Infinity, duration: 3 }}
+              >
+                <div className="w-6 h-4 bg-blue-500 rounded-sm relative overflow-hidden">
+                  <motion.div
+                    className="absolute top-0 left-0 h-full bg-blue-300"
+                    animate={{ width: [`${stats.occupancyRate}%`, `${Math.max(stats.occupancyRate - 10, 20)}%`, `${stats.occupancyRate}%`] }}
+                    transition={{ repeat: Infinity, duration: 3 }}
+                  />
+                </div>
+              </motion.div>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center py-4">
-                <CircularProgress value={stats.occupancyRate} label="Ocupación" />
+              <div className="text-2xl font-bold text-blue-500 text-center">
+                <AnimatedCounter value={stats.occupancyRate} suffix="%" />
               </div>
-              <p className="text-xs text-muted-foreground text-center">
+              <p className="text-xs text-muted-foreground text-center mt-2">
                 {stats.occupiedUnits} de {stats.totalUnits} unidades
               </p>
             </CardContent>
@@ -164,13 +180,21 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
           variants={cardVariants}
           transition={{ delay: 0.2, duration: 0.6 }}
         >
-          <Card className="relative overflow-hidden">
+          <Card className="relative overflow-hidden h-40">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pagos Pendientes</CardTitle>
-              <AlertCircle className={`h-4 w-4 ${stats.overduePayments > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+              <motion.div
+                animate={{ 
+                  rotate: stats.overduePayments > 0 ? [0, 10, -10, 0] : 0,
+                  scale: stats.overduePayments > 0 ? [1, 1.1, 1] : 1
+                }}
+                transition={{ repeat: Infinity, duration: 2 }}
+              >
+                <AlertCircle className={`h-6 w-6 ${stats.overduePayments > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+              </motion.div>
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${stats.overduePayments > 0 ? 'text-red-500' : 'text-gray-600'}`}>
+              <div className={`text-2xl font-bold text-center ${stats.overduePayments > 0 ? 'text-red-500' : 'text-gray-600'}`}>
                 <AnimatedCounter value={stats.overduePayments} />
                 {stats.overduePayments > 0 && (
                   <motion.span
@@ -182,7 +206,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                   </motion.span>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-2 text-center">
                 {stats.overduePayments > 0 ? 'Requieren atención' : 'Todo al día'}
               </p>
             </CardContent>

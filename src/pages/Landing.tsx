@@ -32,12 +32,14 @@ const Landing = () => {
     ],
     premium: [
       "Todo lo de la versión gratuita",
-      "Contabilidad completa",
-      "Asistente IA especializado",
-      "Análisis avanzados",
+      "Contabilidad completa con reportes fiscales",
+      "Asistente IA especializado con NLP",
+      "Análisis avanzados y predictivos",
+      "Reportes automáticos PDF/Excel",
       "Unidades ilimitadas",
       "Portal del cliente Stripe",
-      "Soporte prioritario"
+      "Sin anuncios publicitarios",
+      "Soporte prioritario 24/7"
     ],
     tenant: [
       "Ver información de la unidad",
@@ -109,26 +111,36 @@ const Landing = () => {
             <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-6 w-80 shadow-lg">
               <div className="text-sm font-semibold text-gray-600 mb-4">Vista previa del Dashboard</div>
               <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg">
+                  <div>
+                    <div className="text-xs text-emerald-600">Ingresos Mensuales</div>
+                    <div className="text-lg font-bold text-emerald-800 animate-pulse">€12,450</div>
+                  </div>
+                  <div className="w-8 h-8 flex items-center justify-center">
+                    <div className="w-6 h-6 text-emerald-500 animate-bounce">
+                      ↗️
+                    </div>
+                  </div>
+                </div>
                 <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                   <div>
-                    <div className="text-xs text-blue-600">Ingresos Mensuales</div>
-                    <div className="text-lg font-bold text-blue-800 animate-pulse">€12,450</div>
+                    <div className="text-xs text-blue-600">Ocupación</div>
+                    <div className="text-lg font-bold text-blue-800 animate-pulse">92%</div>
                   </div>
-                  <div className="w-8 h-8 bg-blue-200 rounded-full animate-bounce"></div>
+                  <div className="w-8 h-8 flex items-center justify-center">
+                    <div className="w-6 h-3 bg-blue-500 rounded-sm relative overflow-hidden">
+                      <div className="absolute top-0 left-0 h-full w-4 bg-blue-300 animate-pulse"></div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
                   <div>
-                    <div className="text-xs text-green-600">Ocupación</div>
-                    <div className="text-lg font-bold text-green-800 animate-pulse">92%</div>
+                    <div className="text-xs text-orange-600">Alertas</div>
+                    <div className="text-lg font-bold text-orange-800 animate-pulse">2</div>
                   </div>
-                  <div className="w-8 h-8 bg-green-200 rounded-full animate-spin"></div>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                  <div>
-                    <div className="text-xs text-purple-600">Propiedades</div>
-                    <div className="text-lg font-bold text-purple-800 animate-pulse">15</div>
+                  <div className="w-8 h-8 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-orange-500 rounded-full animate-ping"></div>
                   </div>
-                  <div className="w-8 h-8 bg-purple-200 rounded-full animate-ping"></div>
                 </div>
               </div>
             </div>
@@ -146,7 +158,7 @@ const Landing = () => {
             Desde gestión básica hasta análisis avanzados con IA
           </p>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <Card className="text-center">
               <CardHeader>
                 <Users className="h-12 w-12 text-blue-600 mx-auto mb-4" />
@@ -170,7 +182,7 @@ const Landing = () => {
             <Card className="text-center">
               <CardHeader>
                 <Calculator className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-                <CardTitle>Contabilidad</CardTitle>
+                <CardTitle>Contabilidad Premium</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">Contabilidad completa y reportes fiscales automáticos</p>
@@ -180,10 +192,30 @@ const Landing = () => {
             <Card className="text-center">
               <CardHeader>
                 <MessageCircle className="h-12 w-12 text-orange-600 mx-auto mb-4" />
-                <CardTitle>Asistente IA</CardTitle>
+                <CardTitle>Asistente IA Premium</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Asistente inteligente para consultas y análisis</p>
+                <p className="text-gray-600">Asistente inteligente para consultas y análisis avanzados</p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <BarChart3 className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
+                <CardTitle>Reportes y Analytics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">Análisis profundos de rentabilidad y reportes automáticos</p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <FileText className="h-12 w-12 text-teal-600 mx-auto mb-4" />
+                <CardTitle>Exportación de Datos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">Exporta todos tus datos en PDF, Excel y otros formatos</p>
               </CardContent>
             </Card>
           </div>

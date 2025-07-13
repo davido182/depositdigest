@@ -10,13 +10,38 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function DataSettings() {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const [isClearing, setIsClearing] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [showCodeVerification, setShowCodeVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [backups, setBackups] = useState<any[]>([]);
+
+  // Para inquilinos, solo mostrar configuraciones básicas
+  if (userRole === 'tenant') {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Configuración Básica
+            </CardTitle>
+            <CardDescription>
+              Tu propietario gestiona la mayoría de configuraciones de datos
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Para cambios en tus datos personales o solicitudes de eliminación, 
+              contacta directamente con tu propietario a través del chat.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const generateSecureVerificationCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
