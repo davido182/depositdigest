@@ -169,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           // Get proper role from database
           await refreshUserRole(session.user);
-          setIsLoading(false);
+          // isLoading is set to false inside refreshUserRole
         } else {
           setUser(null);
           setSession(null);
