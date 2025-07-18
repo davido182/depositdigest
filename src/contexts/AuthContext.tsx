@@ -47,67 +47,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasActivePremium = userRole === 'landlord_premium';
 
   const refreshUserRole = async (currentUser?: User) => {
-    console.log("=== REFRESH USER ROLE START ===");
-    
     const userToCheck = currentUser || user;
     
     if (!userToCheck) {
-      console.log("No user found, setting role to null");
       setUserRole(null);
       setIsLoading(false);
       return;
     }
 
     try {
-      console.log("Refreshing user role for user:", userToCheck.id, userToCheck.email);
-      
-      // Get user role from database with optimized query - only get the most recent role
+      // Get user role from database
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userToCheck.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
-      
-      console.log("Role query result:", { roleData, roleError });
+        .maybeSingle();
 
       if (roleError) {
-        if (roleError.code === 'PGRST116') {
-          // No role found, create default landlord_free role
-          console.log("No role found, creating default landlord_free role");
+        console.error("Error fetching user role:", roleError);
+        setUserRole('landlord_free');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!roleData) {
+        // Create default role
+        const { data: newRoleData, error: createError } = await supabase
+          .from('user_roles')
+          .insert([{
+            user_id: userToCheck.id,
+            role: 'landlord_free' as UserRole
+          }])
+          .select('role')
+          .single();
           
-          const { data: newRoleData, error: createError } = await supabase
-            .from('user_roles')
-            .insert([{
-              user_id: userToCheck.id,
-              role: 'landlord_free' as UserRole
-            }])
-            .select('role')
-            .single();
-          
-          console.log("Role creation result:", { newRoleData, createError });
-          
-          if (createError) {
-            console.error("Error creating user role:", createError);
-            setUserRole('landlord_free'); // Fallback
-          } else {
-            console.log("Successfully created default role:", newRoleData.role);
-            setUserRole(newRoleData.role);
-          }
+        if (createError) {
+          console.error("Error creating user role:", createError);
+          setUserRole('landlord_free');
         } else {
-          console.error("Error fetching user role:", roleError);
-          setUserRole('landlord_free'); // Fallback
+          setUserRole(newRoleData.role);
         }
       } else {
-        console.log("Found existing role:", roleData.role);
         setUserRole(roleData.role);
       }
     } catch (error) {
       console.error("Exception in refreshUserRole:", error);
-      setUserRole('landlord_free'); // Fallback
+      setUserRole('landlord_free');
     } finally {
-      console.log("=== REFRESH USER ROLE END ===");
       setIsLoading(false);
     }
   };
@@ -147,8 +135,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    let isInitialized = false;
-    
     console.log("AuthProvider: Setting up Supabase auth listener");
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -187,50 +173,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(null);
           setIsLoading(false);
         }
+        
+        if (event === 'INITIAL_SESSION') {
+          console.log("Initial session detected");
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          const urlParams = new URLSearchParams(window.location.search);
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const isRecoveryUrl = urlParams.has('type') && urlParams.get('type') === 'recovery' || 
+                               hashParams.has('type') && hashParams.get('type') === 'recovery' ||
+                               urlParams.has('reset') && urlParams.get('reset') === 'true';
+          
+          if (session && isRecoveryUrl) {
+            setIsPasswordRecovery(true);
+            setIsLoading(false);
+          } else if (session?.user) {
+            await refreshUserRole(session.user);
+          } else {
+            setIsLoading(false);
+          }
+        }
       }
     );
 
-    // Initial session check - only run once
-    const initializeAuth = async () => {
-      if (isInitialized) return;
-      isInitialized = true;
-      
-      console.log("=== INITIALIZING AUTH ===");
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log("Initial session:", session ? "Found" : "None");
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const isRecoveryUrl = urlParams.has('type') && urlParams.get('type') === 'recovery' || 
-                             hashParams.has('type') && hashParams.get('type') === 'recovery' ||
-                             urlParams.has('reset') && urlParams.get('reset') === 'true';
-        
-        if (session && isRecoveryUrl) {
-          setIsPasswordRecovery(true);
-        }
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          console.log("Found session, refreshing user role");
-          await refreshUserRole(session.user);
-        } else {
-          console.log("No session found, setting loading to false");
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-        setIsLoading(false);
-      }
-    };
-
-    // Delay initialization to avoid race conditions
-    const timeoutId = setTimeout(initializeAuth, 100);
-
     return () => {
-      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);

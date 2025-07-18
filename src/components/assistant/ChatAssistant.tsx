@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, Bot, User } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Message {
   id: string;
@@ -15,10 +17,11 @@ interface Message {
 }
 
 export function ChatAssistant() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '¡Hola! Soy tu asistente de RentFlow. Puedo ayudarte a encontrar información sobre tus inquilinos, pagos, mantenimiento y más. Pregúntame algo como "¿Cuál es el alquiler del apartamento 101?" o "¿Cuándo ingresó María González?"',
+      text: '¡Hola! Soy tu asistente de RentFlow. Puedo ayudarte a encontrar información sobre tus inquilinos, pagos, mantenimiento y más. Pregúntame algo como "¿Cuál es el alquiler del apartamento 2?" o "¿Quién vive en la unidad 3?"',
       isBot: true,
       timestamp: new Date()
     }
@@ -40,25 +43,72 @@ export function ChatAssistant() {
     scrollToBottom();
   }, [messages]);
 
-  const getApplicationData = () => {
-    const tenants = JSON.parse(localStorage.getItem('tenants') || '[]');
-    const payments = JSON.parse(localStorage.getItem('payments') || '[]');
-    const maintenanceRequests = JSON.parse(localStorage.getItem('maintenance_requests') || '[]');
+  const getApplicationData = async () => {
+    if (!user) {
+      return { tenants: [], payments: [], maintenanceRequests: [] };
+    }
     
-    return { tenants, payments, maintenanceRequests };
+    try {
+      console.log('Fetching data for assistant...');
+      
+      // Fetch tenants
+      const { data: tenantsData, error: tenantsError } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (tenantsError) {
+        console.error('Error fetching tenants:', tenantsError);
+      }
+      
+      // Fetch payments
+      const { data: paymentsData, error: paymentsError } = await supabase
+        .from('payments')
+        .select('*, tenants!inner(name)')
+        .eq('user_id', user.id);
+      
+      if (paymentsError) {
+        console.error('Error fetching payments:', paymentsError);
+      }
+      
+      // Fetch maintenance requests
+      const { data: maintenanceData, error: maintenanceError } = await supabase
+        .from('maintenance_requests')
+        .select('*, tenants!inner(name)')
+        .eq('user_id', user.id);
+      
+      if (maintenanceError) {
+        console.error('Error fetching maintenance:', maintenanceError);
+      }
+      
+      console.log('Assistant data fetched:', {
+        tenants: tenantsData?.length || 0,
+        payments: paymentsData?.length || 0,
+        maintenance: maintenanceData?.length || 0
+      });
+      
+      return {
+        tenants: tenantsData || [],
+        payments: paymentsData || [],
+        maintenanceRequests: maintenanceData || []
+      };
+    } catch (error) {
+      console.error('Error fetching data for assistant:', error);
+      return { tenants: [], payments: [], maintenanceRequests: [] };
+    }
   };
 
-  const processQuery = (query: string) => {
-    const { tenants, payments, maintenanceRequests } = getApplicationData();
+  const processQuery = async (query: string) => {
+    const { tenants, payments, maintenanceRequests } = await getApplicationData();
     const lowerQuery = query.toLowerCase();
 
     // Buscar por unidad específica
     const unitMatch = lowerQuery.match(/(?:unidad|apartamento|apto|unit)\s*(\d+)/);
     if (unitMatch) {
       const unitNumber = unitMatch[1];
-      const tenant = tenants.find((t: any) => t.unit === unitNumber);
+      const tenant = tenants.find((t: any) => t.unit_number === unitNumber);
       if (tenant) {
-        return `El inquilino de la unidad ${unitNumber} es ${tenant.name}. Ingresó el ${new Date(tenant.moveInDate).toLocaleDateString('es-ES')} y paga $${tenant.rentAmount.toLocaleString()} de alquiler.`;
+        return `El inquilino de la unidad ${unitNumber} es ${tenant.name}. Ingresó el ${new Date(tenant.lease_start_date).toLocaleDateString('es-ES')} y paga $${Number(tenant.rent_amount).toLocaleString()} de alquiler.`;
       } else {
         return `No encontré información sobre la unidad ${unitNumber}.`;
       }
@@ -71,23 +121,23 @@ export function ChatAssistant() {
     );
 
     if (tenant) {
-      const tenantPayments = payments.filter((p: any) => p.tenantId === tenant.id);
-      const lastPayment = tenantPayments.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-      const maintenanceCount = maintenanceRequests.filter((m: any) => m.tenantId === tenant.id).length;
+      const tenantPayments = payments.filter((p: any) => p.tenant_id === tenant.id);
+      const lastPayment = tenantPayments.sort((a: any, b: any) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())[0];
+      const maintenanceCount = maintenanceRequests.filter((m: any) => m.tenant_id === tenant.id).length;
 
       return `**${tenant.name}**
-- Unidad: ${tenant.unit}
-- Alquiler: $${tenant.rentAmount.toLocaleString()}
-- Fecha de ingreso: ${new Date(tenant.moveInDate).toLocaleDateString('es-ES')}
+- Unidad: ${tenant.unit_number}
+- Alquiler: $${Number(tenant.rent_amount).toLocaleString()}
+- Fecha de ingreso: ${new Date(tenant.lease_start_date).toLocaleDateString('es-ES')}
 - Estado: ${tenant.status === 'active' ? 'Activo' : tenant.status}
-- Último pago: ${lastPayment ? new Date(lastPayment.date).toLocaleDateString('es-ES') : 'Sin pagos registrados'}
+- Último pago: ${lastPayment ? new Date(lastPayment.payment_date).toLocaleDateString('es-ES') : 'Sin pagos registrados'}
 - Solicitudes de mantenimiento: ${maintenanceCount}`;
     }
 
     // Consultas sobre pagos
     if (lowerQuery.includes('pago') || lowerQuery.includes('cuanto pag') || lowerQuery.includes('último pago')) {
       const recentPayments = payments
-        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .sort((a: any, b: any) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
         .slice(0, 5);
       
       if (recentPayments.length === 0) {
@@ -96,8 +146,8 @@ export function ChatAssistant() {
 
       let response = 'Últimos pagos registrados:\n\n';
       recentPayments.forEach((payment: any) => {
-        const tenant = tenants.find((t: any) => t.id === payment.tenantId);
-        response += `• ${tenant ? tenant.name : 'Desconocido'}: $${payment.amount.toLocaleString()} (${new Date(payment.date).toLocaleDateString('es-ES')})\n`;
+        const tenant = tenants.find((t: any) => t.id === payment.tenant_id);
+        response += `• ${tenant ? tenant.name : 'Desconocido'}: $${Number(payment.amount).toLocaleString()} (${new Date(payment.payment_date).toLocaleDateString('es-ES')})\n`;
       });
       
       return response;
@@ -105,7 +155,7 @@ export function ChatAssistant() {
 
     // Consultas sobre mantenimiento
     if (lowerQuery.includes('mantenimiento') || lowerQuery.includes('reparac') || lowerQuery.includes('problema')) {
-      const pendingMaintenance = maintenanceRequests.filter((m: any) => m.status === 'pending');
+      const pendingMaintenance = maintenanceRequests.filter((m: any) => m.status === 'open');
       
       if (pendingMaintenance.length === 0) {
         return 'No hay solicitudes de mantenimiento pendientes.';
@@ -113,8 +163,8 @@ export function ChatAssistant() {
 
       let response = `Hay ${pendingMaintenance.length} solicitudes de mantenimiento pendientes:\n\n`;
       pendingMaintenance.slice(0, 5).forEach((request: any) => {
-        const tenant = tenants.find((t: any) => t.id === request.tenantId);
-        response += `• Unidad ${request.unit}: ${request.title} (${tenant ? tenant.name : 'Desconocido'})\n`;
+        const tenant = tenants.find((t: any) => t.id === request.tenant_id);
+        response += `• Unidad ${request.unit_number}: ${request.title} (${tenant ? tenant.name : 'Desconocido'})\n`;
       });
       
       return response;
@@ -123,8 +173,8 @@ export function ChatAssistant() {
     // Estadísticas generales
     if (lowerQuery.includes('resumen') || lowerQuery.includes('estadística') || lowerQuery.includes('total')) {
       const activeTenantsCount = tenants.filter((t: any) => t.status === 'active').length;
-      const totalRent = tenants.reduce((sum: number, t: any) => sum + (t.rentAmount || 0), 0);
-      const pendingMaintenanceCount = maintenanceRequests.filter((m: any) => m.status === 'pending').length;
+      const totalRent = tenants.reduce((sum: number, t: any) => sum + Number(t.rent_amount || 0), 0);
+      const pendingMaintenanceCount = maintenanceRequests.filter((m: any) => m.status === 'open').length;
       
       return `**Resumen del Sistema:**
 - Total inquilinos activos: ${activeTenantsCount}
@@ -151,21 +201,43 @@ export function ChatAssistant() {
     setIsLoading(true);
 
     try {
-      // Procesar la consulta localmente
-      const response = processQuery(inputValue);
+      // Get fresh data for the AI assistant
+      const userData = await getApplicationData();
       
-      // Simular un pequeño delay para mejorar la experiencia
-      setTimeout(() => {
+      // Call AI assistant with user query and data
+      const { data, error } = await supabase.functions.invoke('ai-assistant', {
+        body: {
+          query: inputValue,
+          userData: userData
+        }
+      });
+
+      if (error) {
+        console.error('AI Assistant error:', error);
+        // Fallback to local processing
+        const fallbackResponse = await processQuery(inputValue);
+        
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
-          text: response,
+          text: fallbackResponse,
           isBot: true,
           timestamp: new Date()
         };
 
         setMessages(prev => [...prev, botMessage]);
         setIsLoading(false);
-      }, 800);
+        return;
+      }
+
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: data.response || 'Lo siento, no pude procesar tu consulta.',
+        isBot: true,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+      setIsLoading(false);
 
     } catch (error) {
       console.error('Error processing query:', error);
