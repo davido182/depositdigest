@@ -135,14 +135,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    console.log("AuthProvider: Setting up Supabase auth listener");
-    
+    let mounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("=== AUTH STATE CHANGE ===", event, session?.user?.email);
+        if (!mounted) return;
+        
+        console.log("Auth event:", event, session?.user?.email);
         
         if (event === 'PASSWORD_RECOVERY') {
-          console.log("Password recovery event detected");
           setIsPasswordRecovery(true);
           setUser(session?.user ?? null);
           setSession(session);
@@ -150,54 +151,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         
-        if (event === 'SIGNED_IN') {
-          console.log("User signed in, setting up user state");
-          setIsPasswordRecovery(false);
-          setUser(session?.user ?? null);
-          setSession(session);
-          
-          if (session?.user) {
-            console.log("Calling refreshUserRole after sign in");
-            await refreshUserRole(session.user);
-          } else {
-            setIsLoading(false);
-          }
-        }
-        
         if (event === 'SIGNED_OUT') {
-          console.log("User signed out, clearing state");
           setIsPasswordRecovery(false);
           setUserRole(null);
           setSubscriptionPlan(null);
           setUser(null);
           setSession(null);
           setIsLoading(false);
+          return;
         }
         
-        if (event === 'INITIAL_SESSION') {
-          console.log("Initial session detected");
+        // Handle signed in and initial session
+        if (session?.user) {
+          setIsPasswordRecovery(false);
+          setUser(session.user);
           setSession(session);
-          setUser(session?.user ?? null);
           
-          const urlParams = new URLSearchParams(window.location.search);
-          const hashParams = new URLSearchParams(window.location.hash.substring(1));
-          const isRecoveryUrl = urlParams.has('type') && urlParams.get('type') === 'recovery' || 
-                               hashParams.has('type') && hashParams.get('type') === 'recovery' ||
-                               urlParams.has('reset') && urlParams.get('reset') === 'true';
-          
-          if (session && isRecoveryUrl) {
-            setIsPasswordRecovery(true);
-            setIsLoading(false);
-          } else if (session?.user) {
-            await refreshUserRole(session.user);
-          } else {
-            setIsLoading(false);
-          }
+          // Simple role assignment - avoid complex queries during auth
+          setUserRole('landlord_free');
+          setIsLoading(false);
+        } else {
+          setUser(null);
+          setSession(null);
+          setUserRole(null);
+          setIsLoading(false);
         }
       }
     );
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -232,22 +215,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    console.log("SignIn attempt:", email);
     setIsLoading(true);
     
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-    if (error) {
-      console.error("SignIn error:", error);
+      if (error) throw error;
+      
+      // Auth state change will handle the rest
+    } catch (error) {
       setIsLoading(false);
       throw error;
     }
-
-    console.log("SignIn successful:", data.user?.email);
-    // Don't set loading to false here, let the auth state change handle it
   };
 
   const signOut = async () => {

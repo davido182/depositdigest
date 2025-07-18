@@ -20,18 +20,13 @@ const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Handle navigation based on auth state
+  // Simple auth check - no complex logic
   useEffect(() => {
-    // If user is authenticated and not in password recovery, redirect to home
     if (isAuthenticated && !isPasswordRecovery) {
-      console.log("User authenticated, redirecting to home");
       navigate("/");
-      return;
     }
-
-    // If we have a password recovery session, show password update form
+    
     if (isPasswordRecovery && user) {
-      console.log("Password recovery session active");
       toast.info("Ahora puedes establecer tu nueva contraseña");
     }
   }, [isAuthenticated, isPasswordRecovery, user, navigate]);
@@ -49,9 +44,8 @@ const Login = () => {
     try {
       await signIn(email, password);
       toast.success("Sesión iniciada exitosamente");
-      navigate("/");
+      // Navigation handled by useEffect
     } catch (error: any) {
-      console.error("SignIn error:", error);
       if (error.message?.includes("Invalid login credentials")) {
         toast.error("Email o contraseña incorrectos");
       } else if (error.message?.includes("Email not confirmed")) {

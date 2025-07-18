@@ -14,10 +14,10 @@ serve(async (req) => {
   try {
     const { query, userData } = await req.json();
     
-    // Get Perplexity API key from environment
-    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
-    if (!perplexityApiKey) {
-      throw new Error('PERPLEXITY_API_KEY not configured');
+    // Get Cerebras API key from environment - SECURE
+    const cerebrasApiKey = Deno.env.get('PERPLEXITY_API_KEY'); // Using same env var name as configured
+    if (!cerebrasApiKey) {
+      throw new Error('CEREBRAS_API_KEY not configured');
     }
 
     // Create context from user data
@@ -49,14 +49,14 @@ IMPORTANTE:
 
 Si no tienes información suficiente en el contexto, di que necesitas más datos específicos.`;
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
+        'Authorization': `Bearer ${cerebrasApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
+        model: 'llama3.1-8b',
         messages: [
           {
             role: 'system',
@@ -68,19 +68,15 @@ Si no tienes información suficiente en el contexto, di que necesitas más datos
           }
         ],
         temperature: 0.3,
-        top_p: 0.9,
         max_tokens: 800,
-        return_images: false,
-        return_related_questions: false,
-        frequency_penalty: 1,
-        presence_penalty: 0
+        top_p: 0.9
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Perplexity API error:', errorText);
-      throw new Error(`Perplexity API error: ${response.status}`);
+      console.error('Cerebras API error:', errorText);
+      throw new Error(`Cerebras API error: ${response.status}`);
     }
 
     const data = await response.json();
