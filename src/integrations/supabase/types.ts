@@ -458,6 +458,7 @@ export type Database = {
           created_at: string
           id: string
           landlord_id: string | null
+          property_limit: number | null
           role: Database["public"]["Enums"]["user_role"]
           unit_code: string | null
           updated_at: string
@@ -467,6 +468,7 @@ export type Database = {
           created_at?: string
           id?: string
           landlord_id?: string | null
+          property_limit?: number | null
           role?: Database["public"]["Enums"]["user_role"]
           unit_code?: string | null
           updated_at?: string
@@ -476,6 +478,7 @@ export type Database = {
           created_at?: string
           id?: string
           landlord_id?: string | null
+          property_limit?: number | null
           role?: Database["public"]["Enums"]["user_role"]
           unit_code?: string | null
           updated_at?: string

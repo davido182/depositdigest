@@ -147,6 +147,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let isInitialized = false;
+    
     console.log("AuthProvider: Setting up Supabase auth listener");
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -168,10 +170,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(session?.user ?? null);
           setSession(session);
           
-          // Don't set loading to false here, let refreshUserRole handle it
           if (session?.user) {
             console.log("Calling refreshUserRole after sign in");
-            // Pass the user directly to avoid timing issues
             await refreshUserRole(session.user);
           } else {
             setIsLoading(false);
@@ -190,12 +190,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Initial session check
+    // Initial session check - only run once
     const initializeAuth = async () => {
+      if (isInitialized) return;
+      isInitialized = true;
+      
       console.log("=== INITIALIZING AUTH ===");
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        console.log("Initial session:", session?.user?.email);
+        console.log("Initial session:", session ? "Found" : "None");
         
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -223,20 +226,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    initializeAuth();
+    // Delay initialization to avoid race conditions
+    const timeoutId = setTimeout(initializeAuth, 100);
 
     return () => {
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
 
-  // Update refreshUserRole when user changes
-  useEffect(() => {
-    if (user && !isLoading) {
-      console.log("User changed, refreshing role");
-      refreshUserRole(user);
-    }
-  }, [user?.id]);
+  // Remove this useEffect to prevent multiple role refreshes
+  // The role is already refreshed in the auth state change handler
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     console.log("SignUp attempt:", email, "with name:", fullName);

@@ -9,43 +9,50 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { DashboardStats } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePropertyStats } from "@/hooks/use-property-stats";
 
-interface DashboardSummaryProps {
-  stats: DashboardStats;
-}
-
-export function DashboardSummary({ stats }: DashboardSummaryProps) {
+export function DashboardSummary() {
   const isMobile = useIsMobile();
+  const { stats } = usePropertyStats();
+
+  if (stats.isLoading) {
+    return (
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
       <StatsCard
-        title="Monthly Revenue"
-        value={`$${stats.monthlyRevenue.toLocaleString()}`}
+        title="Ingresos Mensuales"
+        value={`€${stats.monthlyRevenue.toLocaleString()}`}
         icon={DollarSign}
-        description="This month"
+        description="Este mes"
         trend={{ value: 12.8, isPositive: true }}
       />
       <StatsCard
-        title="Total Tenants"
-        value={stats.totalTenants}
-        icon={Users}
-        description={`${stats.occupancyRate}% occupancy rate`}
-      />
-      <StatsCard
-        title="Units Status"
-        value={`${stats.occupiedUnits}/${stats.totalUnits}`}
+        title="Total Propiedades"
+        value={stats.totalProperties}
         icon={Building}
-        description={`${stats.totalUnits - stats.occupiedUnits} vacant units`}
+        description={`${stats.occupancyRate}% ocupación`}
       />
       <StatsCard
-        title="Overdue Payments"
+        title="Estado Unidades"
+        value={`${stats.occupiedUnits}/${stats.totalProperties}`}
+        icon={Home}
+        description={`${stats.vacantUnits} unidades vacantes`}
+      />
+      <StatsCard
+        title="Pagos Pendientes"
         value={stats.overduePayments}
         icon={Wallet}
         trend={{ value: 5.2, isPositive: false }}
-        description="Need attention"
+        description="Requieren atención"
       />
     </div>
   );
