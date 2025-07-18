@@ -167,8 +167,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(session.user);
           setSession(session);
           
-          // Simple role assignment - avoid complex queries during auth
-          setUserRole('landlord_free');
+          // Get proper role from database
+          await refreshUserRole(session.user);
           setIsLoading(false);
         } else {
           setUser(null);

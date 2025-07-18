@@ -1,7 +1,7 @@
 
 
 import { Layout } from "@/components/Layout";
-import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
+import { IntelligentDashboard } from "@/components/dashboard/IntelligentDashboard";
 import { TenantsGrid } from "@/components/dashboard/TenantsGrid";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import TenantDashboard from "@/components/tenant/TenantDashboard";
@@ -100,7 +100,7 @@ const Index = () => {
           </Button>
         </div>
         
-        <DashboardSummary />
+        <IntelligentDashboard stats={stats} />
       </section>
 
       <Tabs defaultValue="tenants" className="w-full">

@@ -3,24 +3,34 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface PropertyStats {
+  totalUnits: number;
   totalProperties: number;
   occupiedUnits: number;
   vacantUnits: number;
   monthlyRevenue: number;
   overduePayments: number;
   occupancyRate: number;
+  totalTenants: number;
+  pendingDeposits: number;
+  upcomingMoveIns: number;
+  upcomingMoveOuts: number;
   isLoading: boolean;
 }
 
 export function usePropertyStats() {
   const { user, isAuthenticated } = useAuth();
   const [stats, setStats] = useState<PropertyStats>({
+    totalUnits: 0,
     totalProperties: 0,
     occupiedUnits: 0,
     vacantUnits: 0,
     monthlyRevenue: 0,
     overduePayments: 0,
     occupancyRate: 0,
+    totalTenants: 0,
+    pendingDeposits: 0,
+    upcomingMoveIns: 0,
+    upcomingMoveOuts: 0,
     isLoading: true,
   });
 
@@ -28,12 +38,17 @@ export function usePropertyStats() {
     if (!user || !isAuthenticated) {
       console.log('No user or not authenticated, clearing stats');
       setStats({
+        totalUnits: 0,
         totalProperties: 0,
         occupiedUnits: 0,
         vacantUnits: 0,
         monthlyRevenue: 0,
         overduePayments: 0,
         occupancyRate: 0,
+        totalTenants: 0,
+        pendingDeposits: 0,
+        upcomingMoveIns: 0,
+        upcomingMoveOuts: 0,
         isLoading: false,
       });
       return;
@@ -82,12 +97,17 @@ export function usePropertyStats() {
       const occupancyRate = totalProperties > 0 ? Math.round((occupiedUnits / totalProperties) * 100) : 0;
 
       const newStats = {
+        totalUnits: totalProperties,
         totalProperties,
         occupiedUnits,
         vacantUnits,
         monthlyRevenue,
         overduePayments,
         occupancyRate,
+        totalTenants: occupiedUnits,
+        pendingDeposits: 0,
+        upcomingMoveIns: 0,
+        upcomingMoveOuts: 0,
         isLoading: false,
       };
 
@@ -96,12 +116,17 @@ export function usePropertyStats() {
     } catch (error) {
       console.error('Error fetching property stats:', error);
       setStats({
+        totalUnits: 0,
         totalProperties: 0,
         occupiedUnits: 0,
         vacantUnits: 0,
         monthlyRevenue: 0,
         overduePayments: 0,
         occupancyRate: 0,
+        totalTenants: 0,
+        pendingDeposits: 0,
+        upcomingMoveIns: 0,
+        upcomingMoveOuts: 0,
         isLoading: false,
       });
     }
