@@ -60,8 +60,33 @@ const TenantDashboard = () => {
 
   const handlePayRent = async () => {
     try {
-      // This would typically integrate with a payment system
-      toast.success("Funcionalidad de pago en desarrollo");
+      if (!tenantInfo) {
+        toast.error("Información del inquilino no disponible");
+        return;
+      }
+
+      // Create payment session with Stripe
+      const { data, error } = await supabase.functions.invoke('create-tenant-payment', {
+        body: {
+          tenantId: tenantInfo.id,
+          amount: tenantInfo.rent_amount,
+          description: `Pago de renta - Unidad ${tenantInfo.unit_number}`
+        }
+      });
+
+      if (error) {
+        console.error("Error creating payment session:", error);
+        toast.error("Error al crear sesión de pago");
+        return;
+      }
+
+      if (data?.url) {
+        // Open Stripe checkout in new tab
+        window.open(data.url, '_blank');
+        toast.success("Redirigiendo a página de pago...");
+      } else {
+        toast.error("No se pudo crear la sesión de pago");
+      }
     } catch (error) {
       console.error("Error processing payment:", error);
       toast.error("Error al procesar el pago");

@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Tenants from "./pages/Tenants";
+import Properties from "./pages/Properties";
 import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
 import Analytics from "./pages/Analytics";
@@ -78,6 +79,7 @@ const App = () => {
               <Route path="/tenant-signup" element={<TenantSignup />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<Index />} />
+                <Route path="/properties" element={<Properties />} />
                 <Route path="/tenants" element={<Tenants />} />
                 <Route path="/payments" element={<Payments />} />
                 <Route path="/maintenance" element={<Maintenance />} />

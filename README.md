@@ -1,8 +1,8 @@
-# Welcome to your Lovable project
+# RentFlow - Plataforma de Gestión Inmobiliaria
 
-## Project info
+## 🏢 Descripción
 
-**URL**: https://lovable.dev/projects/8d19717d-812d-442e-879a-ca561313dd86
+RentFlow es una plataforma integral de gestión inmobiliaria que permite a propietarios e inquilinos gestionar eficientemente alquileres, pagos, mantenimiento y contabilidad.
 
 ## How can I edit this code?
 
