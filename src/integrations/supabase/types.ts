@@ -486,6 +486,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_stripe_configs: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          publishable_key: string | null
+          secret_key: string | null
+          updated_at: string
+          user_id: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          publishable_key?: string | null
+          secret_key?: string | null
+          updated_at?: string
+          user_id: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          publishable_key?: string | null
+          secret_key?: string | null
+          updated_at?: string
+          user_id?: string
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
