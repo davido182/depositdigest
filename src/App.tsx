@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AuthDebugger from "@/components/AuthDebugger";
 import Index from "./pages/Index";
 import Tenants from "./pages/Tenants";
 import Properties from "./pages/Properties";
@@ -38,7 +38,7 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  console.log("App component rendering - updated version");
+  console.log("🚀 App component rendering - auth fix version");
   const { isNative } = useDeviceFeatures();
   const listenerRef = useRef<any>(null);
   
@@ -93,6 +93,7 @@ const App = () => {
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <AuthDebugger />
           </BrowserRouter>
           <Toaster />
           <Sonner position="top-right" />

@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +39,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [subscriptionPlan, setSubscriptionPlan] = useState<AppPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  console.log("🔐 AuthProvider render:", { 
+    hasUser: !!user, 
+    userRole, 
+    isLoading, 
+    isInitialized,
+    timestamp: new Date().toISOString()
+  });
 
   // Computed properties
   const isLandlord = userRole === 'landlord_free' || userRole === 'landlord_premium';
@@ -48,12 +58,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUserRole = async (currentUser?: User) => {
     const userToCheck = currentUser || user;
     
+    console.log("🔄 refreshUserRole called:", { 
+      hasUser: !!userToCheck, 
+      userId: userToCheck?.id,
+      timestamp: new Date().toISOString()
+    });
+    
     if (!userToCheck) {
+      console.log("❌ No user to check, setting role to null");
       setUserRole(null);
       return;
     }
 
     try {
+      console.log("📡 Fetching user role from database...");
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -63,13 +81,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (roleError) {
-        console.error("Error fetching user role:", roleError);
+        console.error("❌ Error fetching user role:", roleError);
+        console.log("🔧 Setting default role: landlord_free");
         setUserRole('landlord_free');
         return;
       }
 
       if (!roleData) {
-        // Create default role
+        console.log("📝 No role found, creating default role...");
         const { data: newRoleData, error: createError } = await supabase
           .from('user_roles')
           .insert([{
@@ -80,16 +99,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .single();
           
         if (createError) {
-          console.error("Error creating user role:", createError);
+          console.error("❌ Error creating user role:", createError);
+          console.log("🔧 Fallback: setting role to landlord_free");
           setUserRole('landlord_free');
         } else {
+          console.log("✅ Created new role:", newRoleData.role);
           setUserRole(newRoleData.role);
         }
       } else {
+        console.log("✅ Found existing role:", roleData.role);
         setUserRole(roleData.role);
       }
     } catch (error) {
-      console.error("Exception in refreshUserRole:", error);
+      console.error("💥 Exception in refreshUserRole:", error);
+      console.log("🔧 Fallback: setting role to landlord_free");
       setUserRole('landlord_free');
     }
   };
@@ -99,19 +122,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!currentUser) return;
     
     try {
-      console.log("Checking subscription for:", currentUser.email);
+      console.log("💳 Checking subscription for:", currentUser.email);
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
-        console.error("Subscription check error:", error);
+        console.error("❌ Subscription check error:", error);
         return;
       }
       
       if (data) {
-        console.log("Subscription data:", data);
+        console.log("✅ Subscription data:", data);
         setSubscriptionPlan(data.plan);
         
-        // Update user role based on subscription
         if (data.plan === 'premium' && userRole === 'landlord_free') {
           const { error: updateError } = await supabase
             .from('user_roles')
@@ -124,27 +146,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      console.error("Error checking subscription:", error);
+      console.error("💥 Error checking subscription:", error);
     }
   };
 
   useEffect(() => {
     let isMounted = true;
+    let initializationTimeout: NodeJS.Timeout;
+
+    console.log("🚀 Starting auth initialization...");
 
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Set timeout as fallback
+        initializationTimeout = setTimeout(() => {
+          if (isMounted && !isInitialized) {
+            console.log("⏰ Auth initialization timeout - setting loading to false");
+            setIsLoading(false);
+            setIsInitialized(true);
+          }
+        }, 10000); // 10 second timeout
+
+        console.log("📡 Getting initial session...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("❌ Error getting session:", error);
+          if (isMounted) {
+            setIsLoading(false);
+            setIsInitialized(true);
+          }
+          return;
+        }
+        
+        console.log("📋 Initial session:", { hasSession: !!session, hasUser: !!session?.user });
         
         if (session?.user && isMounted) {
+          console.log("👤 Setting initial user and session");
           setUser(session.user);
           setSession(session);
-          await refreshUserRole(session.user);
+          
+          // Defer role fetching to avoid blocking
+          setTimeout(() => {
+            if (isMounted) {
+              refreshUserRole(session.user);
+            }
+          }, 100);
         }
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-      } finally {
+        
         if (isMounted) {
           setIsLoading(false);
+          setIsInitialized(true);
+          clearTimeout(initializationTimeout);
+        }
+      } catch (error) {
+        console.error("💥 Error initializing auth:", error);
+        if (isMounted) {
+          setIsLoading(false);
+          setIsInitialized(true);
+          clearTimeout(initializationTimeout);
         }
       }
     };
@@ -153,50 +213,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
 
     // Listen for auth changes
+    console.log("👂 Setting up auth state listener...");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!isMounted) return;
         
-        console.log("Auth event:", event);
+        console.log("🔔 Auth event:", event, { hasSession: !!session, hasUser: !!session?.user });
         
         if (event === 'PASSWORD_RECOVERY') {
+          console.log("🔑 Password recovery event");
           setIsPasswordRecovery(true);
           setUser(session?.user ?? null);
           setSession(session);
+          setIsLoading(false);
           return;
         }
         
         if (event === 'SIGNED_OUT') {
+          console.log("👋 User signed out");
           setIsPasswordRecovery(false);
           setUserRole(null);
           setSubscriptionPlan(null);
           setUser(null);
           setSession(null);
+          setIsLoading(false);
           return;
         }
         
         if (event === 'SIGNED_IN' && session?.user) {
+          console.log("🎉 User signed in successfully");
           setIsPasswordRecovery(false);
           setUser(session.user);
           setSession(session);
-          await refreshUserRole(session.user);
+          setIsLoading(false);
+          
+          // Defer role fetching
+          setTimeout(() => {
+            if (isMounted) {
+              refreshUserRole(session.user);
+            }
+          }, 100);
+          return;
         }
         
         if (event === 'TOKEN_REFRESHED' && session?.user) {
+          console.log("🔄 Token refreshed");
           setUser(session.user);
           setSession(session);
+          return;
         }
+
+        // For any other event, ensure loading is false
+        setIsLoading(false);
       }
     );
 
     return () => {
+      console.log("🧹 Cleaning up auth context");
       isMounted = false;
       subscription.unsubscribe();
+      if (initializationTimeout) {
+        clearTimeout(initializationTimeout);
+      }
     };
-  }, []);
+  }, []); // Empty dependency array - only run once
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    console.log("SignUp attempt:", email);
+    console.log("📝 SignUp attempt:", email);
     setIsLoading(true);
     
     try {
@@ -213,17 +296,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        console.error("SignUp error:", error);
+        console.error("❌ SignUp error:", error);
         throw error;
       }
 
-      console.log("SignUp successful:", data.user?.email);
+      console.log("✅ SignUp successful:", data.user?.email);
     } finally {
       setIsLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
+    console.log("🔐 SignIn attempt:", email);
     setIsLoading(true);
     
     try {
@@ -232,61 +316,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("❌ SignIn error:", error);
+        throw error;
+      }
       
+      console.log("✅ SignIn successful:", data.user?.email);
       // The auth state listener will handle the rest
     } catch (error) {
+      console.error("💥 SignIn exception:", error);
       setIsLoading(false);
       throw error;
     }
   };
 
   const signOut = async () => {
-    console.log("SignOut initiated");
+    console.log("👋 SignOut initiated");
     setIsLoading(true);
     
     try {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error("SignOut error:", error);
+        console.error("❌ SignOut error:", error);
         throw error;
       }
       
-      console.log("SignOut successful");
+      console.log("✅ SignOut successful");
     } finally {
       setIsLoading(false);
     }
   };
 
   const resetPassword = async (email: string) => {
-    console.log("Password reset attempt for:", email);
+    console.log("🔑 Password reset attempt for:", email);
     
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/login?reset=true`
     });
 
     if (error) {
-      console.error("Password reset error:", error);
+      console.error("❌ Password reset error:", error);
       throw error;
     }
 
-    console.log("Password reset email sent successfully");
+    console.log("✅ Password reset email sent successfully");
   };
 
   const updatePassword = async (newPassword: string) => {
-    console.log("Password update attempt");
+    console.log("🔑 Password update attempt");
     
     const { error } = await supabase.auth.updateUser({
       password: newPassword
     });
 
     if (error) {
-      console.error("Password update error:", error);
+      console.error("❌ Password update error:", error);
       throw error;
     }
 
-    console.log("Password updated successfully");
+    console.log("✅ Password updated successfully");
     setIsPasswordRecovery(false);
   };
 
@@ -338,6 +427,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     acceptTenantInvitation,
     refreshUserRole
   };
+
+  console.log("📊 AuthProvider context value:", {
+    hasUser: !!user,
+    isAuthenticated: !!user && !isPasswordRecovery,
+    userRole,
+    isLoading,
+    isPasswordRecovery,
+    timestamp: new Date().toISOString()
+  });
 
   return (
     <AuthContext.Provider value={value}>
