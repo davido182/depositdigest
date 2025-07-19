@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/core';
 
 const config: CapacitorConfig = {
   appId: 'app.lovable.8d19717d812d442e879aca561313dd86',
-  appName: 'RentFlow',
+  appName: 'RentaFlux',
   webDir: 'dist',
   bundledWebRuntime: false,
   server: {

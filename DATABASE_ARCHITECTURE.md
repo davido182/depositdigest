@@ -1,8 +1,8 @@
-# Arquitectura de Base de Datos - RentFlow
+# Arquitectura de Base de Datos - RentaFlux
 
 ## Visión General
 
-La base de datos de RentFlow está construida sobre PostgreSQL en Supabase, implementando un diseño relacional optimizado para gestión inmobiliaria con Row Level Security (RLS) para máxima seguridad.
+La base de datos de RentaFlux está construida sobre PostgreSQL en Supabase, implementando un diseño relacional optimizado para gestión inmobiliaria con Row Level Security (RLS) para máxima seguridad.
 
 ## Principios de Diseño
 
@@ -474,4 +474,4 @@ Para escalabilidad futura, considerar particionado por:
 
 ---
 
-Esta arquitectura proporciona una base sólida, segura y escalable para RentFlow, balanceando performance, seguridad y flexibilidad para crecimiento futuro.
+Esta arquitectura proporciona una base sólida, segura y escalable para RentaFlux, balanceando performance, seguridad y flexibilidad para crecimiento futuro.

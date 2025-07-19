@@ -380,7 +380,7 @@ Todas las tablas implementan Row Level Security para garantizar que:
 
 ## 11. Conclusiones
 
-RentFlow representa una plataforma robusta y escalable que aprovecha tecnologías modernas para resolver problemas reales en la gestión inmobiliaria. La arquitectura actual proporciona una base sólida para crecimiento futuro, mientras que las funcionalidades implementadas cubren las necesidades core tanto de propietarios como inquilinos.
+RentaFlux representa una plataforma robusta y escalable que aprovecha tecnologías modernas para resolver problemas reales en la gestión inmobiliaria. La arquitectura actual proporciona una base sólida para crecimiento futuro, mientras que las funcionalidades implementadas cubren las necesidades core tanto de propietarios como inquilinos.
 
 La integración de IA a través de Cerebras y el sistema de pagos con Stripe posicionan la plataforma como una solución competitiva en el mercado PropTech.
 
