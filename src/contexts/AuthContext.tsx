@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
@@ -51,12 +50,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (!userToCheck) {
       setUserRole(null);
-      setIsLoading(false);
       return;
     }
 
     try {
-      // Get user role from database
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -68,7 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (roleError) {
         console.error("Error fetching user role:", roleError);
         setUserRole('landlord_free');
-        setIsLoading(false);
         return;
       }
 
@@ -95,8 +91,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Exception in refreshUserRole:", error);
       setUserRole('landlord_free');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -135,19 +129,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    let mounted = true;
+    let isMounted = true;
 
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user && isMounted) {
+          setUser(session.user);
+          setSession(session);
+          await refreshUserRole(session.user);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    // Initialize auth
+    initializeAuth();
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!mounted) return;
+        if (!isMounted) return;
         
-        console.log("Auth event:", event, session?.user?.email);
+        console.log("Auth event:", event);
         
         if (event === 'PASSWORD_RECOVERY') {
           setIsPasswordRecovery(true);
           setUser(session?.user ?? null);
           setSession(session);
-          setIsLoading(false);
           return;
         }
         
@@ -157,61 +172,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSubscriptionPlan(null);
           setUser(null);
           setSession(null);
-          setIsLoading(false);
           return;
         }
         
-        // Handle signed in and initial session
-        if (session?.user) {
+        if (event === 'SIGNED_IN' && session?.user) {
           setIsPasswordRecovery(false);
           setUser(session.user);
           setSession(session);
-          
-          // Get proper role from database
           await refreshUserRole(session.user);
-          // isLoading is set to false inside refreshUserRole
-        } else {
-          setUser(null);
-          setSession(null);
-          setUserRole(null);
-          setIsLoading(false);
+        }
+        
+        if (event === 'TOKEN_REFRESHED' && session?.user) {
+          setUser(session.user);
+          setSession(session);
         }
       }
     );
 
     return () => {
-      mounted = false;
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  // Remove this useEffect to prevent multiple role refreshes
-  // The role is already refreshed in the auth state change handler
-
   const signUp = async (email: string, password: string, fullName?: string) => {
-    console.log("SignUp attempt:", email, "with name:", fullName);
+    console.log("SignUp attempt:", email);
     setIsLoading(true);
     
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/login?reset=true`,
-        data: {
-          full_name: fullName || email.split('@')[0],
-          name: fullName || email.split('@')[0]
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login?reset=true`,
+          data: {
+            full_name: fullName || email.split('@')[0],
+            name: fullName || email.split('@')[0]
+          }
         }
+      });
+
+      if (error) {
+        console.error("SignUp error:", error);
+        throw error;
       }
-    });
 
-    if (error) {
-      console.error("SignUp error:", error);
+      console.log("SignUp successful:", data.user?.email);
+    } finally {
       setIsLoading(false);
-      throw error;
     }
-
-    console.log("SignUp successful:", data.user?.email);
-    setIsLoading(false);
   };
 
   const signIn = async (email: string, password: string) => {
@@ -225,7 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
       
-      // Auth state change will handle the rest
+      // The auth state listener will handle the rest
     } catch (error) {
       setIsLoading(false);
       throw error;
