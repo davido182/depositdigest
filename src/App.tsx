@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 import TenantSignup from "./pages/TenantSignup";
 import InviteTenant from "./pages/InviteTenant";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import Landing from "./pages/Landing";
 import { useEffect, useRef } from "react";
 import { App as CapApp } from "@capacitor/app";
@@ -89,7 +90,8 @@ const App = () => {
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/invite-tenant" element={<InviteTenant />} />
-                <Route path="/subscription-success" element={<SubscriptionSuccess />} />
+        <Route path="/subscription-success" element={<SubscriptionSuccess />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

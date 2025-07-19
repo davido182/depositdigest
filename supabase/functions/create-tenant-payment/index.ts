@@ -12,61 +12,46 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Create Supabase client using the anon key for user authentication
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+  );
+
   try {
-    // Initialize Supabase client with service role key
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
-
+    // Retrieve authenticated user
+    const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    
-    const user = userData.user;
+    const { data } = await supabaseClient.auth.getUser(token);
+    const user = data.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
 
+    // Get request body
     const { tenantId, amount, description } = await req.json();
-    
-    if (!tenantId || !amount) {
-      throw new Error("Missing required parameters: tenantId and amount");
-    }
 
     // Initialize Stripe
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not configured");
-    
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+      apiVersion: "2023-10-16",
+    });
 
-    // Check if customer exists, create if not
+    // Check if a Stripe customer record exists for this user
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
-    
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
-    } else {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        name: user.user_metadata?.full_name || user.email.split('@')[0]
-      });
-      customerId = customer.id;
     }
 
-    // Create checkout session for one-time payment
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    // Create a one-time payment session for rent
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
+      customer_email: customerId ? undefined : user.email,
       line_items: [
         {
           price_data: {
-            currency: "eur",
-            product_data: {
-              name: description || `Pago de renta - Inquilino`,
-              description: `Pago mensual de alquiler`
+            currency: "usd",
+            product_data: { 
+              name: "Pago de Renta",
+              description: description || "Pago mensual de renta"
             },
             unit_amount: Math.round(amount * 100), // Convert to cents
           },
@@ -74,8 +59,8 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${origin}/payments?success=true`,
-      cancel_url: `${origin}/payments?canceled=true`,
+      success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get("origin")}/tenant-dashboard`,
       metadata: {
         tenant_id: tenantId,
         user_id: user.id,
@@ -83,27 +68,13 @@ serve(async (req) => {
       }
     });
 
-    // Optionally create a payment record in your database
-    await supabaseClient.from("payments").insert({
-      user_id: user.id,
-      tenant_id: tenantId,
-      amount: amount,
-      payment_date: new Date().toISOString().split('T')[0],
-      payment_method: "stripe",
-      status: "pending",
-      notes: `Stripe session: ${session.id}`
-    });
-
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-
   } catch (error) {
-    console.error("Error in create-tenant-payment:", error);
-    return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : "Unknown error occurred" 
-    }), {
+    console.error("Error creating tenant payment session:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
