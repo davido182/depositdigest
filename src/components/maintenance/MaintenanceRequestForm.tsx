@@ -58,17 +58,53 @@ export function MaintenanceRequestForm({ onSubmit, onCancel }: MaintenanceReques
     setIsSubmitting(true);
     
     try {
-      // This would be replaced with an actual API call in a real implementation
-      console.log("Submitting maintenance request:", values);
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { useAuth } = await import("@/contexts/AuthContext");
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Usuario no autenticado");
+        return;
+      }
+
+      // Get tenant info to link the request
+      const { data: tenant } = await supabase
+        .from('tenants')
+        .select('id, landlord_id')
+        .eq('email', user.email)
+        .single();
+
+      if (!tenant) {
+        toast.error("Información del inquilino no encontrada");
+        return;
+      }
+
+      // Create maintenance request
+      const { error } = await supabase
+        .from('maintenance_requests')
+        .insert({
+          user_id: user.id,
+          tenant_id: tenant.id,
+          landlord_id: tenant.landlord_id,
+          title: values.title,
+          description: values.description,
+          unit_number: values.unit,
+          priority: values.priority,
+          status: 'open'
+        });
+
+      if (error) {
+        console.error("Error creating maintenance request:", error);
+        toast.error("Error al crear solicitud de mantenimiento");
+        return;
+      }
       
-      toast.success("Maintenance request submitted successfully");
+      toast.success("Solicitud de mantenimiento enviada exitosamente");
       onSubmit();
     } catch (error) {
       console.error("Error submitting maintenance request:", error);
-      toast.error("Failed to submit maintenance request");
+      toast.error("Error al enviar solicitud de mantenimiento");
     } finally {
       setIsSubmitting(false);
     }

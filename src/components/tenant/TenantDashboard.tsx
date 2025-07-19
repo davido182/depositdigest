@@ -220,10 +220,16 @@ const TenantDashboard = () => {
                   <CreditCard className="h-4 w-4" />
                   Pagar Renta Mensual
                 </Button>
-                <Button variant="outline" onClick={() => window.location.href = '/maintenance'}>
+                <Button variant="outline" onClick={() => {
+                  const maintenanceEvent = new CustomEvent('openMaintenance');
+                  window.dispatchEvent(maintenanceEvent);
+                  window.location.href = '/maintenance';
+                }}>
                   Reportar Mantenimiento
                 </Button>
-                <Button variant="outline" onClick={() => window.location.href = '/payments'}>
+                <Button variant="outline" onClick={() => {
+                  window.location.href = '/payments';
+                }}>
                   Ver Historial de Pagos
                 </Button>
               </div>
