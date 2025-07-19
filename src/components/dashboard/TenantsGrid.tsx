@@ -1,6 +1,6 @@
 
 import { Tenant } from "@/types";
-import { TenantCard } from "@/components/tenants/TenantCard";
+import { TenantsTable } from "@/components/tenants/TenantsTable";
 
 interface TenantsGridProps {
   tenants: Tenant[];
@@ -16,24 +16,11 @@ export function TenantsGrid({ tenants, onEditTenant, onDeleteTenant }: TenantsGr
     return unitA - unitB;
   });
 
-  if (sortedTenants.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No hay tenants registrados</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {sortedTenants.map((tenant) => (
-        <TenantCard
-          key={tenant.id}
-          tenant={tenant}
-          onEdit={onEditTenant}
-          onDelete={onDeleteTenant}
-        />
-      ))}
-    </div>
+    <TenantsTable
+      tenants={sortedTenants}
+      onEditTenant={onEditTenant}
+      onDeleteTenant={onDeleteTenant}
+    />
   );
 }

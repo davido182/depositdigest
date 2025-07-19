@@ -221,7 +221,6 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
           animate="visible"
           variants={cardVariants}
           transition={{ delay: 0.3, duration: 0.6 }}
-          className="md:col-span-2 lg:col-span-1"
         >
           <Card>
             <CardHeader>

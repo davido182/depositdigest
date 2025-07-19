@@ -94,10 +94,16 @@ const Index = () => {
       <section className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-          <Button onClick={handleAddTenant} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Agregar Inquilino
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleAddTenant} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Agregar Inquilino
+            </Button>
+            <Button variant="outline" className="gap-2">
+              <Plus className="h-4 w-4" />
+              Agregar Propiedad
+            </Button>
+          </div>
         </div>
         
         <IntelligentDashboard stats={stats} />

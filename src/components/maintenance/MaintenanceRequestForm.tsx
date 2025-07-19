@@ -119,12 +119,12 @@ export function MaintenanceRequestForm({ onSubmit, onCancel }: MaintenanceReques
             name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Issue Title</FormLabel>
+                <FormLabel>Título del Problema</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Leaking Faucet" {...field} />
+                  <Input placeholder="ej., Fuga en la ducha" {...field} />
                 </FormControl>
                 <FormDescription>
-                  Short description of the maintenance issue
+                  Descripción breve del problema de mantenimiento
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -136,12 +136,12 @@ export function MaintenanceRequestForm({ onSubmit, onCancel }: MaintenanceReques
             name="unit"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Unit Number</FormLabel>
+                <FormLabel>Número de Unidad</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., 101" {...field} />
+                  <Input placeholder="ej., 101" {...field} />
                 </FormControl>
                 <FormDescription>
-                  The unit where the issue is located
+                  La unidad donde se encuentra el problema
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -155,27 +155,27 @@ export function MaintenanceRequestForm({ onSubmit, onCancel }: MaintenanceReques
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Category</FormLabel>
+                <FormLabel>Categoría</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
+                      <SelectValue placeholder="Selecciona una categoría" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="plumbing">Plumbing</SelectItem>
-                    <SelectItem value="electrical">Electrical</SelectItem>
-                    <SelectItem value="heating">Heating/Cooling</SelectItem>
-                    <SelectItem value="appliance">Appliance</SelectItem>
-                    <SelectItem value="structural">Structural</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="plumbing">Plomería</SelectItem>
+                    <SelectItem value="electrical">Eléctrico</SelectItem>
+                    <SelectItem value="heating">Calefacción/Aire</SelectItem>
+                    <SelectItem value="appliance">Electrodomésticos</SelectItem>
+                    <SelectItem value="structural">Estructural</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Type of maintenance issue
+                  Tipo de problema de mantenimiento
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -187,25 +187,25 @@ export function MaintenanceRequestForm({ onSubmit, onCancel }: MaintenanceReques
             name="priority"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Priority</FormLabel>
+                <FormLabel>Prioridad</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select priority" />
+                      <SelectValue placeholder="Selecciona la prioridad" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="emergency">Emergency</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="emergency">Emergencia</SelectItem>
+                    <SelectItem value="high">Alta</SelectItem>
+                    <SelectItem value="medium">Media</SelectItem>
+                    <SelectItem value="low">Baja</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  How urgent is this issue?
+                  ¿Qué tan urgente es este problema?
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -218,16 +218,16 @@ export function MaintenanceRequestForm({ onSubmit, onCancel }: MaintenanceReques
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Detailed Description</FormLabel>
+              <FormLabel>Descripción Detallada</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Please provide details about the issue..." 
+                  placeholder="Por favor proporciona detalles sobre el problema..." 
                   className="min-h-[120px]" 
                   {...field} 
                 />
               </FormControl>
               <FormDescription>
-                Describe the issue in detail to help maintenance staff understand the problem
+                Describe el problema en detalle para ayudar al personal de mantenimiento
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -241,10 +241,10 @@ export function MaintenanceRequestForm({ onSubmit, onCancel }: MaintenanceReques
             onClick={onCancel}
             disabled={isSubmitting}
           >
-            Cancel
+            Cancelar
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit Request"}
+            {isSubmitting ? "Enviando..." : "Enviar Solicitud"}
           </Button>
         </div>
       </form>

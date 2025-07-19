@@ -28,7 +28,7 @@ const Landing = () => {
       "Solicitudes de mantenimiento",
       "Invitaciones a inquilinos",
       "Reportes básicos",
-      "Hasta 5 unidades"
+      "1 propiedad, hasta 3 unidades"
     ],
     premium: [
       "Todo lo de la versión gratuita",
@@ -36,7 +36,7 @@ const Landing = () => {
       "Asistente IA especializado con NLP",
       "Análisis avanzados y predictivos",
       "Reportes automáticos PDF/Excel",
-      "Unidades ilimitadas",
+      "Propiedades y unidades ilimitadas",
       "Portal del cliente Stripe",
       "Sin anuncios publicitarios",
       "Soporte prioritario 24/7"
@@ -161,11 +161,11 @@ const Landing = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <Card className="text-center">
               <CardHeader>
-                <Users className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <CardTitle>Gestión de Inquilinos</CardTitle>
+                <Building2 className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <CardTitle>Gestión de Propiedades</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Organiza la información de todos tus inquilinos en un solo lugar</p>
+                <p className="text-gray-600">Organiza propiedades con múltiples unidades e inquilinos</p>
               </CardContent>
             </Card>
 
@@ -229,7 +229,7 @@ const Landing = () => {
             Planes para cada necesidad
           </h2>
           <p className="text-gray-600 text-center mb-12">
-            Desde propietarios individuales hasta grandes portfolios
+            Desde una propiedad hasta portfolios ilimitados
           </p>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">

@@ -133,7 +133,7 @@ const Sidebar = () => {
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Building2 className="h-8 w-8 text-blue-600" />
-            <h1 className="text-xl font-bold text-gray-900">RentaFlux</h1>
+            <h1 className="text-xl font-bold text-gray-900">RentFlow</h1>
           </div>
           <div className="text-sm text-gray-500">Iniciando...</div>
         </div>
@@ -147,7 +147,7 @@ const Sidebar = () => {
         <div className="flex items-center space-x-2 mb-4">
           <Building2 className="h-8 w-8 text-blue-600" />
           <div>
-            <h1 className="text-xl font-bold text-gray-900">RentaFlux</h1>
+            <h1 className="text-xl font-bold text-gray-900">RentFlow</h1>
             {hasActivePremium && (
               <div className="flex items-center text-xs text-yellow-600">
                 <Crown className="h-3 w-3 mr-1" />

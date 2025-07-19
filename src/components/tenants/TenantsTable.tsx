@@ -1,0 +1,273 @@
+import { useState } from "react";
+import { Tenant } from "@/types";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Edit,
+  Trash2,
+  Search,
+  Filter,
+  CheckCircle,
+  Circle,
+  Calendar,
+} from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+interface TenantsTableProps {
+  tenants: Tenant[];
+  onEditTenant: (tenant: Tenant) => void;
+  onDeleteTenant: (tenant: Tenant) => void;
+}
+
+export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsTableProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("unit");
+  const [deleteConfirmTenant, setDeleteConfirmTenant] = useState<Tenant | null>(null);
+
+  // Filtrar y ordenar inquilinos
+  const filteredAndSortedTenants = tenants
+    .filter((tenant) => {
+      const matchesSearch =
+        tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tenant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tenant.unit.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || tenant.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "unit":
+          return parseInt(a.unit || "0") - parseInt(b.unit || "0");
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "date":
+          return new Date(a.moveInDate).getTime() - new Date(b.moveInDate).getTime();
+        case "rent":
+          return (a.rentAmount || 0) - (b.rentAmount || 0);
+        default:
+          return 0;
+      }
+    });
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Badge className="bg-emerald-100 text-emerald-800">Activo</Badge>;
+      case "late":
+        return <Badge className="bg-red-100 text-red-800">Atrasado</Badge>;
+      case "notice":
+        return <Badge className="bg-amber-100 text-amber-800">Aviso</Badge>;
+      case "inactive":
+        return <Badge className="bg-gray-100 text-gray-800">Inactivo</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
+  const getCurrentMonthPaymentStatus = (tenant: Tenant) => {
+    // Simulación del estado de pago del mes actual
+    // En una implementación real, esto vendría de la base de datos
+    const random = Math.random();
+    if (random > 0.7) return "paid";
+    if (random > 0.4) return "pending";
+    return "overdue";
+  };
+
+  const getPaymentStatusIcon = (status: string) => {
+    switch (status) {
+      case "paid":
+        return <CheckCircle className="h-5 w-5 text-emerald-600" />;
+      case "pending":
+        return <Circle className="h-5 w-5 text-amber-600" />;
+      case "overdue":
+        return <Circle className="h-5 w-5 text-red-600" />;
+      default:
+        return <Circle className="h-5 w-5 text-gray-400" />;
+    }
+  };
+
+  const handleDeleteClick = (tenant: Tenant) => {
+    setDeleteConfirmTenant(tenant);
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmTenant) {
+      onDeleteTenant(deleteConfirmTenant);
+      setDeleteConfirmTenant(null);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Controles de filtrado y búsqueda */}
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="flex gap-2 items-center flex-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Buscar inquilinos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="active">Activo</SelectItem>
+              <SelectItem value="late">Atrasado</SelectItem>
+              <SelectItem value="notice">Aviso</SelectItem>
+              <SelectItem value="inactive">Inactivo</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unit">Unidad</SelectItem>
+              <SelectItem value="name">Nombre</SelectItem>
+              <SelectItem value="date">Fecha ingreso</SelectItem>
+              <SelectItem value="rent">Renta</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Tabla de inquilinos */}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-16">Pago</TableHead>
+              <TableHead>Unidad</TableHead>
+              <TableHead>Inquilino</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Renta</TableHead>
+              <TableHead className="text-center">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredAndSortedTenants.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  No se encontraron inquilinos
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredAndSortedTenants.map((tenant) => {
+                const paymentStatus = getCurrentMonthPaymentStatus(tenant);
+                return (
+                  <TableRow key={tenant.id} className="hover:bg-muted/50">
+                    <TableCell>
+                      <div className="flex justify-center">
+                        {getPaymentStatusIcon(paymentStatus)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{tenant.unit}</TableCell>
+                    <TableCell>{tenant.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{tenant.email}</TableCell>
+                    <TableCell>{getStatusBadge(tenant.status)}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      €{tenant.rentAmount?.toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEditTenant(tenant)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteClick(tenant)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Leyenda de estados de pago */}
+      <div className="flex gap-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <CheckCircle className="h-4 w-4 text-emerald-600" />
+          <span>Pagado</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Circle className="h-4 w-4 text-amber-600" />
+          <span>Pendiente</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Circle className="h-4 w-4 text-red-600" />
+          <span>Vencido</span>
+        </div>
+      </div>
+
+      {/* Dialog de confirmación de eliminación */}
+      <AlertDialog open={!!deleteConfirmTenant} onOpenChange={() => setDeleteConfirmTenant(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar inquilino?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente a {deleteConfirmTenant?.name} de la unidad {deleteConfirmTenant?.unit}.
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
