@@ -3,6 +3,7 @@ import React from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTrialCountdown } from "@/hooks/use-trial";
 import {
   Building2,
   Users,
@@ -25,6 +26,7 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { userRole, hasActivePremium, user, signOut, isLoading } = useAuth();
+  const { trialDaysLeft, isTrialUser } = useTrialCountdown();
 
   console.log("Sidebar render - userRole:", userRole, "isLoading:", isLoading);
 
@@ -68,13 +70,14 @@ const Sidebar = () => {
         { name: "Inquilinos", href: "/tenants", icon: Users },
         { name: "Pagos", href: "/payments", icon: CreditCard },
         { name: "Mantenimiento", href: "/maintenance", icon: Wrench },
-        { name: "Invitar Inquilino", href: "/invite-tenant", icon: UserPlus },
+        
         
       ];
 
       // Premium-only features
       if (userRole === 'landlord_premium') {
         landlordItems.push(
+          { name: "Invitar Inquilino", href: "/invite-tenant", icon: UserPlus },
           { name: "Contabilidad", href: "/accounting", icon: Calculator },
           { name: "Asistente IA", href: "/assistant", icon: MessageCircle },
           { name: "Análisis", href: "/analytics", icon: BarChart3 },
@@ -133,7 +136,7 @@ const Sidebar = () => {
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Building2 className="h-8 w-8 text-blue-600" />
-            <h1 className="text-xl font-bold text-gray-900">RentFlow</h1>
+            <h1 className="text-xl font-bold text-gray-900">RentaFlux</h1>
           </div>
           <div className="text-sm text-gray-500">Iniciando...</div>
         </div>
@@ -147,7 +150,7 @@ const Sidebar = () => {
         <div className="flex items-center space-x-2 mb-4">
           <Building2 className="h-8 w-8 text-blue-600" />
           <div>
-            <h1 className="text-xl font-bold text-gray-900">RentFlow</h1>
+            <h1 className="text-xl font-bold text-gray-900">RentaFlux</h1>
             {hasActivePremium && (
               <div className="flex items-center text-xs text-yellow-600">
                 <Crown className="h-3 w-3 mr-1" />
@@ -202,8 +205,15 @@ const Sidebar = () => {
               Actualizar a Premium
               <ExternalLink className="h-3 w-3" />
             </button>
+            {isTrialUser && trialDaysLeft !== null && (
+              <div className="text-xs text-center mb-2">
+                <div className="bg-amber-100 text-amber-800 px-2 py-1 rounded font-medium">
+                  🎁 Prueba Premium: {trialDaysLeft} días restantes
+                </div>
+              </div>
+            )}
             <div className="text-xs text-gray-600 text-center">
-              🚀 Desbloquea todas las funciones avanzadas
+              🚀 Desbloquea RentaFlux Premium
             </div>
           </div>
         )}

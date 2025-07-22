@@ -1,16 +1,17 @@
 
 
 import { Layout } from "@/components/Layout";
-import { TenantList } from "@/components/tenants/TenantList";
+import { TenantsTable } from "@/components/tenants/TenantsTable";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import { UnitManagementModal } from "@/components/units/UnitManagementModal";
 import { Tenant, TenantStatus } from "@/types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import DatabaseService from "@/services/DatabaseService";
-import { ValidationService } from "@/services/ValidationService";
+import { tenantService } from "@/services/TenantService";
 import { Button } from "@/components/ui/button";
-import { Building, AlertTriangle } from "lucide-react";
+import { Building, AlertTriangle, Plus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,38 +25,25 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Tenants = () => {
+  const { userRole } = useAuth();
+  const isMobile = useIsMobile();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isOffline, setIsOffline] = useState(false);
-  const [totalUnits, setTotalUnits] = useState(9);
 
   useEffect(() => {
     const loadTenants = async () => {
       try {
         setIsLoading(true);
-        const dbService = DatabaseService.getInstance();
-        const isConnected = await dbService.testConnections();
-        
-        if (isConnected) {
-          console.log('Loading tenants from database service');
-          const loadedTenants = await dbService.getTenants();
-          console.log(`Loaded ${loadedTenants.length} tenants`);
-          setTenants(loadedTenants);
-          
-          const savedUnits = dbService.getTotalUnits();
-          setTotalUnits(savedUnits);
-          setIsOffline(false);
-        } else {
-          setIsOffline(true);
-          toast.warning("Using offline mode");
-        }
+        console.log('Loading tenants from Supabase...');
+        const loadedTenants = await tenantService.getTenants();
+        console.log(`Loaded ${loadedTenants.length} tenants`);
+        setTenants(loadedTenants);
       } catch (error) {
         console.error("Error loading tenants:", error);
-        toast.error("Failed to load tenants data");
-        setIsOffline(true);
+        toast.error("Error al cargar los datos de inquilinos");
       } finally {
         setIsLoading(false);
       }
@@ -64,25 +52,11 @@ const Tenants = () => {
     loadTenants();
   }, []);
 
-  const handleClearCorruptedData = async () => {
-    try {
-      localStorage.removeItem('tenants');
-      localStorage.removeItem('totalUnits');
-      
-      const dbService = DatabaseService.getInstance();
-      dbService.setTotalUnits(9);
-      
-      setTenants([]);
-      setTotalUnits(9);
-      
-      toast.success("Datos limpiados exitosamente. Ahora puedes agregar tus tenants nuevamente.");
-    } catch (error) {
-      console.error("Error clearing data:", error);
-      toast.error("Error al limpiar los datos");
-    }
-  };
-
   const handleAddTenant = () => {
+    if (userRole === 'landlord_free') {
+      toast.error("La función de agregar inquilinos es exclusiva de usuarios Premium");
+      return;
+    }
     setCurrentTenant(null);
     setIsEditModalOpen(true);
   };
@@ -94,164 +68,70 @@ const Tenants = () => {
   
   const handleDeleteTenant = async (tenant: Tenant) => {
     try {
-      const dbService = DatabaseService.getInstance();
-      await dbService.deleteTenant(tenant.id);
-      
+      await tenantService.deleteTenant(tenant.id);
       setTenants(tenants.filter(t => t.id !== tenant.id));
-      toast.success(`Tenant ${tenant.name} removed successfully`);
+      toast.success(`Inquilino ${tenant.name} eliminado exitosamente`);
     } catch (error) {
       console.error("Error removing tenant:", error);
-      toast.error("Failed to remove tenant");
-      
-      if (isOffline) {
-        setTenants(tenants.filter(t => t.id !== tenant.id));
-        toast.info("Tenant removed in offline mode");
-      }
+      toast.error("Error al eliminar el inquilino");
     }
   };
 
   const handleSaveTenant = async (updatedTenant: Tenant) => {
     try {
-      const dbService = DatabaseService.getInstance();
-      
       if (currentTenant) {
-        await dbService.updateTenant(updatedTenant.id, updatedTenant);
-        setTenants(
-          tenants.map((t) => (t.id === updatedTenant.id ? updatedTenant : t))
-        );
-        toast.success("Tenant updated successfully");
+        const updated = await tenantService.updateTenant(updatedTenant.id, updatedTenant);
+        setTenants(tenants.map((t) => (t.id === updatedTenant.id ? updated : t)));
+        toast.success("Inquilino actualizado exitosamente");
       } else {
-        const newId = await dbService.createTenant(updatedTenant);
-        if (typeof newId === 'string') {
-          const newTenant = { ...updatedTenant, id: newId };
-          setTenants([...tenants, newTenant]);
-          toast.success("Tenant added successfully");
-        } else {
-          toast.error("Failed to create tenant");
-        }
+        const newTenant = await tenantService.createTenant(updatedTenant);
+        setTenants([...tenants, newTenant]);
+        toast.success("Inquilino agregado exitosamente");
       }
       
       setIsEditModalOpen(false);
     } catch (error) {
       console.error("Error saving tenant:", error);
-      toast.error("Failed to save tenant");
-      
-      if (isOffline) {
-        if (currentTenant) {
-          setTenants(
-            tenants.map((t) => (t.id === updatedTenant.id ? updatedTenant : t))
-          );
-        } else {
-          const mockId = Math.random().toString(36).substring(2, 15);
-          const newTenant = { 
-            ...updatedTenant, 
-            id: mockId,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-          setTenants([...tenants, newTenant as Tenant]);
-        }
-        setIsEditModalOpen(false);
-        toast.info("Changes saved in offline mode");
-      }
+      toast.error("Error al guardar el inquilino");
     }
   };
   
-  const handleUpdateUnitCount = (newCount: number) => {
-    try {
-      const validationService = ValidationService.getInstance();
-      validationService.validateUnitCount(newCount, tenants);
-      
-      const dbService = DatabaseService.getInstance();
-      dbService.setTotalUnits(newCount);
-      setTotalUnits(newCount);
-      toast.success(`Property updated to ${newCount} units`);
-      setIsUnitModalOpen(false);
-    } catch (error: any) {
-      console.error("Error updating unit count:", error);
-      toast.error(error.message || "Failed to update unit count");
-    }
-  };
 
   return (
     <Layout>
-      <section className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-semibold tracking-tight">Tenants</h1>
-          <div className="flex gap-2">
-            {isOffline && (
-              <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-md text-sm">
-                Offline Mode
-              </div>
-            )}
-            {tenants.length > 15 && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="gap-1.5">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span>Limpiar Datos Corruptos</span>
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>¿Limpiar todos los datos?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Se detectaron {tenants.length} tenants, lo cual parece ser datos de demostración mezclados con tus datos reales.
-                      Esto eliminará TODOS los datos actuales y te permitirá empezar limpio.
-                      Solo haz esto si estás seguro de que los datos actuales no son correctos.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearCorruptedData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Sí, limpiar todo
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+      <div className={`space-y-6 ${isMobile ? 'px-2' : ''}`}>
+        <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between items-center'}`}>
+          <div>
+            <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>Inquilinos</h1>
+            <p className="text-muted-foreground">Gestiona tus inquilinos y sus pagos</p>
           </div>
+          {userRole === 'landlord_premium' && (
+            <Button onClick={handleAddTenant} className="gap-2" size={isMobile ? "sm" : "default"}>
+              <Plus className="h-4 w-4" />
+              Agregar Inquilino
+            </Button>
+          )}
         </div>
-
-        {tenants.length > 15 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 text-red-800">
-              <AlertTriangle className="h-5 w-5" />
-              <strong>Advertencia: Datos Sospechosos Detectados</strong>
-            </div>
-            <p className="text-red-700 mt-1">
-              Se encontraron {tenants.length} tenants, lo cual sugiere que se mezclaron datos de demostración con tus datos reales.
-              Usa el botón "Limpiar Datos Corruptos" para empezar limpio si estos no son tus datos.
-            </p>
-          </div>
-        )}
 
         {isLoading ? (
           <div className="flex justify-center p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
         ) : (
-          <TenantList
+          <TenantsTable
             tenants={tenants}
-            onAddTenant={handleAddTenant}
             onEditTenant={handleEditTenant}
             onDeleteTenant={handleDeleteTenant}
           />
         )}
+        
         <TenantEditForm
           tenant={currentTenant}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onSave={handleSaveTenant}
         />
-        
-        <UnitManagementModal
-          isOpen={isUnitModalOpen}
-          onClose={() => setIsUnitModalOpen(false)}
-          currentUnitCount={totalUnits}
-          onSave={handleUpdateUnitCount}
-        />
-      </section>
+      </div>
     </Layout>
   );
 };

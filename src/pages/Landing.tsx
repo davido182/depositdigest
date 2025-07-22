@@ -26,7 +26,7 @@ const Landing = () => {
       "Gestión básica de inquilinos",
       "Registro de pagos",
       "Solicitudes de mantenimiento",
-      "Invitaciones a inquilinos",
+      "Invitaciones premium a inquilinos",
       "Reportes básicos",
       "1 propiedad, hasta 3 unidades"
     ],
@@ -70,7 +70,7 @@ const Landing = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <Building2 className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900">RentFlow</h1>
+            <h1 className="text-2xl font-bold text-gray-900">RentaFlux</h1>
           </div>
           <div className="space-x-4">
             <Button variant="ghost" onClick={() => navigate("/login")}>
@@ -94,7 +94,7 @@ const Landing = () => {
             <span className="text-blue-600"> forma inteligente</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            RentFlow es la plataforma completa para propietarios e inquilinos. 
+            RentaFlux es la plataforma completa para propietarios e inquilinos. 
             Gestiona pagos, mantenimiento, contabilidad y más desde tu móvil o web.
           </p>
           <div className="flex flex-col lg:flex-row gap-8 justify-center items-center">
@@ -369,7 +369,7 @@ const Landing = () => {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Building2 className="h-6 w-6 text-blue-400" />
-                <h3 className="text-xl font-bold">RentFlow</h3>
+                <h3 className="text-xl font-bold">RentaFlux</h3>
               </div>
               <p className="text-gray-400">
                 La plataforma completa para la gestión de propiedades en alquiler.
@@ -401,7 +401,7 @@ const Landing = () => {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 RentFlow. Todos los derechos reservados.</p>
+            <p>&copy; 2024 RentaFlux. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>

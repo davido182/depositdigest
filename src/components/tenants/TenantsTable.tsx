@@ -72,6 +72,12 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
           return new Date(a.moveInDate).getTime() - new Date(b.moveInDate).getTime();
         case "rent":
           return (a.rentAmount || 0) - (b.rentAmount || 0);
+        case "property":
+          const propertyA = a.unit?.substring(0, 1) || "";
+          const propertyB = b.unit?.substring(0, 1) || "";
+          return propertyA.localeCompare(propertyB);
+        case "age":
+          return new Date(a.moveInDate).getTime() - new Date(b.moveInDate).getTime();
         default:
           return 0;
       }
@@ -129,57 +135,61 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
     <div className="space-y-4">
       {/* Controles de filtrado y búsqueda */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="flex gap-2 items-center flex-1">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Buscar inquilinos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center flex-1">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Buscar inquilinos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="active">Activo</SelectItem>
-              <SelectItem value="late">Atrasado</SelectItem>
-              <SelectItem value="notice">Aviso</SelectItem>
-              <SelectItem value="inactive">Inactivo</SelectItem>
-            </SelectContent>
-          </Select>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="active">Activo</SelectItem>
+                  <SelectItem value="late">Atrasado</SelectItem>
+                  <SelectItem value="notice">Aviso</SelectItem>
+                  <SelectItem value="inactive">Inactivo</SelectItem>
+                </SelectContent>
+              </Select>
 
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Ordenar por" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="unit">Unidad</SelectItem>
-              <SelectItem value="name">Nombre</SelectItem>
-              <SelectItem value="date">Fecha ingreso</SelectItem>
-              <SelectItem value="rent">Renta</SelectItem>
-            </SelectContent>
-          </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unit">Unidad</SelectItem>
+                  <SelectItem value="name">Nombre</SelectItem>
+                  <SelectItem value="date">Fecha ingreso</SelectItem>
+                  <SelectItem value="rent">Renta</SelectItem>
+                  <SelectItem value="property">Propiedad</SelectItem>
+                  <SelectItem value="age">Antigüedad</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
         </div>
       </div>
 
-      {/* Tabla de inquilinos */}
-      <div className="rounded-md border">
-        <Table>
+      {/* Tabla de inquilinos - Responsive */}
+      <div className="rounded-md border overflow-x-auto">
+        <Table className="min-w-[600px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-16">Pago</TableHead>
-              <TableHead>Unidad</TableHead>
-              <TableHead>Inquilino</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Renta</TableHead>
-              <TableHead className="text-center">Acciones</TableHead>
+              <TableHead className="w-12 text-center">💳</TableHead>
+              <TableHead className="min-w-[80px]">Unidad</TableHead>
+              <TableHead className="min-w-[120px]">Inquilino</TableHead>
+              <TableHead className="min-w-[180px] hidden sm:table-cell">Email</TableHead>
+              <TableHead className="min-w-[80px]">Estado</TableHead>
+              <TableHead className="min-w-[100px] text-right">Renta</TableHead>
+              <TableHead className="w-20 text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -194,35 +204,40 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
                 const paymentStatus = getCurrentMonthPaymentStatus(tenant);
                 return (
                   <TableRow key={tenant.id} className="hover:bg-muted/50">
-                    <TableCell>
-                      <div className="flex justify-center">
-                        {getPaymentStatusIcon(paymentStatus)}
+                    <TableCell className="text-center">
+                      {getPaymentStatusIcon(paymentStatus)}
+                    </TableCell>
+                    <TableCell className="font-medium text-sm">{tenant.unit}</TableCell>
+                    <TableCell className="text-sm">
+                      <div className="font-medium">{tenant.name}</div>
+                      <div className="text-xs text-muted-foreground sm:hidden">
+                        {tenant.email}
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{tenant.unit}</TableCell>
-                    <TableCell>{tenant.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{tenant.email}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm hidden sm:table-cell">
+                      {tenant.email}
+                    </TableCell>
                     <TableCell>{getStatusBadge(tenant.status)}</TableCell>
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="text-right font-medium text-sm">
                       €{tenant.rentAmount?.toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => onEditTenant(tenant)}
-                          className="h-8 w-8 p-0"
+                          className="h-7 w-7 p-0"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3 w-3" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteClick(tenant)}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </TableCell>

@@ -228,13 +228,11 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                 <BarChart3 className="h-5 w-5" />
                 Evolución de Ingresos
               </CardTitle>
-              <CardDescription>Últimos 6 meses</CardDescription>
+              <CardDescription>Últimos 4 meses</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {[
-                  { month: 'Ene', amount: stats.monthlyRevenue * 0.8 },
-                  { month: 'Feb', amount: stats.monthlyRevenue * 0.9 },
                   { month: 'Mar', amount: stats.monthlyRevenue * 0.85 },
                   { month: 'Abr', amount: stats.monthlyRevenue * 1.1 },
                   { month: 'May', amount: stats.monthlyRevenue * 0.95 },
