@@ -81,7 +81,11 @@ const Properties = () => {
   }, [user]);
 
   const handleAddProperty = () => {
-    toast.info("Funcionalidad de agregar propiedad en desarrollo");
+    if (userRole === 'landlord_free' && properties.length >= 1) {
+      toast.error("Los usuarios gratuitos pueden tener máximo 1 propiedad. Actualiza a Premium para propiedades ilimitadas.");
+      return;
+    }
+    setIsPropertyFormOpen(true);
   };
 
   if (isLoading) {
