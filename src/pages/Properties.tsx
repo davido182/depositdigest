@@ -85,7 +85,7 @@ const Properties = () => {
       toast.error("Los usuarios gratuitos pueden tener máximo 1 propiedad. Actualiza a Premium para propiedades ilimitadas.");
       return;
     }
-    setIsPropertyFormOpen(true);
+    toast.info("Función en desarrollo - Próximamente disponible");
   };
 
   if (isLoading) {

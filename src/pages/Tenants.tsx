@@ -4,11 +4,13 @@ import { Layout } from "@/components/Layout";
 import { TenantsTable } from "@/components/tenants/TenantsTable";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import { UnitManagementModal } from "@/components/units/UnitManagementModal";
+import { TenantPaymentTracker } from "@/components/payments/TenantPaymentTracker";
 import { Tenant, TenantStatus } from "@/types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { tenantService } from "@/services/TenantService";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building, AlertTriangle, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -118,11 +120,22 @@ const Tenants = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
         ) : (
-          <TenantsTable
-            tenants={tenants}
-            onEditTenant={handleEditTenant}
-            onDeleteTenant={handleDeleteTenant}
-          />
+          <Tabs defaultValue="tenants" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="tenants">Lista de Inquilinos</TabsTrigger>
+              <TabsTrigger value="payments">Seguimiento de Pagos</TabsTrigger>
+            </TabsList>
+            <TabsContent value="tenants" className="space-y-4">
+              <TenantsTable
+                tenants={tenants}
+                onEditTenant={handleEditTenant}
+                onDeleteTenant={handleDeleteTenant}
+              />
+            </TabsContent>
+            <TabsContent value="payments" className="space-y-4">
+              <TenantPaymentTracker tenants={tenants} />
+            </TabsContent>
+          </Tabs>
         )}
         
         <TenantEditForm

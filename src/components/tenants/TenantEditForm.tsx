@@ -323,12 +323,12 @@ export function TenantEditForm({
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {tenant ? "Edit Tenant" : "Add New Tenant"}
+            {tenant ? "Editar Inquilino" : "Agregar Nuevo Inquilino"}
           </DialogTitle>
           <DialogDescription>
             {tenant
-              ? "Update the tenant information below."
-              : "Enter the new tenant details below."}
+              ? "Actualiza la información del inquilino."
+              : "Ingresa los detalles del nuevo inquilino."}
           </DialogDescription>
         </DialogHeader>
         
@@ -336,7 +336,7 @@ export function TenantEditForm({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name" className="flex items-center gap-1">
-                Name <span className="text-destructive">*</span>
+                Nombre <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="name"
@@ -352,7 +352,7 @@ export function TenantEditForm({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Correo Electrónico</Label>
                 <div className="flex items-center">
                   <Mail className="w-4 h-4 mr-2 text-muted-foreground" />
                   <Input
@@ -370,7 +370,7 @@ export function TenantEditForm({
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="phone">Phone</Label>
+                <Label htmlFor="phone">Teléfono</Label>
                 <div className="flex items-center">
                   <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
                   <Input
@@ -387,7 +387,7 @@ export function TenantEditForm({
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="unit" className="flex items-center gap-1">
-                  Unit <span className="text-destructive">*</span>
+                  Unidad <span className="text-destructive">*</span>
                 </Label>
                 <div className="flex items-center">
                   <Home className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -397,22 +397,22 @@ export function TenantEditForm({
                     disabled={isLoadingUnits}
                   >
                     <SelectTrigger className={errors.unit ? "border-destructive" : ""}>
-                      <SelectValue placeholder={isLoadingUnits ? "Loading..." : "Select unit"} />
+                      <SelectValue placeholder={isLoadingUnits ? "Cargando..." : "Seleccionar unidad"} />
                     </SelectTrigger>
                     <SelectContent>
                       {isLoadingUnits ? (
                         <SelectItem value="loading" disabled>
-                          Loading units...
+                          Cargando unidades...
                         </SelectItem>
                       ) : availableUnits.length > 0 ? (
                         availableUnits.map(unit => (
                           <SelectItem key={unit} value={unit}>
-                            Unit {unit}
+                            Unidad {unit}
                           </SelectItem>
                         ))
                       ) : (
                         <SelectItem value="no-units" disabled>
-                          No units available
+                          No hay unidades disponibles
                         </SelectItem>
                       )}
                     </SelectContent>
@@ -424,19 +424,19 @@ export function TenantEditForm({
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">Estado</Label>
                 <Select
                   value={formData.status}
                   onValueChange={handleStatusChange}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Seleccionar estado" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="late">Late</SelectItem>
-                    <SelectItem value="notice">Notice</SelectItem>
+                    <SelectItem value="active">Activo</SelectItem>
+                    <SelectItem value="inactive">Inactivo</SelectItem>
+                    <SelectItem value="late">Atrasado</SelectItem>
+                    <SelectItem value="notice">En Aviso</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -444,7 +444,7 @@ export function TenantEditForm({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="moveInDate">Move In Date</Label>
+                <Label htmlFor="moveInDate">Fecha de Ingreso</Label>
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
                   <Input
@@ -462,7 +462,7 @@ export function TenantEditForm({
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="leaseEndDate">Lease End Date (Optional)</Label>
+                <Label htmlFor="leaseEndDate">Fecha Fin de Contrato (Opcional)</Label>
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
                   <Input
@@ -478,7 +478,7 @@ export function TenantEditForm({
 
             <div className="grid gap-2">
               <Label htmlFor="rentAmount" className="flex items-center gap-1">
-                Rent Amount <span className="text-destructive">*</span>
+                Monto de Renta <span className="text-destructive">*</span>
               </Label>
               <div className="flex items-center">
                 <DollarSign className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -488,7 +488,7 @@ export function TenantEditForm({
                   type="number"
                   min="0"
                   step="0.01"
-                  value={formData.rentAmount}
+                  value={formData.rentAmount || ""}
                   onChange={handleChange}
                   className={errors.rentAmount ? "border-destructive" : ""}
                 />
@@ -504,7 +504,7 @@ export function TenantEditForm({
                 checked={hasDeposit}
                 onCheckedChange={handleDepositToggle}
               />
-              <Label htmlFor="hasDeposit">Has Security Deposit</Label>
+              <Label htmlFor="hasDeposit">Tiene Depósito de Seguridad</Label>
             </div>
 
             {hasDeposit && (
@@ -513,7 +513,7 @@ export function TenantEditForm({
                   htmlFor="depositAmount"
                   className="flex items-center gap-1"
                 >
-                  Deposit Amount <span className="text-destructive">*</span>
+                  Monto del Depósito <span className="text-destructive">*</span>
                 </Label>
                 <div className="flex items-center">
                   <DollarSign className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -538,7 +538,7 @@ export function TenantEditForm({
 
             {/* Contract Upload Section */}
             <div className="grid gap-2">
-              <Label>Lease Contract (Optional)</Label>
+              <Label>Contrato de Arrendamiento (Opcional)</Label>
               {existingContract && (
                 <div className="flex items-center gap-2 p-2 bg-muted rounded">
                   <FileText className="w-4 h-4" />
@@ -561,17 +561,17 @@ export function TenantEditForm({
                     disabled={isUploadingContract}
                   >
                     <Upload className="w-4 h-4 mr-1" />
-                    {isUploadingContract ? "Uploading..." : "Upload"}
+                    {isUploadingContract ? "Subiendo..." : "Subir"}
                   </Button>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Supported formats: PDF, JPG, PNG (Max 10MB)
+                Formatos soportados: PDF, JPG, PNG (Máx 10MB)
               </p>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">Notas</Label>
               <textarea
                 id="notes"
                 name="notes"
@@ -591,10 +591,10 @@ export function TenantEditForm({
               onClick={onClose}
               className="mr-2"
             >
-              Cancel
+              Cancelar
             </Button>
             <Button type="submit" disabled={isLoadingUnits}>
-              Save Changes
+              {tenant ? "Guardar Cambios" : "Crear Inquilino"}
             </Button>
           </DialogFooter>
         </form>

@@ -84,7 +84,7 @@ const Analytics = () => {
   return (
     <Layout>
       <section className="space-y-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Analytics</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Analíticas</h1>
         
         {isLoading ? (
           <div className="flex justify-center p-8">
@@ -95,45 +95,45 @@ const Analytics = () => {
             {/* KPI Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="p-6">
-                <h3 className="text-sm font-medium text-muted-foreground">Occupancy Rate</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Tasa de Ocupación</h3>
                 <p className="text-2xl font-semibold mt-2">{occupancyRate.toFixed(1)}%</p>
                 <div className="text-xs text-muted-foreground mt-1">
-                  {occupiedUnits} of {totalUnits} units occupied
+                  {occupiedUnits} de {totalUnits} unidades ocupadas
                 </div>
                 <Badge className="mt-3 bg-green-100 text-green-800 hover:bg-green-200">
-                  Health: {occupancyRate > 80 ? 'Excellent' : occupancyRate > 60 ? 'Good' : 'Needs Attention'}
+                  Estado: {occupancyRate > 80 ? 'Excelente' : occupancyRate > 60 ? 'Bueno' : 'Necesita Atención'}
                 </Badge>
               </Card>
               
               <Card className="p-6">
-                <h3 className="text-sm font-medium text-muted-foreground">Monthly Revenue</h3>
-                <p className="text-2xl font-semibold mt-2">${monthlyRevenue.toLocaleString()}</p>
+                <h3 className="text-sm font-medium text-muted-foreground">Ingresos Mensuales</h3>
+                <p className="text-2xl font-semibold mt-2">€{monthlyRevenue.toLocaleString()}</p>
                 <div className="text-xs text-muted-foreground mt-1">
-                  Avg. ${(monthlyRevenue / (tenants.length || 1)).toFixed(2)} per tenant
+                  Prom. €{(monthlyRevenue / (tenants.length || 1)).toFixed(2)} por inquilino
                 </div>
                 <Badge className="mt-3 bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
-                  {tenants.length} active income sources
+                  {tenants.length} fuentes de ingresos activas
                 </Badge>
               </Card>
               
               <Card className="p-6">
-                <h3 className="text-sm font-medium text-muted-foreground">Collection Rate</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Tasa de Cobranza</h3>
                 <p className="text-2xl font-semibold mt-2">{collectionRate.toFixed(1)}%</p>
                 <div className="text-xs text-muted-foreground mt-1">
-                  ${collectedRevenue.toLocaleString()} of ${monthlyRevenue.toLocaleString()} collected
+                  €{collectedRevenue.toLocaleString()} de €{monthlyRevenue.toLocaleString()} cobrados
                 </div>
                 <Badge className="mt-3 bg-blue-100 text-blue-800 hover:bg-blue-200">
-                  Health: {collectionRate > 95 ? 'Excellent' : collectionRate > 80 ? 'Good' : 'Needs Attention'}
+                  Estado: {collectionRate > 95 ? 'Excelente' : collectionRate > 80 ? 'Bueno' : 'Necesita Atención'}
                 </Badge>
               </Card>
             </div>
             
             <Tabs defaultValue="occupancy" className="w-full">
               <TabsList className="mb-6">
-                <TabsTrigger value="occupancy">Occupancy</TabsTrigger>
-                <TabsTrigger value="revenue">Revenue</TabsTrigger>
-                <TabsTrigger value="tenants">Tenant Analysis</TabsTrigger>
-                <TabsTrigger value="payments">Payment Analysis</TabsTrigger>
+                <TabsTrigger value="occupancy">Ocupación</TabsTrigger>
+                <TabsTrigger value="revenue">Ingresos</TabsTrigger>
+                <TabsTrigger value="tenants">Análisis de Inquilinos</TabsTrigger>
+                <TabsTrigger value="payments">Análisis de Pagos</TabsTrigger>
               </TabsList>
               
               {/* Occupancy Tab */}
@@ -323,15 +323,15 @@ const Analytics = () => {
             </Tabs>
             
             <Card className="p-6">
-              <h3 className="text-lg font-medium mb-4">KPI Recommendations</h3>
+              <h3 className="text-lg font-medium mb-4">Recomendaciones KPI</h3>
               <div className="space-y-3">
-                <p className="text-sm">Based on your property data, we recommend monitoring these key metrics:</p>
+                <p className="text-sm">Basado en los datos de tu propiedad, recomendamos monitorear estas métricas clave:</p>
                 <ul className="list-disc pl-5 space-y-2 text-sm">
-                  <li><span className="font-medium">Occupancy Rate:</span> Target at least 85% for optimal revenue</li>
-                  <li><span className="font-medium">Rent Collection:</span> Aim for 95%+ collection rate</li>
-                  <li><span className="font-medium">Tenant Turnover:</span> Keep below 25% annually</li>
-                  <li><span className="font-medium">Maintenance Cost:</span> Target 15-20% of gross income</li>
-                  <li><span className="font-medium">Tenant Satisfaction:</span> Monitor through regular surveys</li>
+                  <li><span className="font-medium">Tasa de Ocupación:</span> Objetivo de al menos 85% para ingresos óptimos</li>
+                  <li><span className="font-medium">Cobranza de Renta:</span> Apuntar a 95%+ de tasa de cobranza</li>
+                  <li><span className="font-medium">Rotación de Inquilinos:</span> Mantener por debajo del 25% anual</li>
+                  <li><span className="font-medium">Costo de Mantenimiento:</span> Objetivo 15-20% del ingreso bruto</li>
+                  <li><span className="font-medium">Satisfacción del Inquilino:</span> Monitorear a través de encuestas regulares</li>
                 </ul>
               </div>
             </Card>

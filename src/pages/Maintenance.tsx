@@ -88,10 +88,6 @@ const Maintenance = () => {
           <h1 className="text-3xl font-bold tracking-tight">
             Solicitudes de Mantenimiento
           </h1>
-          <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
-            <PlusCircle className="h-4 w-4" />
-            Nueva Solicitud
-          </Button>
         </div>
         
         {showForm ? (
