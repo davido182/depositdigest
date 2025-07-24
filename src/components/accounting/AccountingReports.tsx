@@ -23,18 +23,26 @@ function AccountingStatsCards() {
 
   const loadAccountingStats = async () => {
     try {
-      // Get payments data for income
+      const currentYear = new Date().getFullYear();
+      const yearStart = `${currentYear}-01-01`;
+      const yearEnd = `${currentYear}-12-31`;
+
+      // Get payments data for income (current year only)
       const { data: payments } = await supabase
         .from('payments')
-        .select('amount, status')
+        .select('amount, status, payment_date')
         .eq('user_id', user?.id)
-        .eq('status', 'completed');
+        .eq('status', 'completed')
+        .gte('payment_date', yearStart)
+        .lte('payment_date', yearEnd);
 
-      // Get accounting entries for expenses
+      // Get accounting entries for expenses (current year only)
       const { data: expenses } = await supabase
         .from('accounting_entries')
-        .select('debit_amount, credit_amount, accounts(type)')
-        .eq('user_id', user?.id);
+        .select('debit_amount, credit_amount, date, accounts(type)')
+        .eq('user_id', user?.id)
+        .gte('date', yearStart)
+        .lte('date', yearEnd);
 
       const totalIncome = payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
       const totalExpenses = expenses
@@ -56,7 +64,7 @@ function AccountingStatsCards() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            Total Ingresos (Mes)
+            Total Ingresos (Año)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -70,7 +78,7 @@ function AccountingStatsCards() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            Total Gastos (Mes)
+            Total Gastos (Año)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -84,7 +92,7 @@ function AccountingStatsCards() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            Utilidad Neta (Mes)
+            Utilidad Neta (Año)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -163,9 +171,7 @@ export function AccountingReports() {
         ))}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <AccountingStatsCards />
-      </div>
+      <AccountingStatsCards />
     </div>
   );
 }

@@ -43,9 +43,22 @@ const Analytics = () => {
   const occupancyRate = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
   
   const monthlyRevenue = tenants.reduce((sum, tenant) => sum + tenant.rentAmount, 0);
-  const collectedRevenue = payments
-    .filter(p => p.status === 'completed' && p.type === 'rent')
-    .reduce((sum, payment) => sum + payment.amount, 0);
+  
+  // Calculate monthly collection rate for current month
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+  
+  const monthlyPayments = payments.filter(p => {
+    const paymentDate = new Date(p.date);
+    return p.status === 'completed' && 
+           p.type === 'rent' &&
+           paymentDate >= firstDayOfMonth && 
+           paymentDate <= lastDayOfMonth;
+  });
+  
+  const collectedRevenue = monthlyPayments.reduce((sum, payment) => sum + payment.amount, 0);
   const collectionRate = monthlyRevenue > 0 ? (collectedRevenue / monthlyRevenue) * 100 : 0;
   
   // Calculate tenant status breakdown

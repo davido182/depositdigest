@@ -148,14 +148,17 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
         
         toast.success(`Pago de ${monthName} para ${tenant.name} marcado como pagado`);
       } else {
-        // Remove payment record
+        // Remove payment record - find the specific payment for this month
+        const startDate = new Date(selectedYear, monthIndex, 1).toISOString().split('T')[0];
+        const endDate = new Date(selectedYear, monthIndex + 1, 1).toISOString().split('T')[0];
+        
         const { error } = await supabase
           .from('payments')
           .delete()
           .eq('user_id', user.id)
           .eq('tenant_id', tenantId)
-          .gte('payment_date', new Date(selectedYear, monthIndex, 1).toISOString().split('T')[0])
-          .lt('payment_date', new Date(selectedYear, monthIndex + 1, 1).toISOString().split('T')[0]);
+          .gte('payment_date', startDate)
+          .lt('payment_date', endDate);
 
         if (error) throw error;
         

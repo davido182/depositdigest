@@ -70,8 +70,6 @@ const Sidebar = () => {
         { name: "Inquilinos", href: "/tenants", icon: Users },
         { name: "Pagos", href: "/payments", icon: CreditCard },
         { name: "Mantenimiento", href: "/maintenance", icon: Wrench },
-        
-        
       ];
 
       // Premium-only features

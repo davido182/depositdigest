@@ -15,6 +15,9 @@ interface Property {
   address: string;
   description?: string;
   units: number;
+  occupied_units?: number;
+  monthly_revenue?: number;
+  created_at?: string;
 }
 
 interface PropertyFormProps {
@@ -99,7 +102,11 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
       onSave({
         ...formData,
         id: property?.id || `prop-${Date.now()}`,
+        occupied_units: 0,
+        monthly_revenue: 0,
+        created_at: new Date().toISOString()
       });
+      onClose(); // Close dialog after saving
     }
   };
 

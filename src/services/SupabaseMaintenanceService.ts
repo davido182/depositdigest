@@ -80,7 +80,6 @@ export class SupabaseMaintenanceService extends SupabaseService {
       priority: request.priority,
       status: request.status,
       unit_number: request.unit,
-      unit: request.unit,
       assigned_to: request.assignedTo || null
     };
 
@@ -109,7 +108,6 @@ export class SupabaseMaintenanceService extends SupabaseService {
     if (updates.status) updateData.status = updates.status;
     if (updates.unit) {
       updateData.unit_number = updates.unit;
-      updateData.unit = updates.unit;
     }
     if (updates.assignedTo !== undefined) updateData.assigned_to = updates.assignedTo;
 
