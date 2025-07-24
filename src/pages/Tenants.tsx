@@ -159,6 +159,11 @@ const Tenants = () => {
         <UnitManagementModal
           isOpen={isUnitModalOpen}
           onClose={() => setIsUnitModalOpen(false)}
+          currentUnitCount={20}
+          onSave={(units) => {
+            toast.success(`Configuración de unidades actualizada: ${units} unidades`);
+            setIsUnitModalOpen(false);
+          }}
         />
       </div>
     </Layout>

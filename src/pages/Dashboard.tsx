@@ -1,5 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { IntelligentDashboard } from "@/components/dashboard/IntelligentDashboard";
+import { MaintenanceNotifications } from "@/components/dashboard/MaintenanceNotifications";
 import { TenantCard } from "@/components/tenants/TenantCard";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import TenantDashboard from "@/components/tenant/TenantDashboard";
@@ -158,6 +159,7 @@ const Dashboard = () => {
         <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between items-center'}`}>
           <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>Dashboard</h1>
           <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
+            <MaintenanceNotifications />
             {userRole === 'landlord_premium' && (
               <Button onClick={handleAddTenant} className="gap-2" size={isMobile ? "sm" : "default"}>
                 <Plus className="h-4 w-4" />

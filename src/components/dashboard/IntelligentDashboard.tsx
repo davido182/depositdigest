@@ -310,7 +310,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-amber-800">
                 <Crown className="h-5 w-5" />
-                Desbloquea RentFlow Premium
+                Desbloquea RentaFlux Premium
               </CardTitle>
               <CardDescription className="text-amber-700">
                 Accede a análisis avanzados, reportes automáticos y gestión ilimitada de propiedades
@@ -351,7 +351,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-blue-800">
                 <Zap className="h-5 w-5" />
-                Insights IA
+                Insights
               </CardTitle>
               <CardDescription className="text-blue-700">
                 Recomendaciones personalizadas basadas en tus datos
