@@ -75,7 +75,7 @@ export function MaintenanceRequestList({
     return (
       <Card className="w-full">
         <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">No maintenance requests found.</p>
+          <p className="text-muted-foreground">No se encontraron solicitudes de mantenimiento.</p>
         </CardContent>
       </Card>
     );
@@ -101,13 +101,13 @@ export function MaintenanceRequestList({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Unit</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>Título</TableHead>
+            <TableHead>Unidad</TableHead>
+            <TableHead>Categoría</TableHead>
+            <TableHead>Prioridad</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead>Creado</TableHead>
+            <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -118,7 +118,9 @@ export function MaintenanceRequestList({
               <TableCell className="capitalize">{request.category.replace('_', ' ')}</TableCell>
               <TableCell>
                 <Badge variant={priorityColors[request.priority] as any}>
-                  {request.priority}
+                  {request.priority === 'high' ? 'Alta' : 
+                   request.priority === 'medium' ? 'Media' : 
+                   request.priority === 'low' ? 'Baja' : 'Emergencia'}
                 </Badge>
               </TableCell>
               <TableCell>
@@ -129,7 +131,10 @@ export function MaintenanceRequestList({
                   <SelectTrigger className="w-32">
                     <SelectValue>
                       <Badge variant={statusColors[request.status] as any}>
-                        {request.status.replace('_', ' ')}
+                        {request.status === 'pending' ? 'Pendiente' :
+                         request.status === 'assigned' ? 'Asignado' :
+                         request.status === 'in_progress' ? 'En Progreso' :
+                         request.status === 'completed' ? 'Completado' : 'Cancelado'}
                       </Badge>
                     </SelectValue>
                   </SelectTrigger>

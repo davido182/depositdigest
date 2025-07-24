@@ -137,9 +137,9 @@ const Analytics = () => {
               </TabsList>
               
               {/* Occupancy Tab */}
-              <TabsContent value="occupancy" className="space-y-6">
+            <TabsContent value="occupancy" className="space-y-6">
                 <Card className="p-6">
-                  <h3 className="text-lg font-medium mb-4">Occupancy Trend</h3>
+                  <h3 className="text-lg font-medium mb-4">Tendencia de Ocupación</h3>
                   <div className="h-64">
                     <AreaChart
                       data={occupancyTrend}
@@ -153,12 +153,12 @@ const Analytics = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Unit Status</h3>
+                    <h3 className="text-lg font-medium mb-4">Estado de Unidades</h3>
                     <div className="h-64">
                       <PieChart
                         data={[
-                          { name: "Occupied", value: occupiedUnits },
-                          { name: "Vacant", value: vacantUnits },
+                          { name: "Ocupadas", value: occupiedUnits },
+                          { name: "Vacías", value: vacantUnits },
                         ]}
                         index="name"
                         category="value"
@@ -169,19 +169,19 @@ const Analytics = () => {
                   </Card>
                   
                   <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Key Metrics</h3>
+                    <h3 className="text-lg font-medium mb-4">Métricas Clave</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Average Tenant Duration</p>
-                        <p className="text-xl font-medium">14 months</p>
+                        <p className="text-sm text-muted-foreground">Duración Promedio del Inquilino</p>
+                        <p className="text-xl font-medium">14 meses</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Turnover Rate (Annual)</p>
+                        <p className="text-sm text-muted-foreground">Tasa de Rotación (Anual)</p>
                         <p className="text-xl font-medium">22%</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Avg. Days to Fill Vacancy</p>
-                        <p className="text-xl font-medium">18 days</p>
+                        <p className="text-sm text-muted-foreground">Días Promedio para Llenar Vacante</p>
+                        <p className="text-xl font-medium">18 días</p>
                       </div>
                     </div>
                   </Card>
@@ -191,49 +191,49 @@ const Analytics = () => {
               {/* Revenue Tab */}
               <TabsContent value="revenue" className="space-y-6">
                 <Card className="p-6">
-                  <h3 className="text-lg font-medium mb-4">Revenue Trend</h3>
+                  <h3 className="text-lg font-medium mb-4">Tendencia de Ingresos</h3>
                   <div className="h-64">
                     <AreaChart
                       data={revenueTrend}
                       index="month"
                       categories={["amount"]}
                       colors={["green"]}
-                      valueFormatter={(value) => `$${value.toLocaleString()}`}
+                      valueFormatter={(value) => `€${value.toLocaleString()}`}
                     />
                   </div>
                 </Card>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Revenue Breakdown</h3>
+                    <h3 className="text-lg font-medium mb-4">Desglose de Ingresos</h3>
                     <div className="h-64">
                       <PieChart
                         data={[
-                          { type: "Rent", value: monthlyRevenue * 0.85 },
-                          { type: "Deposits", value: monthlyRevenue * 0.1 },
-                          { type: "Fees", value: monthlyRevenue * 0.05 },
+                          { type: "Renta", value: monthlyRevenue * 0.85 },
+                          { type: "Depósitos", value: monthlyRevenue * 0.1 },
+                          { type: "Comisiones", value: monthlyRevenue * 0.05 },
                         ]}
                         index="type"
                         category="value"
                         colors={["blue", "amber", "violet"]}
-                        valueFormatter={(value) => `$${value.toLocaleString()}`}
+                        valueFormatter={(value) => `€${value.toLocaleString()}`}
                       />
                     </div>
                   </Card>
                   
                   <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Financial Health</h3>
+                    <h3 className="text-lg font-medium mb-4">Salud Financiera</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Net Operating Income</p>
-                        <p className="text-xl font-medium">${(monthlyRevenue * 0.7).toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">Ingreso Operativo Neto</p>
+                        <p className="text-xl font-medium">€{(monthlyRevenue * 0.7).toLocaleString()}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Cash Flow</p>
-                        <p className="text-xl font-medium">${(monthlyRevenue * 0.4).toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">Flujo de Efectivo</p>
+                        <p className="text-xl font-medium">€{(monthlyRevenue * 0.4).toLocaleString()}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Cap Rate</p>
+                        <p className="text-sm text-muted-foreground">Tasa de Capitalización</p>
                         <p className="text-xl font-medium">5.8%</p>
                       </div>
                     </div>
@@ -249,33 +249,33 @@ const Analytics = () => {
                     <div className="h-64">
                       <BarChart
                         data={[
-                          { status: "Active", count: statusCount.active },
-                          { status: "Late", count: statusCount.late },
-                          { status: "Notice", count: statusCount.notice },
-                          { status: "Inactive", count: statusCount.inactive },
+                          { status: "Activo", count: statusCount.active },
+                          { status: "Atrasado", count: statusCount.late },
+                          { status: "Aviso", count: statusCount.notice },
+                          { status: "Inactivo", count: statusCount.inactive },
                         ]}
                         index="status"
                         categories={["count"]}
                         colors={["blue"]}
-                        valueFormatter={(value) => `${value} tenants`}
+                        valueFormatter={(value) => `${value} inquilinos`}
                       />
                     </div>
                   </Card>
                   
                   <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Tenant Insights</h3>
+                    <h3 className="text-lg font-medium mb-4">Información de Inquilinos</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Tenant Satisfaction Score</p>
+                        <p className="text-sm text-muted-foreground">Puntuación de Satisfacción</p>
                         <p className="text-xl font-medium">4.2/5.0</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Renewal Rate</p>
+                        <p className="text-sm text-muted-foreground">Tasa de Renovación</p>
                         <p className="text-xl font-medium">76%</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Avg. Lease Term</p>
-                        <p className="text-xl font-medium">14 months</p>
+                        <p className="text-sm text-muted-foreground">Duración Promedio del Contrato</p>
+                        <p className="text-xl font-medium">14 meses</p>
                       </div>
                     </div>
                   </Card>
@@ -286,7 +286,7 @@ const Analytics = () => {
               <TabsContent value="payments" className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Payment Methods</h3>
+                    <h3 className="text-lg font-medium mb-4">Métodos de Pago</h3>
                     <div className="h-64">
                       <PieChart
                         data={Object.entries(paymentMethods).map(([method, count]) => ({
@@ -296,25 +296,25 @@ const Analytics = () => {
                         index="method"
                         category="count"
                         colors={["indigo", "cyan", "amber", "emerald"]}
-                        valueFormatter={(value) => `${value} payments`}
+                        valueFormatter={(value) => `${value} pagos`}
                       />
                     </div>
                   </Card>
                   
                   <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Payment Insights</h3>
+                    <h3 className="text-lg font-medium mb-4">Información de Pagos</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">On-Time Payment Rate</p>
+                        <p className="text-sm text-muted-foreground">Tasa de Pago a Tiempo</p>
                         <p className="text-xl font-medium">88%</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Avg. Days Late</p>
-                        <p className="text-xl font-medium">4.2 days</p>
+                        <p className="text-sm text-muted-foreground">Días Promedio de Retraso</p>
+                        <p className="text-xl font-medium">4.2 días</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Processing Time</p>
-                        <p className="text-xl font-medium">1.5 days</p>
+                        <p className="text-sm text-muted-foreground">Tiempo de Procesamiento</p>
+                        <p className="text-xl font-medium">1.5 días</p>
                       </div>
                     </div>
                   </Card>

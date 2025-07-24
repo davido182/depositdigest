@@ -2,6 +2,7 @@ import { Layout } from "@/components/Layout";
 import { PaymentsList } from "@/components/payments/PaymentsList";
 import { ReceiptProcessor } from "@/components/payments/ReceiptProcessor";
 import TenantPaymentsList from "@/components/payments/TenantPaymentsList";
+import { TenantPaymentTracker } from "@/components/payments/TenantPaymentTracker";
 import { Payment, Tenant } from "@/types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -130,11 +131,16 @@ const Payments = () => {
       <section className="space-y-6">
         <h1 className="text-3xl font-semibold tracking-tight">Pagos</h1>
         
-        <Tabs defaultValue="payments" className="w-full">
+        <Tabs defaultValue="tracker" className="w-full">
           <TabsList>
+            <TabsTrigger value="tracker">Seguimiento de Pagos</TabsTrigger>
             <TabsTrigger value="payments">Lista de Pagos</TabsTrigger>
             <TabsTrigger value="processor">Procesar Comprobantes</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="tracker">
+            <TenantPaymentTracker tenants={tenants} />
+          </TabsContent>
           
           <TabsContent value="payments">
             {isLoading ? (

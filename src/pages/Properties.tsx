@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PropertyForm } from "@/components/properties/PropertyForm";
+import { PropertyDetails } from "@/components/properties/PropertyDetails";
 
 interface Property {
   id: string;
@@ -24,6 +25,7 @@ const Properties = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [showPropertyDetails, setShowPropertyDetails] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
   useEffect(() => {
@@ -104,7 +106,8 @@ const Properties = () => {
   };
 
   const handleViewProperty = (property: Property) => {
-    toast.info(`Viendo detalles de ${property.name} - Función en desarrollo`);
+    setSelectedProperty(property);
+    setShowPropertyDetails(true);
   };
 
   const handleSaveProperty = (property: Property) => {
@@ -273,6 +276,30 @@ const Properties = () => {
           }}
           onSave={handleSaveProperty}
           userRole={userRole || 'landlord_free'}
+        />
+
+        <PropertyDetails
+          property={selectedProperty}
+          isOpen={showPropertyDetails}
+          onClose={() => {
+            setShowPropertyDetails(false);
+            setSelectedProperty(null);
+          }}
+          onEdit={(property) => {
+            setShowPropertyDetails(false);
+            // Convert property to match the state interface
+            const stateProperty: Property = {
+              id: property.id || '',
+              name: property.name,
+              address: property.address,
+              units: property.units,
+              occupied_units: 0,
+              monthly_revenue: 0,
+              created_at: new Date().toISOString()
+            };
+            setSelectedProperty(stateProperty);
+            setShowPropertyForm(true);
+          }}
         />
       </div>
     </Layout>

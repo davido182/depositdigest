@@ -10,7 +10,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
     const { data, error } = await supabase
       .from('maintenance_requests')
       .select('*')
-      .eq('user_id', user.id)
+      .or(`user_id.eq.${user.id},landlord_id.eq.${user.id}`)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -63,9 +63,17 @@ export class SupabaseMaintenanceService extends SupabaseService {
   async createMaintenanceRequest(request: Omit<MaintenanceRequest, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const user = await this.ensureAuthenticated();
     
+    // Find tenant's landlord to set landlord_id
+    const { data: tenantData } = await supabase
+      .from('tenants')
+      .select('landlord_id')
+      .eq('id', request.tenantId)
+      .single();
+    
     const requestData = {
       user_id: user.id,
       tenant_id: request.tenantId,
+      landlord_id: tenantData?.landlord_id || null,
       title: request.title,
       description: request.description,
       category: request.category || 'other',

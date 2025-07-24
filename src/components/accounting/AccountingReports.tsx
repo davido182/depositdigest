@@ -2,6 +2,103 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileDown, Calculator, TrendingUp, PieChart } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+// Component to show real accounting stats
+function AccountingStatsCards() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    totalIncome: 0,
+    totalExpenses: 0,
+    netProfit: 0
+  });
+
+  useEffect(() => {
+    if (user) {
+      loadAccountingStats();
+    }
+  }, [user]);
+
+  const loadAccountingStats = async () => {
+    try {
+      // Get payments data for income
+      const { data: payments } = await supabase
+        .from('payments')
+        .select('amount, status')
+        .eq('user_id', user?.id)
+        .eq('status', 'completed');
+
+      // Get accounting entries for expenses
+      const { data: expenses } = await supabase
+        .from('accounting_entries')
+        .select('debit_amount, credit_amount, accounts(type)')
+        .eq('user_id', user?.id);
+
+      const totalIncome = payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
+      const totalExpenses = expenses
+        ?.filter(entry => entry.accounts?.type === 'expense')
+        .reduce((sum, entry) => sum + (entry.debit_amount || 0), 0) || 0;
+      
+      setStats({
+        totalIncome,
+        totalExpenses,
+        netProfit: totalIncome - totalExpenses
+      });
+    } catch (error) {
+      console.error('Error loading accounting stats:', error);
+    }
+  };
+
+  return (
+    <div className="grid gap-6 md:grid-cols-3">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Total Ingresos (Mes)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">€{stats.totalIncome.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground">
+            Basado en pagos completados
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Total Gastos (Mes)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">€{stats.totalExpenses.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground">
+            Basado en entradas contables
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Utilidad Neta (Mes)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className={`text-2xl font-bold ${stats.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            €{stats.netProfit.toLocaleString()}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Ingresos - Gastos
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 export function AccountingReports() {
   const reports = [
@@ -67,47 +164,7 @@ export function AccountingReports() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Ingresos (Mes)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$45,200</div>
-            <p className="text-xs text-muted-foreground">
-              +12% vs mes anterior
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Gastos (Mes)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$8,950</div>
-            <p className="text-xs text-muted-foreground">
-              -5% vs mes anterior
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Utilidad Neta (Mes)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">$36,250</div>
-            <p className="text-xs text-muted-foreground">
-              +18% vs mes anterior
-            </p>
-          </CardContent>
-        </Card>
+        <AccountingStatsCards />
       </div>
     </div>
   );

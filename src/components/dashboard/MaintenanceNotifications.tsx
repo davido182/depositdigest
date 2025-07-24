@@ -46,7 +46,7 @@ export function MaintenanceNotifications() {
           )
         `)
         .eq('landlord_id', user?.id)
-        .in('status', ['open', 'pending'])
+        .in('status', ['pending', 'assigned', 'in_progress'])
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -103,7 +103,7 @@ export function MaintenanceNotifications() {
     });
   };
 
-  if (userRole !== 'landlord_premium') {
+  if (userRole === 'tenant') {
     return null;
   }
 
