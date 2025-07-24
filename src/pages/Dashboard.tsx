@@ -178,8 +178,6 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <IntelligentDashboard stats={stats} />
-
         {/* Resumen de Propiedades */}
         {properties.length > 0 && (
           <Card>
@@ -213,6 +211,8 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         )}
+
+        <IntelligentDashboard stats={stats} />
 
         {/* Tarjetas de Inquilinos */}
         {tenants.length > 0 && (

@@ -3,10 +3,11 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Building, Users, DollarSign, MapPin, Calendar } from "lucide-react";
+import { Plus, Building, Users, DollarSign, MapPin, Calendar, Edit, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { PropertyForm } from "@/components/properties/PropertyForm";
 
 interface Property {
   id: string;
@@ -22,6 +23,8 @@ const Properties = () => {
   const { user, userRole } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
   useEffect(() => {
     const loadProperties = async () => {
@@ -68,7 +71,13 @@ const Properties = () => {
           }
         });
 
-        setProperties(Array.from(propertyMap.values()));
+        // Sort properties numerically
+        const sortedProperties = Array.from(propertyMap.values()).sort((a, b) => {
+          const aNumber = parseInt(a.name.match(/\d+/)?.[0] || '0');
+          const bNumber = parseInt(b.name.match(/\d+/)?.[0] || '0');
+          return aNumber - bNumber;
+        });
+        setProperties(sortedProperties);
       } catch (error) {
         console.error("Error loading properties:", error);
         toast.error("Error al cargar propiedades");
@@ -85,7 +94,31 @@ const Properties = () => {
       toast.error("Los usuarios gratuitos pueden tener máximo 1 propiedad. Actualiza a Premium para propiedades ilimitadas.");
       return;
     }
-    toast.info("Función en desarrollo - Próximamente disponible");
+    setSelectedProperty(null);
+    setShowPropertyForm(true);
+  };
+
+  const handleEditProperty = (property: Property) => {
+    setSelectedProperty(property);
+    setShowPropertyForm(true);
+  };
+
+  const handleViewProperty = (property: Property) => {
+    toast.info(`Viendo detalles de ${property.name} - Función en desarrollo`);
+  };
+
+  const handleSaveProperty = (property: Property) => {
+    if (selectedProperty) {
+      // Update existing property
+      setProperties(prev => prev.map(p => p.id === property.id ? property : p));
+      toast.success("Propiedad actualizada exitosamente");
+    } else {
+      // Add new property
+      setProperties(prev => [...prev, property]);
+      toast.success("Propiedad agregada exitosamente");
+    }
+    setShowPropertyForm(false);
+    setSelectedProperty(null);
   };
 
   if (isLoading) {
@@ -175,10 +208,22 @@ const Properties = () => {
                   </div>
 
                   <div className="pt-4 space-y-2">
-                    <Button variant="outline" className="w-full" size="sm">
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      size="sm"
+                      onClick={() => handleViewProperty(property)}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
                       Ver Detalles
                     </Button>
-                    <Button variant="ghost" className="w-full" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      className="w-full" 
+                      size="sm"
+                      onClick={() => handleEditProperty(property)}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
                       Editar Propiedad
                     </Button>
                   </div>
@@ -218,6 +263,17 @@ const Properties = () => {
             </CardContent>
           </Card>
         )}
+
+        <PropertyForm
+          property={selectedProperty}
+          isOpen={showPropertyForm}
+          onClose={() => {
+            setShowPropertyForm(false);
+            setSelectedProperty(null);
+          }}
+          onSave={handleSaveProperty}
+          userRole={userRole || 'landlord_free'}
+        />
       </div>
     </Layout>
   );

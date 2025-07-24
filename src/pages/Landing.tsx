@@ -284,8 +284,8 @@ const Landing = () => {
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700" onClick={() => navigate("/login")}>
-                  Comenzar Prueba
+                <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700" onClick={() => window.open("https://buy.stripe.com/your-premium-link", "_blank")}>
+                  Quiero ser Premium
                 </Button>
               </CardContent>
             </Card>

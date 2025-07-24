@@ -488,8 +488,9 @@ export function TenantEditForm({
                   type="number"
                   min="0"
                   step="0.01"
-                  value={formData.rentAmount || ""}
+                  value={formData.rentAmount === 0 ? "" : formData.rentAmount.toString()}
                   onChange={handleChange}
+                  placeholder="Ingrese el monto de renta"
                   className={errors.rentAmount ? "border-destructive" : ""}
                 />
               </div>

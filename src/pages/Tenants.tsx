@@ -107,12 +107,23 @@ const Tenants = () => {
             <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>Inquilinos</h1>
             <p className="text-muted-foreground">Gestiona tus inquilinos y sus pagos</p>
           </div>
-          {userRole === 'landlord_premium' && (
-            <Button onClick={handleAddTenant} className="gap-2" size={isMobile ? "sm" : "default"}>
-              <Plus className="h-4 w-4" />
-              Agregar Inquilino
+          <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
+            {userRole === 'landlord_premium' && (
+              <Button onClick={handleAddTenant} className="gap-2" size={isMobile ? "sm" : "default"}>
+                <Plus className="h-4 w-4" />
+                Agregar Inquilino
+              </Button>
+            )}
+            <Button 
+              variant="outline" 
+              onClick={() => setIsUnitModalOpen(true)}
+              className="gap-2"
+              size={isMobile ? "sm" : "default"}
+            >
+              <Building className="h-4 w-4" />
+              Gestionar Unidades
             </Button>
-          )}
+          </div>
         </div>
 
         {isLoading ? (
@@ -143,6 +154,11 @@ const Tenants = () => {
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onSave={handleSaveTenant}
+        />
+        
+        <UnitManagementModal
+          isOpen={isUnitModalOpen}
+          onClose={() => setIsUnitModalOpen(false)}
         />
       </div>
     </Layout>
