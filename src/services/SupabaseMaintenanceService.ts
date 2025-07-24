@@ -115,7 +115,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
       .from('maintenance_requests')
       .update(updateData)
       .eq('id', id)
-      .eq('user_id', user.id);
+      .or(`user_id.eq.${user.id},landlord_id.eq.${user.id}`);
 
     if (error) {
       console.error('Error updating maintenance request:', error);

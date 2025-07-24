@@ -1,1 +1,4 @@
 project_id = "xhscuftwypziepjgnfan"
+
+[functions.create-tenant-payment]
+verify_jwt = true

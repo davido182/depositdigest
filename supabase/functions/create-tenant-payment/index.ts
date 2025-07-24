@@ -7,74 +7,95 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[CREATE-TENANT-PAYMENT] ${step}${detailsStr}`);
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Create Supabase client using the anon key for user authentication
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_ANON_KEY") ?? ""
   );
 
   try {
-    // Retrieve authenticated user
-    const authHeader = req.headers.get("Authorization")!;
+    logStep("Function started");
+    
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("Authorization header is required");
+    }
+    
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
+    const { data, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError) {
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+    
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
+    
+    logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Get request body
-    const { tenantId, amount, description } = await req.json();
+    const { landlord_id, amount, tenant_email } = await req.json();
+    
+    // Get landlord's Stripe configuration
+    const { data: stripeConfig, error: configError } = await supabaseClient
+      .from('user_stripe_configs')
+      .select('*')
+      .eq('user_id', landlord_id)
+      .eq('enabled', true)
+      .single();
 
-    // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    if (configError || !stripeConfig) {
+      throw new Error("Landlord Stripe configuration not found or disabled");
+    }
+
+    logStep("Stripe config found", { landlordId: landlord_id });
+
+    const stripe = new Stripe(stripeConfig.secret_key, {
       apiVersion: "2023-10-16",
     });
 
-    // Check if a Stripe customer record exists for this user
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    // Check if customer exists
+    const customers = await stripe.customers.list({ email: tenant_email, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
     }
 
-    // Create a one-time payment session for rent
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      customer_email: customerId ? undefined : tenant_email,
       line_items: [
         {
           price_data: {
-            currency: "usd",
-            product_data: { 
-              name: "Pago de Renta",
-              description: description || "Pago mensual de renta"
-            },
+            currency: "eur",
+            product_data: { name: "Pago de Renta" },
             unit_amount: Math.round(amount * 100), // Convert to cents
           },
           quantity: 1,
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${req.headers.get("origin")}/payment-success`,
       cancel_url: `${req.headers.get("origin")}/tenant-dashboard`,
-      metadata: {
-        tenant_id: tenantId,
-        user_id: user.id,
-        payment_type: "rent"
-      }
     });
+
+    logStep("Checkout session created", { sessionId: session.id });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error("Error creating tenant payment session:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR in create-tenant-payment", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

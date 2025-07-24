@@ -27,7 +27,7 @@ function AccountingStatsCards() {
       const yearStart = `${currentYear}-01-01`;
       const yearEnd = `${currentYear}-12-31`;
 
-      // Get payments data for income (current year only)
+      // Get payments data for income (annual)
       const { data: payments } = await supabase
         .from('payments')
         .select('amount, status, payment_date')
@@ -36,7 +36,7 @@ function AccountingStatsCards() {
         .gte('payment_date', yearStart)
         .lte('payment_date', yearEnd);
 
-      // Get accounting entries for expenses (current year only)
+      // Get accounting entries for expenses (annual)
       const { data: expenses } = await supabase
         .from('accounting_entries')
         .select('debit_amount, credit_amount, date, accounts(type)')

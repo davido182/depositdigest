@@ -243,24 +243,36 @@ const Properties = () => {
               <CardTitle>Resumen de Propiedades</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {properties.length}
+                    {properties.filter(prop => prop.occupied_units > 0).length}
                   </div>
-                  <div className="text-sm text-muted-foreground">Propiedades</div>
+                  <div className="text-sm text-muted-foreground">Propiedades Ocupadas</div>
+                  <div className="text-xs text-muted-foreground">
+                    de {properties.length} total
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-emerald-600">
+                    {properties.reduce((acc, prop) => acc + prop.units, 0)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Total Unidades</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
                     {properties.reduce((acc, prop) => acc + prop.occupied_units, 0)}
                   </div>
                   <div className="text-sm text-muted-foreground">Unidades Ocupadas</div>
+                  <div className="text-xs text-muted-foreground">
+                    {((properties.reduce((acc, prop) => acc + prop.occupied_units, 0) / Math.max(properties.reduce((acc, prop) => acc + prop.units, 0), 1)) * 100).toFixed(1)}% ocupación
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
                     €{properties.reduce((acc, prop) => acc + prop.monthly_revenue, 0).toLocaleString()}
                   </div>
-                  <div className="text-sm text-muted-foreground">Ingresos Totales</div>
+                  <div className="text-sm text-muted-foreground">Ingresos Mensuales</div>
                 </div>
               </div>
             </CardContent>

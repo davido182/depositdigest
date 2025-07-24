@@ -44,22 +44,21 @@ const Analytics = () => {
   
   const monthlyRevenue = tenants.reduce((sum, tenant) => sum + tenant.rentAmount, 0);
   
-  // Calculate monthly collection rate for current month
+  // Calculate monthly collection rate based on payment tracker data
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
   
-  const monthlyPayments = payments.filter(p => {
+  const activeTenantIds = activeTenants.map(t => t.id);
+  const currentMonthPayments = payments.filter(p => {
     const paymentDate = new Date(p.date);
     return p.status === 'completed' && 
-           p.type === 'rent' &&
-           paymentDate >= firstDayOfMonth && 
-           paymentDate <= lastDayOfMonth;
+           activeTenantIds.includes(p.tenantId) &&
+           paymentDate.getMonth() === currentMonth &&
+           paymentDate.getFullYear() === currentYear;
   });
   
-  const collectedRevenue = monthlyPayments.reduce((sum, payment) => sum + payment.amount, 0);
-  const collectionRate = monthlyRevenue > 0 ? (collectedRevenue / monthlyRevenue) * 100 : 0;
+  const paidTenants = new Set(currentMonthPayments.map(p => p.tenantId));
+  const collectionRate = activeTenants.length > 0 ? (paidTenants.size / activeTenants.length) * 100 : 0;
   
   // Calculate tenant status breakdown
   const statusCount = {
@@ -133,7 +132,7 @@ const Analytics = () => {
                 <h3 className="text-sm font-medium text-muted-foreground">Tasa de Cobranza</h3>
                 <p className="text-2xl font-semibold mt-2">{collectionRate.toFixed(1)}%</p>
                 <div className="text-xs text-muted-foreground mt-1">
-                  €{collectedRevenue.toLocaleString()} de €{monthlyRevenue.toLocaleString()} cobrados
+                  {paidTenants.size} de {activeTenants.length} inquilinos han pagado este mes
                 </div>
                 <Badge className="mt-3 bg-blue-100 text-blue-800 hover:bg-blue-200">
                   Estado: {collectionRate > 95 ? 'Excelente' : collectionRate > 80 ? 'Bueno' : 'Necesita Atención'}

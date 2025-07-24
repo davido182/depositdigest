@@ -62,7 +62,7 @@ export function MaintenanceRequestList({
     return (
       <Card className="w-full border-destructive">
         <CardHeader>
-          <CardTitle className="text-destructive">Error Loading Maintenance Requests</CardTitle>
+          <CardTitle className="text-destructive">Error al Cargar Solicitudes de Mantenimiento</CardTitle>
         </CardHeader>
         <CardContent>
           <p>{error}</p>

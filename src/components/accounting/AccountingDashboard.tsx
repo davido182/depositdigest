@@ -12,11 +12,11 @@ export function AccountingDashboard() {
     <div className="space-y-6">
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="accounts">Accounts</TabsTrigger>
-          <TabsTrigger value="entries">Entries</TabsTrigger>
-          <TabsTrigger value="statements">Financial Statements</TabsTrigger>
-          <TabsTrigger value="taxes">Taxes</TabsTrigger>
+          <TabsTrigger value="overview">Resumen</TabsTrigger>
+          <TabsTrigger value="accounts">Cuentas</TabsTrigger>
+          <TabsTrigger value="entries">Asientos</TabsTrigger>
+          <TabsTrigger value="statements">Estados Financieros</TabsTrigger>
+          <TabsTrigger value="taxes">Impuestos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">

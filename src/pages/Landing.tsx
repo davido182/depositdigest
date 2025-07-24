@@ -17,6 +17,7 @@ import {
   UserPlus
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -284,7 +285,21 @@ const Landing = () => {
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700" onClick={() => navigate("/login")}>
+                <Button 
+                  className="w-full mt-6 bg-blue-600 hover:bg-blue-700" 
+                  onClick={async () => {
+                    try {
+                      const { data, error } = await supabase.functions.invoke('create-checkout');
+                      if (error) throw error;
+                      if (data?.url) {
+                        window.open(data.url, '_blank');
+                      }
+                    } catch (error) {
+                      console.error('Error creating checkout:', error);
+                      navigate("/login");
+                    }
+                  }}
+                >
                   Quiero ser Premium
                 </Button>
               </CardContent>

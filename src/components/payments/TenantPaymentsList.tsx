@@ -76,9 +76,47 @@ const TenantPaymentsList = () => {
 
   const handlePayRent = async () => {
     try {
-      // This would typically integrate with a payment processor
-      toast.info("Redirigiéndote al sistema de pagos...");
-      // Here you would integrate with Stripe, PayPal, or other payment system
+      if (!user) return;
+      
+      // Get tenant info to find landlord
+      const { data: tenant, error: tenantError } = await supabase
+        .from('tenants')
+        .select('landlord_id')
+        .eq('email', user.email)
+        .single();
+
+      if (tenantError) {
+        toast.error("Error al obtener información del inquilino");
+        return;
+      }
+
+      // Get landlord's Stripe config
+      const { data: stripeConfig, error: stripeError } = await supabase
+        .from('user_stripe_configs')
+        .select('*')
+        .eq('user_id', tenant.landlord_id)
+        .eq('enabled', true)
+        .single();
+
+      if (stripeError || !stripeConfig) {
+        toast.error("El propietario aún no ha configurado los pagos online");
+        return;
+      }
+
+      // Create payment with landlord's Stripe config
+      const { data, error } = await supabase.functions.invoke('create-tenant-payment', {
+        body: {
+          landlord_id: tenant.landlord_id,
+          amount: rentAmount,
+          tenant_email: user.email
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
     } catch (error) {
       console.error("Error processing payment:", error);
       toast.error("Error al procesar el pago");

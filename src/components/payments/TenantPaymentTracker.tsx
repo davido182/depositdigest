@@ -86,14 +86,12 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
         const year = date.getFullYear();
         const month = date.getMonth();
         
-        if (year === selectedYear) {
-          records.push({
-            tenantId: payment.tenant_id,
-            year,
-            month,
-            paid: payment.status === 'completed'
-          });
-        }
+        records.push({
+          tenantId: payment.tenant_id,
+          year,
+          month,
+          paid: payment.status === 'completed'
+        });
       });
 
       setPaymentRecords(records);

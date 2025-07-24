@@ -99,14 +99,22 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
     e.preventDefault();
     
     if (validateForm()) {
-      onSave({
-        ...formData,
-        id: property?.id || `prop-${Date.now()}`,
-        occupied_units: 0,
-        monthly_revenue: 0,
-        created_at: new Date().toISOString()
-      });
-      onClose(); // Close dialog after saving
+      try {
+        const propertyData = {
+          ...formData,
+          id: property?.id || `prop-${Date.now()}`,
+          occupied_units: property?.occupied_units || 0,
+          monthly_revenue: property?.monthly_revenue || 0,
+          created_at: property?.created_at || new Date().toISOString()
+        };
+        
+        onSave(propertyData);
+        toast.success(property ? "Propiedad actualizada correctamente" : "Propiedad creada correctamente");
+        onClose();
+      } catch (error) {
+        console.error("Error saving property:", error);
+        toast.error("Error al guardar la propiedad");
+      }
     }
   };
 
