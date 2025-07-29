@@ -7,13 +7,36 @@ import { DataSettings } from "@/components/settings/DataSettings";
 import { MobileFeatureToggle } from "@/components/settings/MobileFeatureToggle";
 import StripeSettings from "@/components/settings/StripeSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Crown } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Settings = () => {
+  const { userRole } = useAuth();
+  
+  const handleUpgradeToPremium = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout');
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error creating checkout:', error);
+    }
+  };
   return (
     <Layout>
       <section className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-semibold tracking-tight">Configuración</h1>
+          {userRole === 'landlord_free' && (
+            <Button onClick={handleUpgradeToPremium} className="gap-2">
+              <Crown className="h-4 w-4" />
+              Actualizar a Premium
+            </Button>
+          )}
         </div>
         
         <Tabs defaultValue="account" className="w-full">

@@ -6,11 +6,12 @@ import { MaintenanceRequest } from "@/types";
 export class SupabaseMaintenanceService extends SupabaseService {
   async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
     const user = await this.ensureAuthenticated();
+    const userId = user.id;
     
     const { data, error } = await supabase
       .from('maintenance_requests')
       .select('*')
-      .or(`user_id.eq.${user.id},landlord_id.eq.${user.id}`)
+      .or(`user_id.eq.${userId},landlord_id.eq.${userId}`)
       .order('created_at', { ascending: false });
 
     if (error) {
