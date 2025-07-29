@@ -218,7 +218,8 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[180px]">Inquilino</TableHead>
+                <TableHead className="min-w-[120px]">Propiedad</TableHead>
+                <TableHead className="min-w-[160px]">Inquilino</TableHead>
                 <TableHead className="min-w-[100px]">
                   <div className="flex items-center gap-1">
                     <DollarSign className="h-4 w-4" />
@@ -234,21 +235,34 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
             </TableHeader>
             <TableBody>
               {tenants.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={14} className="h-24 text-center text-muted-foreground">
-                    No hay inquilinos registrados
-                  </TableCell>
-                </TableRow>
+                 <TableRow>
+                   <TableCell colSpan={15} className="h-24 text-center text-muted-foreground">
+                     No hay inquilinos registrados
+                   </TableCell>
+                 </TableRow>
               ) : (
                 tenants
                 .filter(tenant => tenant.status === "active")
+                .sort((a, b) => {
+                  const buildingA = a.unit.substring(0, 1);
+                  const buildingB = b.unit.substring(0, 1);
+                  if (buildingA !== buildingB) {
+                    return buildingA.localeCompare(buildingB);
+                  }
+                  return parseInt(a.unit) - parseInt(b.unit);
+                })
                 .map((tenant) => (
-                  <TableRow key={tenant.id}>
-                    <TableCell className="font-medium">
-                      {tenant.name}
-                      <div className="text-xs text-muted-foreground">Unidad {tenant.unit}</div>
-                    </TableCell>
-                    <TableCell>€{tenant.rentAmount.toLocaleString()}</TableCell>
+                   <TableRow key={tenant.id}>
+                     <TableCell className="font-medium">
+                       <div className="text-xs text-muted-foreground">
+                         Edificio {tenant.unit.substring(0, 1)}
+                       </div>
+                     </TableCell>
+                     <TableCell className="font-medium">
+                       {tenant.name}
+                       <div className="text-xs text-muted-foreground">Unidad {tenant.unit}</div>
+                     </TableCell>
+                     <TableCell>€{tenant.rentAmount.toLocaleString()}</TableCell>
                     {months.map((month) => {
                       const isPaid = hasPaymentForMonth(tenant.id, month.index);
                       

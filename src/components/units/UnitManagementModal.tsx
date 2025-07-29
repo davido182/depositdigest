@@ -98,16 +98,16 @@ export function UnitManagementModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building className="h-5 w-5" />
-            Manage Property Units
+            Gestionar Unidades de la Propiedad
           </DialogTitle>
           <DialogDescription>
-            Configure the total number of rental units in your property.
+            Configura el número total de unidades en tu propiedad.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="unitCount">Total Units</Label>
+            <Label htmlFor="unitCount">Total de Unidades</Label>
             <Input
               id="unitCount"
               type="number"
@@ -125,36 +125,36 @@ export function UnitManagementModal({
 
           {!isLoading && (
             <div className="bg-muted p-3 rounded-lg space-y-2">
-              <h4 className="font-medium text-sm">Current Occupancy</h4>
+              <h4 className="font-medium text-sm">Ocupación Actual</h4>
               <div className="text-xs text-muted-foreground space-y-1">
-                <p>• Active tenants: {occupancyInfo.activeCount}</p>
-                <p>• Highest occupied unit: {occupancyInfo.highestUnit || 'None'}</p>
+                <p>• Inquilinos activos: {occupancyInfo.activeCount}</p>
+                <p>• Unidad más alta ocupada: {occupancyInfo.highestUnit || 'Ninguna'}</p>
                 {occupancyInfo.occupiedUnits.length > 0 && (
-                  <p>• Occupied units: {occupancyInfo.occupiedUnits.join(', ')}</p>
+                  <p>• Unidades ocupadas: {occupancyInfo.occupiedUnits.join(', ')}</p>
                 )}
               </div>
               {unitCount < occupancyInfo.highestUnit && (
                 <div className="text-xs text-destructive mt-2">
-                  ⚠️ Cannot reduce units below {occupancyInfo.highestUnit} (highest occupied unit)
+                  ⚠️ No puedes reducir las unidades por debajo de {occupancyInfo.highestUnit} (unidad más alta ocupada)
                 </div>
               )}
             </div>
           )}
 
           <div className="text-xs text-muted-foreground">
-            <p><strong>Note:</strong> You cannot reduce the unit count below the highest occupied unit number.</p>
+            <p><strong>Nota:</strong> No puedes reducir el número de unidades por debajo del número más alto de unidad ocupada.</p>
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            Cancelar
           </Button>
           <Button 
             onClick={handleSave}
-            disabled={isLoading || unitCount < occupancyInfo.highestUnit}
+            disabled={isLoading}
           >
-            Save Changes
+            Guardar Cambios
           </Button>
         </DialogFooter>
       </DialogContent>

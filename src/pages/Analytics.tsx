@@ -48,17 +48,17 @@ const Analytics = () => {
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   
-  const activeTenantIds = activeTenants.map(t => t.id);
-  const currentMonthPayments = payments.filter(p => {
-    const paymentDate = new Date(p.date);
-    return p.status === 'completed' && 
-           activeTenantIds.includes(p.tenantId) &&
-           paymentDate.getMonth() === currentMonth &&
-           paymentDate.getFullYear() === currentYear;
-  });
-  
-  const paidTenants = new Set(currentMonthPayments.map(p => p.tenantId));
-  const collectionRate = activeTenants.length > 0 ? (paidTenants.size / activeTenants.length) * 100 : 0;
+   // Get collection rate from payment tracker status
+   const { data: paymentData } = await supabase
+     .from('payments')
+     .select('tenant_id, payment_date, status')
+     .eq('user_id', user?.id || '')
+     .gte('payment_date', `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-01`)
+     .lt('payment_date', `${currentYear}-${(currentMonth + 2).toString().padStart(2, '0')}-01`);
+   
+   const paidThisMonth = paymentData?.filter(p => p.status === 'completed') || [];
+   const paidTenantIds = new Set(paidThisMonth.map(p => p.tenant_id));
+   const collectionRate = activeTenants.length > 0 ? (paidTenantIds.size / activeTenants.length) * 100 : 0;
   
   // Calculate tenant status breakdown
   const statusCount = {
@@ -131,9 +131,9 @@ const Analytics = () => {
               <Card className="p-6">
                 <h3 className="text-sm font-medium text-muted-foreground">Tasa de Cobranza</h3>
                 <p className="text-2xl font-semibold mt-2">{collectionRate.toFixed(1)}%</p>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {paidTenants.size} de {activeTenants.length} inquilinos han pagado este mes
-                </div>
+                 <div className="text-xs text-muted-foreground mt-1">
+                   {paidTenantIds.size} de {activeTenants.length} inquilinos han pagado este mes
+                 </div>
                 <Badge className="mt-3 bg-blue-100 text-blue-800 hover:bg-blue-200">
                   Estado: {collectionRate > 95 ? 'Excelente' : collectionRate > 80 ? 'Bueno' : 'Necesita Atención'}
                 </Badge>

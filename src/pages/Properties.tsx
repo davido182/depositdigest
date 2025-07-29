@@ -47,39 +47,42 @@ const Properties = () => {
           return;
         }
 
-        // Group tenants by unit_number and create mock properties
-        const propertyMap = new Map();
-        tenants.forEach(tenant => {
-          const propertyKey = tenant.unit_number.substring(0, 1); // Use first character as building identifier
-          const propertyName = `Edificio ${propertyKey}`;
-          
-          if (!propertyMap.has(propertyName)) {
-            propertyMap.set(propertyName, {
-              id: `prop-${propertyKey}`,
-              name: propertyName,
-              address: `Calle Principal ${propertyKey}00, Madrid`,
-              units: 0,
-              occupied_units: 0,
-              monthly_revenue: 0,
-              created_at: new Date().toISOString()
-            });
+        // Create mock properties that persist independently of tenants
+        const mockProperties = [
+          {
+            id: 'prop-1',
+            name: 'Edificio Principal',
+            address: 'Calle Principal 100, Madrid',
+            units: 5,
+            occupied_units: 0,
+            monthly_revenue: 0,
+            created_at: new Date().toISOString()
+          },
+          {
+            id: 'prop-2', 
+            name: 'Complejo Norte',
+            address: 'Avenida Norte 200, Madrid',
+            units: 3,
+            occupied_units: 0,
+            monthly_revenue: 0,
+            created_at: new Date().toISOString()
           }
+        ];
+
+        // Calculate occupancy based on tenants for each property
+        mockProperties.forEach(property => {
+          const propertyTenants = tenants.filter(tenant => {
+            const buildingNumber = tenant.unit_number.substring(0, 1);
+            return property.id === `prop-${buildingNumber}`;
+          });
           
-          const property = propertyMap.get(propertyName);
-          property.units += 1;
-          if (tenant.status === 'active') {
-            property.occupied_units += 1;
-            property.monthly_revenue += tenant.rent_amount;
-          }
+          property.occupied_units = propertyTenants.filter(t => t.status === 'active').length;
+          property.monthly_revenue = propertyTenants
+            .filter(t => t.status === 'active')
+            .reduce((sum, t) => sum + t.rent_amount, 0);
         });
 
-        // Sort properties numerically
-        const sortedProperties = Array.from(propertyMap.values()).sort((a, b) => {
-          const aNumber = parseInt(a.name.match(/\d+/)?.[0] || '0');
-          const bNumber = parseInt(b.name.match(/\d+/)?.[0] || '0');
-          return aNumber - bNumber;
-        });
-        setProperties(sortedProperties);
+        setProperties(mockProperties);
       } catch (error) {
         console.error("Error loading properties:", error);
         toast.error("Error al cargar propiedades");

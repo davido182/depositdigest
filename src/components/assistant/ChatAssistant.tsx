@@ -21,7 +21,7 @@ export function ChatAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '¡Hola! Soy tu asistente de RentFlow. Puedo ayudarte a encontrar información sobre tus inquilinos, pagos, mantenimiento y más. Pregúntame algo como "¿Cuál es el alquiler del apartamento 2?" o "¿Quién vive en la unidad 3?"',
+      text: '¡Hola! Soy RentFlux, tu asistente inteligente. Puedo ayudarte a encontrar información sobre tus inquilinos, pagos, mantenimiento y más. Pregúntame algo como "¿Cuál es el alquiler del apartamento 2?" o "¿Quién vive en la unidad 3?"',
       isBot: true,
       timestamp: new Date()
     }
@@ -258,7 +258,7 @@ export function ChatAssistant() {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5" />
-          Asistente de Consultas
+          RentFlux Assistant
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-4">

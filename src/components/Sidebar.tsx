@@ -67,8 +67,8 @@ const Sidebar = () => {
       const landlordItems = [
         ...baseItems,
         { name: "Propiedades", href: "/properties", icon: Building2 },
-        { name: "Inquilinos", href: "/tenants", icon: Users },
-        { name: "Pagos", href: "/payments", icon: CreditCard },
+         { name: "Inquilinos", href: "/tenants", icon: Users },
+         { name: "Pagos", href: "/payments", icon: CreditCard },
         { name: "Mantenimiento", href: "/maintenance", icon: Wrench },
       ];
 
