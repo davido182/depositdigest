@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Calendar, DollarSign } from "lucide-react";
+import { Calendar, DollarSign, FileCheck, FileX } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,13 @@ interface PaymentRecord {
   paid: boolean;
 }
 
+interface PaymentReceipt {
+  tenant_id: string;
+  year: number;
+  month: number;
+  has_receipt: boolean;
+}
+
 interface TenantPaymentTrackerProps {
   tenants: Tenant[];
 }
@@ -39,6 +46,7 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
   const { user } = useAuth();
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
   const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
+  const [paymentReceipts, setPaymentReceipts] = useState<PaymentReceipt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const years = useMemo(() => {
@@ -72,17 +80,19 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
     
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      
+      // Load payment tracking records
+      const { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select('tenant_id, payment_date, status')
         .eq('user_id', user.id)
         .eq('status', 'completed');
 
-      if (error) throw error;
+      if (paymentsError) throw paymentsError;
 
       const records: PaymentRecord[] = [];
       
-      data?.forEach(payment => {
+      payments?.forEach(payment => {
         const date = new Date(payment.payment_date);
         const year = date.getFullYear();
         const month = date.getMonth();
@@ -95,7 +105,17 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
         });
       });
 
+      // Load receipt records
+      const { data: receipts, error: receiptsError } = await supabase
+        .from('payment_receipts')
+        .select('tenant_id, year, month, has_receipt')
+        .eq('user_id', user.id)
+        .eq('year', selectedYear);
+
+      if (receiptsError) throw receiptsError;
+
       setPaymentRecords(records);
+      setPaymentReceipts(receipts || []);
     } catch (error) {
       console.error('Error loading payment records:', error);
       toast.error('Error al cargar los registros de pagos');
@@ -110,6 +130,15 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
       record.year === selectedYear &&
       record.month === monthIndex && 
       record.paid
+    );
+  };
+
+  const hasReceiptForMonth = (tenantId: string, monthIndex: number) => {
+    return paymentReceipts.some(receipt => 
+      receipt.tenant_id === tenantId && 
+      receipt.year === selectedYear &&
+      receipt.month === monthIndex + 1 && // Receipt months are 1-indexed
+      receipt.has_receipt
     );
   };
   
@@ -226,11 +255,21 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
                     <span>Renta</span>
                   </div>
                 </TableHead>
-                {months.map((month) => (
-                  <TableHead key={month.index} className="text-center w-[45px]" title={month.full}>
-                    {month.label}
-                  </TableHead>
-                ))}
+                 {months.map((month) => (
+                   <TableHead key={month.index} className="text-center w-[60px]" title={month.full}>
+                      <div className="flex flex-col items-center gap-1">
+                        <span>{month.label}</span>
+                        <div className="flex gap-1">
+                          <div title="Con comprobante">
+                            <FileCheck className="h-3 w-3 text-green-600" />
+                          </div>
+                          <div title="Sin comprobante">
+                            <FileX className="h-3 w-3 text-gray-400" />
+                          </div>
+                        </div>
+                      </div>
+                   </TableHead>
+                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -263,36 +302,48 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
                        <div className="text-xs text-muted-foreground">Unidad {tenant.unit}</div>
                      </TableCell>
                      <TableCell>€{tenant.rentAmount.toLocaleString()}</TableCell>
-                    {months.map((month) => {
-                      const isPaid = hasPaymentForMonth(tenant.id, month.index);
-                      
-                      return (
-                        <TableCell key={month.index} className="text-center">
-                          <div 
-                            className={cn(
-                              "flex items-center justify-center p-1 rounded-md",
-                              isPaid ? "bg-emerald-50" : ""
-                            )}
-                          >
-                            <Checkbox
-                              checked={isPaid}
-                              onCheckedChange={(checked) => 
-                                handleCheckboxChange(
-                                  checked, 
-                                  tenant.id, 
-                                  month.index, 
-                                  month.full
-                                )
-                              }
-                              className={cn(
-                                isPaid ? "border-emerald-500 data-[state=checked]:bg-emerald-500" : ""
-                              )}
-                              aria-label={`${month.full} pago para ${tenant.name}`}
-                            />
-                          </div>
-                        </TableCell>
-                      );
-                    })}
+                     {months.map((month) => {
+                       const isPaid = hasPaymentForMonth(tenant.id, month.index);
+                       const hasReceipt = hasReceiptForMonth(tenant.id, month.index);
+                       
+                       return (
+                         <TableCell key={month.index} className="text-center">
+                           <div 
+                             className={cn(
+                               "flex flex-col items-center gap-1 p-1 rounded-md",
+                               isPaid ? "bg-emerald-50" : ""
+                             )}
+                           >
+                             <Checkbox
+                               checked={isPaid}
+                               onCheckedChange={(checked) => 
+                                 handleCheckboxChange(
+                                   checked, 
+                                   tenant.id, 
+                                   month.index, 
+                                   month.full
+                                 )
+                               }
+                               className={cn(
+                                 isPaid ? "border-emerald-500 data-[state=checked]:bg-emerald-500" : ""
+                               )}
+                               aria-label={`${month.full} pago para ${tenant.name}`}
+                             />
+                              <div className="flex gap-1">
+                                {hasReceipt ? (
+                                  <div title="Tiene comprobante">
+                                    <FileCheck className="h-3 w-3 text-green-600" />
+                                  </div>
+                                ) : (
+                                  <div title="Sin comprobante">
+                                    <FileX className="h-3 w-3 text-gray-400" />
+                                  </div>
+                                )}
+                              </div>
+                           </div>
+                         </TableCell>
+                       );
+                     })}
                   </TableRow>
                 ))
               )}

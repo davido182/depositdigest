@@ -38,7 +38,7 @@ export function DashboardSummary() {
         title="Total Unidades"
         value={stats.totalUnits}
         icon={Home}
-        description="Unidades disponibles"
+        description="Unidades totales"
       />
       <StatsCard
         title="Unidades Ocupadas"

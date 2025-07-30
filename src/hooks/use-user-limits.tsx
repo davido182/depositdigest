@@ -21,9 +21,9 @@ export function useUserLimits(): UserLimits {
     };
   }
 
-  // Free user limits
+  // Free user limits - Solo 1 propiedad, 3 unidades
   return {
-    maxProperties: 3,
+    maxProperties: 1,
     maxUnitsPerProperty: 3,
     canAddTenants: true,
     canAddProperties: true,

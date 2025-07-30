@@ -21,12 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, DollarSign, Home, Mail, Phone, Upload, FileText } from "lucide-react";
+import { Calendar, DollarSign, Home, Mail, Phone, Upload, FileText, Building } from "lucide-react";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
 import { ValidationService } from "@/services/ValidationService";
 import { validatePhone, sanitizeInput } from "@/utils/validation";
 import { supabase } from "@/integrations/supabase/client";
+import { propertyService } from "@/services/PropertyService";
 
 interface TenantEditFormProps {
   tenant: Tenant | null;
@@ -69,6 +70,8 @@ export function TenantEditForm({
   const [isUploadingContract, setIsUploadingContract] = useState(false);
   const [existingContract, setExistingContract] = useState<string | null>(null);
   const [allTenants, setAllTenants] = useState<Tenant[]>([]);
+  const [properties, setProperties] = useState<any[]>([]);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string>("");
 
   useEffect(() => {
     if (isOpen) {
@@ -77,12 +80,48 @@ export function TenantEditForm({
       setErrors({});
       setContractFile(null);
       setExistingContract(null);
+      loadProperties();
       loadAvailableUnits();
       if (tenant) {
         loadExistingContract(tenant.id);
+        // Set selected property if editing
+        if (tenant.id) {
+          loadTenantProperty(tenant.id);
+        }
       }
     }
   }, [tenant, isOpen]);
+
+  const loadProperties = async () => {
+    try {
+      const props = await propertyService.getProperties();
+      setProperties(props);
+    } catch (error) {
+      console.error("Error loading properties:", error);
+      toast.error("Error al cargar propiedades");
+    }
+  };
+
+  const loadTenantProperty = async (tenantId: string) => {
+    try {
+      const { data: tenantData, error } = await supabase
+        .from('tenants')
+        .select('property_id')
+        .eq('id', tenantId)
+        .single();
+
+      if (error) {
+        console.error('Error loading tenant property:', error);
+        return;
+      }
+
+      if (tenantData?.property_id) {
+        setSelectedPropertyId(tenantData.property_id);
+      }
+    } catch (error) {
+      console.error('Error loading tenant property:', error);
+    }
+  };
 
   const loadExistingContract = async (tenantId: string) => {
     try {
@@ -384,6 +423,39 @@ export function TenantEditForm({
               </div>
             </div>
 
+            <div className="grid gap-2">
+              <Label htmlFor="property" className="flex items-center gap-1">
+                Propiedad <span className="text-destructive">*</span>
+              </Label>
+              <div className="flex items-center">
+                <Building className="w-4 h-4 mr-2 text-muted-foreground" />
+                <Select 
+                  value={selectedPropertyId} 
+                  onValueChange={setSelectedPropertyId}
+                >
+                  <SelectTrigger className={errors.property ? "border-destructive" : ""}>
+                    <SelectValue placeholder="Seleccionar propiedad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {properties.length > 0 ? (
+                      properties.map(property => (
+                        <SelectItem key={property.id} value={property.id}>
+                          {property.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-properties" disabled>
+                        No hay propiedades disponibles
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              {errors.property && (
+                <p className="text-xs text-destructive">{errors.property}</p>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="unit" className="flex items-center gap-1">
@@ -394,10 +466,13 @@ export function TenantEditForm({
                   <Select 
                     value={formData.unit} 
                     onValueChange={handleUnitChange}
-                    disabled={isLoadingUnits}
+                    disabled={isLoadingUnits || !selectedPropertyId}
                   >
                     <SelectTrigger className={errors.unit ? "border-destructive" : ""}>
-                      <SelectValue placeholder={isLoadingUnits ? "Cargando..." : "Seleccionar unidad"} />
+                      <SelectValue placeholder={
+                        !selectedPropertyId ? "Primero selecciona una propiedad" :
+                        isLoadingUnits ? "Cargando..." : "Seleccionar unidad"
+                      } />
                     </SelectTrigger>
                     <SelectContent>
                       {isLoadingUnits ? (

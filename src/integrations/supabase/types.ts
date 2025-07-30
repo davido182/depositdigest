@@ -208,6 +208,42 @@ export type Database = {
           },
         ]
       }
+      payment_receipts: {
+        Row: {
+          created_at: string
+          has_receipt: boolean
+          id: string
+          month: number
+          receipt_file_path: string | null
+          tenant_id: string
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          has_receipt?: boolean
+          id?: string
+          month: number
+          receipt_file_path?: string | null
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          has_receipt?: boolean
+          id?: string
+          month?: number
+          receipt_file_path?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -276,6 +312,39 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          address: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          total_units: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          total_units?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          total_units?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -415,6 +484,8 @@ export type Database = {
           lease_start_date: string
           name: string
           phone: string | null
+          property_id: string | null
+          property_name: string | null
           rent_amount: number
           status: string
           unit_number: string
@@ -430,6 +501,8 @@ export type Database = {
           lease_start_date: string
           name: string
           phone?: string | null
+          property_id?: string | null
+          property_name?: string | null
           rent_amount: number
           status?: string
           unit_number: string
@@ -445,13 +518,23 @@ export type Database = {
           lease_start_date?: string
           name?: string
           phone?: string | null
+          property_id?: string | null
+          property_name?: string | null
           rent_amount?: number
           status?: string
           unit_number?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tenants_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

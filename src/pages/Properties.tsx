@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PropertyForm } from "@/components/properties/PropertyForm";
 import { PropertyDetails } from "@/components/properties/PropertyDetails";
+import { propertyService, Property as PropertyType } from "@/services/PropertyService";
+import { useUserLimits } from "@/hooks/use-user-limits";
 
 interface Property {
   id: string;
@@ -22,6 +24,7 @@ interface Property {
 
 const Properties = () => {
   const { user, userRole } = useAuth();
+  const { maxProperties } = useUserLimits();
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showPropertyForm, setShowPropertyForm] = useState(false);
@@ -35,7 +38,10 @@ const Properties = () => {
       try {
         setIsLoading(true);
         
-        // For now, we'll simulate properties based on tenants data
+        // Load properties from database
+        const dbProperties = await propertyService.getProperties();
+        
+        // Get tenants to calculate occupancy
         const { data: tenants, error } = await supabase
           .from('tenants')
           .select('*')
@@ -43,46 +49,28 @@ const Properties = () => {
 
         if (error) {
           console.error("Error loading tenants:", error);
-          toast.error("Error al cargar propiedades");
+          toast.error("Error al cargar inquilinos");
           return;
         }
 
-        // Create mock properties that persist independently of tenants
-        const mockProperties = [
-          {
-            id: 'prop-1',
-            name: 'Edificio Principal',
-            address: 'Calle Principal 100, Madrid',
-            units: 5,
-            occupied_units: 0,
-            monthly_revenue: 0,
-            created_at: new Date().toISOString()
-          },
-          {
-            id: 'prop-2', 
-            name: 'Complejo Norte',
-            address: 'Avenida Norte 200, Madrid',
-            units: 3,
-            occupied_units: 0,
-            monthly_revenue: 0,
-            created_at: new Date().toISOString()
-          }
-        ];
-
-        // Calculate occupancy based on tenants for each property
-        mockProperties.forEach(property => {
-          const propertyTenants = tenants.filter(tenant => {
-            const buildingNumber = tenant.unit_number.substring(0, 1);
-            return property.id === `prop-${buildingNumber}`;
-          });
+        // Map database properties to component format and calculate occupancy
+        const mappedProperties = dbProperties.map(dbProp => {
+          const propertyTenants = tenants.filter(tenant => 
+            tenant.property_id === dbProp.id && tenant.status === 'active'
+          );
           
-          property.occupied_units = propertyTenants.filter(t => t.status === 'active').length;
-          property.monthly_revenue = propertyTenants
-            .filter(t => t.status === 'active')
-            .reduce((sum, t) => sum + t.rent_amount, 0);
+          return {
+            id: dbProp.id,
+            name: dbProp.name,
+            address: dbProp.address,
+            units: dbProp.total_units,
+            occupied_units: propertyTenants.length,
+            monthly_revenue: propertyTenants.reduce((sum, t) => sum + t.rent_amount, 0),
+            created_at: dbProp.created_at
+          };
         });
 
-        setProperties(mockProperties);
+        setProperties(mappedProperties);
       } catch (error) {
         console.error("Error loading properties:", error);
         toast.error("Error al cargar propiedades");
@@ -95,8 +83,8 @@ const Properties = () => {
   }, [user]);
 
   const handleAddProperty = () => {
-    if (userRole === 'landlord_free' && properties.length >= 3) {
-      toast.error("Los usuarios gratuitos pueden tener máximo 3 propiedades. Actualiza a Premium para propiedades ilimitadas.");
+    if (properties.length >= maxProperties) {
+      toast.error(`Los usuarios gratuitos pueden tener máximo ${maxProperties} propiedad${maxProperties > 1 ? 'es' : ''}. Actualiza a Premium para propiedades ilimitadas.`);
       return;
     }
     setSelectedProperty(null);
@@ -105,31 +93,12 @@ const Properties = () => {
 
   const handleDeleteProperty = async (property: Property) => {
     try {
-      // Check if property has active tenants
-      const { data: tenants, error } = await supabase
-        .from('tenants')
-        .select('*')
-        .eq('user_id', user!.id)
-        .eq('status', 'active');
-
-      if (error) throw error;
-
-      const propertyTenants = tenants.filter(tenant => {
-        const buildingNumber = tenant.unit_number.substring(0, 1);
-        return property.id === `prop-${buildingNumber}`;
-      });
-
-      if (propertyTenants.length > 0) {
-        toast.error("No se puede eliminar una propiedad con inquilinos activos. Primero desactiva o elimina los inquilinos.");
-        return;
-      }
-
-      // Remove property from state
+      await propertyService.deleteProperty(property.id);
       setProperties(prev => prev.filter(p => p.id !== property.id));
       toast.success("Propiedad eliminada exitosamente");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting property:", error);
-      toast.error("Error al eliminar la propiedad");
+      toast.error(error.message || "Error al eliminar la propiedad");
     }
   };
 
