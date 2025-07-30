@@ -55,8 +55,8 @@ const Tenants = () => {
   }, []);
 
   const handleAddTenant = () => {
-    if (userRole === 'landlord_free') {
-      toast.error("La función de agregar inquilinos es exclusiva de usuarios Premium");
+    if (userRole === 'landlord_free' && tenants.length >= 3) {
+      toast.error("Los usuarios gratuitos pueden tener máximo 3 inquilinos. Actualiza a Premium para inquilinos ilimitados");
       return;
     }
     setCurrentTenant(null);
@@ -108,12 +108,10 @@ const Tenants = () => {
             <p className="text-muted-foreground">Gestiona tus inquilinos y sus pagos</p>
           </div>
           <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
-            {userRole === 'landlord_premium' && (
-              <Button onClick={handleAddTenant} className="gap-2" size={isMobile ? "sm" : "default"}>
-                <Plus className="h-4 w-4" />
-                Agregar Inquilino
-              </Button>
-            )}
+            <Button onClick={handleAddTenant} className="gap-2" size={isMobile ? "sm" : "default"}>
+              <Plus className="h-4 w-4" />
+              Agregar Inquilino
+            </Button>
             <Button 
               variant="outline" 
               onClick={() => setIsUnitModalOpen(true)}
@@ -131,22 +129,11 @@ const Tenants = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
         ) : (
-          <Tabs defaultValue="tenants" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="tenants">Lista de Inquilinos</TabsTrigger>
-              <TabsTrigger value="payments">Seguimiento de Pagos</TabsTrigger>
-            </TabsList>
-            <TabsContent value="tenants" className="space-y-4">
-              <TenantsTable
-                tenants={tenants}
-                onEditTenant={handleEditTenant}
-                onDeleteTenant={handleDeleteTenant}
-              />
-            </TabsContent>
-            <TabsContent value="payments" className="space-y-4">
-              <TenantPaymentTracker tenants={tenants} />
-            </TabsContent>
-          </Tabs>
+          <TenantsTable
+            tenants={tenants}
+            onEditTenant={handleEditTenant}
+            onDeleteTenant={handleDeleteTenant}
+          />
         )}
         
         <TenantEditForm

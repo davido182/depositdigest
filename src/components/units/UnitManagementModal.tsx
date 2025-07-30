@@ -67,15 +67,17 @@ export function UnitManagementModal({
   };
 
   const handleSave = () => {
-    try {
-      const validationService = ValidationService.getInstance();
-      validationService.validateUnitCount(unitCount, tenants);
+    const occupancyInfo = getOccupancyInfo();
+    
+    if (unitCount < occupancyInfo.highestUnit) {
+      const confirmMessage = `¿Estás seguro? Esto eliminará las unidades ocupadas desde la ${unitCount + 1} hasta la ${occupancyInfo.highestUnit}. Los inquilinos en esas unidades perderán su asignación.`;
       
-      onSave(unitCount);
-    } catch (error: any) {
-      setError(error.message);
-      toast.error(error.message);
+      if (!window.confirm(confirmMessage)) {
+        return;
+      }
     }
+    
+    onSave(unitCount);
   };
 
   const getOccupancyInfo = () => {
@@ -134,15 +136,15 @@ export function UnitManagementModal({
                 )}
               </div>
               {unitCount < occupancyInfo.highestUnit && (
-                <div className="text-xs text-destructive mt-2">
-                  ⚠️ No puedes reducir las unidades por debajo de {occupancyInfo.highestUnit} (unidad más alta ocupada)
+                <div className="text-xs text-amber-600 mt-2">
+                  ⚠️ Reducir por debajo de {occupancyInfo.highestUnit} eliminará inquilinos de las unidades superiores
                 </div>
               )}
             </div>
           )}
 
           <div className="text-xs text-muted-foreground">
-            <p><strong>Nota:</strong> No puedes reducir el número de unidades por debajo del número más alto de unidad ocupada.</p>
+            <p><strong>Nota:</strong> Puedes reducir unidades pero se te advertirá si hay inquilinos afectados.</p>
           </div>
         </div>
 

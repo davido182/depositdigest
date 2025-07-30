@@ -75,7 +75,8 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
       const { data, error } = await supabase
         .from('payments')
         .select('tenant_id, payment_date, status')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('status', 'completed');
 
       if (error) throw error;
 
@@ -90,7 +91,7 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
           tenantId: payment.tenant_id,
           year,
           month,
-          paid: payment.status === 'completed'
+          paid: true
         });
       });
 
@@ -106,6 +107,7 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
   const hasPaymentForMonth = (tenantId: string, monthIndex: number) => {
     return paymentRecords.some(record => 
       record.tenantId === tenantId && 
+      record.year === selectedYear &&
       record.month === monthIndex && 
       record.paid
     );
@@ -146,23 +148,21 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
         
         toast.success(`Pago de ${monthName} para ${tenant.name} marcado como pagado`);
       } else {
-        // Remove payment record - find the specific payment for this month
-        const startDate = new Date(selectedYear, monthIndex, 1).toISOString().split('T')[0];
-        const endDate = new Date(selectedYear, monthIndex + 1, 1).toISOString().split('T')[0];
+        // Remove payment record - find the specific payment for this month and year
+        const targetDate = new Date(selectedYear, monthIndex, 1).toISOString().split('T')[0];
         
         const { error } = await supabase
           .from('payments')
           .delete()
           .eq('user_id', user.id)
           .eq('tenant_id', tenantId)
-          .gte('payment_date', startDate)
-          .lt('payment_date', endDate);
+          .eq('payment_date', targetDate);
 
         if (error) throw error;
         
         // Update local state
         setPaymentRecords(prev => 
-          prev.filter(r => !(r.tenantId === tenantId && r.month === monthIndex))
+          prev.filter(r => !(r.tenantId === tenantId && r.year === selectedYear && r.month === monthIndex))
         );
         
         toast.info(`Pago de ${monthName} para ${tenant.name} marcado como pendiente`);
