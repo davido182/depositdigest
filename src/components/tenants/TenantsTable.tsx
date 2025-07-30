@@ -184,6 +184,7 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
           <TableHeader>
             <TableRow>
               <TableHead className="w-12 text-center">💳</TableHead>
+              <TableHead className="min-w-[100px]">Propiedad</TableHead>
               <TableHead className="min-w-[80px]">Unidad</TableHead>
               <TableHead className="min-w-[120px]">Inquilino</TableHead>
               <TableHead className="min-w-[180px] hidden sm:table-cell">Email</TableHead>
@@ -195,7 +196,7 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
           <TableBody>
             {filteredAndSortedTenants.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No se encontraron inquilinos
                 </TableCell>
               </TableRow>
@@ -206,6 +207,9 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
                   <TableRow key={tenant.id} className="hover:bg-muted/50">
                     <TableCell className="text-center">
                       {getPaymentStatusIcon(paymentStatus)}
+                    </TableCell>
+                    <TableCell className="font-medium text-sm">
+                      Edificio {tenant.unit?.substring(0, 1) || "1"}
                     </TableCell>
                     <TableCell className="font-medium text-sm">{tenant.unit}</TableCell>
                     <TableCell className="text-sm">

@@ -23,10 +23,10 @@ export function useUserLimits(): UserLimits {
 
   // Free user limits
   return {
-    maxProperties: 1,
+    maxProperties: 3,
     maxUnitsPerProperty: 3,
-    canAddTenants: false,
-    canAddProperties: false,
+    canAddTenants: true,
+    canAddProperties: true,
     isUnlimited: false,
   };
 }

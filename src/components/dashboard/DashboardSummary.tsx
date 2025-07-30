@@ -27,25 +27,30 @@ export function DashboardSummary() {
   }
 
   return (
-    <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+    <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
       <StatsCard
         title="Total Propiedades"
         value={stats.totalProperties}
         icon={Building}
-        description={`${stats.occupancyRate}% ocupación`}
+        description="Propiedades registradas"
       />
       <StatsCard
-        title="Estado Unidades"
-        value={`${stats.occupiedUnits}/${stats.totalUnits}`}
+        title="Total Unidades"
+        value={stats.totalUnits}
         icon={Home}
-        description={`${stats.vacantUnits} unidades vacantes`}
+        description="Unidades disponibles"
       />
       <StatsCard
-        title="Pagos Pendientes"
-        value={stats.overduePayments}
-        icon={Wallet}
-        trend={{ value: 5.2, isPositive: false }}
-        description="Requieren atención"
+        title="Unidades Ocupadas"
+        value={stats.occupiedUnits}
+        icon={Users}
+        description="Con inquilinos activos"
+      />
+      <StatsCard
+        title="Unidades Disponibles"
+        value={stats.vacantUnits}
+        icon={Home}
+        description="Listas para alquilar"
       />
     </div>
   );

@@ -3,7 +3,7 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Building, Users, DollarSign, MapPin, Calendar, Edit, Eye } from "lucide-react";
+import { Plus, Building, Users, DollarSign, MapPin, Calendar, Edit, Eye, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -95,12 +95,42 @@ const Properties = () => {
   }, [user]);
 
   const handleAddProperty = () => {
-    if (userRole === 'landlord_free' && properties.length >= 1) {
-      toast.error("Los usuarios gratuitos pueden tener máximo 1 propiedad. Actualiza a Premium para propiedades ilimitadas.");
+    if (userRole === 'landlord_free' && properties.length >= 3) {
+      toast.error("Los usuarios gratuitos pueden tener máximo 3 propiedades. Actualiza a Premium para propiedades ilimitadas.");
       return;
     }
     setSelectedProperty(null);
     setShowPropertyForm(true);
+  };
+
+  const handleDeleteProperty = async (property: Property) => {
+    try {
+      // Check if property has active tenants
+      const { data: tenants, error } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('user_id', user!.id)
+        .eq('status', 'active');
+
+      if (error) throw error;
+
+      const propertyTenants = tenants.filter(tenant => {
+        const buildingNumber = tenant.unit_number.substring(0, 1);
+        return property.id === `prop-${buildingNumber}`;
+      });
+
+      if (propertyTenants.length > 0) {
+        toast.error("No se puede eliminar una propiedad con inquilinos activos. Primero desactiva o elimina los inquilinos.");
+        return;
+      }
+
+      // Remove property from state
+      setProperties(prev => prev.filter(p => p.id !== property.id));
+      toast.success("Propiedad eliminada exitosamente");
+    } catch (error) {
+      console.error("Error deleting property:", error);
+      toast.error("Error al eliminar la propiedad");
+    }
   };
 
   const handleEditProperty = (property: Property) => {
@@ -166,6 +196,42 @@ const Properties = () => {
             </CardContent>
           </Card>
         ) : (
+          <>
+          {/* Summary Card - Moved to top of properties */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Resumen de Propiedades</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {properties.length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Total Propiedades</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-emerald-600">
+                    {properties.reduce((acc, prop) => acc + prop.units, 0)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Total Unidades</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {properties.reduce((acc, prop) => acc + prop.occupied_units, 0)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Unidades Ocupadas</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-amber-600">
+                    {properties.reduce((acc, prop) => acc + prop.units, 0) - properties.reduce((acc, prop) => acc + prop.occupied_units, 0)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Unidades Disponibles</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {properties.map((property) => (
               <Card key={property.id} className="hover:shadow-lg transition-shadow">
@@ -223,64 +289,38 @@ const Properties = () => {
                       <Eye className="h-4 w-4 mr-2" />
                       Ver Detalles
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full" 
-                      size="sm"
-                      onClick={() => handleEditProperty(property)}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Editar Propiedad
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        className="flex-1" 
+                        size="sm"
+                        onClick={() => handleEditProperty(property)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex-1 text-destructive hover:text-destructive" 
+                        size="sm"
+                        onClick={() => {
+                          if (confirm("¿Estás seguro de que quieres eliminar esta propiedad? Esta acción no se puede deshacer.")) {
+                            handleDeleteProperty(property);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Eliminar
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
+          </>
         )}
 
-        {/* Summary Card */}
-        {properties.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Resumen de Propiedades</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {properties.filter(prop => prop.occupied_units > 0).length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Propiedades Ocupadas</div>
-                  <div className="text-xs text-muted-foreground">
-                    de {properties.length} total
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-emerald-600">
-                    {properties.reduce((acc, prop) => acc + prop.units, 0)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Total Unidades</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {properties.reduce((acc, prop) => acc + prop.occupied_units, 0)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Unidades Ocupadas</div>
-                  <div className="text-xs text-muted-foreground">
-                    {((properties.reduce((acc, prop) => acc + prop.occupied_units, 0) / Math.max(properties.reduce((acc, prop) => acc + prop.units, 0), 1)) * 100).toFixed(1)}% ocupación
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">
-                    €{properties.reduce((acc, prop) => acc + prop.monthly_revenue, 0).toLocaleString()}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Ingresos Mensuales</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         <PropertyForm
           property={selectedProperty}

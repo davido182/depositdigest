@@ -107,21 +107,10 @@ const Tenants = () => {
             <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>Inquilinos</h1>
             <p className="text-muted-foreground">Gestiona tus inquilinos y sus pagos</p>
           </div>
-          <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
-            <Button onClick={handleAddTenant} className="gap-2" size={isMobile ? "sm" : "default"}>
-              <Plus className="h-4 w-4" />
-              Agregar Inquilino
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsUnitModalOpen(true)}
-              className="gap-2"
-              size={isMobile ? "sm" : "default"}
-            >
-              <Building className="h-4 w-4" />
-              Gestionar Unidades
-            </Button>
-          </div>
+          <Button onClick={handleAddTenant} className="gap-2" size={isMobile ? "sm" : "default"}>
+            <Plus className="h-4 w-4" />
+            Agregar Inquilino
+          </Button>
         </div>
 
         {isLoading ? (
