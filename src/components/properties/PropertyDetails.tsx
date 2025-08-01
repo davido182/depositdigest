@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building, MapPin, Users, Plus } from "lucide-react";
-// import { UnitManagementModal } from "../units/UnitManagementModal";
+import { UnitManagementModal } from "../units/UnitManagementModal";
 
 interface Property {
   id?: string;
@@ -190,7 +190,18 @@ export function PropertyDetails({ property, isOpen, onClose, onEdit }: PropertyD
         </DialogContent>
       </Dialog>
 
-      {/* TODO: Implement UnitManagementModal */}
+      {showUnitManagement && (
+        <UnitManagementModal
+          isOpen={showUnitManagement}
+          onClose={() => setShowUnitManagement(false)}
+          propertyId={property.id!}
+          propertyName={property.name}
+          onUnitsUpdated={() => {
+            console.log('Units updated for property:', property.name);
+            setShowUnitManagement(false);
+          }}
+        />
+      )}
     </>
   );
 }

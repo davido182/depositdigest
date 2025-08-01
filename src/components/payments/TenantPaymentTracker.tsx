@@ -81,12 +81,17 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
     try {
       setIsLoading(true);
       
-      // Load payment tracking records
+      // Load payment tracking records for the selected year
+      const yearStart = `${selectedYear}-01-01`;
+      const yearEnd = `${selectedYear}-12-31`;
+      
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select('tenant_id, payment_date, status')
         .eq('user_id', user.id)
-        .eq('status', 'completed');
+        .eq('status', 'completed')
+        .gte('payment_date', yearStart)
+        .lte('payment_date', yearEnd);
 
       if (paymentsError) throw paymentsError;
 

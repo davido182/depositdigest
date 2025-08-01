@@ -24,6 +24,7 @@ const Settings = () => {
       }
     } catch (error) {
       console.error('Error creating checkout:', error);
+      alert('Error al crear sesión de pago. Por favor intenta de nuevo.');
     }
   };
   return (
