@@ -112,18 +112,60 @@ const Properties = () => {
     setShowPropertyDetails(true);
   };
 
-  const handleSaveProperty = (property: Property) => {
-    if (selectedProperty) {
-      // Update existing property
-      setProperties(prev => prev.map(p => p.id === property.id ? property : p));
-      toast.success("Propiedad actualizada exitosamente");
-    } else {
-      // Add new property
-      setProperties(prev => [...prev, property]);
-      toast.success("Propiedad agregada exitosamente");
-    }
+  const handleSaveProperty = async (property: Property) => {
     setShowPropertyForm(false);
     setSelectedProperty(null);
+    // Reload properties after save to ensure persistence
+    if (!user) return;
+
+    try {
+      setIsLoading(true);
+      
+      // Load properties from database
+      const dbProperties = await propertyService.getProperties();
+      
+      // Get tenants to calculate occupancy
+      const { data: tenants, error } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error("Error loading tenants:", error);
+        toast.error("Error al cargar inquilinos");
+        return;
+      }
+
+      // Map database properties to component format and calculate occupancy
+      const mappedProperties = dbProperties.map(dbProp => {
+        const propertyTenants = tenants.filter(tenant => 
+          tenant.property_id === dbProp.id && tenant.status === 'active'
+        );
+        
+        return {
+          id: dbProp.id,
+          name: dbProp.name,
+          address: dbProp.address,
+          units: dbProp.total_units,
+          occupied_units: propertyTenants.length,
+          monthly_revenue: propertyTenants.reduce((sum, t) => sum + t.rent_amount, 0),
+          created_at: dbProp.created_at
+        };
+      });
+
+      setProperties(mappedProperties);
+      
+      if (selectedProperty) {
+        toast.success("Propiedad actualizada exitosamente");
+      } else {
+        toast.success("Propiedad agregada exitosamente");
+      }
+    } catch (error) {
+      console.error("Error loading properties:", error);
+      toast.error("Error al cargar propiedades");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isLoading) {

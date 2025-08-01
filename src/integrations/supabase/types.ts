@@ -253,6 +253,7 @@ export type Database = {
           notes: string | null
           payment_date: string
           payment_method: string
+          receipt_file_path: string | null
           status: string
           tenant_id: string
           user_id: string
@@ -265,6 +266,7 @@ export type Database = {
           notes?: string | null
           payment_date: string
           payment_method?: string
+          receipt_file_path?: string | null
           status?: string
           tenant_id: string
           user_id: string
@@ -277,6 +279,7 @@ export type Database = {
           notes?: string | null
           payment_date?: string
           payment_method?: string
+          receipt_file_path?: string | null
           status?: string
           tenant_id?: string
           user_id?: string
@@ -528,6 +531,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_tenants_property"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tenants_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
@@ -535,6 +545,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      units: {
+        Row: {
+          created_at: string
+          id: string
+          is_available: boolean
+          property_id: string
+          rent_amount: number | null
+          tenant_id: string | null
+          unit_number: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          property_id: string
+          rent_amount?: number | null
+          tenant_id?: string | null
+          unit_number: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          property_id?: string
+          rent_amount?: number | null
+          tenant_id?: string | null
+          unit_number?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

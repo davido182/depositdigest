@@ -81,33 +81,26 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
     try {
       setIsLoading(true);
       
-      // Load payment tracking records for the selected year
-      const yearStart = `${selectedYear}-01-01`;
-      const yearEnd = `${selectedYear}-12-31`;
-      
-      const { data: payments, error: paymentsError } = await supabase
-        .from('payments')
-        .select('tenant_id, payment_date, status')
+      // Load payment tracking records from payment_receipts table
+      const { data: trackingRecords, error: trackingError } = await supabase
+        .from('payment_receipts')
+        .select('tenant_id, year, month, has_receipt')
         .eq('user_id', user.id)
-        .eq('status', 'completed')
-        .gte('payment_date', yearStart)
-        .lte('payment_date', yearEnd);
+        .eq('year', selectedYear);
 
-      if (paymentsError) throw paymentsError;
+      if (trackingError) throw trackingError;
 
       const records: PaymentRecord[] = [];
       
-      payments?.forEach(payment => {
-        const date = new Date(payment.payment_date);
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        
-        records.push({
-          tenantId: payment.tenant_id,
-          year,
-          month,
-          paid: true
-        });
+      trackingRecords?.forEach(record => {
+        if (record.has_receipt) {
+          records.push({
+            tenantId: record.tenant_id,
+            year: record.year,
+            month: record.month - 1, // Convert to 0-indexed for local state
+            paid: true
+          });
+        }
       });
 
       // Load receipt records
@@ -160,17 +153,16 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
     
     try {
       if (checked === true) {
-        // Create a payment record
+        // Create a tracking record in payment_receipts table (this is independent from actual payments)
         const { error } = await supabase
-          .from('payments')
-          .insert({
+          .from('payment_receipts')
+          .upsert({
             user_id: user.id,
             tenant_id: tenantId,
-            amount: tenant.rentAmount,
-            payment_date: new Date(selectedYear, monthIndex, 1).toISOString().split('T')[0],
-            payment_method: 'cash',
-            status: 'completed'
-          });
+            year: selectedYear,
+            month: monthIndex + 1, // Payment receipts months are 1-indexed
+            has_receipt: true
+          }, { onConflict: 'user_id,tenant_id,year,month' });
 
         if (error) throw error;
         
@@ -182,15 +174,14 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
         
         toast.success(`Pago de ${monthName} para ${tenant.name} marcado como pagado`);
       } else {
-        // Remove payment record - find the specific payment for this month and year
-        const targetDate = new Date(selectedYear, monthIndex, 1).toISOString().split('T')[0];
-        
+        // Remove tracking record
         const { error } = await supabase
-          .from('payments')
+          .from('payment_receipts')
           .delete()
           .eq('user_id', user.id)
           .eq('tenant_id', tenantId)
-          .eq('payment_date', targetDate);
+          .eq('year', selectedYear)
+          .eq('month', monthIndex + 1);
 
         if (error) throw error;
         

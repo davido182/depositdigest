@@ -18,13 +18,18 @@ const Settings = () => {
   const handleUpgradeToPremium = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout');
-      if (error) throw error;
+      if (error) {
+        console.error('Stripe function error:', error);
+        throw error;
+      }
       if (data?.url) {
         window.open(data.url, '_blank');
+      } else {
+        throw new Error('No se recibió URL de checkout');
       }
     } catch (error) {
       console.error('Error creating checkout:', error);
-      alert('Error al crear sesión de pago. Por favor intenta de nuevo.');
+      alert('Error al crear sesión de pago. Verifica tu configuración de Stripe.');
     }
   };
   return (
