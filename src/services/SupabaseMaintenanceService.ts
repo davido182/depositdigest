@@ -10,7 +10,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
     const { data, error } = await supabase
       .from('maintenance_requests')
       .select('*')
-      .eq('user_id', user.id)
+      .or(`user_id.eq.${user.id},landlord_id.eq.${user.id}`)
       .order('created_at', { ascending: false });
 
     if (error) {

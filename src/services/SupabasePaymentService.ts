@@ -5,6 +5,8 @@ import { Payment, PaymentMethod } from "@/types";
 
 export class SupabasePaymentService extends SupabaseService {
   async getPayments(): Promise<Payment[]> {
+    console.log('Fetching payments from Supabase...');
+    
     const user = await this.ensureAuthenticated();
     
     const { data, error } = await supabase

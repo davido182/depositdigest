@@ -3,7 +3,7 @@
 import { Layout } from "@/components/Layout";
 import { TenantsTable } from "@/components/tenants/TenantsTable";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
-import { UnitManagementModal } from "@/components/units/UnitManagementModal";
+// import { UnitManagementModal } from "@/components/units/UnitManagementModal";
 import { TenantPaymentTracker } from "@/components/payments/TenantPaymentTracker";
 import { Tenant, TenantStatus } from "@/types";
 import { useState, useEffect } from "react";
@@ -132,15 +132,7 @@ const Tenants = () => {
           onSave={handleSaveTenant}
         />
         
-        <UnitManagementModal
-          isOpen={isUnitModalOpen}
-          onClose={() => setIsUnitModalOpen(false)}
-          currentUnitCount={20}
-          onSave={(units) => {
-            toast.success(`Configuración de unidades actualizada: ${units} unidades`);
-            setIsUnitModalOpen(false);
-          }}
-        />
+        {/* TODO: Implement UnitManagementModal */}
       </div>
     </Layout>
   );
