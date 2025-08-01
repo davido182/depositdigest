@@ -6,9 +6,12 @@ export class SupabaseTenantService extends BaseService {
   async getTenants(): Promise<Tenant[]> {
     console.log('Fetching tenants from Supabase...');
     
+    const user = await this.ensureAuthenticated();
+    
     const { data, error } = await this.supabase
       .from('tenants')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {

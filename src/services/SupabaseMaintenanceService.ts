@@ -6,15 +6,11 @@ import { MaintenanceRequest } from "@/types";
 export class SupabaseMaintenanceService extends SupabaseService {
   async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
     const user = await this.ensureAuthenticated();
-    const userId = user.id;
     
     const { data, error } = await supabase
       .from('maintenance_requests')
-      .select(`
-        *,
-        tenants!inner(landlord_id, name, unit_number)
-      `)
-      .or(`user_id.eq.${userId},tenants.landlord_id.eq.${userId}`)
+      .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -80,7 +76,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
       landlord_id: tenantData?.landlord_id || null,
       title: request.title,
       description: request.description,
-      category: request.category || 'other',
+      
       priority: request.priority,
       status: request.status,
       unit_number: request.unit,
@@ -107,7 +103,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
     const updateData: any = {};
     if (updates.title) updateData.title = updates.title;
     if (updates.description) updateData.description = updates.description;
-    if (updates.category) updateData.category = updates.category;
+    
     if (updates.priority) updateData.priority = updates.priority;
     if (updates.status) updateData.status = updates.status;
     if (updates.unit) {
@@ -153,7 +149,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
       unit: data.unit || data.unit_number,
       title: data.title,
       description: data.description,
-      category: data.category as MaintenanceRequest['category'] || 'other',
+      category: 'plumbing' as MaintenanceRequest['category'],
       priority: data.priority as MaintenanceRequest['priority'],
       status: data.status as MaintenanceRequest['status'],
       assignedTo: data.assigned_to || undefined,
