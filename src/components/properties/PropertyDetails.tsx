@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building, MapPin, Users, Plus } from "lucide-react";
 import { UnitManagementModal } from "../units/UnitManagementModal";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Property {
   id?: string;
@@ -36,23 +37,45 @@ interface PropertyDetailsProps {
 export function PropertyDetails({ property, isOpen, onClose, onEdit }: PropertyDetailsProps) {
   const [showUnitManagement, setShowUnitManagement] = useState(false);
   
-  // Mock units data - in real app this would come from database
-  const mockUnits: Unit[] = Array.from({ length: property?.units || 0 }, (_, i) => ({
-    id: `unit-${i + 1}`,
-    number: `${i + 1}`,
-    type: 'Apartamento',
-    rentAmount: 800 + (i * 50),
-    isOccupied: Math.random() > 0.3,
-    tenant: Math.random() > 0.3 ? `Inquilino ${i + 1}` : undefined
-  }));
+  const [units, setUnits] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (property?.id && isOpen) {
+      loadUnits();
+    }
+  }, [property?.id, isOpen]);
+
+  const loadUnits = async () => {
+    if (!property?.id) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('units')
+        .select('*')
+        .eq('property_id', property.id);
+        
+      if (error) {
+        console.error('Error loading units:', error);
+        return;
+      }
+      
+      setUnits(data || []);
+    } catch (error) {
+      console.error('Error loading units:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!property) return null;
 
-  const occupiedUnits = mockUnits.filter(unit => unit.isOccupied).length;
-  const occupancyRate = property.units > 0 ? (occupiedUnits / property.units) * 100 : 0;
-  const totalRevenue = mockUnits
-    .filter(unit => unit.isOccupied)
-    .reduce((sum, unit) => sum + unit.rentAmount, 0);
+  const occupiedUnits = units.filter(unit => !unit.is_available).length;
+  const occupancyRate = units.length > 0 ? (occupiedUnits / units.length) * 100 : 0;
+  const totalRevenue = units
+    .filter(unit => !unit.is_available)
+    .reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
 
   return (
     <>
@@ -78,9 +101,9 @@ export function PropertyDetails({ property, isOpen, onClose, onEdit }: PropertyD
                     Total Unidades
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{property.units}</div>
-                </CardContent>
+                 <CardContent>
+                   <div className="text-2xl font-bold">{units.length}</div>
+                 </CardContent>
               </Card>
               
               <Card>
@@ -91,9 +114,9 @@ export function PropertyDetails({ property, isOpen, onClose, onEdit }: PropertyD
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{occupancyRate.toFixed(1)}%</div>
-                  <p className="text-xs text-muted-foreground">
-                    {occupiedUnits} de {property.units} ocupadas
-                  </p>
+                   <p className="text-xs text-muted-foreground">
+                     {occupiedUnits} de {units.length} ocupadas
+                   </p>
                 </CardContent>
               </Card>
               
@@ -124,10 +147,10 @@ export function PropertyDetails({ property, isOpen, onClose, onEdit }: PropertyD
             {/* Units Section */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Unidades ({property.units})
-                </CardTitle>
+                 <CardTitle className="text-base flex items-center gap-2">
+                   <Users className="h-4 w-4" />
+                   Unidades ({units.length})
+                 </CardTitle>
                 <Button 
                   size="sm" 
                   onClick={() => setShowUnitManagement(true)}
@@ -137,45 +160,44 @@ export function PropertyDetails({ property, isOpen, onClose, onEdit }: PropertyD
                   Gestionar Unidades
                 </Button>
               </CardHeader>
-              <CardContent>
-                {property.units > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {mockUnits.map((unit) => (
-                      <div 
-                        key={unit.id}
-                        className="p-3 border rounded-lg flex justify-between items-center"
-                      >
-                        <div>
-                          <div className="font-medium">Unidad {unit.number}</div>
-                          <div className="text-sm text-muted-foreground">
-                            €{unit.rentAmount}/mes
-                          </div>
-                          {unit.tenant && (
-                            <div className="text-xs text-muted-foreground">
-                              {unit.tenant}
-                            </div>
-                          )}
-                        </div>
-                        <Badge variant={unit.isOccupied ? "default" : "secondary"}>
-                          {unit.isOccupied ? "Ocupada" : "Disponible"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <Building className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>No hay unidades configuradas</p>
-                    <Button 
-                      size="sm" 
-                      className="mt-2"
-                      onClick={() => setShowUnitManagement(true)}
-                    >
-                      Agregar Primera Unidad
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
+               <CardContent>
+                 {loading ? (
+                   <div className="text-center py-6 text-muted-foreground">
+                     Cargando unidades...
+                   </div>
+                 ) : units.length > 0 ? (
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                     {units.map((unit) => (
+                       <div 
+                         key={unit.id}
+                         className="p-3 border rounded-lg flex justify-between items-center"
+                       >
+                         <div>
+                           <div className="font-medium">Unidad {unit.unit_number}</div>
+                           <div className="text-sm text-muted-foreground">
+                             €{unit.rent_amount || 0}/mes
+                           </div>
+                         </div>
+                         <Badge variant={unit.is_available ? "secondary" : "default"}>
+                           {unit.is_available ? "Disponible" : "Ocupada"}
+                         </Badge>
+                       </div>
+                     ))}
+                   </div>
+                 ) : (
+                   <div className="text-center py-6 text-muted-foreground">
+                     <Building className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                     <p>No hay unidades configuradas</p>
+                     <Button 
+                       size="sm" 
+                       className="mt-2"
+                       onClick={() => setShowUnitManagement(true)}
+                     >
+                       Agregar Primera Unidad
+                     </Button>
+                   </div>
+                 )}
+               </CardContent>
             </Card>
           </div>
 
@@ -196,7 +218,7 @@ export function PropertyDetails({ property, isOpen, onClose, onEdit }: PropertyD
           onClose={() => setShowUnitManagement(false)}
           propertyId={property.id!}
           onUnitsUpdated={() => {
-            console.log('Units updated for property:', property.name);
+            loadUnits(); // Reload units when updated
             setShowUnitManagement(false);
           }}
         />

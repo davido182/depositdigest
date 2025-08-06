@@ -85,30 +85,30 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-sm max-h-[500px]">
         <DialogHeader>
           <DialogTitle>Editar Unidad</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="unit_number">Número de Unidad</Label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="unit_number" className="text-sm font-medium">Número de Unidad</Label>
               <Input
                 id="unit_number"
                 name="unit_number"
                 value={formData.unit_number}
                 onChange={handleChange}
                 placeholder="Ej: 101, A, 1A"
-                className={errors.unit_number ? "border-destructive" : ""}
+                className={`h-9 ${errors.unit_number ? "border-destructive" : ""}`}
               />
               {errors.unit_number && (
                 <p className="text-xs text-destructive">{errors.unit_number}</p>
               )}
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="rent_amount">Renta Mensual</Label>
+            <div className="space-y-2">
+              <Label htmlFor="rent_amount" className="text-sm font-medium">Renta Mensual (€)</Label>
               <Input
                 id="rent_amount"
                 name="rent_amount"
@@ -118,7 +118,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
                 value={formData.rent_amount}
                 onChange={handleChange}
                 placeholder="0.00"
-                className={errors.rent_amount ? "border-destructive" : ""}
+                className={`h-9 ${errors.rent_amount ? "border-destructive" : ""}`}
               />
               {errors.rent_amount && (
                 <p className="text-xs text-destructive">{errors.rent_amount}</p>
@@ -126,11 +126,11 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={onClose} size="sm">
               Cancelar
             </Button>
-            <Button type="submit">Guardar Cambios</Button>
+            <Button type="submit" size="sm">Guardar Cambios</Button>
           </DialogFooter>
         </form>
       </DialogContent>

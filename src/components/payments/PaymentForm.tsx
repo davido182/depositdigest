@@ -221,12 +221,12 @@ export function PaymentForm({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {payment ? "Edit Payment" : "Record New Payment"}
+            {payment ? "Editar Pago" : "Registrar Nuevo Pago"}
           </DialogTitle>
           <DialogDescription>
             {payment
-              ? "Update the payment information below."
-              : "Enter the payment details below."}
+              ? "Actualiza la información del pago a continuación."
+              : "Ingresa los detalles del pago a continuación."}
           </DialogDescription>
         </DialogHeader>
 
@@ -234,16 +234,16 @@ export function PaymentForm({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="tenantId" className="flex items-center gap-1">
-                Tenant <span className="text-destructive">*</span>
+                Inquilino <span className="text-destructive">*</span>
               </Label>
               <Select value={formData.tenantId} onValueChange={handleTenantChange}>
                 <SelectTrigger className={errors.tenantId ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Select tenant" />
+                  <SelectValue placeholder="Selecciona un inquilino" />
                 </SelectTrigger>
                 <SelectContent>
                   {tenants.map((tenant) => (
                     <SelectItem key={tenant.id} value={tenant.id}>
-                      {tenant.name} - Unit {tenant.unit}
+                      {tenant.name} - Unidad {tenant.unit}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -255,26 +255,26 @@ export function PaymentForm({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="type">Payment Type</Label>
+                <Label htmlFor="type">Tipo de Pago</Label>
                 <Select value={formData.type} onValueChange={handleTypeChange}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder="Selecciona tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="rent">Rent</SelectItem>
-                    <SelectItem value="deposit">Deposit</SelectItem>
-                    <SelectItem value="fee">Fee</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="rent">Renta</SelectItem>
+                    <SelectItem value="deposit">Depósito</SelectItem>
+                    <SelectItem value="fee">Comisión</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="amount" className="flex items-center gap-1">
-                  Amount <span className="text-destructive">*</span>
+                  Cantidad <span className="text-destructive">*</span>
                 </Label>
                 <div className="flex items-center">
-                  <DollarSign className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <span className="mr-2 text-muted-foreground">€</span>
                   <Input
                     id="amount"
                     name="amount"
@@ -293,7 +293,7 @@ export function PaymentForm({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="date">Payment Date</Label>
+              <Label htmlFor="date">Fecha del Pago</Label>
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
                 <Input
@@ -312,35 +312,35 @@ export function PaymentForm({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="method">Payment Method</Label>
+                <Label htmlFor="method">Método de Pago</Label>
                 <div className="flex items-center">
                   <CreditCard className="w-4 h-4 mr-2 text-muted-foreground" />
                   <Select value={formData.method} onValueChange={handleMethodChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select method" />
+                      <SelectValue placeholder="Selecciona método" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="check">Check</SelectItem>
-                      <SelectItem value="transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="card">Credit/Debit Card</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="cash">Efectivo</SelectItem>
+                      <SelectItem value="check">Cheque</SelectItem>
+                      <SelectItem value="transfer">Transferencia</SelectItem>
+                      <SelectItem value="card">Tarjeta</SelectItem>
+                      <SelectItem value="other">Otro</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">Estado</Label>
                 <Select value={formData.status} onValueChange={handleStatusChange}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Selecciona estado" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                    <SelectItem value="refunded">Refunded</SelectItem>
+                    <SelectItem value="pending">Pendiente</SelectItem>
+                    <SelectItem value="completed">Completado</SelectItem>
+                    <SelectItem value="failed">Fallido</SelectItem>
+                    <SelectItem value="refunded">Reembolsado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -349,21 +349,29 @@ export function PaymentForm({
             {selectedTenant && formData.type === "rent" && (
               <div className="bg-muted p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  Expected rent for {selectedTenant.name}: ${selectedTenant.rentAmount.toLocaleString()}
+                  Renta esperada para {selectedTenant.name}: €{selectedTenant.rentAmount.toLocaleString()}
                 </p>
               </div>
             )}
 
             <div className="grid gap-2">
               <Label htmlFor="month">Mes del Pago</Label>
-              <Input
-                id="month"
-                name="month"
-                type="month"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                placeholder="Selecciona el mes"
-              />
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona el mes" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({length: 12}, (_, i) => {
+                    const date = new Date(2024, i, 1);
+                    const monthKey = `2024-${String(i + 1).padStart(2, '0')}`;
+                    return (
+                      <SelectItem key={monthKey} value={monthKey}>
+                        {date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid gap-2">
@@ -381,23 +389,23 @@ export function PaymentForm({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Label htmlFor="notes">Notas (Opcional)</Label>
               <textarea
                 id="notes"
                 name="notes"
                 value={formData.notes || ""}
                 onChange={handleChange}
                 className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                placeholder="Add any additional notes..."
+                placeholder="Agrega notas adicionales..."
               />
             </div>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              Cancelar
             </Button>
-            <Button type="submit">Save Payment</Button>
+            <Button type="submit">Guardar Pago</Button>
           </DialogFooter>
         </form>
       </DialogContent>
