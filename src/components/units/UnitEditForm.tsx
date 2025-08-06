@@ -85,15 +85,15 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-sm max-h-[500px]">
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Editar Unidad</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="unit_number" className="text-sm font-medium">Número de Unidad</Label>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="unit_number" className="text-sm">Número de Unidad</Label>
               <Input
                 id="unit_number"
                 name="unit_number"
@@ -107,8 +107,8 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="rent_amount" className="text-sm font-medium">Renta Mensual (€)</Label>
+            <div className="space-y-1">
+              <Label htmlFor="rent_amount" className="text-sm">Renta Mensual (€)</Label>
               <Input
                 id="rent_amount"
                 name="rent_amount"
@@ -126,7 +126,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
             </div>
           </div>
 
-          <DialogFooter className="gap-2 pt-4">
+          <DialogFooter className="gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose} size="sm">
               Cancelar
             </Button>

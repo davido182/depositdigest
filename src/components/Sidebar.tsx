@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -98,6 +99,25 @@ const Sidebar = () => {
 
   const handleLandingPageClick = () => {
     window.open('/landing', '_blank');
+  };
+
+  const handleUpgrade = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout');
+      
+      if (error) {
+        console.error('Error creating checkout:', error);
+        toast.error('Error al procesar el pago');
+        return;
+      }
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error al procesar el pago');
+    }
   };
 
   const handleSignOut = async () => {
@@ -196,7 +216,7 @@ const Sidebar = () => {
         {userRole === 'landlord_free' && (
           <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
             <button
-              onClick={handleLandingPageClick}
+              onClick={handleUpgrade}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md mb-2"
             >
               <Crown className="h-4 w-4" />

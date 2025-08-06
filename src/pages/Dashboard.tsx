@@ -1,4 +1,5 @@
 import { Layout } from "@/components/Layout";
+import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { IntelligentDashboard } from "@/components/dashboard/IntelligentDashboard";
 import { MaintenanceNotifications } from "@/components/dashboard/MaintenanceNotifications";
 import { TenantCard } from "@/components/tenants/TenantCard";
@@ -179,39 +180,12 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Resumen de Propiedades */}
-        {properties.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5" />
-                Resumen de Propiedades
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-3'}`}>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {properties.length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Propiedades</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {properties.reduce((acc, prop) => acc + prop.occupied_units, 0)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Unidades Ocupadas</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">
-                    €{properties.reduce((acc, prop) => acc + prop.monthly_revenue, 0).toLocaleString()}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Ingresos Totales</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <DashboardSummary 
+          totalProperties={properties.length}
+          totalUnits={properties.reduce((acc, prop) => acc + prop.units, 0)}
+          occupiedUnits={properties.reduce((acc, prop) => acc + prop.occupied_units, 0)}
+          monthlyRevenue={properties.reduce((acc, prop) => acc + prop.monthly_revenue, 0)}
+        />
 
         <IntelligentDashboard stats={stats} />
 

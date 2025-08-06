@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { unitsService } from "@/services/UnitsService";
 import { UnitEditForm } from "../units/UnitEditForm";
 
 interface Unit {
@@ -10,6 +10,7 @@ interface Unit {
   unit_number: string;
   rent_amount?: number | null;
   is_available: boolean;
+  tenant_id?: string | null;
 }
 
 interface UnitsDisplayProps {
@@ -29,18 +30,8 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
   const loadUnits = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('units')
-        .select('*')
-        .eq('property_id', propertyId)
-        .limit(3); // Only show first 3 units in card
-        
-      if (error) {
-        console.error('Error loading units:', error);
-        return;
-      }
-      
-      setUnits(data || []);
+      const data = await unitsService.getUnits(propertyId);
+      setUnits(data.slice(0, 3)); // Only show first 3 units in card
     } catch (error) {
       console.error('Error loading units:', error);
     } finally {
@@ -55,15 +46,10 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
 
   const handleSaveUnit = async (updatedUnit: Unit) => {
     try {
-      const { error } = await supabase
-        .from('units')
-        .update({
-          unit_number: updatedUnit.unit_number,
-          rent_amount: updatedUnit.rent_amount
-        })
-        .eq('id', updatedUnit.id);
-
-      if (error) throw error;
+      await unitsService.updateUnit(updatedUnit.id, {
+        unit_number: updatedUnit.unit_number,
+        rent_amount: updatedUnit.rent_amount
+      });
 
       // Update local state
       setUnits(prev => prev.map(unit => 
