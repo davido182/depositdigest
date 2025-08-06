@@ -191,23 +191,29 @@ export function PaymentForm({
         
         const paymentData: Payment = {
           ...formData,
+          type: 'rent', // Valor por defecto necesario
           id: payment?.id || crypto.randomUUID(),
           createdAt: payment?.createdAt || new Date().toISOString(),
         };
         
-        // Update payment tracking if month/year selected and receipt uploaded
-        if (formData.month && formData.year && receiptPath && selectedTenant) {
-          await supabase.from('payment_receipts').upsert({
-            user_id: selectedTenant.landlordId,
-            tenant_id: selectedTenant.id,
-            year: formData.year,
-            month: formData.month,
-            has_receipt: true,
-            receipt_file_path: receiptPath
-          });
+        // Update payment tracking if month/year selected
+        if (formData.month && formData.year && selectedTenant) {
+          const { data: authUser } = await supabase.auth.getUser();
+          if (authUser.user) {
+            await supabase.from('payment_receipts').upsert({
+              user_id: authUser.user.id,
+              tenant_id: selectedTenant.id,
+              year: formData.year,
+              month: formData.month,
+              has_receipt: !!receiptPath,
+              receipt_file_path: receiptPath
+            });
+          }
         }
         
         onSave(paymentData);
+        onClose();
+        toast.success('Pago guardado exitosamente');
       } catch (error) {
         console.error('Error saving payment:', error);
         toast.error('Error al guardar el pago');
