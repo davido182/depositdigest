@@ -4,13 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Mail, Lock, LogOut } from "lucide-react";
+import { User, Mail, Lock, LogOut, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function AccountSettings() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, userRole } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -126,6 +126,44 @@ export function AccountSettings() {
             </Button>
           </div>
         </div>
+
+        {/* Upgrade to Premium */}
+        {userRole === 'landlord_free' && (
+          <div className="pt-4 border-t space-y-3">
+            <div className="flex items-center gap-2">
+              <Crown className="h-4 w-4 text-amber-500" />
+              <h4 className="font-medium">Plan Premium</h4>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Desbloquea todas las funciones premium: propiedades ilimitadas, invitaciones de inquilinos, reportes avanzados y más.
+            </p>
+            <Button 
+              onClick={async () => {
+                try {
+                  const { data, error } = await supabase.functions.invoke('create-checkout', {
+                    body: { 
+                      email: user?.email,
+                      priceId: 'price_1QdFz0DKXqPjJWpJqwgNLYkr'
+                    }
+                  });
+                  
+                  if (error) throw error;
+                  
+                  if (data?.url) {
+                    window.open(data.url, '_blank');
+                  }
+                } catch (error) {
+                  console.error('Error creating checkout:', error);
+                  toast.error('Error al procesar el pago');
+                }
+              }}
+              className="w-full gap-2"
+            >
+              <Crown className="h-4 w-4" />
+              Actualizar a Premium - €29/mes
+            </Button>
+          </div>
+        )}
 
         {/* Sign Out */}
         <div className="pt-4 border-t">

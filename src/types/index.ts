@@ -31,6 +31,8 @@ export interface Payment {
   status: PaymentStatus;
   notes?: string;
   createdAt: string;
+  month?: number;
+  year?: number;
 }
 
 export type PaymentType = 'rent' | 'deposit' | 'fee' | 'other';

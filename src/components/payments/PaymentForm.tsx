@@ -195,14 +195,13 @@ export function PaymentForm({
           createdAt: payment?.createdAt || new Date().toISOString(),
         };
         
-        // Update payment tracking if month selected and receipt uploaded
-        if (selectedMonth && receiptPath && selectedTenant) {
-          const [year, month] = selectedMonth.split('-');
+        // Update payment tracking if month/year selected and receipt uploaded
+        if (formData.month && formData.year && receiptPath && selectedTenant) {
           await supabase.from('payment_receipts').upsert({
             user_id: selectedTenant.landlordId,
             tenant_id: selectedTenant.id,
-            year: parseInt(year),
-            month: parseInt(month),
+            year: formData.year,
+            month: formData.month,
             has_receipt: true,
             receipt_file_path: receiptPath
           });
@@ -253,43 +252,26 @@ export function PaymentForm({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="type">Tipo de Pago</Label>
-                <Select value={formData.type} onValueChange={handleTypeChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rent">Renta</SelectItem>
-                    <SelectItem value="deposit">Depósito</SelectItem>
-                    <SelectItem value="fee">Comisión</SelectItem>
-                    <SelectItem value="other">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="grid gap-2">
+              <Label htmlFor="amount" className="flex items-center gap-1">
+                Cantidad <span className="text-destructive">*</span>
+              </Label>
+              <div className="flex items-center">
+                <span className="mr-2 text-muted-foreground">€</span>
+                <Input
+                  id="amount"
+                  name="amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.amount}
+                  onChange={handleChange}
+                  className={errors.amount ? "border-destructive" : ""}
+                />
               </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="amount" className="flex items-center gap-1">
-                  Cantidad <span className="text-destructive">*</span>
-                </Label>
-                <div className="flex items-center">
-                  <span className="mr-2 text-muted-foreground">€</span>
-                  <Input
-                    id="amount"
-                    name="amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.amount}
-                    onChange={handleChange}
-                    className={errors.amount ? "border-destructive" : ""}
-                  />
-                </div>
-                {errors.amount && (
-                  <p className="text-xs text-destructive">{errors.amount}</p>
-                )}
-              </div>
+              {errors.amount && (
+                <p className="text-xs text-destructive">{errors.amount}</p>
+              )}
             </div>
 
             <div className="grid gap-2">
@@ -354,24 +336,38 @@ export function PaymentForm({
               </div>
             )}
 
-            <div className="grid gap-2">
-              <Label htmlFor="month">Mes del Pago</Label>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona el mes" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({length: 12}, (_, i) => {
-                    const date = new Date(2024, i, 1);
-                    const monthKey = `2024-${String(i + 1).padStart(2, '0')}`;
-                    return (
-                      <SelectItem key={monthKey} value={monthKey}>
-                        {date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="year">Año del Pago</Label>
+                <Select value={formData.year?.toString() || ""} onValueChange={(year) => setFormData({...formData, year: parseInt(year)})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona año" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[2023, 2024, 2025].map(year => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
                       </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="month">Mes del Pago</Label>
+                <Select value={formData.month?.toString() || ""} onValueChange={(month) => setFormData({...formData, month: parseInt(month)})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona mes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({length: 12}, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        {new Date(2024, i, 1).toLocaleDateString('es-ES', { month: 'long' })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid gap-2">

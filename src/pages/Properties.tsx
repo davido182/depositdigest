@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Building, Users, DollarSign, MapPin, Calendar, Edit, Eye, Trash2 } from "lucide-react";
+import { UnitsDisplay } from "@/components/properties/UnitsDisplay";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -290,6 +291,15 @@ const Properties = () => {
                     <span>{new Date(property.created_at).toLocaleDateString()}</span>
                   </div>
 
+                  {/* Units List */}
+                  <div className="border-t pt-4 space-y-2">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Unidades ({property.units})
+                    </h4>
+                    <UnitsDisplay propertyId={property.id} />
+                  </div>
+
                   <div className="pt-4 space-y-2">
                     <Button 
                       variant="outline" 
@@ -297,8 +307,8 @@ const Properties = () => {
                       size="sm"
                       onClick={() => handleViewProperty(property)}
                     >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver Detalles
+                      <Plus className="h-4 w-4 mr-2" />
+                      Gestionar Unidades
                     </Button>
                     <div className="flex gap-2">
                       <Button 

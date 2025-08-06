@@ -19,7 +19,11 @@ const Settings = () => {
   const handleUpgradeToPremium = async () => {
     try {
       console.log('Creating checkout session...');
-      const { data, error } = await supabase.functions.invoke('create-checkout');
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { 
+          priceId: 'price_1QdFz0DKXqPjJWpJqwgNLYkr'
+        }
+      });
       
       if (error) {
         console.error('Stripe function error:', error);
@@ -28,12 +32,7 @@ const Settings = () => {
       
       if (data?.url) {
         console.log('Opening checkout URL:', data.url);
-        // Force open in new window/tab
-        const newWindow = window.open(data.url, '_blank', 'noopener,noreferrer');
-        if (!newWindow) {
-          // Fallback if popup blocked
-          window.location.href = data.url;
-        }
+        window.open(data.url, '_blank');
       } else {
         throw new Error('No se recibió URL de checkout');
       }

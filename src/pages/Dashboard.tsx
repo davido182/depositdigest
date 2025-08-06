@@ -53,39 +53,38 @@ const Dashboard = () => {
         console.log(`Dashboard: Loaded ${loadedTenants.length} tenants`);
         setTenants(loadedTenants);
 
-        // Load properties (simulated from tenants data for now)
+        // Load properties from database
         if (user) {
-          const { data: tenantsData, error } = await supabase
-            .from('tenants')
+          const { data: dbProperties, error: propsError } = await supabase
+            .from('properties')
             .select('*')
             .eq('user_id', user.id);
 
-          if (!error && tenantsData) {
-            const propertyMap = new Map();
-            tenantsData.forEach(tenant => {
-              const propertyKey = tenant.unit_number?.substring(0, 1) || 'A';
-              const propertyName = `Edificio ${propertyKey}`;
-              
-              if (!propertyMap.has(propertyName)) {
-                propertyMap.set(propertyName, {
-                  id: `prop-${propertyKey}`,
-                  name: propertyName,
-                  address: `Calle Principal ${propertyKey}00, Madrid`,
-                  units: 0,
-                  occupied_units: 0,
-                  monthly_revenue: 0,
-                  created_at: new Date().toISOString()
-                });
-              }
-              
-              const property = propertyMap.get(propertyName);
-              property.units += 1;
-              if (tenant.status === 'active') {
-                property.occupied_units += 1;
-                property.monthly_revenue += tenant.rent_amount || 0;
-              }
-            });
-            setProperties(Array.from(propertyMap.values()));
+          if (!propsError && dbProperties) {
+            // Get units for each property
+            const { data: units, error: unitsError } = await supabase
+              .from('units')
+              .select('*')
+              .eq('user_id', user.id);
+
+            if (!unitsError && units) {
+              const mappedProperties = dbProperties.map(dbProp => {
+                const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
+                const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
+                const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
+                
+                return {
+                  id: dbProp.id,
+                  name: dbProp.name,
+                  address: dbProp.address || '',
+                  units: propertyUnits.length,
+                  occupied_units: occupiedUnits.length,
+                  monthly_revenue: totalRevenue,
+                  created_at: dbProp.created_at
+                };
+              });
+              setProperties(mappedProperties);
+            }
           }
         }
       } catch (error) {
