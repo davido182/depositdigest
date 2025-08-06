@@ -15,6 +15,7 @@ export interface Tenant {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  landlordId?: string;
 }
 
 export type TenantStatus = 'active' | 'inactive' | 'late' | 'notice';

@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, UserPlus, UserMinus, Edit } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserPlus, UserMinus, Trash2, Plus, Edit } from "lucide-react";
 import { unitsService } from "@/services/UnitsService";
-import { tenantService } from "@/services/TenantService";
-import { Tenant as BaseTenant } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { UnitEditForm } from "./UnitEditForm";
 
 interface Unit {
   id: string;
@@ -28,34 +28,32 @@ interface TenantForUnit {
   id: string;
   name: string;
   email: string;
-  rentAmount: number;
-  unit: string;
+  unit_number: string;
   status: string;
+  rent_amount: number;
 }
 
 interface UnitManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
   propertyId: string;
-  propertyName: string;
   onUnitsUpdated: () => void;
 }
 
-export function UnitManagementModal({ 
-  isOpen, 
-  onClose, 
-  propertyId, 
-  propertyName, 
-  onUnitsUpdated 
+export function UnitManagementModal({
+  isOpen,
+  onClose,
+  propertyId,
+  onUnitsUpdated,
 }: UnitManagementModalProps) {
   const [units, setUnits] = useState<Unit[]>([]);
   const [tenants, setTenants] = useState<TenantForUnit[]>([]);
-  const [newUnitNumber, setNewUnitNumber] = useState("");
-  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [assigningTenant, setAssigningTenant] = useState<Unit | null>(null);
   const [selectedTenantId, setSelectedTenantId] = useState("");
-  const [rentAmount, setRentAmount] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [rentAmount, setRentAmount] = useState("");
+  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+  const [newUnitNumber, setNewUnitNumber] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -64,29 +62,40 @@ export function UnitManagementModal({
   }, [isOpen, propertyId]);
 
   const loadData = async () => {
+    if (!propertyId) return;
+    
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const [unitsData, baseTenants] = await Promise.all([
-        unitsService.getUnits(propertyId),
-        tenantService.getTenants()
-      ]);
+      // Load units for this property
+      const unitsData = await unitsService.getUnits(propertyId);
       setUnits(unitsData);
-      
-      // Convert BaseTenant to TenantForUnit
-      const convertedTenants: TenantForUnit[] = baseTenants
-        .filter(t => t.status === 'active')
-        .map(t => ({
-          id: t.id,
-          name: t.name,
-          email: t.email,
-          rentAmount: t.rentAmount,
-          unit: t.unit,
-          status: t.status
-        }));
-      setTenants(convertedTenants);
+
+      // Load available tenants (those without assigned units)
+      const { data: tenantsData, error } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('status', 'active')
+        .is('property_id', null);
+
+      if (error) {
+        console.error('Error loading tenants:', error);
+        toast.error("Error al cargar inquilinos");
+        return;
+      }
+
+      const formattedTenants: TenantForUnit[] = (tenantsData || []).map(tenant => ({
+        id: tenant.id,
+        name: tenant.name,
+        email: tenant.email,
+        unit_number: tenant.unit_number,
+        status: tenant.status,
+        rent_amount: tenant.rent_amount
+      }));
+
+      setTenants(formattedTenants);
     } catch (error) {
       console.error('Error loading data:', error);
-      toast.error('Error al cargar datos');
+      toast.error("Error al cargar datos");
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +103,7 @@ export function UnitManagementModal({
 
   const handleCreateUnit = async () => {
     if (!newUnitNumber.trim()) {
-      toast.error('Por favor ingresa un número de unidad');
+      toast.error("El número de unidad es requerido");
       return;
     }
 
@@ -102,82 +111,104 @@ export function UnitManagementModal({
       await unitsService.createUnit({
         property_id: propertyId,
         unit_number: newUnitNumber,
-        is_available: true
+        is_available: true,
       });
       
       setNewUnitNumber("");
-      loadData();
+      await loadData();
       onUnitsUpdated();
-      toast.success('Unidad creada exitosamente');
+      toast.success("Unidad creada correctamente");
     } catch (error) {
       console.error('Error creating unit:', error);
-      toast.error('Error al crear unidad');
+      toast.error("Error al crear unidad");
     }
   };
 
   const handleDeleteUnit = async (unitId: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar esta unidad?')) return;
+    if (!confirm("¿Estás seguro de que quieres eliminar esta unidad?")) {
+      return;
+    }
 
     try {
       await unitsService.deleteUnit(unitId);
-      loadData();
+      await loadData();
       onUnitsUpdated();
-      toast.success('Unidad eliminada exitosamente');
+      toast.success("Unidad eliminada correctamente");
     } catch (error) {
       console.error('Error deleting unit:', error);
-      toast.error('Error al eliminar unidad');
+      toast.error("Error al eliminar unidad");
     }
   };
 
   const handleAssignTenant = async () => {
     if (!assigningTenant || !selectedTenantId || !rentAmount) {
-      toast.error('Por favor completa todos los campos');
+      toast.error("Todos los campos son requeridos");
       return;
     }
 
     try {
-      await unitsService.assignTenant(assigningTenant.id, selectedTenantId, rentAmount);
+      await unitsService.assignTenant(
+        assigningTenant.id,
+        selectedTenantId,
+        parseFloat(rentAmount)
+      );
+      
       setAssigningTenant(null);
       setSelectedTenantId("");
-      setRentAmount(0);
-      loadData();
+      setRentAmount("");
+      await loadData();
       onUnitsUpdated();
-      toast.success('Inquilino asignado exitosamente');
+      toast.success("Inquilino asignado correctamente");
     } catch (error) {
       console.error('Error assigning tenant:', error);
-      toast.error('Error al asignar inquilino');
+      toast.error("Error al asignar inquilino");
     }
   };
 
-  const handleUnassignTenant = async (unitId: string) => {
-    if (!confirm('¿Estás seguro de que deseas desasignar este inquilino?')) return;
-
+  const handleUnassignTenant = async (unit: Unit) => {
+    if (!confirm(`¿Estás seguro de que quieres desasignar al inquilino de la unidad ${unit.unit_number}?`)) {
+      return;
+    }
+    
     try {
-      await unitsService.unassignTenant(unitId);
-      loadData();
+      await unitsService.unassignTenant(unit.id);
+      await loadData();
       onUnitsUpdated();
-      toast.success('Inquilino desasignado exitosamente');
+      toast.success("Inquilino desasignado correctamente");
     } catch (error) {
       console.error('Error unassigning tenant:', error);
-      toast.error('Error al desasignar inquilino');
+      toast.error("Error al desasignar inquilino");
     }
   };
 
-  const getTenantName = (tenantId: string | null) => {
-    if (!tenantId) return null;
-    const tenant = tenants.find(t => t.id === tenantId);
-    return tenant?.name || 'Inquilino no encontrado';
+  const handleEditUnit = async (unit: Unit) => {
+    try {
+      await unitsService.updateUnit(unit.id, {
+        unit_number: unit.unit_number,
+        rent_amount: unit.rent_amount,
+      });
+      await loadData();
+      onUnitsUpdated();
+      toast.success("Unidad actualizada correctamente");
+    } catch (error) {
+      console.error('Error updating unit:', error);
+      toast.error("Error al actualizar unidad");
+    }
   };
 
-  const availableTenants = tenants.filter(tenant => 
-    !units.some(unit => unit.tenant_id === tenant.id)
-  );
+  const getTenantName = (tenantId: string) => {
+    // This would need to be implemented to get tenant names
+    // For now, return the tenant ID
+    return `Inquilino ${tenantId.slice(0, 8)}`;
+  };
+
+  if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Gestionar Unidades - {propertyName}</DialogTitle>
+          <DialogTitle>Gestión de Unidades</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -187,14 +218,20 @@ export function UnitManagementModal({
               <CardTitle className="text-lg">Crear Nueva Unidad</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Número de unidad (ej: 101, A-1, etc.)"
-                  value={newUnitNumber}
-                  onChange={(e) => setNewUnitNumber(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateUnit()}
-                />
-                <Button onClick={handleCreateUnit}>Crear Unidad</Button>
+              <div className="flex gap-4 items-end">
+                <div className="flex-1">
+                  <Label htmlFor="unitNumber">Número de Unidad</Label>
+                  <Input
+                    id="unitNumber"
+                    value={newUnitNumber}
+                    onChange={(e) => setNewUnitNumber(e.target.value)}
+                    placeholder="Ej: 101, A, 1A"
+                  />
+                </div>
+                <Button onClick={handleCreateUnit}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Crear Unidad
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -251,18 +288,29 @@ export function UnitManagementModal({
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleUnassignTenant(unit.id)}
+                            onClick={() => handleUnassignTenant(unit)}
                           >
                             <UserMinus className="h-4 w-4" />
                             Desasignar
                           </Button>
                         )}
+                        
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingUnit(unit)}
+                        >
+                          <Edit className="h-4 w-4" />
+                          Editar
+                        </Button>
+                        
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleDeleteUnit(unit.id)}
                         >
                           <Trash2 className="h-4 w-4" />
+                          Eliminar
                         </Button>
                       </div>
                     </div>
@@ -274,60 +322,60 @@ export function UnitManagementModal({
         </div>
 
         {/* Assign Tenant Dialog */}
-        {assigningTenant && (
-          <Dialog open={true} onOpenChange={() => setAssigningTenant(null)}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  Asignar Inquilino a Unidad {assigningTenant.unit_number}
-                </DialogTitle>
-              </DialogHeader>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label>Seleccionar Inquilino</Label>
-                  <Select value={selectedTenantId} onValueChange={setSelectedTenantId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un inquilino" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableTenants.map((tenant) => (
-                        <SelectItem key={tenant.id} value={tenant.id}>
-                          {tenant.name} - {tenant.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label>Monto de Renta</Label>
-                  <Input
-                    type="number"
-                    placeholder="Ingresa el monto de renta"
-                    value={rentAmount || ''}
-                    onChange={(e) => setRentAmount(Number(e.target.value))}
-                  />
-                </div>
+        <Dialog open={!!assigningTenant} onOpenChange={() => setAssigningTenant(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                Asignar Inquilino a Unidad {assigningTenant?.unit_number}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="tenant">Seleccionar Inquilino</Label>
+                <Select value={selectedTenantId} onValueChange={setSelectedTenantId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un inquilino" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tenants.map((tenant) => (
+                      <SelectItem key={tenant.id} value={tenant.id}>
+                        {tenant.name} - {tenant.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
-              <DialogFooter>
+              <div>
+                <Label htmlFor="rent">Renta Mensual</Label>
+                <Input
+                  id="rent"
+                  type="number"
+                  value={rentAmount}
+                  onChange={(e) => setRentAmount(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+              
+              <div className="flex gap-2 pt-4">
                 <Button variant="outline" onClick={() => setAssigningTenant(null)}>
                   Cancelar
                 </Button>
                 <Button onClick={handleAssignTenant}>
                   Asignar Inquilino
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cerrar
-          </Button>
-        </DialogFooter>
+        <UnitEditForm
+          unit={editingUnit}
+          isOpen={!!editingUnit}
+          onClose={() => setEditingUnit(null)}
+          onSave={handleEditUnit}
+        />
       </DialogContent>
     </Dialog>
   );

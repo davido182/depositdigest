@@ -95,21 +95,34 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
       try {
-        const propertyData = {
-          ...formData,
-          id: property?.id || `prop-${Date.now()}`,
-          occupied_units: property?.occupied_units || 0,
-          monthly_revenue: property?.monthly_revenue || 0,
-          created_at: property?.created_at || new Date().toISOString()
-        };
+        const { propertyService } = await import("@/services/PropertyService");
         
-        onSave(propertyData);
-        toast.success(property ? "Propiedad actualizada correctamente" : "Propiedad creada correctamente");
+        if (property?.id) {
+          // Update existing property
+          await propertyService.updateProperty(property.id, {
+            name: formData.name,
+            address: formData.address,
+            description: formData.description,
+            total_units: formData.units
+          });
+          toast.success("Propiedad actualizada correctamente");
+        } else {
+          // Create new property
+          await propertyService.createProperty({
+            name: formData.name,
+            address: formData.address,
+            description: formData.description,
+            total_units: formData.units
+          });
+          toast.success("Propiedad creada correctamente");
+        }
+        
+        onSave(formData);
         onClose();
       } catch (error) {
         console.error("Error saving property:", error);

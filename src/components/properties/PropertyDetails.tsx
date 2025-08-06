@@ -195,7 +195,6 @@ export function PropertyDetails({ property, isOpen, onClose, onEdit }: PropertyD
           isOpen={showUnitManagement}
           onClose={() => setShowUnitManagement(false)}
           propertyId={property.id!}
-          propertyName={property.name}
           onUnitsUpdated={() => {
             console.log('Units updated for property:', property.name);
             setShowUnitManagement(false);

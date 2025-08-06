@@ -23,6 +23,7 @@ import { DollarSign, Calendar, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { ValidationService } from "@/services/ValidationService";
 import { sanitizeInput } from "@/utils/validation";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentFormProps {
   payment: Payment | null;
@@ -54,6 +55,8 @@ export function PaymentForm({
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
 
   useEffect(() => {
     if (isOpen) {
@@ -162,17 +165,54 @@ export function PaymentForm({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
-      const paymentData: Payment = {
-        ...formData,
-        id: payment?.id || crypto.randomUUID(),
-        createdAt: payment?.createdAt || new Date().toISOString(),
-      };
-      
-      onSave(paymentData);
+      try {
+        let receiptPath = null;
+        
+        // Upload receipt if provided
+        if (receiptFile) {
+          const fileExt = receiptFile.name.split('.').pop();
+          const fileName = `${Date.now()}.${fileExt}`;
+          const filePath = `receipts/${fileName}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('lease-contracts')
+            .upload(filePath, receiptFile);
+            
+          if (uploadError) {
+            throw new Error('Error al subir el comprobante');
+          }
+          
+          receiptPath = filePath;
+        }
+        
+        const paymentData: Payment = {
+          ...formData,
+          id: payment?.id || crypto.randomUUID(),
+          createdAt: payment?.createdAt || new Date().toISOString(),
+        };
+        
+        // Update payment tracking if month selected and receipt uploaded
+        if (selectedMonth && receiptPath && selectedTenant) {
+          const [year, month] = selectedMonth.split('-');
+          await supabase.from('payment_receipts').upsert({
+            user_id: selectedTenant.landlordId,
+            tenant_id: selectedTenant.id,
+            year: parseInt(year),
+            month: parseInt(month),
+            has_receipt: true,
+            receipt_file_path: receiptPath
+          });
+        }
+        
+        onSave(paymentData);
+      } catch (error) {
+        console.error('Error saving payment:', error);
+        toast.error('Error al guardar el pago');
+      }
     }
   };
 
@@ -313,6 +353,32 @@ export function PaymentForm({
                 </p>
               </div>
             )}
+
+            <div className="grid gap-2">
+              <Label htmlFor="month">Mes del Pago</Label>
+              <Input
+                id="month"
+                name="month"
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                placeholder="Selecciona el mes"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="receipt">Comprobante de Pago</Label>
+              <Input
+                id="receipt"
+                name="receipt"
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Formatos permitidos: PDF, JPG, PNG
+              </p>
+            </div>
 
             <div className="grid gap-2">
               <Label htmlFor="notes">Notes (Optional)</Label>

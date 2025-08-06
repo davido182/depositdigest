@@ -11,25 +11,35 @@ import { Button } from "@/components/ui/button";
 import { Crown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Settings = () => {
   const { userRole } = useAuth();
   
   const handleUpgradeToPremium = async () => {
     try {
+      console.log('Creating checkout session...');
       const { data, error } = await supabase.functions.invoke('create-checkout');
+      
       if (error) {
         console.error('Stripe function error:', error);
         throw error;
       }
+      
       if (data?.url) {
-        window.open(data.url, '_blank');
+        console.log('Opening checkout URL:', data.url);
+        // Force open in new window/tab
+        const newWindow = window.open(data.url, '_blank', 'noopener,noreferrer');
+        if (!newWindow) {
+          // Fallback if popup blocked
+          window.location.href = data.url;
+        }
       } else {
         throw new Error('No se recibió URL de checkout');
       }
     } catch (error) {
       console.error('Error creating checkout:', error);
-      alert('Error al crear sesión de pago. Verifica tu configuración de Stripe.');
+      toast.error('Error al crear sesión de pago. Verifica tu configuración de Stripe.');
     }
   };
   return (
