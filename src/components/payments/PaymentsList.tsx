@@ -53,11 +53,17 @@ export function PaymentsList({
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [viewingPayment, setViewingPayment] = useState<Payment | null>(null);
 
-  const handleAddPayment = (payment: Payment) => {
+  const handleAddPayment = async (payment: Payment) => {
     console.log('Agregando nuevo pago:', payment);
-    onUpdatePayment(payment);
-    setIsAddModalOpen(false);
-    toast.success("Pago agregado exitosamente");
+    try {
+      // Call onUpdatePayment for both add and update operations
+      await onUpdatePayment(payment);
+      setIsAddModalOpen(false);
+      toast.success("Pago agregado exitosamente");
+    } catch (error) {
+      console.error('Error al agregar pago:', error);
+      toast.error('Error al guardar el pago');
+    }
   };
 
   const handleUpdatePayment = (payment: Payment) => {

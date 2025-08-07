@@ -189,11 +189,18 @@ export function PaymentForm({
           receiptPath = filePath;
         }
         
-        const paymentData: Payment = {
+        // Create payment data without ID for new payments
+        const paymentToSave = payment ? {
           ...formData,
-          type: 'rent', // Valor por defecto necesario
-          id: payment?.id || crypto.randomUUID(),
-          createdAt: payment?.createdAt || new Date().toISOString(),
+          id: payment.id,
+          createdAt: payment.createdAt,
+          // Include receipt path if uploaded
+          ...(receiptPath && { receipt_file_path: receiptPath })
+        } : {
+          ...formData,
+          // Don't include ID for new payments - let the service generate it
+          // Include receipt path if uploaded
+          ...(receiptPath && { receipt_file_path: receiptPath })
         };
         
         // Update payment tracking if month/year selected
@@ -211,7 +218,7 @@ export function PaymentForm({
           }
         }
         
-        onSave(paymentData);
+        onSave(paymentToSave as Payment);
         onClose();
         toast.success('Pago guardado exitosamente');
       } catch (error) {

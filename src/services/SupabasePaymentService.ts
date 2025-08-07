@@ -33,7 +33,9 @@ export class SupabasePaymentService extends SupabaseService {
       payment_date: payment.date,
       payment_method: this.mapPaymentMethodToDb(payment.method),
       status: payment.status,
-      notes: payment.notes || null
+      notes: payment.notes || null,
+      // Include receipt file path if provided
+      receipt_file_path: payment.receipt_file_path || null
     };
 
     const { data, error } = await supabase
@@ -44,7 +46,7 @@ export class SupabasePaymentService extends SupabaseService {
 
     if (error) {
       console.error('Error creating payment:', error);
-      throw error;
+      throw new Error(`Error al crear el pago: ${error.message}`);
     }
 
     return data!.id;
@@ -122,7 +124,8 @@ export class SupabasePaymentService extends SupabaseService {
       method: this.mapDbPaymentMethodToApp(data.payment_method),
       status: data.status,
       notes: data.notes || '',
-      createdAt: data.created_at
+      createdAt: data.created_at,
+      receipt_file_path: data.receipt_file_path
     };
   }
 }

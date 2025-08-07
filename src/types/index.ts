@@ -33,6 +33,7 @@ export interface Payment {
   createdAt: string;
   month?: number;
   year?: number;
+  receipt_file_path?: string;
 }
 
 export type PaymentType = 'rent' | 'deposit' | 'fee' | 'other';

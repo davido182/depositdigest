@@ -103,7 +103,12 @@ const Sidebar = () => {
 
   const handleUpgrade = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout');
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { 
+          email: user?.email,
+          priceId: 'price_1QdFz0DKXqPjJWpJqwgNLYkr'
+        }
+      });
       
       if (error) {
         console.error('Error creating checkout:', error);
@@ -113,6 +118,8 @@ const Sidebar = () => {
       
       if (data?.url) {
         window.open(data.url, '_blank');
+      } else {
+        toast.error('No se pudo generar el enlace de pago');
       }
     } catch (error) {
       console.error('Error:', error);
