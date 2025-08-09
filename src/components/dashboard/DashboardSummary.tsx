@@ -10,7 +10,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { usePropertyStats } from "@/hooks/use-property-stats";
+import { useAppData } from "@/hooks/use-app-data";
 
 interface DashboardSummaryProps {
   totalProperties?: number;
@@ -26,16 +26,18 @@ export function DashboardSummary({
   monthlyRevenue 
 }: DashboardSummaryProps = {}) {
   const isMobile = useIsMobile();
-  const { stats } = usePropertyStats();
+  const { stats, isLoading } = useAppData();
 
-  // Use props if provided, otherwise fall back to stats hook
+  // Use props if provided, otherwise fall back to centralized data
   const displayStats = {
     totalProperties: totalProperties ?? stats.totalProperties,
     totalUnits: totalUnits ?? stats.totalUnits,
     occupiedUnits: occupiedUnits ?? stats.occupiedUnits,
     vacantUnits: (totalUnits ?? stats.totalUnits) - (occupiedUnits ?? stats.occupiedUnits),
-    isLoading: stats.isLoading
+    isLoading: isLoading
   };
+
+  console.log('DashboardSummary: Using stats:', displayStats);
 
   if (displayStats.isLoading) {
     return (

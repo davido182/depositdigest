@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { Building, Plus, Users, DollarSign, MapPin, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { tenantService } from "@/services/TenantService";
-import { usePropertyStats } from "@/hooks/use-property-stats";
+import { useAppData } from "@/hooks/use-app-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -36,7 +36,7 @@ const Dashboard = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { stats, refetch } = usePropertyStats();
+  const { stats, refetch } = useAppData();
 
   // Show tenant dashboard for tenant users
   if (userRole === 'tenant') {
@@ -180,12 +180,7 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <DashboardSummary 
-          totalProperties={properties.length}
-          totalUnits={properties.reduce((acc, prop) => acc + prop.units, 0)}
-          occupiedUnits={properties.reduce((acc, prop) => acc + prop.occupied_units, 0)}
-          monthlyRevenue={properties.reduce((acc, prop) => acc + prop.monthly_revenue, 0)}
-        />
+        <DashboardSummary />
 
         <IntelligentDashboard stats={stats} />
 

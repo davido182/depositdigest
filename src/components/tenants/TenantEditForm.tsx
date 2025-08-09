@@ -75,20 +75,34 @@ export function TenantEditForm({
 
   useEffect(() => {
     if (isOpen) {
-      setFormData(tenant || emptyTenant);
-      setHasDeposit(tenant ? tenant.depositAmount > 0 : false);
+      console.log('TenantEditForm: Modal opened with tenant:', tenant);
+      // Force clean state reset
+      if (tenant) {
+        setFormData({ ...tenant });
+        setHasDeposit(tenant.depositAmount > 0);
+        setSelectedPropertyId(tenant.id ? '' : ''); // Will be loaded by loadTenantProperty
+        loadExistingContract(tenant.id);
+        loadTenantProperty(tenant.id);
+      } else {
+        console.log('TenantEditForm: Resetting to empty tenant');
+        setFormData({ ...emptyTenant });
+        setHasDeposit(false);
+        setSelectedPropertyId('');
+      }
       setErrors({});
       setContractFile(null);
       setExistingContract(null);
       loadProperties();
       loadAvailableUnits();
-      if (tenant) {
-        loadExistingContract(tenant.id);
-        // Set selected property if editing
-        if (tenant.id) {
-          loadTenantProperty(tenant.id);
-        }
-      }
+    } else {
+      // Clean up state when modal closes
+      console.log('TenantEditForm: Modal closed, cleaning up state');
+      setFormData({ ...emptyTenant });
+      setHasDeposit(false);
+      setSelectedPropertyId('');
+      setErrors({});
+      setContractFile(null);
+      setExistingContract(null);
     }
   }, [tenant, isOpen]);
 

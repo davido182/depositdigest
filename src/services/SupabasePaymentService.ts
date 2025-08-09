@@ -23,21 +23,10 @@ export class SupabasePaymentService extends SupabaseService {
     return data.map(payment => this.mapSupabasePaymentToPayment(payment));
   }
 
-  async createPayment(payment: Omit<Payment, 'id' | 'createdAt'>): Promise<string> {
-    const user = await this.ensureAuthenticated();
+  async createPayment(paymentData: any): Promise<string> {
+    console.log('SupabasePaymentService: Creating payment with data:', paymentData);
     
-    const paymentData = {
-      user_id: user.id,
-      tenant_id: payment.tenantId,
-      amount: payment.amount,
-      payment_date: payment.date,
-      payment_method: this.mapPaymentMethodToDb(payment.method),
-      status: payment.status,
-      notes: payment.notes || null,
-      // Include receipt file path if provided
-      receipt_file_path: payment.receipt_file_path || null
-    };
-
+    // Data is already in the correct format from PaymentForm
     const { data, error } = await supabase
       .from('payments')
       .insert(paymentData)
@@ -45,23 +34,22 @@ export class SupabasePaymentService extends SupabaseService {
       .single();
 
     if (error) {
-      console.error('Error creating payment:', error);
+      console.error('SupabasePaymentService: Error creating payment:', error);
       throw new Error(`Error al crear el pago: ${error.message}`);
     }
 
+    console.log('SupabasePaymentService: Payment created successfully:', data);
     return data!.id;
   }
 
-  async updatePayment(id: string, updates: Partial<Payment>): Promise<boolean> {
+  async updatePayment(id: string, paymentData: any): Promise<boolean> {
+    console.log('SupabasePaymentService: Updating payment with data:', paymentData);
+    
     const user = await this.ensureAuthenticated();
     
-    const updateData: any = {};
-    if (updates.amount !== undefined) updateData.amount = updates.amount;
-    if (updates.date) updateData.payment_date = updates.date;
-    if (updates.method) updateData.payment_method = this.mapPaymentMethodToDb(updates.method);
-    if (updates.status) updateData.status = updates.status;
-    if (updates.notes !== undefined) updateData.notes = updates.notes;
-
+    // Remove id from update data if present
+    const { id: _, ...updateData } = paymentData;
+    
     const { error } = await supabase
       .from('payments')
       .update(updateData)
@@ -69,10 +57,11 @@ export class SupabasePaymentService extends SupabaseService {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Error updating payment:', error);
-      throw error;
+      console.error('SupabasePaymentService: Error updating payment:', error);
+      throw new Error(`Error al actualizar el pago: ${error.message}`);
     }
 
+    console.log('SupabasePaymentService: Payment updated successfully');
     return true;
   }
 

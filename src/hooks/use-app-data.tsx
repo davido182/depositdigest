@@ -20,6 +20,12 @@ interface AggregatedStats {
   activeTenants: number;
   occupancyRate: number;
   collectionRate: number;
+  // DashboardStats compatibility
+  totalTenants: number;
+  overduePayments: number;
+  pendingDeposits: number;
+  upcomingMoveIns: number;
+  upcomingMoveOuts: number;
 }
 
 export function useAppData() {
@@ -42,6 +48,12 @@ export function useAppData() {
     activeTenants: 0,
     occupancyRate: 0,
     collectionRate: 0,
+    // DashboardStats compatibility
+    totalTenants: 0,
+    overduePayments: 0,
+    pendingDeposits: 0,
+    upcomingMoveIns: 0,
+    upcomingMoveOuts: 0,
   });
 
   const fetchAllData = useCallback(async () => {
@@ -125,6 +137,12 @@ export function useAppData() {
         activeTenants,
         occupancyRate,
         collectionRate,
+        // DashboardStats compatibility
+        totalTenants: activeTenants,
+        overduePayments: 0, // TODO: Calculate from overdue payments
+        pendingDeposits: 0, // TODO: Calculate from pending deposits
+        upcomingMoveIns: 0, // TODO: Calculate from upcoming move-ins
+        upcomingMoveOuts: 0, // TODO: Calculate from upcoming move-outs
       });
 
     } catch (error) {

@@ -167,6 +167,7 @@ export function PaymentForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('PaymentForm: Starting submit with formData:', formData);
     
     if (validateForm()) {
       try {
@@ -183,47 +184,73 @@ export function PaymentForm({
             .upload(filePath, receiptFile);
             
           if (uploadError) {
+            console.error('Receipt upload error:', uploadError);
             throw new Error('Error al subir el comprobante');
           }
           
           receiptPath = filePath;
+          console.log('Receipt uploaded successfully:', receiptPath);
         }
         
-        // Create payment data without ID for new payments
-        const paymentToSave = payment ? {
-          ...formData,
-          id: payment.id,
-          createdAt: payment.createdAt,
-          // Include receipt path if uploaded
-          ...(receiptPath && { receipt_file_path: receiptPath })
-        } : {
-          ...formData,
-          // Don't include ID for new payments - let the service generate it
-          // Include receipt path if uploaded
-          ...(receiptPath && { receipt_file_path: receiptPath })
+        // Get current user for user_id
+        const { data: authUser } = await supabase.auth.getUser();
+        if (!authUser.user) {
+          throw new Error('Usuario no autenticado');
+        }
+
+        // Create payment data with correct structure for database
+        const paymentToSave = {
+          // Map frontend fields to database fields
+          tenant_id: formData.tenantId,
+          amount: formData.amount,
+          payment_date: formData.date,
+          payment_method: formData.method,
+          status: formData.status,
+          notes: formData.notes || null,
+          user_id: authUser.user.id,
+          ...(receiptPath && { receipt_file_path: receiptPath }),
+          // Include ID only for updates
+          ...(payment && { id: payment.id })
         };
+        
+        console.log('PaymentForm: Mapped payment data for save:', paymentToSave);
         
         // Update payment tracking if month/year selected
         if (formData.month && formData.year && selectedTenant) {
-          const { data: authUser } = await supabase.auth.getUser();
-          if (authUser.user) {
-            await supabase.from('payment_receipts').upsert({
-              user_id: authUser.user.id,
-              tenant_id: selectedTenant.id,
-              year: formData.year,
-              month: formData.month,
-              has_receipt: !!receiptPath,
-              receipt_file_path: receiptPath
-            });
-          }
+          await supabase.from('payment_receipts').upsert({
+            user_id: authUser.user.id,
+            tenant_id: selectedTenant.id,
+            year: formData.year,
+            month: formData.month,
+            has_receipt: !!receiptPath,
+            receipt_file_path: receiptPath
+          });
+          console.log('PaymentForm: Payment receipt tracking updated');
         }
         
-        onSave(paymentToSave as Payment);
+        // Convert back to frontend format for onSave callback
+        const frontendPayment: Payment = {
+          id: payment?.id || '',
+          tenantId: formData.tenantId,
+          amount: formData.amount,
+          date: formData.date,
+          type: formData.type,
+          method: formData.method,
+          status: formData.status,
+          notes: formData.notes,
+          createdAt: payment?.createdAt || new Date().toISOString(),
+          ...(formData.month && { month: formData.month }),
+          ...(formData.year && { year: formData.year }),
+          ...(receiptPath && { receipt_file_path: receiptPath })
+        };
+        
+        console.log('PaymentForm: Calling onSave with:', frontendPayment);
+        onSave(frontendPayment);
         onClose();
         toast.success('Pago guardado exitosamente');
       } catch (error) {
         console.error('Error saving payment:', error);
-        toast.error('Error al guardar el pago');
+        toast.error(`Error al guardar el pago: ${error instanceof Error ? error.message : 'Error desconocido'}`);
       }
     }
   };

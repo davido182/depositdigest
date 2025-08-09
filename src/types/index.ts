@@ -148,3 +148,21 @@ export interface DashboardStats {
   upcomingMoveIns: number;
   upcomingMoveOuts: number;
 }
+
+// Aggregated stats interface for useAppData
+export interface AggregatedStats {
+  totalProperties: number;
+  totalUnits: number;
+  occupiedUnits: number;
+  vacantUnits: number;
+  monthlyRevenue: number;
+  activeTenants: number;
+  occupancyRate: number;
+  collectionRate: number;
+  // Extend to include DashboardStats properties for compatibility
+  totalTenants: number;
+  overduePayments: number;
+  pendingDeposits: number;
+  upcomingMoveIns: number;
+  upcomingMoveOuts: number;
+}

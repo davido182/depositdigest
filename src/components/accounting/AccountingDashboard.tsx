@@ -6,10 +6,12 @@ import { AccountingEntriesList } from "./AccountingEntriesList";
 import { TaxEntriesList } from "./TaxEntriesList";
 import { FinancialStatements } from "./FinancialStatements";
 import { AccountingReports } from "./AccountingReports";
+import { AutomatedAccountingIntegration } from "./AutomatedAccountingIntegration";
 
 export function AccountingDashboard() {
   return (
     <div className="space-y-6">
+      <AutomatedAccountingIntegration />
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Resumen</TabsTrigger>
