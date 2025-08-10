@@ -262,7 +262,7 @@ export function ChatAssistant() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-4">
-        <ScrollArea className="flex-1" ref={scrollAreaRef}>
+        <ScrollArea className="flex-1 max-h-[400px]" ref={scrollAreaRef}>
           <div className="space-y-4 pr-4">
             {messages.map((message) => (
               <div

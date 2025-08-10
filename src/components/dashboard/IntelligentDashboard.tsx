@@ -207,7 +207,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-2 text-center">
-                {stats.overduePayments > 0 ? 'Requieren atención' : 'Todo al día'}
+                {stats.pendingDeposits > 0 ? 'Requieren atención' : 'Todo al día'}
               </p>
             </CardContent>
           </Card>

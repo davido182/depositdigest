@@ -38,39 +38,63 @@ const Properties = () => {
 
       try {
         setIsLoading(true);
+        console.log('Loading properties and calculating stats...');
         
         // Load properties from database
         const dbProperties = await propertyService.getProperties();
+        console.log('DB Properties loaded:', dbProperties.length);
         
-        // Get tenants to calculate occupancy
-        const { data: tenants, error } = await supabase
-          .from('tenants')
-          .select('*')
-          .eq('user_id', user.id);
+        // Get tenants and units to calculate occupancy
+        const [tenantsResult, unitsResult] = await Promise.all([
+          supabase.from('tenants').select('*').eq('user_id', user.id),
+          supabase.from('units').select('*').eq('user_id', user.id)
+        ]);
 
-        if (error) {
-          console.error("Error loading tenants:", error);
+        if (tenantsResult.error) {
+          console.error("Error loading tenants:", tenantsResult.error);
           toast.error("Error al cargar inquilinos");
           return;
         }
 
+        if (unitsResult.error) {
+          console.error("Error loading units:", unitsResult.error);
+          toast.error("Error al cargar unidades");
+          return;
+        }
+
+        const tenants = tenantsResult.data || [];
+        const units = unitsResult.data || [];
+        
+        console.log('Tenants loaded:', tenants.length);
+        console.log('Units loaded:', units.length);
+
         // Map database properties to component format and calculate occupancy
         const mappedProperties = dbProperties.map(dbProp => {
-          const propertyTenants = tenants.filter(tenant => 
-            tenant.property_id === dbProp.id && tenant.status === 'active'
-          );
+          // Get units for this property
+          const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
+          const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
+          
+          console.log(`Property ${dbProp.name}:`, {
+            totalUnits: propertyUnits.length,
+            occupiedUnits: occupiedUnits.length,
+            propertyUnits: propertyUnits.map(u => ({ id: u.id, unit_number: u.unit_number, is_available: u.is_available, rent_amount: u.rent_amount }))
+          });
+          
+          // Calculate revenue from occupied units
+          const monthlyRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
           
           return {
             id: dbProp.id,
             name: dbProp.name,
-            address: dbProp.address,
-            units: dbProp.total_units,
-            occupied_units: propertyTenants.length,
-            monthly_revenue: propertyTenants.reduce((sum, t) => sum + t.rent_amount, 0),
+            address: dbProp.address || 'Dirección no especificada',
+            units: propertyUnits.length,
+            occupied_units: occupiedUnits.length,
+            monthly_revenue: monthlyRevenue,
             created_at: dbProp.created_at
           };
         });
 
+        console.log('Final mapped properties:', mappedProperties);
         setProperties(mappedProperties);
       } catch (error) {
         console.error("Error loading properties:", error);
@@ -124,32 +148,45 @@ const Properties = () => {
       
       // Load properties from database
       const dbProperties = await propertyService.getProperties();
+      console.log('Reloading properties after save...');
       
-      // Get tenants to calculate occupancy
-      const { data: tenants, error } = await supabase
-        .from('tenants')
-        .select('*')
-        .eq('user_id', user.id);
+      // Get tenants and units to calculate occupancy
+      const [tenantsResult, unitsResult] = await Promise.all([
+        supabase.from('tenants').select('*').eq('user_id', user.id),
+        supabase.from('units').select('*').eq('user_id', user.id)
+      ]);
 
-      if (error) {
-        console.error("Error loading tenants:", error);
+      if (tenantsResult.error) {
+        console.error("Error loading tenants:", tenantsResult.error);
         toast.error("Error al cargar inquilinos");
         return;
       }
 
+      if (unitsResult.error) {
+        console.error("Error loading units:", unitsResult.error);
+        toast.error("Error al cargar unidades");
+        return;
+      }
+
+      const tenants = tenantsResult.data || [];
+      const units = unitsResult.data || [];
+
       // Map database properties to component format and calculate occupancy
       const mappedProperties = dbProperties.map(dbProp => {
-        const propertyTenants = tenants.filter(tenant => 
-          tenant.property_id === dbProp.id && tenant.status === 'active'
-        );
+        // Get units for this property
+        const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
+        const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
+        
+        // Calculate revenue from occupied units
+        const monthlyRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
         
         return {
           id: dbProp.id,
           name: dbProp.name,
-          address: dbProp.address,
-          units: dbProp.total_units,
-          occupied_units: propertyTenants.length,
-          monthly_revenue: propertyTenants.reduce((sum, t) => sum + t.rent_amount, 0),
+          address: dbProp.address || 'Dirección no especificada',
+          units: propertyUnits.length,
+          occupied_units: occupiedUnits.length,
+          monthly_revenue: monthlyRevenue,
           created_at: dbProp.created_at
         };
       });
@@ -283,13 +320,6 @@ const Properties = () => {
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>Registrada</span>
-                    </div>
-                    <span>{new Date(property.created_at).toLocaleDateString()}</span>
-                  </div>
 
                   {/* Units List */}
                   <div className="border-t pt-4 space-y-2">

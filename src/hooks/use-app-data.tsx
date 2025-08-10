@@ -169,10 +169,10 @@ export function useAppData() {
         activeTenants,
         occupancyRate,
         collectionRate,
-        // DashboardStats compatibility
+        // DashboardStats compatibility  
         totalTenants: activeTenants,
         overduePayments: 0, // TODO: Calculate from overdue payments
-        pendingDeposits: 0, // TODO: Calculate from pending deposits
+        pendingDeposits: payments.filter(p => p.status === 'pending').length,
         upcomingMoveIns: 0, // TODO: Calculate from upcoming move-ins
         upcomingMoveOuts: 0, // TODO: Calculate from upcoming move-outs
       });
