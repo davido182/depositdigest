@@ -18,6 +18,9 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -85,7 +88,17 @@ const Landing = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 text-center">
+      <section className="relative py-20 text-center overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <img
+            src="/images/landing-hero.webp"
+            alt="Panorámica urbana de edificios residenciales con cielo en degradado y acento azul"
+            className="h-full w-full object-cover"
+            loading="eager"
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/50 to-background" />
+        </div>
         <div className="container mx-auto px-4">
           <Badge className="mb-4 bg-blue-100 text-blue-800 hover:bg-blue-100">
             Disponible en App Store y Google Play
@@ -402,7 +415,7 @@ const Landing = () => {
               <h4 className="font-semibold mb-4">Soporte</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>Centro de Ayuda</li>
-                <li>Contacto</li>
+                <li><a href="#contacto" className="hover:text-white">Contacto</a></li>
               </ul>
             </div>
             <div>
