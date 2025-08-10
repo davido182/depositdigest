@@ -272,7 +272,7 @@ const Landing = () => {
                   <Crown className="h-5 w-5 text-yellow-500" />
                 </CardTitle>
                 <CardDescription>
-                  <span className="text-3xl font-bold">€3.99</span>
+                  <span className="text-3xl font-bold">Con invitación - contáctanos</span>
                   <span className="text-gray-600">/mes</span>
                 </CardDescription>
               </CardHeader>
@@ -403,7 +403,6 @@ const Landing = () => {
               <ul className="space-y-2 text-gray-400">
                 <li>Centro de Ayuda</li>
                 <li>Contacto</li>
-                <li>API</li>
               </ul>
             </div>
             <div>
@@ -416,7 +415,7 @@ const Landing = () => {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 RentaFlux. Todos los derechos reservados.</p>
+            <p>&copy; 2025 RentaFlux. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>
