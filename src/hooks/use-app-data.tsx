@@ -71,6 +71,7 @@ export function useAppData() {
 
     try {
       setData(prev => ({ ...prev, isLoading: true, error: null }));
+      console.log('useAppData: Fetching all data for user:', user.id);
 
       // Fetch all data in parallel
       const [tenantsResult, paymentsResult, propertiesResult, unitsResult] = await Promise.all([
@@ -91,12 +92,25 @@ export function useAppData() {
       const properties = propertiesResult.data || [];
       const units = unitsResult.data || [];
 
-      // Calculate aggregated stats
+      console.log('useAppData: Fetched data:', {
+        tenantsCount: tenants.length,
+        paymentsCount: payments.length,
+        propertiesCount: properties.length,
+        unitsCount: units.length
+      });
+
+      // Calculate aggregated stats with detailed logging
       const totalProperties = properties.length;
       const totalUnits = units.length;
       const occupiedUnits = units.filter(u => !u.is_available).length;
       const vacantUnits = totalUnits - occupiedUnits;
       const activeTenants = tenants.filter(t => t.status === 'active').length;
+      
+      console.log('useAppData: Units analysis:', {
+        totalUnits,
+        occupiedUnits: units.filter(u => !u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number, rent_amount: u.rent_amount })),
+        vacantUnits: units.filter(u => u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number }))
+      });
       
       // Calculate monthly revenue from occupied units
       const monthlyRevenue = units
@@ -116,6 +130,13 @@ export function useAppData() {
                p.status === 'completed';
       });
       
+      console.log('useAppData: Current month payments:', {
+        currentMonth,
+        currentYear,
+        currentMonthPayments,
+        activeTenants
+      });
+      
       const paidTenantIds = new Set(currentMonthPayments.map(p => p.tenant_id));
       const collectionRate = activeTenants > 0 ? (paidTenantIds.size / activeTenants) * 100 : 0;
 
@@ -126,6 +147,17 @@ export function useAppData() {
         units,
         isLoading: false,
         error: null,
+      });
+
+      console.log('useAppData: Final calculated stats:', {
+        totalProperties,
+        totalUnits,
+        occupiedUnits,
+        vacantUnits,
+        monthlyRevenue,
+        activeTenants,
+        occupancyRate: occupancyRate.toFixed(2),
+        collectionRate: collectionRate.toFixed(2)
       });
 
       setStats({

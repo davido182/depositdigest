@@ -233,16 +233,16 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             <CardContent>
               <div className="space-y-3">
                 {[
-                  { month: 'Mar', amount: stats.monthlyRevenue * 0.85 },
-                  { month: 'Abr', amount: stats.monthlyRevenue * 1.1 },
-                  { month: 'May', amount: stats.monthlyRevenue * 0.95 },
-                  { month: 'Jun', amount: stats.monthlyRevenue },
+                  { month: 'Mar', amount: Math.max(stats.monthlyRevenue * 0.85, 0) },
+                  { month: 'Abr', amount: Math.max(stats.monthlyRevenue * 1.1, 0) },
+                  { month: 'May', amount: Math.max(stats.monthlyRevenue * 0.95, 0) },
+                  { month: 'Jun', amount: Math.max(stats.monthlyRevenue, 0) },
                 ].map((item, index) => (
                   <div key={item.month} className="flex items-center space-x-3">
                     <span className="text-sm font-medium w-8">{item.month}</span>
                     <div className="flex-1">
                       <Progress 
-                        value={(item.amount / stats.monthlyRevenue) * 100} 
+                        value={stats.monthlyRevenue > 0 ? Math.min((item.amount / stats.monthlyRevenue) * 100, 100) : 0} 
                         className="h-2"
                       />
                     </div>
@@ -359,13 +359,13 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="p-3 bg-blue-100 rounded-lg text-sm text-blue-800">
-                📈 Tu tasa de ocupación del {stats.occupancyRate}% está por encima del promedio del mercado (85%)
+                📈 Tu tasa de ocupación del {stats.occupancyRate.toFixed(2)}% está por encima del promedio del mercado (85%)
               </div>
               <div className="p-3 bg-green-100 rounded-lg text-sm text-green-800">
                 💰 Puedes aumentar los ingresos un 8% ajustando el precio de las unidades vacías
               </div>
               <div className="p-3 bg-amber-100 rounded-lg text-sm text-amber-800">
-                ⏰ Se recomienda revisar contratos que vencen en los próximos 60 días
+                ⏰ Tasa de desocupación: {(100 - stats.occupancyRate).toFixed(2)}% - Se recomienda revisar contratos que vencen en los próximos 60 días
               </div>
             </CardContent>
           </Card>

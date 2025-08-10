@@ -28,7 +28,7 @@ function AccountingStatsCards() {
       const yearEnd = `${currentYear}-12-31`;
 
       // Get payments data for income (annual)
-      const { data: payments } = await supabase
+      const { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select('amount, status, payment_date')
         .eq('user_id', user?.id)
@@ -37,14 +37,21 @@ function AccountingStatsCards() {
         .lte('payment_date', yearEnd);
 
       // Get accounting entries for expenses (annual)
-      const { data: expenses } = await supabase
+      const { data: expenses, error: expensesError } = await supabase
         .from('accounting_entries')
         .select('debit_amount, credit_amount, date, accounts(type)')
         .eq('user_id', user?.id)
         .gte('date', yearStart)
         .lte('date', yearEnd);
 
-      const totalIncome = payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
+      console.log('AccountingReports: Loaded data:', {
+        payments: payments?.length || 0,
+        expenses: expenses?.length || 0,
+        paymentsError,
+        expensesError
+      });
+
+      const totalIncome = payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
       const totalExpenses = expenses
         ?.filter(entry => entry.accounts?.type === 'expense')
         .reduce((sum, entry) => sum + (entry.debit_amount || 0), 0) || 0;

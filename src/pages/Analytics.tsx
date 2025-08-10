@@ -77,6 +77,16 @@ const Analytics = () => {
         const activeTenants = tenants.filter(t => t.status === 'active');
         const paidTenantIds = new Set(currentMonthPayments.map(p => p.tenant_id));
         const collectionRate = activeTenants.length > 0 ? (paidTenantIds.size / activeTenants.length) * 100 : 0;
+        
+        console.log('Analytics: Payment analysis:', {
+          currentMonth,
+          currentYear,
+          totalPayments: payments.length,
+          currentMonthPayments: currentMonthPayments.length,
+          activeTenants: activeTenants.length,
+          paidTenantIds: Array.from(paidTenantIds),
+          collectionRate
+        });
 
         setKpis({
           totalUnits,
@@ -131,12 +141,12 @@ const Analytics = () => {
   ];
   
   const revenueTrend = [
-    { month: 'Ene', amount: kpis.monthlyRevenue * 0.85 },
-    { month: 'Feb', amount: kpis.monthlyRevenue * 0.90 },
-    { month: 'Mar', amount: kpis.monthlyRevenue * 0.92 },
-    { month: 'Abr', amount: kpis.monthlyRevenue * 0.95 },
-    { month: 'May', amount: kpis.monthlyRevenue * 0.98 },
-    { month: 'Jun', amount: kpis.monthlyRevenue },
+    { month: 'Ene', amount: Math.max(kpis.monthlyRevenue * 0.85, 0) },
+    { month: 'Feb', amount: Math.max(kpis.monthlyRevenue * 0.90, 0) },
+    { month: 'Mar', amount: Math.max(kpis.monthlyRevenue * 0.92, 0) },
+    { month: 'Abr', amount: Math.max(kpis.monthlyRevenue * 0.95, 0) },
+    { month: 'May', amount: Math.max(kpis.monthlyRevenue * 0.98, 0) },
+    { month: 'Jun', amount: Math.max(kpis.monthlyRevenue, 0) },
   ];
   
   return (
