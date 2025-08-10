@@ -26,10 +26,13 @@ export class SupabasePaymentService extends SupabaseService {
   async createPayment(paymentData: any): Promise<string> {
     console.log('SupabasePaymentService: Creating payment with data:', paymentData);
     
-    // Data is already in the correct format from PaymentForm
+    // Ensure authenticated user and attach user_id for RLS policies
+    const user = await this.ensureAuthenticated();
+    const payload = { ...paymentData, user_id: user.id };
+    
     const { data, error } = await supabase
       .from('payments')
-      .insert(paymentData)
+      .insert(payload)
       .select('id')
       .single();
 

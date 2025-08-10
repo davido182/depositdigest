@@ -185,18 +185,18 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
               <CardTitle className="text-sm font-medium">Pagos Pendientes</CardTitle>
               <motion.div
                 animate={{ 
-                  rotate: stats.overduePayments > 0 ? [0, 10, -10, 0] : 0,
-                  scale: stats.overduePayments > 0 ? [1, 1.1, 1] : 1
+                  rotate: stats.pendingDeposits > 0 ? [0, 10, -10, 0] : 0,
+                  scale: stats.pendingDeposits > 0 ? [1, 1.1, 1] : 1
                 }}
                 transition={{ repeat: Infinity, duration: 2 }}
               >
-                <AlertCircle className={`h-6 w-6 ${stats.overduePayments > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+                <AlertCircle className={`h-6 w-6 ${stats.pendingDeposits > 0 ? 'text-red-500' : 'text-gray-400'}`} />
               </motion.div>
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold text-center ${stats.overduePayments > 0 ? 'text-red-500' : 'text-gray-600'}`}>
-                <AnimatedCounter value={stats.overduePayments} />
-                {stats.overduePayments > 0 && (
+              <div className={`text-2xl font-bold text-center ${stats.pendingDeposits > 0 ? 'text-red-500' : 'text-gray-600'}`}>
+                <AnimatedCounter value={stats.pendingDeposits} />
+                {stats.pendingDeposits > 0 && (
                   <motion.span
                     animate={{ opacity: [1, 0.5, 1] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
@@ -262,37 +262,25 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
           variants={cardVariants}
           transition={{ delay: 0.4, duration: 0.6 }}
         >
-          <Card>
+          <Card className="relative overflow-hidden border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 h-full">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Resumen de Inquilinos
+              <CardTitle className="flex items-center gap-2 text-blue-800">
+                <Zap className="h-5 w-5" />
+                Insights
               </CardTitle>
+              <CardDescription className="text-blue-700">
+                Recomendaciones personalizadas basadas en tus datos
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Total Inquilinos</span>
-                <Badge variant="secondary">
-                  <AnimatedCounter value={stats.totalTenants} />
-                </Badge>
+            <CardContent className="space-y-3">
+              <div className="p-3 bg-blue-100 rounded-lg text-sm text-blue-800">
+                📈 Tu tasa de ocupación del {stats.occupancyRate.toFixed(2)}% está por encima del promedio del mercado (85%)
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Unidades Vacías</span>
-                <Badge variant={stats.vacantUnits > 0 ? "destructive" : "secondary"}>
-                  <AnimatedCounter value={stats.vacantUnits} />
-                </Badge>
+              <div className="p-3 bg-green-100 rounded-lg text-sm text-green-800">
+                💰 Puedes aumentar los ingresos un 8% ajustando el precio de las unidades vacías
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Próximos Ingresos</span>
-                <Badge variant="secondary">
-                  {stats.upcomingMoveIns}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Salidas Próximas</span>
-                <Badge variant={stats.upcomingMoveOuts > 0 ? "destructive" : "secondary"}>
-                  {stats.upcomingMoveOuts}
-                </Badge>
+              <div className="p-3 bg-amber-100 rounded-lg text-sm text-amber-800">
+                ⏰ Tasa de desocupación: {(100 - stats.occupancyRate).toFixed(2)}% - Revisa contratos que vencen en los próximos 60 días
               </div>
             </CardContent>
           </Card>
@@ -340,37 +328,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
         </motion.div>
       )}
 
-      {/* Insights IA para usuarios Premium */}
-      {isPremium && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.6, duration: 0.6 }}
-        >
-          <Card className="relative overflow-hidden border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-800">
-                <Zap className="h-5 w-5" />
-                Insights
-              </CardTitle>
-              <CardDescription className="text-blue-700">
-                Recomendaciones personalizadas basadas en tus datos
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="p-3 bg-blue-100 rounded-lg text-sm text-blue-800">
-                📈 Tu tasa de ocupación del {stats.occupancyRate.toFixed(2)}% está por encima del promedio del mercado (85%)
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg text-sm text-green-800">
-                💰 Puedes aumentar los ingresos un 8% ajustando el precio de las unidades vacías
-              </div>
-              <div className="p-3 bg-amber-100 rounded-lg text-sm text-amber-800">
-                ⏰ Tasa de desocupación: {(100 - stats.occupancyRate).toFixed(2)}% - Se recomienda revisar contratos que vencen en los próximos 60 días
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+      {/* Insights moved above, replacing tenant summary card */}
     </div>
   );
 }

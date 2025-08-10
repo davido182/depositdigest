@@ -27,52 +27,86 @@ function AccountingStatsCards() {
       const yearStart = `${currentYear}-01-01`;
       const yearEnd = `${currentYear}-12-31`;
 
-      // Get payments data for income (annual)
-      const { data: payments, error: paymentsError } = await supabase
-        .from('payments')
-        .select('amount, status, payment_date')
-        .eq('user_id', user?.id)
-        .eq('status', 'completed')
-        .gte('payment_date', yearStart)
-        .lte('payment_date', yearEnd);
-
-      // Get all accounting entries for analysis
-      const { data: allEntries, error: entriesError } = await supabase
-        .from('accounting_entries')
-        .select('debit_amount, credit_amount, date, account_id, accounts(type, name)')
-        .eq('user_id', user?.id)
-        .gte('date', yearStart)
-        .lte('date', yearEnd);
+      // Load data in parallel
+      const [receiptsRes, tenantsRes, entriesRes, taxesRes] = await Promise.all([
+        // Payment tracking (income proxy)
+        supabase
+          .from('payment_receipts')
+          .select('tenant_id, year, month, has_receipt')
+          .eq('user_id', user?.id)
+          .eq('year', currentYear)
+          .eq('has_receipt', true),
+        // Tenants to derive monthly rent per tenant
+        supabase
+          .from('tenants')
+          .select('id, rent_amount')
+          .eq('user_id', user?.id),
+        // All accounting entries (expenses)
+        supabase
+          .from('accounting_entries')
+          .select('debit_amount, credit_amount, date, account_id, accounts(type, name)')
+          .eq('user_id', user?.id)
+          .gte('date', yearStart)
+          .lte('date', yearEnd),
+        // Taxes configured
+        supabase
+          .from('tax_entries')
+          .select('tax_amount, status, date')
+          .eq('user_id', user?.id)
+          .gte('date', yearStart)
+          .lte('date', yearEnd)
+      ]);
 
       console.log('AccountingReports: Raw data loaded:', {
-        payments: payments?.length || 0,
-        allEntries: allEntries?.length || 0,
-        paymentsData: payments?.map(p => ({ amount: p.amount, date: p.payment_date, status: p.status })),
-        entriesData: allEntries?.map(e => ({ 
-          debit: e.debit_amount, 
-          credit: e.credit_amount, 
-          account_type: e.accounts?.type,
-          account_name: e.accounts?.name 
-        })),
-        paymentsError,
-        entriesError
+        receipts: receiptsRes.data?.length || 0,
+        tenants: tenantsRes.data?.length || 0,
+        entries: entriesRes.data?.length || 0,
+        taxes: taxesRes.data?.length || 0,
+        errors: { receiptsError: receiptsRes.error, tenantsError: tenantsRes.error, entriesError: entriesRes.error, taxesError: taxesRes.error }
       });
 
-      const totalIncome = payments?.reduce((sum, payment) => {
-        const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : (payment.amount || 0);
-        return sum + amount;
-      }, 0) || 0;
-      
-      // Calculate expenses from accounting entries - look for expense accounts or debit amounts
-      const totalExpenses = allEntries?.reduce((sum, entry) => {
-        const isExpenseAccount = entry.accounts?.type === 'expense';
+      if (receiptsRes.error) throw receiptsRes.error;
+      if (tenantsRes.error) throw tenantsRes.error;
+      if (entriesRes.error) throw entriesRes.error;
+      if (taxesRes.error) throw taxesRes.error;
+
+      const receipts = receiptsRes.data || [];
+      const tenants = tenantsRes.data || [];
+      const allEntries = entriesRes.data || [];
+      const taxes = taxesRes.data || [];
+
+      // Map tenant rent amount
+      const tenantRentMap = new Map<string, number>();
+      tenants.forEach((t: any) => {
+        const rent = typeof t.rent_amount === 'string' ? parseFloat(t.rent_amount) : (t.rent_amount || 0);
+        tenantRentMap.set(t.id, rent);
+      });
+
+      // Income: sum rent for each receipt marked as paid
+      const totalIncome = receipts.reduce((sum: number, r: any) => {
+        const rent = tenantRentMap.get(r.tenant_id) || 0;
+        return sum + rent;
+      }, 0);
+
+      // Expenses from accounting entries: sum debits of expense accounts
+      const totalAccountingExpenses = allEntries.reduce((sum: number, entry: any) => {
+        const isExpense = entry.accounts?.type === 'expense';
         const debitAmount = typeof entry.debit_amount === 'string' ? parseFloat(entry.debit_amount) : (entry.debit_amount || 0);
-        // For expense accounts, debit increases the expense
-        return isExpenseAccount ? sum + debitAmount : sum;
-      }, 0) || 0;
+        return isExpense ? sum + debitAmount : sum;
+      }, 0);
+
+      // Taxes expenses
+      const totalTaxes = taxes.reduce((sum: number, t: any) => {
+        const tax = typeof t.tax_amount === 'string' ? parseFloat(t.tax_amount) : (t.tax_amount || 0);
+        return sum + tax;
+      }, 0);
+
+      const totalExpenses = totalAccountingExpenses + totalTaxes;
 
       console.log('AccountingReports: Calculated totals:', {
         totalIncome,
+        totalAccountingExpenses,
+        totalTaxes,
         totalExpenses,
         netProfit: totalIncome - totalExpenses
       });

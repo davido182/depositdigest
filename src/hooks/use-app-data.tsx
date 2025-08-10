@@ -74,11 +74,19 @@ export function useAppData() {
       console.log('useAppData: Fetching all data for user:', user.id);
 
       // Fetch all data in parallel
-      const [tenantsResult, paymentsResult, propertiesResult, unitsResult] = await Promise.all([
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1; // 1-indexed for DB
+      const [tenantsResult, paymentsResult, propertiesResult, unitsResult, receiptsResult] = await Promise.all([
         supabase.from('tenants').select('*').eq('user_id', user.id),
         supabase.from('payments').select('*').eq('user_id', user.id),
         supabase.from('properties').select('*').eq('user_id', user.id),
-        supabase.from('units').select('*').eq('user_id', user.id)
+        supabase.from('units').select('*').eq('user_id', user.id),
+        supabase
+          .from('payment_receipts')
+          .select('tenant_id, year, month, has_receipt')
+          .eq('user_id', user.id)
+          .eq('year', currentYear)
+          .eq('month', currentMonth)
       ]);
 
       // Check for errors
@@ -86,17 +94,20 @@ export function useAppData() {
       if (paymentsResult.error) throw paymentsResult.error;
       if (propertiesResult.error) throw propertiesResult.error;
       if (unitsResult.error) throw unitsResult.error;
+      if (receiptsResult.error) throw receiptsResult.error;
 
       const tenants = tenantsResult.data || [];
       const payments = paymentsResult.data || [];
       const properties = propertiesResult.data || [];
       const units = unitsResult.data || [];
+      const receipts = receiptsResult.data || [];
 
       console.log('useAppData: Fetched data:', {
         tenantsCount: tenants.length,
         paymentsCount: payments.length,
         propertiesCount: properties.length,
-        unitsCount: units.length
+        unitsCount: units.length,
+        receiptsCount: receipts.length
       });
 
       // Calculate aggregated stats with detailed logging
@@ -119,10 +130,7 @@ export function useAppData() {
       
       const occupancyRate = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
 
-      // Calculate collection rate for current month
-      const currentMonth = new Date().getMonth() + 1;
-      const currentYear = new Date().getFullYear();
-      
+      // Calculate collection rate for current month (reuse currentMonth/currentYear from above)
       const currentMonthPayments = payments.filter(p => {
         const paymentDate = new Date(p.payment_date);
         return paymentDate.getMonth() + 1 === currentMonth && 
@@ -130,25 +138,16 @@ export function useAppData() {
                p.status === 'completed';
       });
       
-      console.log('useAppData: Current month payments calculation:', {
-        currentMonth,
-        currentYear,
-        totalPayments: payments.length,
-        currentMonthPayments: currentMonthPayments.length,
-        currentMonthPaymentDetails: currentMonthPayments.map(p => ({
-          tenant_id: p.tenant_id,
-          amount: p.amount,
-          date: p.payment_date,
-          status: p.status
-        })),
-        activeTenants,
-        activeTenantIds: tenants.filter(t => t.status === 'active').map(t => t.id)
-      });
-      
+      const activeTenantsList = tenants.filter(t => t.status === 'active');
       const paidTenantIds = new Set(currentMonthPayments.map(p => p.tenant_id));
-      console.log('useAppData: Paid tenant IDs this month:', Array.from(paidTenantIds));
-      
-      const collectionRate = activeTenants > 0 ? (paidTenantIds.size / activeTenants) * 100 : 0;
+      const collectionRate = activeTenantsList.length > 0 ? (paidTenantIds.size / activeTenantsList.length) * 100 : 0;
+
+      // Derive pending/overdue from payment_receipts (tracking table)
+      const paidByReceipts = new Set(
+        receipts.filter((r: any) => r.has_receipt).map((r: any) => r.tenant_id)
+      );
+      const overduePayments = Math.max(activeTenantsList.length - paidByReceipts.size, 0);
+      const pendingDeposits = overduePayments;
 
       setData({
         tenants,
@@ -165,9 +164,11 @@ export function useAppData() {
         occupiedUnits,
         vacantUnits,
         monthlyRevenue,
-        activeTenants,
+        activeTenants: activeTenantsList.length,
         occupancyRate: occupancyRate.toFixed(2),
-        collectionRate: collectionRate.toFixed(2)
+        collectionRate: collectionRate.toFixed(2),
+        overduePayments,
+        pendingDeposits
       });
 
       setStats({
@@ -176,15 +177,15 @@ export function useAppData() {
         occupiedUnits,
         vacantUnits,
         monthlyRevenue,
-        activeTenants,
+        activeTenants: activeTenantsList.length,
         occupancyRate,
         collectionRate,
         // DashboardStats compatibility  
-        totalTenants: activeTenants,
-        overduePayments: 0, // TODO: Calculate from overdue payments
-        pendingDeposits: payments.filter(p => p.status === 'pending').length,
-        upcomingMoveIns: 0, // TODO: Calculate from upcoming move-ins
-        upcomingMoveOuts: 0, // TODO: Calculate from upcoming move-outs
+        totalTenants: activeTenantsList.length,
+        overduePayments, // Based on tracking table for current month
+        pendingDeposits, // Mirror tracking table pending count
+        upcomingMoveIns: 0, // TODO
+        upcomingMoveOuts: 0, // TODO
       });
 
     } catch (error) {

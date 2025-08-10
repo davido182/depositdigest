@@ -35,11 +35,20 @@ const Analytics = () => {
         setIsLoading(true);
         
         // Fetch all data from Supabase directly
-        const [tenantsResult, paymentsResult, propertiesResult, unitsResult] = await Promise.all([
+        const queryYear = new Date().getFullYear();
+        const queryMonth = new Date().getMonth() + 1; // 1-indexed
+        const [tenantsResult, paymentsResult, propertiesResult, unitsResult, receiptsResult] = await Promise.all([
           supabase.from('tenants').select('*').eq('user_id', user.id),
           supabase.from('payments').select('*').eq('user_id', user.id),
           supabase.from('properties').select('*').eq('user_id', user.id),
-          supabase.from('units').select('*').eq('user_id', user.id)
+          supabase.from('units').select('*').eq('user_id', user.id),
+          supabase
+            .from('payment_receipts')
+            .select('tenant_id, year, month, has_receipt')
+            .eq('user_id', user.id)
+            .eq('year', queryYear)
+            .eq('month', queryMonth)
+            .eq('has_receipt', true)
         ]);
 
         if (tenantsResult.error) throw tenantsResult.error;
