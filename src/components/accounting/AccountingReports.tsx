@@ -36,25 +36,46 @@ function AccountingStatsCards() {
         .gte('payment_date', yearStart)
         .lte('payment_date', yearEnd);
 
-      // Get accounting entries for expenses (annual)
-      const { data: expenses, error: expensesError } = await supabase
+      // Get all accounting entries for analysis
+      const { data: allEntries, error: entriesError } = await supabase
         .from('accounting_entries')
-        .select('debit_amount, credit_amount, date, accounts(type)')
+        .select('debit_amount, credit_amount, date, account_id, accounts(type, name)')
         .eq('user_id', user?.id)
         .gte('date', yearStart)
         .lte('date', yearEnd);
 
-      console.log('AccountingReports: Loaded data:', {
+      console.log('AccountingReports: Raw data loaded:', {
         payments: payments?.length || 0,
-        expenses: expenses?.length || 0,
+        allEntries: allEntries?.length || 0,
+        paymentsData: payments?.map(p => ({ amount: p.amount, date: p.payment_date, status: p.status })),
+        entriesData: allEntries?.map(e => ({ 
+          debit: e.debit_amount, 
+          credit: e.credit_amount, 
+          account_type: e.accounts?.type,
+          account_name: e.accounts?.name 
+        })),
         paymentsError,
-        expensesError
+        entriesError
       });
 
-      const totalIncome = payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
-      const totalExpenses = expenses
-        ?.filter(entry => entry.accounts?.type === 'expense')
-        .reduce((sum, entry) => sum + (entry.debit_amount || 0), 0) || 0;
+      const totalIncome = payments?.reduce((sum, payment) => {
+        const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : (payment.amount || 0);
+        return sum + amount;
+      }, 0) || 0;
+      
+      // Calculate expenses from accounting entries - look for expense accounts or debit amounts
+      const totalExpenses = allEntries?.reduce((sum, entry) => {
+        const isExpenseAccount = entry.accounts?.type === 'expense';
+        const debitAmount = typeof entry.debit_amount === 'string' ? parseFloat(entry.debit_amount) : (entry.debit_amount || 0);
+        // For expense accounts, debit increases the expense
+        return isExpenseAccount ? sum + debitAmount : sum;
+      }, 0) || 0;
+
+      console.log('AccountingReports: Calculated totals:', {
+        totalIncome,
+        totalExpenses,
+        netProfit: totalIncome - totalExpenses
+      });
       
       setStats({
         totalIncome,

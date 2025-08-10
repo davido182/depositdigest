@@ -130,14 +130,24 @@ export function useAppData() {
                p.status === 'completed';
       });
       
-      console.log('useAppData: Current month payments:', {
+      console.log('useAppData: Current month payments calculation:', {
         currentMonth,
         currentYear,
-        currentMonthPayments,
-        activeTenants
+        totalPayments: payments.length,
+        currentMonthPayments: currentMonthPayments.length,
+        currentMonthPaymentDetails: currentMonthPayments.map(p => ({
+          tenant_id: p.tenant_id,
+          amount: p.amount,
+          date: p.payment_date,
+          status: p.status
+        })),
+        activeTenants,
+        activeTenantIds: tenants.filter(t => t.status === 'active').map(t => t.id)
       });
       
       const paidTenantIds = new Set(currentMonthPayments.map(p => p.tenant_id));
+      console.log('useAppData: Paid tenant IDs this month:', Array.from(paidTenantIds));
+      
       const collectionRate = activeTenants > 0 ? (paidTenantIds.size / activeTenants) * 100 : 0;
 
       setData({

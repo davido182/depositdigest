@@ -53,12 +53,36 @@ export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessor
       // Simular procesamiento OCR mejorado
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Datos simulados más realistas basados en el tipo de archivo
+      // Datos simulados más realistas basados en el nombre del archivo
+      const fileName = file.name.toLowerCase();
+      let amount = 800; // Default amount
+      
+      // Intentar extraer monto del nombre del archivo
+      const amountMatch = fileName.match(/(\d+(?:\.\d{2})?)/);
+      if (amountMatch) {
+        amount = parseFloat(amountMatch[1]);
+      }
+      
+      // Intentar extraer fecha del nombre del archivo
+      let extractedDate = new Date().toISOString().split('T')[0];
+      const dateMatch = fileName.match(/(\d{4}[-_]\d{2}[-_]\d{2})|(\d{2}[-_]\d{2}[-_]\d{4})/);
+      if (dateMatch) {
+        const dateStr = dateMatch[0].replace(/_/g, '-');
+        try {
+          const parsedDate = new Date(dateStr);
+          if (!isNaN(parsedDate.getTime())) {
+            extractedDate = parsedDate.toISOString().split('T')[0];
+          }
+        } catch (e) {
+          console.log('Could not parse date from filename');
+        }
+      }
+      
       const mockExtractedData: ExtractedData = {
-        amount: Math.floor(Math.random() * 2000) + 500,
-        date: new Date().toISOString().split('T')[0],
-        description: 'Depósito bancario - Comprobante procesado',
-        reference: `REF${Math.floor(Math.random() * 100000)}`,
+        amount: amount,
+        date: extractedDate,
+        description: `Pago de renta - ${file.name}`,
+        reference: `REF${Date.now()}`,
         fileName: file.name
       };
       

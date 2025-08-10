@@ -175,21 +175,37 @@ export function PaymentForm({
         
         // Upload receipt if provided
         if (receiptFile) {
+          console.log('PaymentForm: Uploading receipt file:', receiptFile.name, receiptFile.type, receiptFile.size);
+          
+          // Validate file type
+          const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+          if (!allowedTypes.includes(receiptFile.type)) {
+            throw new Error('Tipo de archivo no permitido. Use JPG, PNG, WEBP o PDF');
+          }
+          
+          // Validate file size (max 5MB)
+          if (receiptFile.size > 5 * 1024 * 1024) {
+            throw new Error('El archivo es demasiado grande. Máximo 5MB');
+          }
+          
           const fileExt = receiptFile.name.split('.').pop();
-          const fileName = `${Date.now()}.${fileExt}`;
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
           const filePath = `receipts/${fileName}`;
           
-          const { error: uploadError } = await supabase.storage
+          const { data: uploadData, error: uploadError } = await supabase.storage
             .from('lease-contracts')
-            .upload(filePath, receiptFile);
+            .upload(filePath, receiptFile, {
+              cacheControl: '3600',
+              upsert: false
+            });
             
           if (uploadError) {
             console.error('Receipt upload error:', uploadError);
-            throw new Error('Error al subir el comprobante');
+            throw new Error(`Error al subir el comprobante: ${uploadError.message}`);
           }
           
           receiptPath = filePath;
-          console.log('Receipt uploaded successfully:', receiptPath);
+          console.log('Receipt uploaded successfully:', receiptPath, uploadData);
         }
         
         // Get current user for user_id
