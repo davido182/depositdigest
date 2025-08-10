@@ -67,6 +67,22 @@ const Landing = () => {
     }
   };
 
+  const handleContactSubmit = (e: any) => {
+    e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    const data = new FormData(form);
+    const name = (data.get('name') as string) || '';
+    const email = (data.get('email') as string) || '';
+    const subjectRaw = (data.get('subject') as string) || 'Consulta';
+    const message = (data.get('message') as string) || '';
+
+    const subject = encodeURIComponent(`[Contacto RentaFlux] ${subjectRaw}`);
+    const body = encodeURIComponent(`Nombre: ${name}\nEmail: ${email}\n\n${message}`);
+    window.location.href = `mailto:rentaflux@gmail.com?subject=${subject}&body=${body}`;
+
+    form.reset();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
@@ -385,6 +401,48 @@ const Landing = () => {
                   <p className="text-lg font-bold">Google Play</p>
                 </div>
               </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Section */}
+      <section id="contacto" className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-4">Contacto</h2>
+          <p className="text-gray-600 text-center mb-8 max-w-2xl mx-auto">
+            Envíanos un mensaje y te responderemos a la brevedad.
+          </p>
+          <div className="max-w-2xl mx-auto">
+            <Card className="p-6">
+              <form onSubmit={handleContactSubmit} className="grid gap-4 text-left">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Nombre</Label>
+                    <Input id="name" name="name" placeholder="Tu nombre" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" name="email" type="email" placeholder="tu@email.com" required />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="subject">Asunto (opcional)</Label>
+                  <Input id="subject" name="subject" placeholder="Asunto" />
+                </div>
+                <div>
+                  <Label htmlFor="message">Mensaje</Label>
+                  <Textarea id="message" name="message" placeholder="Cuéntanos cómo podemos ayudarte" rows={5} required />
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                    Enviar mensaje
+                  </Button>
+                  <a href="mailto:rentaflux@gmail.com" className="text-sm text-blue-600 hover:underline">
+                    O escríbenos a rentaflux@gmail.com
+                  </a>
+                </div>
+              </form>
             </Card>
           </div>
         </div>
