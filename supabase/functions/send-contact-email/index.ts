@@ -74,7 +74,22 @@ serve(async (req: Request) => {
     }
 
     const subject = `[Contacto RentaFlux] ${subjectRaw} — ${name}`;
-    const to = "rentaflux@gmail.com";
+    const fromEmail = (Deno.env.get("FROM_EMAIL") || "").trim();
+    if (!fromEmail) {
+      return new Response(JSON.stringify({ error: "FROM_EMAIL no configurado." }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const toEnv = (Deno.env.get("CONTACT_TO_EMAIL") || "").trim();
+    const toList = toEnv.split(",").map(e => e.trim()).filter(Boolean);
+    if (toList.length === 0) {
+      return new Response(JSON.stringify({ error: "CONTACT_TO_EMAIL no configurado." }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
     const html = `
       <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height:1.5;">
@@ -96,8 +111,8 @@ Asunto: ${subjectRaw}
 ${message}`;
 
     const emailResponse = await resend.emails.send({
-      from: "RentaFlux <onboarding@resend.dev>",
-      to: [to],
+      from: `RentaFlux <${fromEmail}>`,
+      to: toList,
       subject,
       html,
       text,
@@ -106,7 +121,18 @@ ${message}`;
 
     console.log("Resend email sent:", emailResponse);
 
-    return new Response(JSON.stringify({ ok: true, id: (emailResponse as any)?.id || null }), {
+    if ((emailResponse as any)?.error) {
+      const err = (emailResponse as any).error;
+      const status = err?.statusCode ?? 400;
+      const message = err?.error || "No se pudo enviar el correo";
+      return new Response(JSON.stringify({ error: message }), {
+        status,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const id = (emailResponse as any)?.data?.id || (emailResponse as any)?.id || null;
+    return new Response(JSON.stringify({ ok: true, id }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

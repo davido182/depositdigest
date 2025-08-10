@@ -83,7 +83,15 @@ const Landing = () => {
       const { data: result, error } = await supabase.functions.invoke('send-contact-email', {
         body: { name, email, subject: subjectRaw, message, hp }
       });
-      if (error) throw error;
+
+      if (error) {
+        const serverMsg = (error as any)?.message || (result as any)?.error;
+        toast({
+          title: "No se pudo enviar el mensaje",
+          description: serverMsg || "Por favor verifica tu correo y vuelve a intentar.",
+        });
+        return;
+      }
 
       console.log('Contacto enviado OK:', result);
       toast({
@@ -93,9 +101,10 @@ const Landing = () => {
       form.reset();
     } catch (err: any) {
       console.error('Error enviando contacto:', err);
+      const serverMsg = err?.message || (err?.error) || "Error inesperado";
       toast({
         title: "No se pudo enviar el mensaje",
-        description: "Por favor intenta nuevamente o usa el enlace de correo directo.",
+        description: serverMsg,
       });
     }
   };
