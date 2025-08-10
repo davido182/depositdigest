@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -67,7 +68,8 @@ const Landing = () => {
     }
   };
 
-  const handleContactSubmit = (e: any) => {
+  // Reemplazado: enviar por Edge Function en lugar de mailto
+  const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget as HTMLFormElement;
     const data = new FormData(form);
@@ -75,12 +77,27 @@ const Landing = () => {
     const email = (data.get('email') as string) || '';
     const subjectRaw = (data.get('subject') as string) || 'Consulta';
     const message = (data.get('message') as string) || '';
+    const hp = (data.get('hp') as string) || '';
 
-    const subject = encodeURIComponent(`[Contacto RentaFlux] ${subjectRaw}`);
-    const body = encodeURIComponent(`Nombre: ${name}\nEmail: ${email}\n\n${message}`);
-    window.location.href = `mailto:rentaflux@gmail.com?subject=${subject}&body=${body}`;
+    try {
+      const { data: result, error } = await supabase.functions.invoke('send-contact-email', {
+        body: { name, email, subject: subjectRaw, message, hp }
+      });
+      if (error) throw error;
 
-    form.reset();
+      console.log('Contacto enviado OK:', result);
+      toast({
+        title: "Mensaje enviado",
+        description: "Gracias por contactarnos. Te responderemos a la brevedad.",
+      });
+      form.reset();
+    } catch (err: any) {
+      console.error('Error enviando contacto:', err);
+      toast({
+        title: "No se pudo enviar el mensaje",
+        description: "Por favor intenta nuevamente o usa el enlace de correo directo.",
+      });
+    }
   };
 
   return (
@@ -416,6 +433,7 @@ const Landing = () => {
           <div className="max-w-2xl mx-auto">
             <Card className="p-6">
               <form onSubmit={handleContactSubmit} className="grid gap-4 text-left">
+                <input type="text" name="hp" className="hidden" tabIndex={-1} autoComplete="off" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="name">Nombre</Label>
