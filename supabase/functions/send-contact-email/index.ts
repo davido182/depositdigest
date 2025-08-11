@@ -1,8 +1,15 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") || "").trim();
+const SUPABASE_SERVICE_ROLE_KEY = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "").trim();
+const supabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  : null;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,6 +96,29 @@ serve(async (req: Request) => {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
+    }
+
+    // Persistir el contacto en la base de datos (no bloquear en caso de error)
+    try {
+      if (supabase) {
+        const ip = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || "";
+        const ua = req.headers.get("user-agent") || "";
+        const { error: insertError } = await supabase.from("contact_submissions").insert({
+          name,
+          email,
+          subject: subjectRaw,
+          message,
+          ip_address: ip,
+          user_agent: ua,
+        });
+        if (insertError) {
+          console.warn("Failed to persist contact submission:", insertError);
+        }
+      } else {
+        console.warn("Supabase client not configured; skipping contact persistence.");
+      }
+    } catch (persistErr) {
+      console.error("Error persisting contact submission:", persistErr);
     }
 
     const html = `
