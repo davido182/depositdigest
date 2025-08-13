@@ -84,7 +84,16 @@ const Analytics = () => {
         });
         
         const activeTenants = tenants.filter(t => t.status === 'active');
-        const paidTenantIds = new Set(currentMonthPayments.map(p => p.tenant_id));
+        
+        // Incluir comprobantes marcados en payment_receipts como pagos del mes
+        const receipts = receiptsResult.data || [];
+        const paidByReceipts = new Set(receipts.map((r: any) => r.tenant_id));
+        const paidByPayments = new Set(currentMonthPayments.map(p => p.tenant_id));
+        const paidTenantIds = new Set([
+          ...Array.from(paidByPayments),
+          ...Array.from(paidByReceipts)
+        ]);
+        
         const collectionRate = activeTenants.length > 0 ? (paidTenantIds.size / activeTenants.length) * 100 : 0;
         
         console.log('Analytics: Payment analysis:', {
@@ -92,6 +101,7 @@ const Analytics = () => {
           currentYear,
           totalPayments: payments.length,
           currentMonthPayments: currentMonthPayments.length,
+          receiptsCount: receipts.length,
           activeTenants: activeTenants.length,
           paidTenantIds: Array.from(paidTenantIds),
           collectionRate
