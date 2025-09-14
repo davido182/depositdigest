@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  rentaflux-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_MODE: development
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+    networks:
+      - rentaflux-network
+
+  rentaflux-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_MODE: staging
+    ports:
+      - "3001:80"
+    environment:
+      - NODE_ENV=staging
+    networks:
+      - rentaflux-network
+
+networks:
+  rentaflux-network:
+    driver: bridge

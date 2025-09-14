@@ -1,0 +1,31 @@
+# ✅ Checklist de Despliegue - RentaFlux 
+ 
+## 📱 APK ANDROID: 
+ 
+[ ] 1. Esperar a que Android Studio termine el build 
+[ ] 2. Localizar APK en: android\app\build\outputs\apk\debug\ 
+[ ] 3. Subir APK a Google Drive 
+[ ] 4. Obtener enlace público de descarga 
+[ ] 5. Reemplazar enlace en mensajes-promocion.txt 
+[ ] 6. Compartir con primeros usuarios 
+ 
+## 🌐 PWA GLOBAL: 
+ 
+OPCIÓN RÁPIDA (Local): 
+[ ] 1. Ejecutar: npm run dev 
+[ ] 2. Obtener IP local: ipconfig 
+[ ] 3. Compartir: http://tu-ip:8081 
+ 
+OPCIÓN PROFESIONAL (Cloudflare): 
+[ ] 1. Crear cuenta en Cloudflare 
+[ ] 2. Configurar túnel 
+[ ] 3. Agregar token a .env.local 
+[ ] 4. Ejecutar: start-with-cloudflare.bat 
+ 
+## 🚀 PROMOCIÓN: 
+ 
+[ ] 1. Editar mensajes con enlaces reales 
+[ ] 2. Compartir en WhatsApp/Telegram 
+[ ] 3. Publicar en redes sociales 
+[ ] 4. Enviar a amigos por email 
+[ ] 5. Recopilar feedback 

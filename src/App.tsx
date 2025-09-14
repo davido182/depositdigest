@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AuthDebugger from "@/components/AuthDebugger";
+import { DevToolsPanel } from "@/hooks/useDevTools";
 import Index from "./pages/Index";
 import Tenants from "./pages/Tenants";
 import Properties from "./pages/Properties";
@@ -23,9 +24,12 @@ import InviteTenant from "./pages/InviteTenant";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Landing from "./pages/Landing";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { App as CapApp } from "@capacitor/app";
 import { useDeviceFeatures } from "./hooks/use-device-features";
+import { logger } from "@/utils/logger";
+import { config } from "@/utils/config";
+import { liveUpdatesService } from "@/services/LiveUpdatesService";
 
 // Create a new query client instance with simplified configuration
 const queryClient = new QueryClient({
@@ -39,9 +43,28 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  console.log("🚀 App component rendering - auth fix version");
+  logger.info("🚀 RentaFlux App initializing", { 
+    version: config.app.version, 
+    environment: config.app.environment 
+  });
+  
   const { isNative } = useDeviceFeatures();
   const listenerRef = useRef<any>(null);
+  const [hasVisitedBefore, setHasVisitedBefore] = useState<boolean | null>(null);
+
+  // Check if user has visited before
+  useEffect(() => {
+    const checkFirstVisit = () => {
+      const hasVisited = localStorage.getItem('rentaflux_has_visited');
+      setHasVisitedBefore(!!hasVisited);
+      
+      if (!hasVisited) {
+        localStorage.setItem('rentaflux_has_visited', 'true');
+      }
+    };
+    
+    checkFirstVisit();
+  }, []);
   
   // Listen for hardware back button on native apps
   useEffect(() => {
@@ -68,6 +91,19 @@ const App = () => {
       };
     }
   }, [isNative]);
+
+  // Initialize Live Updates service
+  useEffect(() => {
+    if (isNative) {
+      liveUpdatesService.initialize().catch(error => {
+        logger.error('Failed to initialize Live Updates:', error);
+      });
+
+      return () => {
+        liveUpdatesService.cleanup();
+      };
+    }
+  }, [isNative]);
   
   return (
     <QueryClientProvider client={queryClient}>
@@ -75,11 +111,12 @@ const App = () => {
         <TooltipProvider>
           <BrowserRouter>
             <Routes>
+              <Route path="/" element={<Landing />} />
               <Route path="/landing" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/tenant-signup" element={<TenantSignup />} />
               <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<Index />} />
+                <Route path="/dashboard" element={<Index />} />
                 <Route path="/properties" element={<Properties />} />
                 <Route path="/tenants" element={<Tenants />} />
                 <Route path="/payments" element={<Payments />} />
@@ -99,6 +136,7 @@ const App = () => {
           </BrowserRouter>
           <Toaster />
           <Sonner position="top-right" />
+          {/* <DevToolsPanel /> */}
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

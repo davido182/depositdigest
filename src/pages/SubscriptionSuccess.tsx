@@ -17,7 +17,7 @@ export default function SubscriptionSuccess() {
     const updateSubscription = async () => {
       try {
         await checkSubscription();
-        toast.success("¡Bienvenido a RentFlow Premium!");
+        toast.success("¡Bienvenido a RentaFlux Premium!");
       } catch (error) {
         console.error("Error updating subscription:", error);
       }
@@ -45,7 +45,7 @@ export default function SubscriptionSuccess() {
             </div>
             
             <p className="text-muted-foreground">
-              Tu suscripción a RentFlow Premium se ha activado correctamente. 
+              Tu suscripción a RentaFlux Premium se ha activado correctamente. 
               Ahora tienes acceso a todas las funciones premium.
             </p>
 

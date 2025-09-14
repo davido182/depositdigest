@@ -342,6 +342,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
       
+      // Clear the visited flag so user sees landing page on next visit
+      localStorage.removeItem('rentaflux_has_visited');
+      
       console.log("✅ SignOut successful");
     } finally {
       setIsLoading(false);

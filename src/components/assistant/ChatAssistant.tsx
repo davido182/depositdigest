@@ -21,14 +21,27 @@ export function ChatAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '¡Hola! Soy RentFlux, tu asistente inteligente. Puedo ayudarte a encontrar información sobre tus inquilinos, pagos, mantenimiento y más. Pregúntame algo como "¿Cuál es el alquiler del apartamento 2?" o "¿Quién vive en la unidad 3?"',
+      text: '¡Hola! Soy tu Consultor Inteligente de RentaFlux 🏠✨\n\nPuedo ayudarte con análisis avanzados y sugerencias personalizadas para optimizar tus propiedades. Mis especialidades incluyen:\n\n🔍 **Análisis de Datos:**\n• Rentabilidad por unidad\n• Tendencias de pagos\n• Estadísticas de ocupación\n\n💡 **Sugerencias Inteligentes:**\n• Optimización de precios\n• Estrategias anti-vacantes\n• Predicción de mantenimiento\n\n📊 **Reportes Personalizados:**\n• Comparativas entre propiedades\n• Análisis de inquilinos\n• Proyecciones financieras\n\n¿En qué te puedo ayudar hoy?',
       isBot: true,
       timestamp: new Date()
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Sugerencias inteligentes basadas en el contexto
+  const smartSuggestions = [
+    "¿Cuál es mi unidad más rentable?",
+    "¿Qué inquilinos tienen pagos atrasados?",
+    "¿Cuánto mantenimiento necesita cada propiedad?",
+    "¿Cuál es mi ingreso mensual total?",
+    "¿Qué unidades están próximas a vencer contrato?",
+    "¿Cuáles son mis mejores inquilinos?",
+    "¿Qué problemas de mantenimiento son más frecuentes?",
+    "¿Cómo puedo optimizar mis precios de alquiler?"
+  ];
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
@@ -47,46 +60,46 @@ export function ChatAssistant() {
     if (!user) {
       return { tenants: [], payments: [], maintenanceRequests: [] };
     }
-    
+
     try {
       console.log('Fetching data for assistant...');
-      
+
       // Fetch tenants
       const { data: tenantsData, error: tenantsError } = await supabase
         .from('tenants')
         .select('*')
         .eq('user_id', user.id);
-      
+
       if (tenantsError) {
         console.error('Error fetching tenants:', tenantsError);
       }
-      
+
       // Fetch payments
       const { data: paymentsData, error: paymentsError } = await supabase
         .from('payments')
         .select('*, tenants!inner(name)')
         .eq('user_id', user.id);
-      
+
       if (paymentsError) {
         console.error('Error fetching payments:', paymentsError);
       }
-      
+
       // Fetch maintenance requests
       const { data: maintenanceData, error: maintenanceError } = await supabase
         .from('maintenance_requests')
         .select('*, tenants!inner(name)')
         .eq('user_id', user.id);
-      
+
       if (maintenanceError) {
         console.error('Error fetching maintenance:', maintenanceError);
       }
-      
+
       console.log('Assistant data fetched:', {
         tenants: tenantsData?.length || 0,
         payments: paymentsData?.length || 0,
         maintenance: maintenanceData?.length || 0
       });
-      
+
       return {
         tenants: tenantsData || [],
         payments: paymentsData || [],
@@ -115,8 +128,8 @@ export function ChatAssistant() {
     }
 
     // Buscar por nombre de inquilino
-    const tenant = tenants.find((t: any) => 
-      lowerQuery.includes(t.name.toLowerCase()) || 
+    const tenant = tenants.find((t: any) =>
+      lowerQuery.includes(t.name.toLowerCase()) ||
       t.name.toLowerCase().includes(lowerQuery.replace(/¿|quien|quién|cual|cuál|\?/g, '').trim())
     );
 
@@ -139,7 +152,7 @@ export function ChatAssistant() {
       const recentPayments = payments
         .sort((a: any, b: any) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
         .slice(0, 5);
-      
+
       if (recentPayments.length === 0) {
         return 'No hay pagos registrados en el sistema.';
       }
@@ -149,14 +162,14 @@ export function ChatAssistant() {
         const tenant = tenants.find((t: any) => t.id === payment.tenant_id);
         response += `• ${tenant ? tenant.name : 'Desconocido'}: $${Number(payment.amount).toLocaleString()} (${new Date(payment.payment_date).toLocaleDateString('es-ES')})\n`;
       });
-      
+
       return response;
     }
 
     // Consultas sobre mantenimiento
     if (lowerQuery.includes('mantenimiento') || lowerQuery.includes('reparac') || lowerQuery.includes('problema')) {
       const pendingMaintenance = maintenanceRequests.filter((m: any) => m.status === 'open');
-      
+
       if (pendingMaintenance.length === 0) {
         return 'No hay solicitudes de mantenimiento pendientes.';
       }
@@ -166,7 +179,7 @@ export function ChatAssistant() {
         const tenant = tenants.find((t: any) => t.id === request.tenant_id);
         response += `• Unidad ${request.unit_number}: ${request.title} (${tenant ? tenant.name : 'Desconocido'})\n`;
       });
-      
+
       return response;
     }
 
@@ -175,7 +188,7 @@ export function ChatAssistant() {
       const activeTenantsCount = tenants.filter((t: any) => t.status === 'active').length;
       const totalRent = tenants.reduce((sum: number, t: any) => sum + Number(t.rent_amount || 0), 0);
       const pendingMaintenanceCount = maintenanceRequests.filter((m: any) => m.status === 'open').length;
-      
+
       return `**Resumen del Sistema:**
 - Total inquilinos activos: ${activeTenantsCount}
 - Ingresos mensuales potenciales: $${totalRent.toLocaleString()}
@@ -203,7 +216,7 @@ export function ChatAssistant() {
     try {
       // Get fresh data for the AI assistant
       const userData = await getApplicationData();
-      
+
       // Call AI assistant with user query and data
       const { data, error } = await supabase.functions.invoke('ai-assistant', {
         body: {
@@ -216,7 +229,7 @@ export function ChatAssistant() {
         console.error('AI Assistant error:', error);
         // Fallback to local processing
         const fallbackResponse = await processQuery(inputValue);
-        
+
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
           text: fallbackResponse,
@@ -246,11 +259,16 @@ export function ChatAssistant() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputValue(suggestion);
+    setShowSuggestions(false);
   };
 
   return (
@@ -275,11 +293,10 @@ export function ChatAssistant() {
                   </div>
                 )}
                 <div
-                  className={`max-w-[80%] p-3 rounded-lg whitespace-pre-line ${
-                    message.isBot
-                      ? 'bg-muted text-foreground'
-                      : 'bg-primary text-primary-foreground ml-auto'
-                  }`}
+                  className={`max-w-[80%] p-3 rounded-lg whitespace-pre-line ${message.isBot
+                    ? 'bg-muted text-foreground'
+                    : 'bg-primary text-primary-foreground ml-auto'
+                    }`}
                 >
                   {message.text}
                 </div>
@@ -306,24 +323,69 @@ export function ChatAssistant() {
             )}
           </div>
         </ScrollArea>
-        
+
+        {/* Sugerencias inteligentes */}
+        {showSuggestions && messages.length <= 1 && (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground font-medium">💡 Sugerencias de consulta:</p>
+            <div className="grid grid-cols-1 gap-2">
+              {smartSuggestions.slice(0, 4).map((suggestion, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  className="justify-start text-left h-auto py-2 px-3 whitespace-normal"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  {suggestion}
+                </Button>
+              ))}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSuggestions(false)}
+              className="text-xs text-muted-foreground"
+            >
+              Ocultar sugerencias
+            </Button>
+          </div>
+        )}
+
         <div className="flex gap-2">
           <Input
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+              if (e.target.value.trim()) {
+                setShowSuggestions(false);
+              }
+            }}
+            onKeyDown={handleKeyDown}
             placeholder="Pregúntame sobre inquilinos, pagos, mantenimiento..."
             disabled={isLoading}
             className="flex-1"
           />
-          <Button 
-            onClick={handleSendMessage} 
+          <Button
+            onClick={handleSendMessage}
             disabled={!inputValue.trim() || isLoading}
             size="icon"
           >
             <Send className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Botón para mostrar más sugerencias */}
+        {!showSuggestions && messages.length <= 3 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowSuggestions(true)}
+            className="text-xs text-muted-foreground self-start"
+          >
+            💡 Ver sugerencias de consulta
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

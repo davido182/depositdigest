@@ -1,0 +1,118 @@
+🎉 ¡GENERANDO TU APK DE RENTAFLUX!
+
+========================================
+📱 INSTRUCCIONES PARA ANDROID STUDIO
+========================================
+
+🚀 ANDROID STUDIO DEBERÍA ESTAR ABRIÉNDOSE...
+
+⏱️ PASO 1: ESPERAR CARGA (2-5 minutos)
+- Android Studio puede tardar en cargar
+- Verás "Building project..." o "Syncing..."
+- ¡Ten paciencia! Es normal que tarde
+
+🔨 PASO 2: GENERAR APK
+Una vez que Android Studio termine de cargar:
+
+1️⃣ Ve al menú superior: Build
+2️⃣ Selecciona: Build Bundle(s) / APK(s)
+3️⃣ Haz clic en: Build APK(s)
+4️⃣ Espera el build (5-10 minutos)
+5️⃣ Aparecerá popup: "APK(s) generated successfully"
+6️⃣ Haz clic en "locate" o "show in explorer"
+
+📍 UBICACIÓN DEL APK:
+android\app\build\outputs\apk\debug\app-debug.apk
+
+========================================
+📱 INSTALAR EN TU ANDROID
+========================================
+
+🔄 MÉTODO 1: USB
+1. Conecta tu Android a la PC con USB
+2. Copia app-debug.apk a tu móvil
+3. En tu móvil, abre el archivo APK
+4. Toca "Instalar"
+
+📤 MÉTODO 2: WhatsApp/Email
+1. Envíate el APK por WhatsApp o email
+2. Descárgalo en tu móvil
+3. Abre el archivo descargado
+4. Toca "Instalar"
+
+☁️ MÉTODO 3: Google Drive
+1. Sube el APK a Google Drive
+2. Descárgalo desde tu móvil
+3. Abre el archivo descargado
+4. Toca "Instalar"
+
+========================================
+⚙️ CONFIGURACIÓN EN ANDROID
+========================================
+
+🔓 HABILITAR INSTALACIÓN:
+Si aparece "Instalación bloqueada":
+
+1. Ve a: Configuración > Seguridad
+2. Busca: "Fuentes desconocidas" o "Instalar apps desconocidas"
+3. Actívalo para tu navegador/explorador de archivos
+4. Vuelve a intentar instalar
+
+O también:
+1. Configuración > Apps y notificaciones
+2. Acceso especial a apps
+3. Instalar apps desconocidas
+4. Selecciona tu explorador de archivos
+5. Permitir desde esta fuente: ON
+
+========================================
+🎊 ¡DESPUÉS DE INSTALAR!
+========================================
+
+✅ Abre RentaFlux desde tu pantalla de inicio
+✅ Explora todas las funciones
+✅ Prueba cómo se ve en móvil
+✅ Toma screenshots si encuentras problemas
+✅ ¡Disfruta tu creación!
+
+========================================
+🐛 SI ALGO NO FUNCIONA
+========================================
+
+❌ Android Studio no abre:
+- Espera más tiempo (puede tardar mucho)
+- Reinicia si es necesario
+
+❌ Error en el build:
+- Cierra Android Studio
+- Ejecuta: npx cap sync
+- Vuelve a abrir: npx cap open android
+
+❌ No encuentro el APK:
+- Busca en: android\app\build\outputs\apk\debug\
+- Si no existe, el build falló
+
+❌ No se instala en móvil:
+- Verifica "Fuentes desconocidas" esté activado
+- Prueba con otro método de transferencia
+
+========================================
+🚀 PRÓXIMOS PASOS
+========================================
+
+Una vez que funcione en tu móvil:
+✅ Compartir con amigos (mismo APK)
+✅ Recopilar feedback
+✅ Hacer mejoras
+✅ Preparar para Play Store ($25)
+✅ ¡Lanzamiento mundial!
+
+========================================
+⏰ TIEMPO ESTIMADO TOTAL
+========================================
+
+🔨 Build del APK: 5-10 minutos
+📱 Transferir e instalar: 2-3 minutos
+🎉 ¡Probando tu app!: ¡Ilimitado!
+
+¡DISFRUTA TU RENTAFLUX EN ANDROID! 📱✨

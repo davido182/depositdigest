@@ -1,0 +1,69 @@
+🎉 ¡TU APP RENTAFLUX ESTÁ LISTA PARA PROBAR!
+
+========================================
+📱 INSTRUCCIONES PARA TU MÓVIL
+========================================
+
+🔧 PASO 1: VERIFICAR SERVIDOR
+- El servidor debería estar ejecutándose
+- Si no, ejecuta: servidor-movil.bat
+
+📶 PASO 2: CONECTAR A WIFI
+- Conecta tu móvil a la MISMA WiFi que tu PC
+- Asegúrate de estar en la misma red
+
+🌐 PASO 3: ABRIR EN EL NAVEGADOR
+Abre el navegador de tu móvil y prueba estas URLs:
+
+📍 OPCIÓN 1: http://192.168.33.1:8081
+📍 OPCIÓN 2: http://192.168.199.1:8081  
+📍 OPCIÓN 3: http://10.150.210.93:8081
+📍 OPCIÓN 4: http://localhost:8081 (solo si no funcionan las otras)
+
+🎯 PASO 4: ¡EXPLORAR!
+- Navega por la aplicación
+- Prueba todas las funciones
+- Ve cómo se ve en móvil
+
+✨ PASO 5: INSTALAR COMO APP (OPCIONAL)
+1. Toca el menú del navegador (⋮ o ⚙️)
+2. Busca "Añadir a pantalla de inicio" o "Instalar app"
+3. Confirma la instalación
+4. ¡Ya tienes RentaFlux como app nativa!
+
+========================================
+🐛 SI NO FUNCIONA:
+========================================
+
+❌ Error "No se puede conectar":
+- Verifica que estés en la misma WiFi
+- Prueba las otras URLs
+- Reinicia el servidor: servidor-movil.bat
+
+❌ Página no carga:
+- Espera unos segundos más
+- Refresca la página (F5 o deslizar hacia abajo)
+- Verifica que el servidor esté corriendo
+
+❌ Se ve mal en móvil:
+- Es normal, es la primera prueba
+- Toma screenshots para mejoras futuras
+
+========================================
+📸 DESPUÉS DE PROBAR:
+========================================
+
+✅ ¿Funciona bien? ¡Perfecto!
+✅ ¿Encontraste problemas? Anótalos
+✅ ¿Te gusta cómo se ve? ¡Genial!
+✅ ¿Ideas de mejora? Apúntalas
+
+🚀 SIGUIENTE PASO:
+Una vez que funcione bien, podrás:
+- Generar el APK para distribución
+- Configurar acceso global con Cloudflare
+- ¡Compartir con amigos!
+
+========================================
+🎊 ¡DISFRUTA PROBANDO TU CREACIÓN!
+========================================

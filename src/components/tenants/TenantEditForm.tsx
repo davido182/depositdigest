@@ -166,21 +166,21 @@ export function TenantEditForm({
       setAllTenants(tenants);
       const units = dbService.getTotalUnits();
       setTotalUnits(units);
-      
+
       const allUnits = Array.from({ length: units }, (_, i) => (i + 1).toString());
-      
+
       // For editing, include current tenant's unit in available units
       const occupiedUnits = tenants
         .filter(t => t.status === 'active' && (tenant ? t.id !== tenant.id : true))
         .map(t => t.unit);
-        
+
       const available = allUnits.filter(unit => !occupiedUnits.includes(unit));
-      
+
       // Always include current tenant's unit when editing
       if (tenant && tenant.unit && !available.includes(tenant.unit)) {
         available.push(tenant.unit);
       }
-      
+
       setAvailableUnits(available.sort((a, b) => parseInt(a) - parseInt(b)));
       console.log(`Loaded ${available.length} available units out of ${units} total units`);
     } catch (error) {
@@ -201,7 +201,7 @@ export function TenantEditForm({
     try {
       setIsUploadingContract(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         toast.error("User not authenticated");
         return;
@@ -254,12 +254,12 @@ export function TenantEditForm({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    
+
     // Clear any existing error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
-    
+
     if (name === "rentAmount" || name === "depositAmount") {
       const numValue = parseFloat(value) || 0;
       setFormData({
@@ -293,13 +293,13 @@ export function TenantEditForm({
       status: value as Tenant["status"],
     });
   };
-  
+
   const handleUnitChange = (value: string) => {
     // Clear unit error when changing
     if (errors.unit) {
       setErrors(prev => ({ ...prev, unit: '' }));
     }
-    
+
     setFormData({
       ...formData,
       unit: value,
@@ -318,10 +318,10 @@ export function TenantEditForm({
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     try {
       const validationService = ValidationService.getInstance();
-      
+
       if (tenant) {
         // Editing existing tenant
         validationService.validateTenantUpdate(formData, allTenants);
@@ -329,7 +329,7 @@ export function TenantEditForm({
         // Creating new tenant
         validationService.validateTenant(formData, allTenants);
       }
-      
+
       return true;
     } catch (error: any) {
       if (error.message.includes('name')) newErrors.name = error.message;
@@ -341,7 +341,7 @@ export function TenantEditForm({
       else {
         toast.error(error.message);
       }
-      
+
       setErrors(newErrors);
       return false;
     }
@@ -349,7 +349,7 @@ export function TenantEditForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
       try {
         const updatedTenant = {
@@ -357,7 +357,7 @@ export function TenantEditForm({
           updatedAt: new Date().toISOString(),
           id: formData.id || `tenant-${Date.now()}`,
         };
-        
+
         console.log("Submitting tenant data:", updatedTenant);
         onSave(updatedTenant);
 
@@ -384,7 +384,7 @@ export function TenantEditForm({
               : "Ingresa los detalles del nuevo inquilino."}
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -421,7 +421,7 @@ export function TenantEditForm({
                   <p className="text-xs text-destructive">{errors.email}</p>
                 )}
               </div>
-              
+
               <div className="grid gap-2">
                 <Label htmlFor="phone">Teléfono</Label>
                 <div className="flex items-center">
@@ -438,19 +438,20 @@ export function TenantEditForm({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="property" className="flex items-center gap-1">
-                Propiedad <span className="text-destructive">*</span>
+              <Label htmlFor="property">
+                Propiedad (Opcional)
               </Label>
               <div className="flex items-center">
                 <Building className="w-4 h-4 mr-2 text-muted-foreground" />
-                <Select 
-                  value={selectedPropertyId} 
+                <Select
+                  value={selectedPropertyId}
                   onValueChange={setSelectedPropertyId}
                 >
-                  <SelectTrigger className={errors.property ? "border-destructive" : ""}>
-                    <SelectValue placeholder="Seleccionar propiedad" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar propiedad (opcional)" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">Sin asignar</SelectItem>
                     {properties.length > 0 ? (
                       properties.map(property => (
                         <SelectItem key={property.id} value={property.id}>
@@ -465,30 +466,30 @@ export function TenantEditForm({
                   </SelectContent>
                 </Select>
               </div>
-              {errors.property && (
-                <p className="text-xs text-destructive">{errors.property}</p>
-              )}
+              <p className="text-xs text-muted-foreground">
+                Puedes asignar la propiedad más tarde
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="unit" className="flex items-center gap-1">
-                  Unidad <span className="text-destructive">*</span>
+                <Label htmlFor="unit">
+                  Unidad (Opcional)
                 </Label>
                 <div className="flex items-center">
                   <Home className="w-4 h-4 mr-2 text-muted-foreground" />
-                  <Select 
-                    value={formData.unit} 
+                  <Select
+                    value={formData.unit}
                     onValueChange={handleUnitChange}
-                    disabled={isLoadingUnits || !selectedPropertyId}
+                    disabled={isLoadingUnits}
                   >
-                    <SelectTrigger className={errors.unit ? "border-destructive" : ""}>
+                    <SelectTrigger>
                       <SelectValue placeholder={
-                        !selectedPropertyId ? "Primero selecciona una propiedad" :
-                        isLoadingUnits ? "Cargando..." : "Seleccionar unidad"
+                        isLoadingUnits ? "Cargando..." : "Seleccionar unidad (opcional)"
                       } />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="">Sin asignar</SelectItem>
                       {isLoadingUnits ? (
                         <SelectItem value="loading" disabled>
                           Cargando unidades...
@@ -507,11 +508,11 @@ export function TenantEditForm({
                     </SelectContent>
                   </Select>
                 </div>
-                {errors.unit && (
-                  <p className="text-xs text-destructive">{errors.unit}</p>
-                )}
+                <p className="text-xs text-muted-foreground">
+                  Puedes asignar la unidad más tarde
+                </p>
               </div>
-              
+
               <div className="grid gap-2">
                 <Label htmlFor="status">Estado</Label>
                 <Select
@@ -549,7 +550,7 @@ export function TenantEditForm({
                   <p className="text-xs text-destructive">{errors.moveInDate}</p>
                 )}
               </div>
-              
+
               <div className="grid gap-2">
                 <Label htmlFor="leaseEndDate">Fecha Fin de Contrato (Opcional)</Label>
                 <div className="flex items-center">
@@ -673,7 +674,7 @@ export function TenantEditForm({
               ></textarea>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button
               type="button"

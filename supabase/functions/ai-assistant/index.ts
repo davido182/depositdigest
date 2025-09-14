@@ -32,7 +32,7 @@ Datos específicos:
 ${JSON.stringify(userData, null, 2)}
 `;
 
-    const systemPrompt = `Eres un asistente inteligente para RentFlow, una aplicación de gestión de propiedades de alquiler. 
+    const systemPrompt = `Eres un asistente inteligente para RentaFlux, una aplicación de gestión de propiedades de alquiler. 
 
 Tu trabajo es ayudar al usuario a:
 1. Encontrar información específica sobre sus inquilinos, pagos y mantenimiento

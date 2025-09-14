@@ -3,7 +3,12 @@ import Sidebar from "./Sidebar";
 import { useState, useEffect } from "react";
 import { OfflineBanner } from "./ui/offline-banner";
 import { useDeviceFeatures } from "@/hooks/use-device-features";
+import { useOrientation } from "@/hooks/use-orientation";
 import { useAuth } from "@/contexts/AuthContext";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { MobileOrientationWrapper } from "./MobileOrientationWrapper";
+import { cn } from "@/lib/utils";
+import { liveUpdatesService } from "@/services/LiveUpdatesService";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,6 +17,7 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const [mounted, setMounted] = useState(false);
   const { isNative, platform } = useDeviceFeatures();
+  const { orientation, isLandscape } = useOrientation();
   const { isAuthenticated, isLoading, user } = useAuth();
 
   useEffect(() => {
@@ -20,6 +26,10 @@ export function Layout({ children }: LayoutProps) {
     
     if (isNative) {
       console.log(`Running on native ${platform} platform`);
+      // Inicializar Live Updates solo en plataformas nativas
+      liveUpdatesService.initialize().catch(error => {
+        console.error("Error initializing Live Updates:", error);
+      });
     } else {
       console.log("Running in browser");
     }
@@ -52,25 +62,55 @@ export function Layout({ children }: LayoutProps) {
   if (!isAuthenticated) {
     console.log("Layout: User not authenticated, showing children only");
     return (
-      <div className="min-h-screen bg-background">
+      <MobileOrientationWrapper className={cn(
+        "min-h-screen bg-background",
+        isNative && isLandscape && "min-h-[100dvh]"
+      )}>
         <OfflineBanner />
         <div className="container max-w-7xl mx-auto py-4 md:py-6 space-y-6 md:space-y-8">
           {children}
         </div>
-      </div>
+      </MobileOrientationWrapper>
     );
   }
 
   console.log("Layout: User authenticated, showing sidebar + children");
   return (
-    <div className="min-h-screen flex w-full bg-background">
-      <Sidebar />
-      <main className="flex-1 overflow-auto">
-        <OfflineBanner />
-        <div className="container max-w-7xl mx-auto py-4 md:py-6 space-y-6 md:space-y-8 animate-fade-in">
-          {children}
+    <MobileOrientationWrapper>
+      <SidebarProvider>
+        <div className={cn(
+          "min-h-screen flex w-full bg-background",
+          isNative && isLandscape && "min-h-[100dvh]",
+          isNative && "overflow-hidden"
+        )}>
+          <Sidebar />
+          <SidebarInset className={cn(
+            "flex flex-col",
+            isNative && isLandscape && "h-[100dvh]"
+          )}>
+            <header className={cn(
+              "flex shrink-0 items-center gap-2 border-b px-4 mobile-landscape-header",
+              isNative && isLandscape ? "h-12" : "h-16"
+            )}>
+              <SidebarTrigger className="-ml-1" />
+              <div className="ml-auto">
+                <OfflineBanner />
+              </div>
+            </header>
+            <main className={cn(
+              "flex-1 overflow-auto mobile-landscape-scroll",
+              isNative && isLandscape && "h-0" // Force height calculation for landscape
+            )}>
+              <div className={cn(
+                "container max-w-7xl mx-auto space-y-6 md:space-y-8 animate-fade-in mobile-landscape-compact",
+                isNative && isLandscape ? "py-2 px-4" : "py-4 md:py-6"
+              )}>
+                {children}
+              </div>
+            </main>
+          </SidebarInset>
         </div>
-      </main>
-    </div>
+      </SidebarProvider>
+    </MobileOrientationWrapper>
   );
 }

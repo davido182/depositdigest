@@ -6,13 +6,13 @@ import { Plus, Download, Eye, Trash2 } from "lucide-react";
 import { Payment, Tenant } from "@/types";
 import { toast } from "sonner";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  ResponsiveTable as Table,
+  ResponsiveTableBody as TableBody,
+  ResponsiveTableCell as TableCell,
+  ResponsiveTableHead as TableHead,
+  ResponsiveTableHeader as TableHeader,
+  ResponsiveTableRow as TableRow,
+} from "@/components/ui/responsive-table";
 import {
   Dialog,
   DialogContent,

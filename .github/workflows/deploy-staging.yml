@@ -1,0 +1,48 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run linting
+      run: npm run lint
+      
+    - name: Run type checking
+      run: npm run type-check
+      
+    - name: Build for staging
+      run: npm run build:staging
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+        VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STAGING_STRIPE_PUBLISHABLE_KEY }}
+        
+    - name: Deploy to staging server
+      run: |
+        echo "Deploying to staging..."
+        # Aquí agregarías el comando específico para tu servidor de staging
+        # Por ejemplo: rsync, scp, o deploy a Netlify/Vercel
+        
+    - name: Notify deployment
+      run: |
+        echo "Staging deployment completed!"
+        echo "URL: https://staging.rentaflux.com"

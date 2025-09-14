@@ -1,0 +1,84 @@
+/* Mobile orientation improvements */
+@media screen and (max-width: 768px) {
+  /* Portrait mobile */
+  @media (orientation: portrait) {
+    .mobile-portrait-optimized {
+      padding: 1rem 0.5rem;
+    }
+    
+    .mobile-portrait-text {
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+    }
+  }
+  
+  /* Landscape mobile */
+  @media (orientation: landscape) {
+    .mobile-landscape-optimized {
+      padding: 0.5rem;
+      max-height: 100vh;
+      overflow-y: auto;
+    }
+    
+    .mobile-landscape-text {
+      font-size: 0.75rem;
+      line-height: 1rem;
+    }
+    
+    .mobile-landscape-compact {
+      gap: 0.5rem;
+    }
+    
+    /* Ensure proper viewport height on mobile landscape */
+    .mobile-landscape-container {
+      height: 100vh;
+      height: 100dvh; /* Dynamic viewport height for better mobile support */
+    }
+    
+    /* Compact headers in landscape */
+    .mobile-landscape-header {
+      height: 3rem;
+      padding: 0.5rem 1rem;
+    }
+    
+    /* Scrollable content areas */
+    .mobile-landscape-scroll {
+      overflow-y: auto;
+      max-height: calc(100vh - 3rem);
+      max-height: calc(100dvh - 3rem);
+    }
+  }
+}
+
+/* Prevent zoom on input focus on mobile */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Smooth transitions for orientation changes */
+.orientation-transition {
+  transition: padding 0.3s ease, font-size 0.3s ease, height 0.3s ease;
+}
+
+/* Fix for iOS Safari viewport issues */
+@supports (-webkit-touch-callout: none) {
+  .ios-viewport-fix {
+    height: -webkit-fill-available;
+  }
+}
+
+/* Android specific fixes */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  /* Fix for Android keyboard issues */
+  .android-landscape-fix {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}

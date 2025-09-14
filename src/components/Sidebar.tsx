@@ -22,6 +22,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Sidebar as SidebarContainer,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -98,7 +109,7 @@ const Sidebar = () => {
   const navigationItems = getNavigationItems();
 
   const handleLandingPageClick = () => {
-    window.open('/landing', '_blank');
+    navigate('/landing');
   };
 
   const handleUpgrade = async () => {
@@ -154,25 +165,10 @@ const Sidebar = () => {
     }
   };
 
-  // Show loading state if still loading
-  if (isLoading) {
-    return (
-      <div className="bg-white border-r border-gray-200 w-64 min-h-screen p-4 flex flex-col">
-        <div className="mb-8">
-          <div className="flex items-center space-x-2 mb-4">
-            <Building2 className="h-8 w-8 text-blue-600" />
-            <h1 className="text-xl font-bold text-gray-900">RentaFlux</h1>
-          </div>
-          <div className="text-sm text-gray-500">Iniciando...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-white border-r border-gray-200 w-64 min-h-screen p-4 flex flex-col">
-      <div className="mb-8">
-        <div className="flex items-center space-x-2 mb-4">
+    <SidebarContainer>
+      <SidebarHeader>
+        <div className="flex items-center space-x-2">
           <Building2 className="h-8 w-8 text-blue-600" />
           <div>
             <h1 className="text-xl font-bold text-gray-900">RentaFlux</h1>
@@ -185,8 +181,7 @@ const Sidebar = () => {
           </div>
         </div>
         
-        {/* User greeting */}
-        <div className="space-y-1">
+        <div className="space-y-1 mt-4">
           <div className="text-sm font-medium text-gray-700">
             Hola, {getUserDisplayName()}
           </div>
@@ -194,31 +189,27 @@ const Sidebar = () => {
             {getRoleDisplayText()}
           </div>
         </div>
-      </div>
+      </SidebarHeader>
 
-      <nav className="space-y-2 flex-1">
-        {navigationItems.map((item) => {
-          const isActive = location.pathname === item.href;
-          return (
-            <NavLink
-              key={item.name}
-              to={item.href}
-              className={cn(
-                "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-blue-100 text-blue-700"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              <span>{item.name}</span>
-            </NavLink>
-          );
-        })}
-      </nav>
+      <SidebarContent>
+        <SidebarMenu>
+          {navigationItems.map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <SidebarMenuItem key={item.name}>
+                <SidebarMenuButton asChild isActive={isActive}>
+                  <NavLink to={item.href}>
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.name}</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarContent>
 
-      {/* Bottom actions */}
-      <div className="mt-auto space-y-3">
+      <SidebarFooter>
         {/* Upgrade section for free users */}
         {userRole === 'landlord_free' && (
           <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
@@ -256,7 +247,6 @@ const Sidebar = () => {
           </div>
         )}
 
-        {/* Sign out button */}
         <Button
           onClick={handleSignOut}
           variant="outline"
@@ -266,8 +256,8 @@ const Sidebar = () => {
           <LogOut className="h-4 w-4" />
           Cerrar Sesión
         </Button>
-      </div>
-    </div>
+      </SidebarFooter>
+    </SidebarContainer>
   );
 };
 

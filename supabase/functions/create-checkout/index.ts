@@ -59,7 +59,7 @@ serve(async (req) => {
         {
           price_data: {
             currency: "usd",
-            product_data: { name: "RentFlow Premium" },
+            product_data: { name: "RentaFlux Premium" },
             unit_amount: 399, // $3.99/month
             recurring: { interval: "month" },
           },

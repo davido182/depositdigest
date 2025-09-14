@@ -1,6 +1,6 @@
 
 import { Layout } from "@/components/Layout";
-import { ChatAssistant } from "@/components/assistant/ChatAssistant";
+import { ChatAssistantImproved as ChatAssistant } from "@/components/assistant/ChatAssistantImproved";
 
 const Assistant = () => {
   return (

@@ -1,7 +1,7 @@
 
--- Create the RentFlow database
-CREATE DATABASE IF NOT EXISTS rentflow_db;
-USE rentflow_db;
+-- Create the RentaFlux database
+CREATE DATABASE IF NOT EXISTS rentaflux_db;
+USE rentaflux_db;
 
 -- Create tenants table
 CREATE TABLE IF NOT EXISTS tenants (

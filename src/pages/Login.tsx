@@ -23,7 +23,7 @@ const Login = () => {
   // Simple auth check - no complex logic
   useEffect(() => {
     if (isAuthenticated && !isPasswordRecovery) {
-      navigate("/");
+      navigate("/dashboard");
     }
     
     if (isPasswordRecovery && user) {
@@ -133,7 +133,7 @@ const Login = () => {
     try {
       await updatePassword(newPassword);
       toast.success("Contraseña actualizada exitosamente");
-      navigate("/");
+      navigate("/dashboard");
     } catch (error: any) {
       console.error("Password update error:", error);
       toast.error("Error al actualizar contraseña: " + (error.message || "Error desconocido"));
@@ -150,7 +150,7 @@ const Login = () => {
           <div className="mb-8 text-center">
             <div className="flex items-center justify-center mb-4">
               <div className="h-8 w-8 rounded-md bg-primary"></div>
-              <h1 className="ml-2 text-2xl font-bold tracking-tight">RentFlow</h1>
+              <h1 className="ml-2 text-2xl font-bold tracking-tight">RentaFlux</h1>
             </div>
             <p className="text-muted-foreground">Recuperar contraseña</p>
           </div>
@@ -205,7 +205,7 @@ const Login = () => {
           <div className="mb-8 text-center">
             <div className="flex items-center justify-center mb-4">
               <div className="h-8 w-8 rounded-md bg-primary"></div>
-              <h1 className="ml-2 text-2xl font-bold tracking-tight">RentFlow</h1>
+              <h1 className="ml-2 text-2xl font-bold tracking-tight">RentaFlux</h1>
             </div>
             <p className="text-muted-foreground">Establecer nueva contraseña</p>
           </div>
@@ -266,7 +266,7 @@ const Login = () => {
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center mb-4">
             <div className="h-8 w-8 rounded-md bg-primary"></div>
-            <h1 className="ml-2 text-2xl font-bold tracking-tight">RentFlow</h1>
+            <h1 className="ml-2 text-2xl font-bold tracking-tight">RentaFlux</h1>
           </div>
           <p className="text-muted-foreground">Gestiona tus propiedades de alquiler con facilidad</p>
         </div>

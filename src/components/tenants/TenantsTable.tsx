@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Tenant } from "@/types";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  ResponsiveTable as Table,
+  ResponsiveTableBody as TableBody,
+  ResponsiveTableCell as TableCell,
+  ResponsiveTableHead as TableHead,
+  ResponsiveTableHeader as TableHeader,
+  ResponsiveTableRow as TableRow,
+} from "@/components/ui/responsive-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";

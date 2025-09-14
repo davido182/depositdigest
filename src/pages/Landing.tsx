@@ -61,10 +61,10 @@ const Landing = () => {
   const handleMobileDownload = (platform: 'ios' | 'android') => {
     if (platform === 'ios') {
       // Redirect to App Store when available
-      window.open("https://apps.apple.com/search?term=rentflow", "_blank");
+      window.open("https://apps.apple.com/search?term=rentaflux", "_blank");
     } else {
       // Redirect to Google Play when available
-      window.open("https://play.google.com/store/search?q=rentflow", "_blank");
+      window.open("https://play.google.com/store/search?q=rentaflux", "_blank");
     }
   };
 
@@ -119,10 +119,16 @@ const Landing = () => {
             <h1 className="text-2xl font-bold text-gray-900">RentaFlux</h1>
           </div>
           <div className="space-x-4">
-            <Button variant="ghost" onClick={() => navigate("/login")}>
+            <Button variant="ghost" onClick={() => {
+              localStorage.setItem('rentaflux_has_visited', 'true');
+              navigate("/login");
+            }}>
               Iniciar Sesión
             </Button>
-            <Button onClick={() => navigate("/login")}>
+            <Button onClick={() => {
+              localStorage.setItem('rentaflux_has_visited', 'true');
+              navigate("/login");
+            }}>
               Comenzar Gratis
             </Button>
           </div>
@@ -155,7 +161,10 @@ const Landing = () => {
           </p>
           <div className="flex flex-col lg:flex-row gap-8 justify-center items-center">
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" onClick={() => navigate("/login")} className="bg-blue-600 hover:bg-blue-700">
+              <Button size="lg" onClick={() => {
+                localStorage.setItem('rentaflux_has_visited', 'true');
+                navigate("/login");
+              }} className="bg-blue-600 hover:bg-blue-700">
                 Comenzar Gratis <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button size="lg" variant="outline" onClick={handleDemoClick}>
@@ -310,7 +319,10 @@ const Landing = () => {
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full mt-6" variant="outline" onClick={() => navigate("/login")}>
+                <Button className="w-full mt-6" variant="outline" onClick={() => {
+                  localStorage.setItem('rentaflux_has_visited', 'true');
+                  navigate("/login");
+                }}>
                   Comenzar Gratis
                 </Button>
               </CardContent>
@@ -351,6 +363,7 @@ const Landing = () => {
                       }
                     } catch (error) {
                       console.error('Error creating checkout:', error);
+                      localStorage.setItem('rentaflux_has_visited', 'true');
                       navigate("/login");
                     }
                   }}
@@ -381,7 +394,10 @@ const Landing = () => {
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full mt-6" variant="outline" onClick={() => navigate("/tenant-signup")}>
+                <Button className="w-full mt-6" variant="outline" onClick={() => {
+                  localStorage.setItem('rentaflux_has_visited', 'true');
+                  navigate("/tenant-signup");
+                }}>
                   Acceso con Código
                 </Button>
               </CardContent>

@@ -291,7 +291,7 @@ const StripeSettings = () => {
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <p className="text-sm text-gray-600">
               Cuando habilites Stripe personal, tus inquilinos podrán pagar directamente a tu cuenta de Stripe,
-              y recibirás los pagos sin comisiones adicionales de RentFlow.
+              y recibirás los pagos sin comisiones adicionales de RentaFlux.
             </p>
           </div>
         )}

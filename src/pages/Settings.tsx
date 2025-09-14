@@ -6,6 +6,7 @@ import { LanguageSettings } from "@/components/settings/LanguageSettings";
 import { DataSettings } from "@/components/settings/DataSettings";
 import { MobileFeatureToggle } from "@/components/settings/MobileFeatureToggle";
 import StripeSettings from "@/components/settings/StripeSettings";
+import { LiveUpdatesStatus } from "@/components/LiveUpdatesStatus";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Crown } from "lucide-react";
@@ -81,7 +82,10 @@ const Settings = () => {
           </TabsContent>
           
           <TabsContent value="mobile">
-            <MobileFeatureToggle />
+            <div className="space-y-6">
+              <MobileFeatureToggle />
+              <LiveUpdatesStatus />
+            </div>
           </TabsContent>
           
           <TabsContent value="data">

@@ -42,9 +42,9 @@ export default function InviteTenant() {
 
   const sendEmailInvitation = () => {
     if (invitationData && email) {
-      const subject = encodeURIComponent(`Invitación para unirse a RentFlow - Unidad ${unitNumber}`);
+      const subject = encodeURIComponent(`Invitación para unirse a RentaFlux - Unidad ${unitNumber}`);
       const body = encodeURIComponent(
-        `Hola,\n\nHas sido invitado/a a unirte a RentFlow como inquilino de la unidad ${unitNumber}.\n\n` +
+        `Hola,\n\nHas sido invitado/a a unirte a RentaFlux como inquilino de la unidad ${unitNumber}.\n\n` +
         `Usa este enlace para registrarte:\n${invitationData.invitation_link}\n\n` +
         `O ingresa el código de invitación: ${invitationData.invitation_code}\n\n` +
         `Esta invitación expira el: ${new Date(invitationData.expires_at).toLocaleDateString()}\n\n` +

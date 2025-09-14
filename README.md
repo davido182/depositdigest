@@ -1,18 +1,13 @@
-# RentFlow - Plataforma de Gestión Inmobiliaria
+# RentaFlux - Plataforma de Gestión Inmobiliaria
 
 ## 🏢 Descripción
 
-RentFlow es una plataforma integral de gestión inmobiliaria que permite a propietarios e inquilinos gestionar eficientemente alquileres, pagos, mantenimiento y contabilidad.
+RentaFlux es una plataforma integral de gestión inmobiliaria que permite a propietarios e inquilinos gestionar eficientemente alquileres, pagos, mantenimiento y contabilidad. Cuanta con versiones free y premium.
 
 ## How can I edit this code?
 
 There are several ways of editing your application.
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/8d19717d-812d-442e-879a-ca561313dd86) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
@@ -60,10 +55,3 @@ This project is built with .
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/8d19717d-812d-442e-879a-ca561313dd86) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
