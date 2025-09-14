@@ -3,11 +3,6 @@
   command = "npm install --legacy-peer-deps && npm run build"
 
 [[redirects]]
-  from = "/"
-  to = "/landing"
-  status = 301
-
-[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
@@ -15,11 +10,3 @@
 [build.environment]
   NODE_VERSION = "18"
   NPM_VERSION = "8"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
