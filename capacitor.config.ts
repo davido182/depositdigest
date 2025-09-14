@@ -35,9 +35,7 @@ const config: CapacitorConfig = {
       channel: 'production',
       autoUpdateMethod: 'background',
       maxVersions: 2,
-      enabled: true,
-      readyTimeout: 10000,
-      checkTimeout: 10000
+      enabled: true
     }
   }
 };
