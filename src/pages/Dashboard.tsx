@@ -113,7 +113,8 @@ const Dashboard = () => {
       toast.error("Los usuarios gratuitos pueden tener máximo 1 propiedad. Actualiza a Premium para propiedades ilimitadas.");
       return;
     }
-    toast.info("Funcionalidad de agregar propiedad en desarrollo");
+    // Redirigir a la página de propiedades
+    window.location.href = '/properties';
   };
 
   const handleEditTenant = (tenant: Tenant) => {

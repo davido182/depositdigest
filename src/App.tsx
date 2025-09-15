@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AuthDebugger from "@/components/AuthDebugger";
 import { DevToolsPanel } from "@/hooks/useDevTools";
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
 import Tenants from "./pages/Tenants";
 import Properties from "./pages/Properties";
 import Payments from "./pages/Payments";
@@ -116,7 +117,7 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/tenant-signup" element={<TenantSignup />} />
               <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard" element={<Index />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/properties" element={<Properties />} />
                 <Route path="/tenants" element={<Tenants />} />
                 <Route path="/payments" element={<Payments />} />
