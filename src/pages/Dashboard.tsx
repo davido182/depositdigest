@@ -4,6 +4,7 @@ import { IntelligentDashboard } from "@/components/dashboard/IntelligentDashboar
 import { MaintenanceNotifications } from "@/components/dashboard/MaintenanceNotifications";
 import { TenantCard } from "@/components/tenants/TenantCard";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
+import { PropertyForm } from "@/components/properties/PropertyForm";
 import TenantDashboard from "@/components/tenant/TenantDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -108,13 +109,14 @@ const Dashboard = () => {
     setIsEditModalOpen(true);
   };
 
+  const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
+
   const handleAddProperty = () => {
     if (userRole === 'landlord_free' && properties.length >= 1) {
       toast.error("Los usuarios gratuitos pueden tener máximo 1 propiedad. Actualiza a Premium para propiedades ilimitadas.");
       return;
     }
-    // Redirigir a la página de propiedades
-    window.location.href = '/properties';
+    setIsPropertyModalOpen(true);
   };
 
   const handleEditTenant = (tenant: Tenant) => {
@@ -151,6 +153,57 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Error saving tenant:", error);
       toast.error("Error al guardar el inquilino");
+    }
+  };
+
+  const handleSaveProperty = async (propertyData: Property) => {
+    try {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('properties')
+        .insert([{
+          name: propertyData.name,
+          address: propertyData.address,
+          description: propertyData.description,
+          total_units: propertyData.units,
+          user_id: user.id
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Crear las unidades para la propiedad
+      const units = Array.from({ length: propertyData.units }, (_, i) => ({
+        property_id: data.id,
+        unit_number: `${i + 1}`,
+        is_available: true,
+        user_id: user.id
+      }));
+
+      const { error: unitsError } = await supabase
+        .from('units')
+        .insert(units);
+
+      if (unitsError) throw unitsError;
+
+      const newProperty = {
+        id: data.id,
+        name: data.name,
+        address: data.address || '',
+        units: propertyData.units,
+        occupied_units: 0,
+        monthly_revenue: 0,
+        created_at: data.created_at
+      };
+
+      setProperties([...properties, newProperty]);
+      setIsPropertyModalOpen(false);
+      toast.success("Propiedad creada exitosamente");
+    } catch (error) {
+      console.error("Error saving property:", error);
+      toast.error("Error al crear la propiedad");
     }
   };
 
@@ -221,6 +274,14 @@ const Dashboard = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSaveTenant}
+      />
+
+      <PropertyForm
+        property={null}
+        isOpen={isPropertyModalOpen}
+        onClose={() => setIsPropertyModalOpen(false)}
+        onSave={handleSaveProperty}
+        userRole={userRole || 'landlord_free'}
       />
     </Layout>
   );
