@@ -8,44 +8,51 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    /* Nueva paleta RentaFlux */
+    --jet: 53 53 53;
+    --caribbean-current: 60 110 113;
+    --white: 255 255 255;
+    --platinum: 217 217 217;
+    --indigo-dye: 40 75 99;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --background: var(--white);
+    --foreground: var(--jet);
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --card: var(--white);
+    --card-foreground: var(--jet);
 
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
+    --popover: var(--white);
+    --popover-foreground: var(--jet);
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --primary: var(--caribbean-current);
+    --primary-foreground: var(--white);
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --secondary: var(--platinum);
+    --secondary-foreground: var(--jet);
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --muted: var(--platinum);
+    --muted-foreground: var(--jet);
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --accent: var(--indigo-dye);
+    --accent-foreground: var(--white);
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --destructive: 239 68 68;
+    --destructive-foreground: var(--white);
+
+    --border: var(--platinum);
+    --input: var(--platinum);
+    --ring: var(--caribbean-current);
 
     --radius: 0.5rem;
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 221 83% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 18%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 18%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-background: var(--jet);
+    --sidebar-foreground: var(--white);
+    --sidebar-primary: var(--caribbean-current);
+    --sidebar-primary-foreground: var(--white);
+    --sidebar-accent: var(--indigo-dye);
+    --sidebar-accent-foreground: var(--white);
+    --sidebar-border: var(--indigo-dye);
+    --sidebar-ring: var(--caribbean-current);
   }
 
   .dark {

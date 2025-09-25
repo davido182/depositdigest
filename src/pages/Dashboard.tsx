@@ -1,7 +1,7 @@
 import { Layout } from "@/components/Layout";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { IntelligentDashboard } from "@/components/dashboard/IntelligentDashboard";
-import { MaintenanceNotifications } from "@/components/dashboard/MaintenanceNotifications";
+import { SmartNotifications } from "@/components/dashboard/SmartNotifications";
 import { TenantCard } from "@/components/tenants/TenantCard";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import { PropertyForm } from "@/components/properties/PropertyForm";
@@ -215,7 +215,7 @@ const Dashboard = () => {
         <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between items-center'}`}>
           <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>Dashboard</h1>
           <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
-            <MaintenanceNotifications />
+            <SmartNotifications />
             
             {/* Botón de importar datos - visible si no hay datos */}
             {tenants.length === 0 && properties.length === 0 && (

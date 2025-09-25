@@ -114,6 +114,8 @@ const Sidebar = () => {
 
   const handleUpgrade = async () => {
     try {
+      toast.loading('Preparando pago...');
+      
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
           email: user?.email,
@@ -121,20 +123,25 @@ const Sidebar = () => {
         }
       });
       
+      toast.dismiss();
+      
       if (error) {
         console.error('Error creating checkout:', error);
-        toast.error('Error al procesar el pago');
+        toast.error(`Error al procesar el pago: ${error.message || 'Error desconocido'}`);
         return;
       }
       
       if (data?.url) {
-        window.open(data.url, '_blank');
+        toast.success('Redirigiendo a Stripe...');
+        window.location.href = data.url; // Usar location.href en lugar de window.open
       } else {
-        toast.error('No se pudo generar el enlace de pago');
+        console.error('No URL returned from create-checkout:', data);
+        toast.error('No se pudo generar el enlace de pago. Intenta de nuevo.');
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al procesar el pago');
+      toast.dismiss();
+      console.error('Error in handleUpgrade:', error);
+      toast.error(`Error: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };
 
