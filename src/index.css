@@ -8,51 +8,44 @@
 
 @layer base {
   :root {
-    /* Nueva paleta RentaFlux */
-    --jet: 53 53 53;
-    --caribbean-current: 60 110 113;
-    --white: 255 255 255;
-    --platinum: 217 217 217;
-    --indigo-dye: 40 75 99;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 21%;
 
-    --background: var(--white);
-    --foreground: var(--jet);
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 21%;
 
-    --card: var(--white);
-    --card-foreground: var(--jet);
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 21%;
 
-    --popover: var(--white);
-    --popover-foreground: var(--jet);
+    --primary: 184 24% 34%;
+    --primary-foreground: 0 0% 100%;
 
-    --primary: var(--caribbean-current);
-    --primary-foreground: var(--white);
+    --secondary: 0 0% 85%;
+    --secondary-foreground: 0 0% 21%;
 
-    --secondary: var(--platinum);
-    --secondary-foreground: var(--jet);
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --muted: var(--platinum);
-    --muted-foreground: var(--jet);
+    --accent: 207 44% 27%;
+    --accent-foreground: 0 0% 100%;
 
-    --accent: var(--indigo-dye);
-    --accent-foreground: var(--white);
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --destructive: 239 68 68;
-    --destructive-foreground: var(--white);
-
-    --border: var(--platinum);
-    --input: var(--platinum);
-    --ring: var(--caribbean-current);
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 184 24% 34%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: var(--jet);
-    --sidebar-foreground: var(--white);
-    --sidebar-primary: var(--caribbean-current);
-    --sidebar-primary-foreground: var(--white);
-    --sidebar-accent: var(--indigo-dye);
-    --sidebar-accent-foreground: var(--white);
-    --sidebar-border: var(--indigo-dye);
-    --sidebar-ring: var(--caribbean-current);
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 21%;
+    --sidebar-primary: 184 24% 34%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 207 44% 27%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 85%;
+    --sidebar-ring: 184 24% 34%;
   }
 
   .dark {
