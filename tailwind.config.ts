@@ -23,18 +23,25 @@ export default {
 				sans: ['Inter', 'system-ui', 'sans-serif'],
 			},
 			colors: {
-				border: 'hsl(var(--border))',
-				input: 'hsl(var(--input))',
-				ring: 'hsl(var(--ring))',
+				// Nueva paleta RentaFlux
+				jet: '#353535',
+				caribbean: '#3c6e71', 
+				platinum: '#d9d9d9',
+				indigo: '#284b63',
+				
+				// Mantener compatibilidad shadcn/ui con nueva paleta
+				border: '#d9d9d9',
+				input: '#d9d9d9',
+				ring: '#3c6e71',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					DEFAULT: '#3c6e71', // caribbean-current
+					foreground: '#ffffff'
 				},
 				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
+					DEFAULT: '#d9d9d9', // platinum
+					foreground: '#353535' // jet
 				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
