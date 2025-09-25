@@ -2,9 +2,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Configuración con variables de entorno
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://xhscuftwypziepjgnfan.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhoc2N1ZnR3eXB6aWVwamduZmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxOTAxMjIsImV4cCI6MjA2Mzc2NjEyMn0.OD4IzuutB5D_Bz6BLeVgxLcpq0UjlVDQMWTXPnq-on8";
+// Configuración con variables de entorno (SOLO del nuevo proyecto)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Validación de configuración
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {

@@ -5,6 +5,7 @@ import { MaintenanceNotifications } from "@/components/dashboard/MaintenanceNoti
 import { TenantCard } from "@/components/tenants/TenantCard";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import { PropertyForm } from "@/components/properties/PropertyForm";
+import { DataImportModal } from "@/components/data/DataImportModal";
 import TenantDashboard from "@/components/tenant/TenantDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tenant } from "@/types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Building, Plus, Users, DollarSign, MapPin, Calendar } from "lucide-react";
+import { Building, Plus, Users, DollarSign, MapPin, Calendar, FileSpreadsheet } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { tenantService } from "@/services/TenantService";
 import { useAppData } from "@/hooks/use-app-data";
@@ -110,6 +111,7 @@ const Dashboard = () => {
   };
 
   const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const handleAddProperty = () => {
     if (userRole === 'landlord_free' && properties.length >= 1) {
@@ -214,6 +216,20 @@ const Dashboard = () => {
           <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>Dashboard</h1>
           <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
             <MaintenanceNotifications />
+            
+            {/* Botón de importar datos - visible si no hay datos */}
+            {tenants.length === 0 && properties.length === 0 && (
+              <Button 
+                onClick={() => setIsImportModalOpen(true)} 
+                variant="default" 
+                className="gap-2 bg-green-600 hover:bg-green-700"
+                size={isMobile ? "sm" : "default"}
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Importar Datos
+              </Button>
+            )}
+            
             {userRole === 'landlord_premium' && (
               <Button onClick={handleAddTenant} className="gap-2" size={isMobile ? "sm" : "default"}>
                 <Plus className="h-4 w-4" />
@@ -282,6 +298,15 @@ const Dashboard = () => {
         onClose={() => setIsPropertyModalOpen(false)}
         onSave={handleSaveProperty}
         userRole={userRole || 'landlord_free'}
+      />
+
+      <DataImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportComplete={() => {
+          // Recargar datos después de importar
+          window.location.reload();
+        }}
       />
     </Layout>
   );
