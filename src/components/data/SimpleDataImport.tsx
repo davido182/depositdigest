@@ -20,20 +20,22 @@ export function SimpleDataImport({ isOpen, onClose, onImportComplete }: SimpleDa
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const downloadTemplate = () => {
-    const csvContent = `nombre,email,telefono,numero_unidad,monto_alquiler
-Juan Pérez,juan@email.com,555-0123,101,1200
-María García,maria@email.com,555-0124,102,1300`;
+    const csvContent = `tipo,nombre,email,telefono,numero_unidad,monto_alquiler,direccion,descripcion,total_unidades,fecha_pago,metodo_pago,estado
+inquilino,Juan Pérez,juan@email.com,555-0123,101,1200,,,,,,
+inquilino,María García,maria@email.com,555-0124,102,1300,,,,,,
+propiedad,Edificio Central,,,,,"Calle Principal 123","Edificio moderno",10,,,
+pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed`;
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'plantilla_inquilinos.csv');
+    link.setAttribute('download', 'plantilla_universal.csv');
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('Plantilla descargada');
+    toast.success('Plantilla universal descargada');
   };
 
   const parseCSVSimple = (text: string): any[] => {
@@ -69,33 +71,107 @@ María García,maria@email.com,555-0124,102,1300`;
     return data;
   };
 
-  const importTenants = async (data: any[]) => {
-    console.log('👥 Importando inquilinos:', data);
+  const importData = async (data: any[]) => {
+    console.log('📊 Importando datos:', data);
     
-    const tenants = data.map(row => ({
-      name: row.nombre || row.name || '',
-      email: row.email || '',
-      phone: row.telefono || row.phone || null,
-      unit_number: row.numero_unidad || row.unit_number || null,
-      rent_amount: parseFloat(row.monto_alquiler || row.rent_amount || '0') || 0,
-      status: 'active',
-      user_id: user?.id
-    }));
-
-    console.log('📤 Enviando a Supabase:', tenants);
-
-    const { data: result, error } = await supabase
-      .from('tenants')
-      .insert(tenants)
-      .select();
-
-    if (error) {
-      console.error('❌ Error de Supabase:', error);
-      throw error;
+    let tenantsCount = 0;
+    let propertiesCount = 0;
+    let paymentsCount = 0;
+    
+    // Separar datos por tipo
+    const tenants = [];
+    const properties = [];
+    const payments = [];
+    
+    for (const row of data) {
+      const tipo = row.tipo?.toLowerCase() || 'auto';
+      
+      if (tipo === 'inquilino' || (tipo === 'auto' && row.nombre && row.email)) {
+        tenants.push({
+          full_name: row.nombre || row.name || '',
+          email: row.email || '',
+          phone: row.telefono || row.phone || null,
+          unit_number: row.numero_unidad || row.unit_number || null,
+          rent_amount: parseFloat(row.monto_alquiler || row.rent_amount || '0') || 0,
+          status: row.estado || 'active',
+          user_id: user?.id
+        });
+      } else if (tipo === 'propiedad' || (tipo === 'auto' && row.direccion)) {
+        properties.push({
+          name: row.nombre || row.name || 'Propiedad',
+          address: row.direccion || row.address || '',
+          description: row.descripcion || row.description || null,
+          total_units: parseInt(row.total_unidades || row.total_units || '1') || 1,
+          user_id: user?.id
+        });
+      } else if (tipo === 'pago' || (tipo === 'auto' && row.fecha_pago)) {
+        // Para pagos, necesitamos encontrar el tenant_id por email
+        const { data: tenant } = await supabase
+          .from('tenants')
+          .select('id')
+          .eq('email', row.email)
+          .eq('user_id', user?.id)
+          .single();
+          
+        if (tenant) {
+          payments.push({
+            tenant_id: tenant.id,
+            amount: parseFloat(row.monto_alquiler || row.amount || '0') || 0,
+            payment_date: row.fecha_pago || row.payment_date || new Date().toISOString().split('T')[0],
+            payment_method: row.metodo_pago || row.payment_method || 'cash',
+            status: row.estado || row.status || 'completed',
+            user_id: user?.id
+          });
+        }
+      }
     }
     
-    console.log('✅ Inquilinos creados:', result);
-    return result;
+    // Importar inquilinos
+    if (tenants.length > 0) {
+      console.log('👥 Importando inquilinos:', tenants);
+      const { data: tenantsResult, error: tenantsError } = await supabase
+        .from('tenants')
+        .insert(tenants)
+        .select();
+        
+      if (tenantsError) {
+        console.error('❌ Error importando inquilinos:', tenantsError);
+        throw new Error(`Error importando inquilinos: ${tenantsError.message}`);
+      }
+      tenantsCount = tenantsResult?.length || 0;
+    }
+    
+    // Importar propiedades
+    if (properties.length > 0) {
+      console.log('🏠 Importando propiedades:', properties);
+      const { data: propertiesResult, error: propertiesError } = await supabase
+        .from('properties')
+        .insert(properties)
+        .select();
+        
+      if (propertiesError) {
+        console.error('❌ Error importando propiedades:', propertiesError);
+        throw new Error(`Error importando propiedades: ${propertiesError.message}`);
+      }
+      propertiesCount = propertiesResult?.length || 0;
+    }
+    
+    // Importar pagos
+    if (payments.length > 0) {
+      console.log('💰 Importando pagos:', payments);
+      const { data: paymentsResult, error: paymentsError } = await supabase
+        .from('payments')
+        .insert(payments)
+        .select();
+        
+      if (paymentsError) {
+        console.error('❌ Error importando pagos:', paymentsError);
+        throw new Error(`Error importando pagos: ${paymentsError.message}`);
+      }
+      paymentsCount = paymentsResult?.length || 0;
+    }
+    
+    return { tenantsCount, propertiesCount, paymentsCount };
   };
 
   const handleFileUpload = async () => {
@@ -115,8 +191,13 @@ María García,maria@email.com,555-0124,102,1300`;
         return;
       }
 
-      const result = await importTenants(data);
-      toast.success(`${result.length} inquilinos importados exitosamente`);
+      const result = await importData(data);
+      const messages = [];
+      if (result.tenantsCount > 0) messages.push(`${result.tenantsCount} inquilinos`);
+      if (result.propertiesCount > 0) messages.push(`${result.propertiesCount} propiedades`);
+      if (result.paymentsCount > 0) messages.push(`${result.paymentsCount} pagos`);
+      
+      toast.success(`Importados: ${messages.join(', ')}`);
       
       onImportComplete();
       onClose();

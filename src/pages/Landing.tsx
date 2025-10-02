@@ -76,7 +76,6 @@ const Landing = () => {
     const email = (data.get('email') as string) || '';
     const subjectRaw = (data.get('subject') as string) || 'Consulta desde RentaFlux';
     const message = (data.get('message') as string) || '';
-    const hp = (data.get('hp') as string) || '';
 
     try {
       toast({
@@ -84,30 +83,57 @@ const Landing = () => {
         description: "Por favor espera un momento.",
       });
 
-      const { data: result, error } = await supabase.functions.invoke('send-contact-email', {
-        body: { name, email, subject: subjectRaw, message, hp }
+      // Usar EmailJS como alternativa gratuita
+      const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          service_id: 'service_rentaflux',
+          template_id: 'template_contact',
+          user_id: 'your_emailjs_user_id',
+          template_params: {
+            from_name: name,
+            from_email: email,
+            subject: subjectRaw,
+            message: message,
+            to_email: 'rentaflux@gmail.com'
+          }
+        })
       });
 
-      if (error) {
-        console.error('Error enviando contacto:', error);
+      if (response.ok) {
         toast({
-          title: "Error al enviar",
-          description: "No se pudo enviar el mensaje. Por favor intenta de nuevo o escríbenos directamente a rentaflux@gmail.com",
+          title: "¡Mensaje enviado!",
+          description: "Gracias por contactarnos. Te responderemos a la brevedad.",
         });
-        return;
+        form.reset();
+      } else {
+        throw new Error('Error en el servicio de email');
       }
-
-      console.log('Contacto enviado OK:', result);
-      toast({
-        title: "¡Mensaje enviado!",
-        description: "Gracias por contactarnos. Te responderemos a la brevedad a tu correo.",
-      });
-      form.reset();
     } catch (err: any) {
       console.error('Error enviando contacto:', err);
+      
+      // Fallback a mailto
+      const subject = encodeURIComponent(`${subjectRaw} - ${name}`);
+      const body = encodeURIComponent(`
+Nombre: ${name}
+Email: ${email}
+
+Mensaje:
+${message}
+
+---
+Enviado desde www.rentaflux.com
+      `);
+
+      const mailtoLink = `mailto:rentaflux@gmail.com?subject=${subject}&body=${body}`;
+      window.open(mailtoLink, '_blank');
+      
       toast({
-        title: "Error al enviar",
-        description: "No se pudo enviar el mensaje. Por favor intenta de nuevo o escríbenos directamente a rentaflux@gmail.com",
+        title: "Abriendo cliente de correo",
+        description: "Se abrirá tu cliente de correo para enviar el mensaje.",
       });
     }
   };

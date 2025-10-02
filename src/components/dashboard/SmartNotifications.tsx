@@ -36,6 +36,19 @@ export function SmartNotifications() {
     }
   }, [user]);
 
+  const markAsRead = (notificationId: string) => {
+    const seenNotifications = JSON.parse(localStorage.getItem('seen_notifications') || '[]');
+    if (!seenNotifications.includes(notificationId)) {
+      seenNotifications.push(notificationId);
+      localStorage.setItem('seen_notifications', JSON.stringify(seenNotifications));
+    }
+    
+    setNotifications(prev => 
+      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+    );
+    setUnreadCount(prev => Math.max(0, prev - 1));
+  };
+
   const loadNotifications = async () => {
     try {
       setIsLoading(true);
@@ -124,17 +137,31 @@ export function SmartNotifications() {
         }
       });
 
-      // 4. Notificaciones del sistema
-      if (notifications.length === 0) {
-        notifications.push({
-          id: 'welcome',
-          type: 'info',
-          title: '¡Todo en orden!',
-          message: 'No hay alertas pendientes en este momento',
-          priority: 'low',
-          created_at: new Date().toISOString(),
-          read: false
-        });
+      // 4. Verificar notificaciones ya vistas
+      const seenNotifications = JSON.parse(localStorage.getItem('seen_notifications') || '[]');
+      
+      // Marcar como leídas las que ya se vieron
+      notifications.forEach(notification => {
+        if (seenNotifications.includes(notification.id)) {
+          notification.read = true;
+        }
+      });
+
+      // 5. Solo agregar mensaje de "todo en orden" si no hay notificaciones reales
+      const realNotifications = notifications.filter(n => n.type !== 'info');
+      if (realNotifications.length === 0) {
+        const welcomeId = 'welcome-' + new Date().toDateString();
+        if (!seenNotifications.includes(welcomeId)) {
+          notifications.push({
+            id: welcomeId,
+            type: 'info',
+            title: '¡Todo en orden!',
+            message: 'No hay alertas pendientes en este momento',
+            priority: 'low',
+            created_at: new Date().toISOString(),
+            read: false
+          });
+        }
       }
 
       // Ordenar por prioridad y fecha
@@ -173,12 +200,7 @@ export function SmartNotifications() {
     }
   };
 
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-    );
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  };
+
 
   return (
     <DropdownMenu>
