@@ -88,7 +88,7 @@ pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed`;
       
       if (tipo === 'inquilino' || (tipo === 'auto' && row.nombre && row.email)) {
         tenants.push({
-          full_name: row.nombre || row.name || '',
+          name: row.nombre || row.name || '',
           email: row.email || '',
           phone: row.telefono || row.phone || null,
           unit_number: row.numero_unidad || row.unit_number || null,

@@ -143,12 +143,9 @@ Enviado desde www.rentaflux.com
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <img 
-              src="/logo-rentaflux.svg" 
-              alt="RentaFlux Logo" 
-              className="h-12 w-auto"
-            />
+          <div className="flex items-center space-x-2">
+            <div className="h-8 w-8 rounded-md bg-primary"></div>
+            <h1 className="text-2xl font-bold text-gray-900">RentaFlux</h1>
           </div>
           <div className="space-x-4">
             <Button variant="ghost" onClick={() => {
@@ -187,13 +184,8 @@ Enviado desde www.rentaflux.com
             Gestiona tus propiedades de
             <span className="text-blue-600"> forma inteligente</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto flex items-center justify-center gap-2 flex-wrap">
-            <img 
-              src="/logo-rentaflux.svg" 
-              alt="RentaFlux" 
-              className="h-8 w-auto inline-block"
-            />
-            es la plataforma completa para propietarios e inquilinos. 
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            RentaFlux es la plataforma completa para propietarios e inquilinos. 
             Gestiona pagos, mantenimiento, contabilidad y más desde tu móvil o web.
           </p>
           <div className="flex flex-col lg:flex-row gap-8 justify-center items-center">
@@ -534,12 +526,9 @@ Enviado desde www.rentaflux.com
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <div className="flex items-center mb-4">
-                <img 
-                  src="/logo-rentaflux.svg" 
-                  alt="RentaFlux Logo" 
-                  className="h-10 w-auto"
-                />
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="h-6 w-6 rounded-md bg-blue-400"></div>
+                <h3 className="text-xl font-bold">RentaFlux</h3>
               </div>
               <p className="text-gray-400">
                 La plataforma completa para la gestión de propiedades en alquiler.
