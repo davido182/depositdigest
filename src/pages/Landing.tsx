@@ -68,45 +68,36 @@ const Landing = () => {
     }
   };
 
-  // Reemplazado: enviar por Edge Function en lugar de mailto
-  const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleContactSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget as HTMLFormElement;
     const data = new FormData(form);
     const name = (data.get('name') as string) || '';
     const email = (data.get('email') as string) || '';
-    const subjectRaw = (data.get('subject') as string) || 'Consulta';
+    const subjectRaw = (data.get('subject') as string) || 'Consulta desde RentaFlux';
     const message = (data.get('message') as string) || '';
-    const hp = (data.get('hp') as string) || '';
 
-    try {
-      const { data: result, error } = await supabase.functions.invoke('send-contact-email', {
-        body: { name, email, subject: subjectRaw, message, hp }
-      });
+    // Crear el mailto con todos los datos
+    const subject = encodeURIComponent(`${subjectRaw} - ${name}`);
+    const body = encodeURIComponent(`
+Nombre: ${name}
+Email: ${email}
+Asunto: ${subjectRaw}
 
-      if (error) {
-        const serverMsg = (error as any)?.message || (result as any)?.error;
-        toast({
-          title: "No se pudo enviar el mensaje",
-          description: serverMsg || "Por favor verifica tu correo y vuelve a intentar.",
-        });
-        return;
-      }
+Mensaje:
+${message}
 
-      console.log('Contacto enviado OK:', result);
-      toast({
-        title: "Mensaje enviado",
-        description: "Gracias por contactarnos. Te responderemos a la brevedad.",
-      });
-      form.reset();
-    } catch (err: any) {
-      console.error('Error enviando contacto:', err);
-      const serverMsg = err?.message || (err?.error) || "Error inesperado";
-      toast({
-        title: "No se pudo enviar el mensaje",
-        description: serverMsg,
-      });
-    }
+---
+Enviado desde www.rentaflux.com
+    `);
+
+    const mailtoLink = `mailto:rentaflux@gmail.com?subject=${subject}&body=${body}`;
+    window.location.href = mailtoLink;
+
+    toast({
+      title: "Abriendo cliente de correo",
+      description: "Se abrirá tu cliente de correo para enviar el mensaje.",
+    });
   };
 
   return (
@@ -114,13 +105,12 @@ const Landing = () => {
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center">
             <img 
               src="/logo-rentaflux.svg" 
               alt="RentaFlux Logo" 
-              className="h-8 w-8"
+              className="h-10 w-auto"
             />
-            <h1 className="text-2xl font-bold text-gray-900"></h1>
           </div>
           <div className="space-x-4">
             <Button variant="ghost" onClick={() => {
@@ -501,13 +491,12 @@ const Landing = () => {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <div className="flex items-center space-x-2 mb-4">
+              <div className="flex items-center mb-4">
                 <img 
                   src="/logo-rentaflux.svg" 
                   alt="RentaFlux Logo" 
-                  className="h-6 w-6"
+                  className="h-8 w-auto"
                 />
-                <h3 className="text-xl font-bold">RentaFlux</h3>
               </div>
               <p className="text-gray-400">
                 La plataforma completa para la gestión de propiedades en alquiler.

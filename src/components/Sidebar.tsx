@@ -147,21 +147,18 @@ const Sidebar = () => {
   return (
     <SidebarContainer>
       <SidebarHeader>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center justify-center">
           <img 
             src="/logo-rentaflux.svg" 
             alt="RentaFlux Logo" 
-            className="h-8 w-8"
+            className="h-12 w-auto"
           />
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">RentaFlux</h1>
-            {hasActivePremium && (
-              <div className="flex items-center text-xs text-yellow-600">
-                <Crown className="h-3 w-3 mr-1" />
-                Premium
-              </div>
-            )}
-          </div>
+          {hasActivePremium && (
+            <div className="flex items-center text-xs text-yellow-600 ml-2">
+              <Crown className="h-3 w-3 mr-1" />
+              Premium
+            </div>
+          )}
         </div>
         
         <div className="space-y-1 mt-4">

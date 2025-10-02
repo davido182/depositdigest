@@ -176,29 +176,82 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
 
     setIsUploading(true);
     try {
-      const text = await selectedFile.text();
+      let text: string;
+      
+      // Manejar diferentes tipos de archivo
+      if (selectedFile.name.toLowerCase().endsWith('.csv')) {
+        text = await selectedFile.text();
+      } else if (selectedFile.name.toLowerCase().endsWith('.xlsx') || selectedFile.name.toLowerCase().endsWith('.xls')) {
+        // Para archivos Excel, el usuario debe convertir a CSV primero
+        toast.error('Por favor, guarda tu archivo Excel como CSV antes de subirlo.');
+        return;
+      } else {
+        // Intentar leer como texto de todos modos
+        text = await selectedFile.text();
+      }
+      
       const data = parseCSV(text);
 
       if (data.length === 0) {
-        toast.error('El archivo está vacío o tiene formato incorrecto');
+        toast.error('El archivo está vacío o tiene formato incorrecto. Verifica que:\n• El archivo sea CSV\n• Tenga al menos una fila de datos\n• Use comas como separador');
         return;
       }
 
+      console.log('Datos parseados:', data);
+      console.log('Headers detectados:', Object.keys(data[0] || {}));
+
       let result;
       const filename = selectedFile.name.toLowerCase();
+      const headers = Object.keys(data[0] || {}).map(h => h.toLowerCase());
 
-      if (filename.includes('inquilino') || filename.includes('tenant')) {
+      // Detectar tipo por headers o nombre de archivo
+      const hasTenantHeaders = headers.some(h => 
+        h.includes('nombre') || h.includes('email') || h.includes('telefono') || 
+        h.includes('unidad') || h.includes('alquiler') || h.includes('name') || h.includes('phone')
+      );
+      
+      const hasPropertyHeaders = headers.some(h => 
+        h.includes('direccion') || h.includes('address') || h.includes('total_unidades') || 
+        h.includes('descripcion') || h.includes('description')
+      );
+      
+      const hasPaymentHeaders = headers.some(h => 
+        h.includes('monto') || h.includes('amount') || h.includes('fecha_pago') || 
+        h.includes('payment_date') || h.includes('metodo_pago') || h.includes('payment_method')
+      );
+
+      if (hasTenantHeaders || filename.includes('inquilino') || filename.includes('tenant')) {
         result = await importTenants(data);
         toast.success(`${result.length} inquilinos importados exitosamente`);
-      } else if (filename.includes('propiedad') || filename.includes('property')) {
+      } else if (hasPropertyHeaders || filename.includes('propiedad') || filename.includes('property')) {
         result = await importProperties(data);
         toast.success(`${result.length} propiedades importadas exitosamente`);
-      } else if (filename.includes('pago') || filename.includes('payment')) {
+      } else if (hasPaymentHeaders || filename.includes('pago') || filename.includes('payment')) {
         result = await importPayments(data);
         toast.success(`${result.length} pagos importados exitosamente`);
       } else {
-        toast.error('No se pudo determinar el tipo de archivo. Usa nombres descriptivos.');
-        return;
+        // Si no se puede detectar, mostrar opciones al usuario
+        const userChoice = window.confirm(
+          `No se pudo detectar automáticamente el tipo de archivo.\n\n` +
+          `¿Es un archivo de inquilinos? (OK = Sí, Cancelar = No)`
+        );
+        
+        if (userChoice) {
+          result = await importTenants(data);
+          toast.success(`${result.length} inquilinos importados exitosamente`);
+        } else {
+          const isProperties = window.confirm(
+            `¿Es un archivo de propiedades? (OK = Sí, Cancelar = Pagos)`
+          );
+          
+          if (isProperties) {
+            result = await importProperties(data);
+            toast.success(`${result.length} propiedades importadas exitosamente`);
+          } else {
+            result = await importPayments(data);
+            toast.success(`${result.length} pagos importados exitosamente`);
+          }
+        }
       }
 
       onImportComplete();
@@ -306,7 +359,8 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
             <ul className="text-sm text-blue-800 space-y-1">
               <li>• Descarga la plantilla correspondiente</li>
               <li>• Completa los datos en Excel o Google Sheets</li>
-              <li>• Guarda como CSV (separado por comas)</li>
+              <li>• <strong>IMPORTANTE:</strong> Guarda como CSV (separado por comas)</li>
+              <li>• Usa nombres descriptivos (ej: "inquilinos.csv", "propiedades.csv")</li>
               <li>• Sube el archivo aquí</li>
               <li>• El sistema detectará automáticamente el tipo de datos</li>
             </ul>
