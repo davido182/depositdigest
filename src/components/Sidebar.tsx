@@ -113,36 +113,8 @@ const Sidebar = () => {
   };
 
   const handleUpgrade = async () => {
-    try {
-      toast.loading('Preparando pago...');
-      
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { 
-          email: user?.email,
-          priceId: 'price_1QdFz0DKXqPjJWpJqwgNLYkr'
-        }
-      });
-      
-      toast.dismiss();
-      
-      if (error) {
-        console.error('Error creating checkout:', error);
-        toast.error(`Error al procesar el pago: ${error.message || 'Error desconocido'}`);
-        return;
-      }
-      
-      if (data?.url) {
-        toast.success('Redirigiendo a Stripe...');
-        window.location.href = data.url; // Usar location.href en lugar de window.open
-      } else {
-        console.error('No URL returned from create-checkout:', data);
-        toast.error('No se pudo generar el enlace de pago. Intenta de nuevo.');
-      }
-    } catch (error) {
-      toast.dismiss();
-      console.error('Error in handleUpgrade:', error);
-      toast.error(`Error: ${error instanceof Error ? error.message : 'Error desconocido'}`);
-    }
+    // Scroll to contact section on landing page
+    window.location.href = '/landing#contacto';
   };
 
   const handleSignOut = async () => {
@@ -221,8 +193,30 @@ const Sidebar = () => {
       </SidebarContent>
 
       <SidebarFooter>
+        {/* Trial countdown for premium trial users */}
+        {isTrialUser && trialDaysLeft !== null && (
+          <div className="p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+            <div className="text-center mb-2">
+              <div className="bg-green-100 text-green-800 px-2 py-1 rounded font-medium text-sm">
+                🎁 Prueba Premium: {trialDaysLeft} días restantes
+              </div>
+            </div>
+            <button
+              onClick={handleUpgrade}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:from-green-700 hover:to-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <Crown className="h-4 w-4" />
+              Continuar con Premium
+              <ExternalLink className="h-3 w-3" />
+            </button>
+            <div className="text-xs text-gray-600 text-center mt-2">
+              💎 Mantén todas las funciones premium
+            </div>
+          </div>
+        )}
+
         {/* Upgrade section for free users */}
-        {userRole === 'landlord_free' && (
+        {userRole === 'landlord_free' && !isTrialUser && (
           <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
             <button
               onClick={handleUpgrade}
@@ -232,13 +226,6 @@ const Sidebar = () => {
               Actualizar a Premium
               <ExternalLink className="h-3 w-3" />
             </button>
-            {isTrialUser && trialDaysLeft !== null && (
-              <div className="text-xs text-center mb-2">
-                <div className="bg-amber-100 text-amber-800 px-2 py-1 rounded font-medium">
-                  🎁 Prueba Premium: {trialDaysLeft} días restantes
-                </div>
-              </div>
-            )}
             <div className="text-xs text-gray-600 text-center">
               🚀 Desbloquea RentaFlux Premium
             </div>

@@ -44,11 +44,11 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  logger.info("🚀 RentaFlux App initializing", { 
-    version: config.app.version, 
-    environment: config.app.environment 
+  logger.info("🚀 RentaFlux App initializing", {
+    version: config.app.version,
+    environment: config.app.environment
   });
-  
+
   const { isNative } = useDeviceFeatures();
   const listenerRef = useRef<any>(null);
   const [hasVisitedBefore, setHasVisitedBefore] = useState<boolean | null>(null);
@@ -58,15 +58,15 @@ const App = () => {
     const checkFirstVisit = () => {
       const hasVisited = localStorage.getItem('rentaflux_has_visited');
       setHasVisitedBefore(!!hasVisited);
-      
+
       if (!hasVisited) {
         localStorage.setItem('rentaflux_has_visited', 'true');
       }
     };
-    
+
     checkFirstVisit();
   }, []);
-  
+
   // Listen for hardware back button on native apps
   useEffect(() => {
     if (isNative) {
@@ -81,9 +81,9 @@ const App = () => {
           }
         });
       };
-      
+
       setupListener();
-      
+
       return () => {
         // Clean up the listener when component unmounts
         if (listenerRef.current) {
@@ -105,18 +105,18 @@ const App = () => {
       };
     }
   }, [isNative]);
-  
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Landing />} />
               <Route path="/landing" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/tenant-signup" element={<TenantSignup />} />
               <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/properties" element={<Properties />} />
                 <Route path="/tenants" element={<Tenants />} />
@@ -128,8 +128,8 @@ const App = () => {
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/invite-tenant" element={<InviteTenant />} />
-        <Route path="/subscription-success" element={<SubscriptionSuccess />} />
-        <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/subscription-success" element={<SubscriptionSuccess />} />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

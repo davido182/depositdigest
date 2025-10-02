@@ -88,12 +88,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!roleData) {
-        console.log("📝 No role found, creating default role...");
+        console.log("📝 No role found, creating default premium trial role...");
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 30); // 30 días de prueba
+        
         const { data: newRoleData, error: createError } = await supabase
           .from('user_roles')
           .insert([{
             user_id: userToCheck.id,
-            role: 'landlord_free' as UserRole
+            role: 'landlord_premium' as UserRole,
+            trial_end_date: trialEndDate.toISOString(),
+            is_trial: true
           }])
           .select('role')
           .single();

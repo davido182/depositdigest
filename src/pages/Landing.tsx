@@ -120,7 +120,7 @@ const Landing = () => {
               alt="RentaFlux Logo" 
               className="h-8 w-8"
             />
-            <h1 className="text-2xl font-bold text-gray-900">RentaFlux</h1>
+            <h1 className="text-2xl font-bold text-gray-900"></h1>
           </div>
           <div className="space-x-4">
             <Button variant="ghost" onClick={() => {
@@ -168,7 +168,7 @@ const Landing = () => {
               <Button size="lg" onClick={() => {
                 localStorage.setItem('rentaflux_has_visited', 'true');
                 navigate("/login");
-              }} className="bg-blue-600 hover:bg-blue-700">
+              }} className="#3c6e71">
                 Comenzar Gratis <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button size="lg" variant="outline" onClick={handleDemoClick}>
@@ -244,7 +244,7 @@ const Landing = () => {
                 <CardTitle>Pagos Automáticos</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Recibe pagos directamente desde la app con Stripe</p>
+                <p className="text-gray-600">Recibe pagos directamente a tu cuenta desde la app con Stripe</p>
               </CardContent>
             </Card>
 
@@ -254,7 +254,7 @@ const Landing = () => {
                 <CardTitle>Contabilidad Premium</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Contabilidad completa y reportes fiscales automáticos</p>
+                <p className="text-gray-600">Contabilidad completa y reportes automáticos</p>
               </CardContent>
             </Card>
 
@@ -284,7 +284,7 @@ const Landing = () => {
                 <CardTitle>Exportación de Datos</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Exporta todos tus datos en PDF, Excel y otros formatos</p>
+                <p className="text-gray-600">Exporta todos tus datos en PDF o Excel</p>
               </CardContent>
             </Card>
           </div>
@@ -344,7 +344,7 @@ const Landing = () => {
                 </CardTitle>
                 <CardDescription>
                   <span className="text-3xl font-bold">Con invitación - contáctanos</span>
-                  <span className="text-gray-600">/mes</span>
+                  
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -358,18 +358,9 @@ const Landing = () => {
                 </ul>
                 <Button 
                   className="w-full mt-6 bg-blue-600 hover:bg-blue-700" 
-                  onClick={async () => {
-                    try {
-                      const { data, error } = await supabase.functions.invoke('create-checkout');
-                      if (error) throw error;
-                      if (data?.url) {
-                        window.open(data.url, '_blank');
-                      }
-                    } catch (error) {
-                      console.error('Error creating checkout:', error);
-                      localStorage.setItem('rentaflux_has_visited', 'true');
-                      navigate("/login");
-                    }
+                  onClick={() => {
+                    window.location.hash = 'contacto-premium';
+                    document.getElementById('contacto')?.scrollIntoView({ behavior: 'smooth' });
                   }}
                 >
                   Quiero ser Premium
@@ -479,7 +470,17 @@ const Landing = () => {
                 </div>
                 <div>
                   <Label htmlFor="message">Mensaje</Label>
-                  <Textarea id="message" name="message" placeholder="Cuéntanos cómo podemos ayudarte" rows={5} required />
+                  <Textarea 
+                    id="message" 
+                    name="message" 
+                    placeholder="Cuéntanos cómo podemos ayudarte" 
+                    rows={5} 
+                    required 
+                    defaultValue={window.location.hash === '#contacto-premium' ? 
+                      'Hola, me interesa obtener acceso a RentaFlux Premium. Por favor, contáctenme para más información sobre los planes y precios.' : 
+                      ''
+                    }
+                  />
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <Button type="submit" className="bg-blue-600 hover:bg-blue-700">

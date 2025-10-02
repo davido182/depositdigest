@@ -49,28 +49,51 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     toast.success(`Plantilla ${type} descargada`);
   };
 
   const parseCSV = (text: string): any[] => {
     const lines = text.split('\n').filter(line => line.trim());
     if (lines.length < 2) return [];
-    
-    const headers = lines[0].split(',').map(h => h.trim());
+
+    // Handle CSV with quotes and commas inside fields
+    const parseCSVLine = (line: string): string[] => {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(current.trim().replace(/^"|"$/g, ''));
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      
+      result.push(current.trim().replace(/^"|"$/g, ''));
+      return result;
+    };
+
+    const headers = parseCSVLine(lines[0]);
     const data = [];
-    
+
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim());
-      if (values.length === headers.length) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length >= headers.length) {
         const row: any = {};
         headers.forEach((header, index) => {
-          row[header] = values[index];
+          row[header] = values[index] || '';
         });
         data.push(row);
       }
     }
-    
+
     return data;
   };
 
@@ -155,7 +178,7 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
     try {
       const text = await selectedFile.text();
       const data = parseCSV(text);
-      
+
       if (data.length === 0) {
         toast.error('El archivo está vacío o tiene formato incorrecto');
         return;
@@ -163,7 +186,7 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
 
       let result;
       const filename = selectedFile.name.toLowerCase();
-      
+
       if (filename.includes('inquilino') || filename.includes('tenant')) {
         result = await importTenants(data);
         toast.success(`${result.length} inquilinos importados exitosamente`);
@@ -262,7 +285,7 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
                   className="mt-1"
                 />
               </div>
-              
+
               {selectedFile && (
                 <div className="p-3 bg-muted rounded-lg">
                   <div className="flex items-center gap-2">
@@ -294,8 +317,8 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button 
-            onClick={handleFileUpload} 
+          <Button
+            onClick={handleFileUpload}
             disabled={!selectedFile || isUploading}
             className="gap-2"
           >
