@@ -150,9 +150,9 @@ const Login = () => {
           <div className="mb-8 text-center">
             <div className="flex items-center justify-center mb-4">
               <img 
-                src="/logo-rentaflux.svg" 
+                src="/logo-rentaflux.ico" 
                 alt="RentaFlux Logo" 
-                className="h-8 w-auto mr-2"
+                className="h-8 w-8 mr-2"
               />
               <h1 className="text-2xl font-bold tracking-tight">RentaFlux</h1>
             </div>
@@ -209,9 +209,9 @@ const Login = () => {
           <div className="mb-8 text-center">
             <div className="flex items-center justify-center mb-4">
               <img 
-                src="/logo-rentaflux.svg" 
+                src="/logo-rentaflux.ico" 
                 alt="RentaFlux Logo" 
-                className="h-8 w-auto mr-2"
+                className="h-8 w-8 mr-2"
               />
               <h1 className="text-2xl font-bold tracking-tight">RentaFlux</h1>
             </div>
@@ -274,9 +274,9 @@ const Login = () => {
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center mb-4">
             <img 
-              src="/logo-rentaflux.svg" 
+              src="/logo-rentaflux.ico" 
               alt="RentaFlux Logo" 
-              className="h-8 w-auto mr-2"
+              className="h-8 w-8 mr-2"
             />
             <h1 className="text-2xl font-bold tracking-tight">RentaFlux</h1>
           </div>

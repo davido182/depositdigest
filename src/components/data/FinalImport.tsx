@@ -19,12 +19,12 @@ export function FinalImport({ isOpen, onClose, onImportComplete }: FinalImportPr
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const downloadTemplate = () => {
-    // Plantilla universal con todos los campos posibles
-    const csvContent = `tipo,nombre,email,telefono,numero_unidad,monto_alquiler,direccion,descripcion,total_unidades,fecha_pago,metodo_pago,estado,notas
-inquilino,Juan Pérez,juan@email.com,555-0123,101,1200,,,,,,,Inquilino puntual
-inquilino,María García,maria@email.com,555-0124,102,1300,,,,,,,Excelente inquilina
-propiedad,Edificio Central,,,,,"Calle Principal 123","Edificio moderno",10,,,,
-pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed,Pago enero`;
+    // Plantilla universal con todos los campos correctos
+    const csvContent = `tipo,nombre,email,telefono,numero_unidad,monto_alquiler,deposito,fecha_inicio_contrato,fecha_fin_contrato,direccion,descripcion,total_unidades,fecha_pago,metodo_pago,estado,notas
+inquilino,Juan Pérez,juan@email.com,555-0123,101,1200,2400,2024-01-01,2024-12-31,,,,,,,Inquilino puntual
+inquilino,María García,maria@email.com,555-0124,102,1300,2600,2024-02-01,2024-12-31,,,,,,,Excelente inquilina
+propiedad,Edificio Central,,,,,,,"Calle Principal 123","Edificio moderno",10,,,,,
+pago,,juan@email.com,,,1200,,,,,,,"2024-01-01",transferencia,completed,Pago enero`;
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -60,23 +60,33 @@ pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed,Pago enero`;
 
   const importTenants = async (tenantRows: any[]) => {
     const tenants = tenantRows.map(row => ({
-      // Usar full_name que parece ser la columna correcta
-      full_name: row.nombre || row.name || row.full_name || 'Sin nombre',
+      // Usar exactamente los nombres de columna de la base de datos
+      name: row.nombre || row.name || 'Sin nombre',
       email: row.email || '',
-      phone: row.telefono || row.phone || null,
-      unit_number: row.numero_unidad || null,
+      phone: row.telefono || row.phone || '',
+      unit: row.numero_unidad || row.unit || '',
+      move_in_date: row.fecha_inicio_contrato || new Date().toISOString().split('T')[0],
+      lease_end_date: row.fecha_fin_contrato || null,
       rent_amount: parseFloat(row.monto_alquiler || '0') || 0,
+      deposit_amount: parseFloat(row.deposito || '0') || 0,
       status: row.estado || 'active',
       notes: row.notas || null,
       user_id: user?.id
     }));
+
+    console.log('📤 Intentando insertar inquilinos:', tenants);
 
     const { data, error } = await supabase
       .from('tenants')
       .insert(tenants)
       .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error insertando inquilinos:', error);
+      throw error;
+    }
+    
+    console.log('✅ Inquilinos insertados:', data);
     return data?.length || 0;
   };
 

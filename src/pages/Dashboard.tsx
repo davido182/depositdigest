@@ -6,6 +6,7 @@ import { TenantCard } from "@/components/tenants/TenantCard";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import { PropertyForm } from "@/components/properties/PropertyForm";
 import { FinalImport } from "@/components/data/FinalImport";
+import { AppDebug } from "@/components/debug/AppDebug";
 import TenantDashboard from "@/components/tenant/TenantDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -283,6 +284,9 @@ const Dashboard = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
         )}
+
+        {/* Debug completo de la app */}
+        <AppDebug />
       </div>
 
       <TenantEditForm

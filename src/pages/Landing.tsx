@@ -83,23 +83,19 @@ const Landing = () => {
         description: "Por favor espera un momento.",
       });
 
-      // Usar EmailJS como alternativa gratuita
-      const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      // Usar Formspree (servicio gratuito)
+      const response = await fetch('https://formspree.io/f/xpwzgkqr', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          service_id: 'service_rentaflux',
-          template_id: 'template_contact',
-          user_id: 'your_emailjs_user_id',
-          template_params: {
-            from_name: name,
-            from_email: email,
-            subject: subjectRaw,
-            message: message,
-            to_email: 'rentaflux@gmail.com'
-          }
+          name: name,
+          email: email,
+          subject: subjectRaw,
+          message: message,
+          _replyto: email,
+          _subject: `${subjectRaw} - ${name}`,
         })
       });
 
@@ -145,9 +141,9 @@ Enviado desde www.rentaflux.com
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <img 
-              src="/logo-rentaflux.svg" 
+              src="/logo-rentaflux.ico" 
               alt="RentaFlux Logo" 
-              className="h-8 w-auto"
+              className="h-8 w-8"
             />
             <h1 className="text-2xl font-bold text-gray-900">RentaFlux</h1>
           </div>
@@ -532,9 +528,9 @@ Enviado desde www.rentaflux.com
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <img 
-                  src="/logo-rentaflux.svg" 
+                  src="/logo-rentaflux.ico" 
                   alt="RentaFlux Logo" 
-                  className="h-6 w-auto"
+                  className="h-6 w-6"
                 />
                 <h3 className="text-xl font-bold">RentaFlux</h3>
               </div>

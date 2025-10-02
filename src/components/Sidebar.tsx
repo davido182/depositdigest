@@ -149,9 +149,9 @@ const Sidebar = () => {
       <SidebarHeader>
         <div className="flex items-center space-x-2">
           <img 
-            src="/logo-rentaflux.svg" 
+            src="/logo-rentaflux.ico" 
             alt="RentaFlux Logo" 
-            className="h-8 w-auto"
+            className="h-8 w-8"
           />
           <div>
             <h1 className="text-xl font-bold text-gray-900">RentaFlux</h1>
