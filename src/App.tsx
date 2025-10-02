@@ -112,11 +112,11 @@ const App = () => {
         <TooltipProvider>
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Landing />} />
               <Route path="/landing" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/tenant-signup" element={<TenantSignup />} />
               <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/app" element={<Dashboard />} />
                 <Route path="/properties" element={<Properties />} />

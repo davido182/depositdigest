@@ -166,6 +166,15 @@ pago,,juan@email.com,,,1200,,,,,,,"2024-01-01",transferencia,completed,Pago ener
         row.tipo === 'pago' || (!row.tipo && row.fecha_pago)
       );
 
+      console.log('📋 Filas separadas:', {
+        inquilinos: tenantRows.length,
+        propiedades: propertyRows.length,
+        pagos: paymentRows.length
+      });
+      console.log('👥 Datos de inquilinos:', tenantRows);
+      console.log('🏠 Datos de propiedades:', propertyRows);
+      console.log('💰 Datos de pagos:', paymentRows);
+
       let results = [];
 
       // Importar inquilinos
@@ -284,6 +293,26 @@ pago,,juan@email.com,,,1200,,,,,,,"2024-01-01",transferencia,completed,Pago ener
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
+          
+          {/* Botón de prueba rápida */}
+          <Button
+            variant="secondary"
+            onClick={() => {
+              // Crear datos de prueba
+              const testCSV = `tipo,nombre,email,telefono,numero_unidad,monto_alquiler,deposito,fecha_inicio_contrato,fecha_fin_contrato,direccion,descripcion,total_unidades,fecha_pago,metodo_pago,estado,notas
+inquilino,Juan Test,juan.test@email.com,555-1234,101,1200,2400,2024-01-01,2024-12-31,,,,,,,Inquilino de prueba
+inquilino,María Test,maria.test@email.com,555-5678,102,1300,2600,2024-02-01,2024-12-31,,,,,,,Inquilina de prueba`;
+              
+              const blob = new Blob([testCSV], { type: 'text/csv' });
+              const file = new File([blob], 'test_inquilinos.csv', { type: 'text/csv' });
+              setSelectedFile(file);
+              toast.success('Archivo de prueba cargado. Haz clic en "Importar Datos"');
+            }}
+            className="gap-2"
+          >
+            🧪 Prueba Rápida
+          </Button>
+          
           <Button
             onClick={handleFileUpload}
             disabled={!selectedFile || isUploading}

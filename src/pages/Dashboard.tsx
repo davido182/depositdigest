@@ -309,7 +309,55 @@ const Dashboard = () => {
         onClose={() => setIsImportModalOpen(false)}
         onImportComplete={() => {
           // Recargar datos después de importar
-          window.location.reload();
+          setIsImportModalOpen(false);
+          // Recargar datos sin recargar toda la página
+          const loadData = async () => {
+            try {
+              const loadedTenants = await tenantService.getTenants();
+              setTenants(loadedTenants);
+              
+              if (user) {
+                const { data: dbProperties, error: propsError } = await supabase
+                  .from('properties')
+                  .select('*')
+                  .eq('user_id', user.id);
+
+                if (!propsError && dbProperties) {
+                  const { data: units, error: unitsError } = await supabase
+                    .from('units')
+                    .select('*')
+                    .eq('user_id', user.id);
+
+                  if (!unitsError && units) {
+                    const mappedProperties = dbProperties.map(dbProp => {
+                      const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
+                      const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
+                      const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
+                      
+                      return {
+                        id: dbProp.id,
+                        name: dbProp.name,
+                        address: dbProp.address || '',
+                        units: propertyUnits.length,
+                        occupied_units: occupiedUnits.length,
+                        monthly_revenue: totalRevenue,
+                        created_at: dbProp.created_at
+                      };
+                    });
+                    setProperties(mappedProperties);
+                  }
+                }
+              }
+              
+              refetch(); // Recargar stats
+              toast.success('Datos actualizados correctamente');
+            } catch (error) {
+              console.error('Error recargando datos:', error);
+              toast.error('Error al actualizar los datos');
+            }
+          };
+          
+          loadData();
         }}
       />
     </Layout>
