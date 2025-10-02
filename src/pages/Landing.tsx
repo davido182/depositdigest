@@ -68,7 +68,7 @@ const Landing = () => {
     }
   };
 
-  const handleContactSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget as HTMLFormElement;
     const data = new FormData(form);
@@ -76,28 +76,40 @@ const Landing = () => {
     const email = (data.get('email') as string) || '';
     const subjectRaw = (data.get('subject') as string) || 'Consulta desde RentaFlux';
     const message = (data.get('message') as string) || '';
+    const hp = (data.get('hp') as string) || '';
 
-    // Crear el mailto con todos los datos
-    const subject = encodeURIComponent(`${subjectRaw} - ${name}`);
-    const body = encodeURIComponent(`
-Nombre: ${name}
-Email: ${email}
-Asunto: ${subjectRaw}
+    try {
+      toast({
+        title: "Enviando mensaje...",
+        description: "Por favor espera un momento.",
+      });
 
-Mensaje:
-${message}
+      const { data: result, error } = await supabase.functions.invoke('send-contact-email', {
+        body: { name, email, subject: subjectRaw, message, hp }
+      });
 
----
-Enviado desde www.rentaflux.com
-    `);
+      if (error) {
+        console.error('Error enviando contacto:', error);
+        toast({
+          title: "Error al enviar",
+          description: "No se pudo enviar el mensaje. Por favor intenta de nuevo o escríbenos directamente a rentaflux@gmail.com",
+        });
+        return;
+      }
 
-    const mailtoLink = `mailto:rentaflux@gmail.com?subject=${subject}&body=${body}`;
-    window.location.href = mailtoLink;
-
-    toast({
-      title: "Abriendo cliente de correo",
-      description: "Se abrirá tu cliente de correo para enviar el mensaje.",
-    });
+      console.log('Contacto enviado OK:', result);
+      toast({
+        title: "¡Mensaje enviado!",
+        description: "Gracias por contactarnos. Te responderemos a la brevedad a tu correo.",
+      });
+      form.reset();
+    } catch (err: any) {
+      console.error('Error enviando contacto:', err);
+      toast({
+        title: "Error al enviar",
+        description: "No se pudo enviar el mensaje. Por favor intenta de nuevo o escríbenos directamente a rentaflux@gmail.com",
+      });
+    }
   };
 
   return (
@@ -109,7 +121,7 @@ Enviado desde www.rentaflux.com
             <img 
               src="/logo-rentaflux.svg" 
               alt="RentaFlux Logo" 
-              className="h-10 w-auto"
+              className="h-12 w-auto"
             />
           </div>
           <div className="space-x-4">
@@ -149,8 +161,13 @@ Enviado desde www.rentaflux.com
             Gestiona tus propiedades de
             <span className="text-blue-600"> forma inteligente</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            RentaFlux es la plataforma completa para propietarios e inquilinos. 
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto flex items-center justify-center gap-2 flex-wrap">
+            <img 
+              src="/logo-rentaflux.svg" 
+              alt="RentaFlux" 
+              className="h-8 w-auto inline-block"
+            />
+            es la plataforma completa para propietarios e inquilinos. 
             Gestiona pagos, mantenimiento, contabilidad y más desde tu móvil o web.
           </p>
           <div className="flex flex-col lg:flex-row gap-8 justify-center items-center">
@@ -495,7 +512,7 @@ Enviado desde www.rentaflux.com
                 <img 
                   src="/logo-rentaflux.svg" 
                   alt="RentaFlux Logo" 
-                  className="h-8 w-auto"
+                  className="h-10 w-auto"
                 />
               </div>
               <p className="text-gray-400">

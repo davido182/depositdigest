@@ -5,7 +5,7 @@ import { SmartNotifications } from "@/components/dashboard/SmartNotifications";
 import { TenantCard } from "@/components/tenants/TenantCard";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import { PropertyForm } from "@/components/properties/PropertyForm";
-import { DataImportModal } from "@/components/data/DataImportModal";
+import { SimpleDataImport } from "@/components/data/SimpleDataImport";
 import TenantDashboard from "@/components/tenant/TenantDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -300,7 +300,7 @@ const Dashboard = () => {
         userRole={userRole || 'landlord_free'}
       />
 
-      <DataImportModal
+      <SimpleDataImport
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImportComplete={() => {
