@@ -77,14 +77,13 @@ export function useAppData() {
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth() + 1; // 1-indexed for DB
       const [tenantsResult, paymentsResult, propertiesResult, unitsResult, receiptsResult] = await Promise.all([
-        supabase.from('tenants').select('*').eq('user_id', user.id),
-        supabase.from('payments').select('*').eq('user_id', user.id),
-        supabase.from('properties').select('*').eq('user_id', user.id),
-        supabase.from('units').select('*').eq('user_id', user.id),
+        supabase.from('tenants').select('*'),
+        supabase.from('payments').select('*'),
+        supabase.from('properties').select('*'),
+        supabase.from('units').select('*'),
         supabase
           .from('payment_receipts')
           .select('tenant_id, year, month, has_receipt')
-          .eq('user_id', user.id)
           .eq('year', currentYear)
           .eq('month', currentMonth)
       ]);

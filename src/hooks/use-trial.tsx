@@ -15,7 +15,7 @@ export function useTrialCountdown() {
         // Get user role data including trial information
         const { data: roleData, error } = await supabase
           .from('user_roles')
-          .select('trial_end_date, is_trial')
+          .select('role')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(1)
@@ -26,34 +26,9 @@ export function useTrialCountdown() {
           return;
         }
 
-        if (roleData?.is_trial && roleData?.trial_end_date) {
-          const trialEndDate = new Date(roleData.trial_end_date);
-          const currentDate = new Date();
-          const daysLeft = Math.ceil((trialEndDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
-          
-          if (daysLeft > 0) {
-            setIsTrialUser(true);
-            setTrialDaysLeft(daysLeft);
-          } else {
-            // Trial expired, update user to free
-            setIsTrialUser(false);
-            setTrialDaysLeft(0);
-            
-            // Update role to free if trial expired
-            if (userRole === 'landlord_premium') {
-              await supabase
-                .from('user_roles')
-                .update({ 
-                  role: 'landlord_free',
-                  is_trial: false 
-                })
-                .eq('user_id', user.id);
-            }
-          }
-        } else {
-          setIsTrialUser(false);
-          setTrialDaysLeft(null);
-        }
+        // Simplificar - no hay sistema de trial por ahora
+        setIsTrialUser(false);
+        setTrialDaysLeft(null);
       } catch (error) {
         console.error('Error in trial countdown:', error);
       }

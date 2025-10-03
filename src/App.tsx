@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AuthDebugger from "@/components/AuthDebugger";
 import { DevToolsPanel } from "@/hooks/useDevTools";
+import { DevErrorNotice } from "@/components/ui/DevErrorNotice";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Tenants from "./pages/Tenants";
@@ -139,6 +140,7 @@ const App = () => {
           <Toaster />
           <Sonner position="top-right" />
           {/* <DevToolsPanel /> */}
+          <DevErrorNotice />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
