@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AuthDebugger from "@/components/AuthDebugger";
 import { DevToolsPanel } from "@/hooks/useDevTools";
 import { DevErrorNotice } from "@/components/ui/DevErrorNotice";
+import { SmartHome } from "@/components/SmartHome";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Tenants from "./pages/Tenants";
@@ -113,11 +114,11 @@ const App = () => {
         <TooltipProvider>
           <BrowserRouter>
             <Routes>
+              <Route path="/" element={<SmartHome />} />
               <Route path="/landing" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/tenant-signup" element={<TenantSignup />} />
               <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/app" element={<Dashboard />} />
                 <Route path="/properties" element={<Properties />} />

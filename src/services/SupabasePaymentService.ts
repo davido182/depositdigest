@@ -12,7 +12,7 @@ export class SupabasePaymentService extends SupabaseService {
     const { data, error } = await supabase
       .from('payments')
       .select('*')
-      .order('payment_date', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching payments:', error);

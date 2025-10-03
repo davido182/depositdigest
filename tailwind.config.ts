@@ -25,10 +25,10 @@ export default {
 			colors: {
 				// Nueva paleta RentaFlux
 				jet: '#353535',
-				caribbean: '#3c6e71', 
+				caribbean: '#3c6e71',
 				platinum: '#d9d9d9',
 				indigo: '#284b63',
-				
+
 				// Mantener compatibilidad shadcn/ui con nueva paleta
 				border: '#d9d9d9',
 				input: '#d9d9d9',

@@ -76,16 +76,11 @@ export function useAppData() {
       // Fetch all data in parallel
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth() + 1; // 1-indexed for DB
-      const [tenantsResult, paymentsResult, propertiesResult, unitsResult, receiptsResult] = await Promise.all([
+      const [tenantsResult, paymentsResult, propertiesResult, unitsResult] = await Promise.all([
         supabase.from('tenants').select('*'),
         supabase.from('payments').select('*'),
         supabase.from('properties').select('*'),
-        supabase.from('units').select('*'),
-        supabase
-          .from('payment_receipts')
-          .select('tenant_id, year, month, has_receipt')
-          .eq('year', currentYear)
-          .eq('month', currentMonth)
+        supabase.from('units').select('*')
       ]);
 
       // Check for errors
@@ -93,20 +88,17 @@ export function useAppData() {
       if (paymentsResult.error) throw paymentsResult.error;
       if (propertiesResult.error) throw propertiesResult.error;
       if (unitsResult.error) throw unitsResult.error;
-      if (receiptsResult.error) throw receiptsResult.error;
 
       const tenants = tenantsResult.data || [];
       const payments = paymentsResult.data || [];
       const properties = propertiesResult.data || [];
       const units = unitsResult.data || [];
-      const receipts = receiptsResult.data || [];
 
       console.log('useAppData: Fetched data:', {
         tenantsCount: tenants.length,
         paymentsCount: payments.length,
         propertiesCount: properties.length,
-        unitsCount: units.length,
-        receiptsCount: receipts.length
+        unitsCount: units.length
       });
 
       // Calculate aggregated stats with detailed logging
@@ -129,23 +121,24 @@ export function useAppData() {
       
       const occupancyRate = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
 
-      // Calculate collection rate for current month (reuse currentMonth/currentYear from above)
+      // Calculate collection rate for current month (simplified)
+      const activeTenantsList = tenants.filter(t => t.status === 'active');
       const currentMonthPayments = payments.filter(p => {
-        const paymentDate = new Date(p.payment_date);
-        return paymentDate.getMonth() + 1 === currentMonth && 
-               paymentDate.getFullYear() === currentYear &&
-               p.status === 'completed';
+        try {
+          const paymentDate = new Date(p.payment_date || p.created_at);
+          return paymentDate.getMonth() + 1 === currentMonth && 
+                 paymentDate.getFullYear() === currentYear &&
+                 p.status === 'completed';
+        } catch {
+          return false;
+        }
       });
       
-      const activeTenantsList = tenants.filter(t => t.status === 'active');
       const paidTenantIds = new Set(currentMonthPayments.map(p => p.tenant_id));
       const collectionRate = activeTenantsList.length > 0 ? (paidTenantIds.size / activeTenantsList.length) * 100 : 0;
 
-      // Derive pending/overdue from payment_receipts (tracking table)
-      const paidByReceipts = new Set(
-        receipts.filter((r: any) => r.has_receipt).map((r: any) => r.tenant_id)
-      );
-      const overduePayments = Math.max(activeTenantsList.length - paidByReceipts.size, 0);
+      // Simplified overdue calculation
+      const overduePayments = Math.max(activeTenantsList.length - paidTenantIds.size, 0);
       const pendingDeposits = overduePayments;
 
       setData({

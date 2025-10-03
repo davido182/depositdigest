@@ -37,16 +37,12 @@ const Analytics = () => {
         // Fetch all data from Supabase directly
         const queryYear = new Date().getFullYear();
         const queryMonth = new Date().getMonth() + 1; // 1-indexed
-        const [tenantsResult, paymentsResult, propertiesResult, unitsResult, receiptsResult] = await Promise.all([
+        const [tenantsResult, paymentsResult, propertiesResult, unitsResult] = await Promise.all([
           supabase.from('tenants').select('*'),
           supabase.from('payments').select('*'),
           supabase.from('properties').select('*'),
-          supabase.from('units').select('*'),
-          supabase
-            .from('payment_receipts')
-            .select('tenant_id, year, month, has_receipt')
-            .eq('year', queryYear)
-            .eq('month', queryMonth)
+          supabase.from('units').select('*')
+        ]);
             .eq('has_receipt', true)
         ]);
 
@@ -84,9 +80,8 @@ const Analytics = () => {
         
         const activeTenants = tenants.filter(t => t.status === 'active');
         
-        // Incluir comprobantes marcados en payment_receipts como pagos del mes
-        const receipts = receiptsResult.data || [];
-        const paidByReceipts = new Set(receipts.map((r: any) => r.tenant_id));
+        // Simplificar cálculo sin payment_receipts
+        const paidByReceipts = new Set();
         const paidByPayments = new Set(currentMonthPayments.map(p => p.tenant_id));
         const paidTenantIds = new Set([
           ...Array.from(paidByPayments),
