@@ -188,8 +188,7 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
       name: row.nombre,
       address: row.direccion || null,
       description: row.descripcion || null,
-      total_units: parseInt(row.total_unidades) || 1,
-      user_id: user?.id
+      total_units: parseInt(row.total_unidades) || 1
     }));
 
     const { data: result, error } = await supabase
@@ -205,8 +204,7 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
     // Primero obtener inquilinos para mapear emails a IDs
     const { data: tenants, error: tenantsError } = await supabase
       .from('tenants')
-      .select('id, email')
-      .eq('user_id', user?.id);
+      .select('id, email');
 
     if (tenantsError) throw tenantsError;
 

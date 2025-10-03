@@ -110,7 +110,6 @@ pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed`;
           .from('tenants')
           .select('id')
           .eq('email', row.email)
-          .eq('user_id', user?.id)
           .single();
           
         if (tenant) {

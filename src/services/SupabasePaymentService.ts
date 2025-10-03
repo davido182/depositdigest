@@ -107,14 +107,14 @@ export class SupabasePaymentService extends SupabaseService {
     return {
       id: data.id,
       tenantId: data.tenant_id,
-      amount: parseFloat(data.amount),
-      date: data.payment_date,
+      amount: parseFloat(data.amount || 0),
+      date: data.payment_date || data.created_at,
       type: 'rent', // Default to rent for now
-      method: this.mapDbPaymentMethodToApp(data.payment_method),
-      status: data.status,
+      method: this.mapDbPaymentMethodToApp(data.payment_method || 'cash'),
+      status: data.status || 'completed',
       notes: data.notes || '',
       createdAt: data.created_at,
-      receipt_file_path: data.receipt_file_path
+      receipt_file_path: data.receipt_file_path || null
     };
   }
 }

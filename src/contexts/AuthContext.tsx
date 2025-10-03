@@ -96,9 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('user_roles')
           .insert([{
             user_id: userToCheck.id,
-            role: 'landlord_premium' as UserRole,
-            trial_end_date: trialEndDate.toISOString(),
-            is_trial: true
+            role: 'landlord_free' as UserRole
           }])
           .select('role')
           .single();

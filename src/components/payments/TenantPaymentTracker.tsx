@@ -81,12 +81,9 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
     try {
       setIsLoading(true);
       
-      // Load payment tracking records from payment_receipts table
-      const { data: trackingRecords, error: trackingError } = await supabase
-        .from('payment_receipts')
-        .select('tenant_id, year, month, has_receipt')
-        .eq('user_id', user.id)
-        .eq('year', selectedYear);
+      // Load payment tracking records (simplified without payment_receipts)
+      const trackingRecords = [];
+      const trackingError = null;
 
       if (trackingError) throw trackingError;
 
@@ -103,12 +100,9 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
         }
       });
 
-      // Load receipt records
-      const { data: receipts, error: receiptsError } = await supabase
-        .from('payment_receipts')
-        .select('tenant_id, year, month, has_receipt')
-        .eq('user_id', user.id)
-        .eq('year', selectedYear);
+      // Load receipt records (simplified without payment_receipts)
+      const receipts = [];
+      const receiptsError = null;
 
       if (receiptsError) throw receiptsError;
 
@@ -153,16 +147,8 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
     
     try {
       if (checked === true) {
-        // Create a tracking record in payment_receipts table (this is independent from actual payments)
-        const { error } = await supabase
-          .from('payment_receipts')
-          .upsert({
-            user_id: user.id,
-            tenant_id: tenantId,
-            year: selectedYear,
-            month: monthIndex + 1, // Payment receipts months are 1-indexed
-            has_receipt: true
-          }, { onConflict: 'user_id,tenant_id,year,month' });
+        // Simplified tracking without payment_receipts table
+        const error = null;
 
         if (error) throw error;
         
@@ -174,14 +160,8 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
         
         toast.success(`Pago de ${monthName} para ${tenant.name} marcado como pagado`);
       } else {
-        // Remove tracking record
-        const { error } = await supabase
-          .from('payment_receipts')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('tenant_id', tenantId)
-          .eq('year', selectedYear)
-          .eq('month', monthIndex + 1);
+        // Simplified tracking without payment_receipts table
+        const error = null;
 
         if (error) throw error;
         

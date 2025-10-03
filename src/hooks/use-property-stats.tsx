@@ -62,8 +62,7 @@ export function usePropertyStats() {
       // Obtener todos los tenants del usuario con optimización
       const { data: tenants, error: tenantsError } = await supabase
         .from('tenants')
-        .select('id, status, rent_amount, unit_number')
-        .eq('user_id', user.id);
+        .select('id, status, rent_amount, unit_number');
 
       if (tenantsError) {
         console.error('Error fetching tenants:', tenantsError);
@@ -79,7 +78,6 @@ export function usePropertyStats() {
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select('amount')
-        .eq('user_id', user.id)
         .gte('payment_date', firstDayThisMonth.toISOString().split('T')[0]);
 
       if (paymentsError) {

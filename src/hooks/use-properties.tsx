@@ -31,8 +31,7 @@ export function useProperties() {
       // Get units for each property to calculate accurate occupancy and revenue
       const { data: units, error: unitsError } = await supabase
         .from('units')
-        .select('*')
-        .eq('user_id', user.id);
+        .select('*');
 
       if (unitsError) {
         console.error("Error loading units:", unitsError);

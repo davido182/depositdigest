@@ -314,14 +314,12 @@ const Dashboard = () => {
               if (user) {
                 const { data: dbProperties, error: propsError } = await supabase
                   .from('properties')
-                  .select('*')
-                  .eq('user_id', user.id);
+                  .select('*');
 
                 if (!propsError && dbProperties) {
                   const { data: units, error: unitsError } = await supabase
                     .from('units')
-                    .select('*')
-                    .eq('user_id', user.id);
+                    .select('*');
 
                   if (!unitsError && units) {
                     const mappedProperties = dbProperties.map(dbProp => {

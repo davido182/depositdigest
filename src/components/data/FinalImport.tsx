@@ -109,6 +109,7 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
     }));
 
     console.log('📤 Insertando propiedades:', properties);
+    console.log('📤 Estructura exacta a insertar:', JSON.stringify(properties, null, 2));
 
     const { data, error } = await supabase
       .from('properties')

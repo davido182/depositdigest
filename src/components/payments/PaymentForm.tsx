@@ -231,18 +231,9 @@ export function PaymentForm({
         
         console.log('PaymentForm: Mapped payment data for save:', paymentToSave);
         
-        // Update payment tracking if month/year selected
-        if (formData.month && formData.year && selectedTenant) {
-          await supabase.from('payment_receipts').upsert({
-            user_id: authUser.user.id,
-            tenant_id: selectedTenant.id,
-            year: formData.year,
-            month: formData.month,
-            has_receipt: !!receiptPath,
-            receipt_file_path: receiptPath
-          });
-          console.log('PaymentForm: Payment receipt tracking updated');
-        }
+        // Simplified tracking without payment_receipts table
+        // Payment tracking functionality temporarily disabled
+        console.log('PaymentForm: Payment tracking skipped (table not available)');
         
         // Convert back to frontend format for onSave callback
         const frontendPayment: Payment = {

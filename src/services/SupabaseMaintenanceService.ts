@@ -10,7 +10,6 @@ export class SupabaseMaintenanceService extends SupabaseService {
     const { data, error } = await supabase
       .from('maintenance_requests')
       .select('*')
-      .or(`user_id.eq.${user.id},landlord_id.eq.${user.id}`)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -28,7 +27,6 @@ export class SupabaseMaintenanceService extends SupabaseService {
       .from('maintenance_requests')
       .select('*')
       .eq('id', id)
-      .eq('user_id', user.id)
       .single();
 
     if (error) {
@@ -49,7 +47,6 @@ export class SupabaseMaintenanceService extends SupabaseService {
       .from('maintenance_requests')
       .select('*')
       .eq('tenant_id', tenantId)
-      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -131,8 +128,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
     const { error } = await supabase
       .from('maintenance_requests')
       .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('id', id);
 
     if (error) {
       console.error('Error deleting maintenance request:', error);

@@ -121,7 +121,10 @@ const Sidebar = () => {
     try {
       await signOut();
       toast.success("Sesión cerrada exitosamente");
-      navigate('/login');
+      // Pequeño delay para asegurar que el estado se actualice
+      setTimeout(() => {
+        navigate('/');
+      }, 100);
     } catch (error) {
       console.error("Error signing out:", error);
       toast.error("Error al cerrar sesión");

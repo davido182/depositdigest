@@ -67,8 +67,7 @@ export function ChatAssistant() {
       // Fetch tenants
       const { data: tenantsData, error: tenantsError } = await supabase
         .from('tenants')
-        .select('*')
-        .eq('user_id', user.id);
+        .select('*');
 
       if (tenantsError) {
         console.error('Error fetching tenants:', tenantsError);
@@ -77,8 +76,7 @@ export function ChatAssistant() {
       // Fetch payments
       const { data: paymentsData, error: paymentsError } = await supabase
         .from('payments')
-        .select('*, tenants!inner(name)')
-        .eq('user_id', user.id);
+        .select('*, tenants!inner(name)');
 
       if (paymentsError) {
         console.error('Error fetching payments:', paymentsError);
@@ -87,8 +85,7 @@ export function ChatAssistant() {
       // Fetch maintenance requests
       const { data: maintenanceData, error: maintenanceError } = await supabase
         .from('maintenance_requests')
-        .select('*, tenants!inner(name)')
-        .eq('user_id', user.id);
+        .select('*, tenants!inner(name)');
 
       if (maintenanceError) {
         console.error('Error fetching maintenance:', maintenanceError);

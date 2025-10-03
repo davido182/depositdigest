@@ -58,7 +58,6 @@ export function SmartNotifications() {
       const { data: maintenance } = await supabase
         .from('maintenance_requests')
         .select('*')
-        .eq('user_id', user?.id)
         .eq('status', 'open')
         .order('created_at', { ascending: false });
 
@@ -83,13 +82,11 @@ export function SmartNotifications() {
       const { data: tenants } = await supabase
         .from('tenants')
         .select('*')
-        .eq('user_id', user?.id)
         .eq('status', 'active');
 
       const { data: payments } = await supabase
         .from('payments')
-        .select('*')
-        .eq('user_id', user?.id);
+        .select('*');
 
       tenants?.forEach(tenant => {
         const currentMonthPayments = payments?.filter(p => {
