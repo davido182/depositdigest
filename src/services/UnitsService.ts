@@ -19,8 +19,7 @@ export class UnitsService extends SupabaseService {
     
     let query = supabase
       .from('units')
-      .select('*')
-      .eq('user_id', user.id);
+      .select('*');
     
     if (propertyId) {
       query = query.eq('property_id', propertyId);
@@ -42,7 +41,7 @@ export class UnitsService extends SupabaseService {
     const { data, error } = await supabase
       .from('units')
       .insert({
-        user_id: user.id,
+
         property_id: unit.property_id,
         unit_number: unit.unit_number,
         tenant_id: unit.tenant_id,
@@ -66,8 +65,7 @@ export class UnitsService extends SupabaseService {
     const { error } = await supabase
       .from('units')
       .update(updates)
-      .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('id', id);
     
     if (error) {
       console.error('Error updating unit:', error);
@@ -83,8 +81,7 @@ export class UnitsService extends SupabaseService {
     const { error } = await supabase
       .from('units')
       .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('id', id);
     
     if (error) {
       console.error('Error deleting unit:', error);
@@ -104,8 +101,7 @@ export class UnitsService extends SupabaseService {
         rent_amount: rentAmount,
         is_available: false
       })
-      .eq('id', unitId)
-      .eq('user_id', user.id);
+      .eq('id', unitId);
     
     if (error) {
       console.error('Error assigning tenant:', error);
@@ -125,8 +121,7 @@ export class UnitsService extends SupabaseService {
         rent_amount: null,
         is_available: true
       })
-      .eq('id', unitId)
-      .eq('user_id', user.id);
+      .eq('id', unitId);
     
     if (error) {
       console.error('Error unassigning tenant:', error);

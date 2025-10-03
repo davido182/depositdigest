@@ -46,8 +46,8 @@ const Properties = () => {
         
         // Get tenants and units to calculate occupancy
         const [tenantsResult, unitsResult] = await Promise.all([
-          supabase.from('tenants').select('*').eq('user_id', user.id),
-          supabase.from('units').select('*').eq('user_id', user.id)
+          supabase.from('tenants').select('*'),
+          supabase.from('units').select('*')
         ]);
 
         if (tenantsResult.error) {
@@ -152,8 +152,8 @@ const Properties = () => {
       
       // Get tenants and units to calculate occupancy
       const [tenantsResult, unitsResult] = await Promise.all([
-        supabase.from('tenants').select('*').eq('user_id', user.id),
-        supabase.from('units').select('*').eq('user_id', user.id)
+        supabase.from('tenants').select('*'),
+        supabase.from('units').select('*')
       ]);
 
       if (tenantsResult.error) {

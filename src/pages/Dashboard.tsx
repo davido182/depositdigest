@@ -61,15 +61,13 @@ const Dashboard = () => {
         if (user) {
           const { data: dbProperties, error: propsError } = await supabase
             .from('properties')
-            .select('*')
-            .eq('user_id', user.id);
+            .select('*');
 
           if (!propsError && dbProperties) {
             // Get units for each property
             const { data: units, error: unitsError } = await supabase
               .from('units')
-              .select('*')
-              .eq('user_id', user.id);
+              .select('*');
 
             if (!unitsError && units) {
               const mappedProperties = dbProperties.map(dbProp => {
@@ -169,8 +167,7 @@ const Dashboard = () => {
           name: propertyData.name,
           address: propertyData.address,
           description: propertyData.description,
-          total_units: propertyData.units,
-          user_id: user.id
+          total_units: propertyData.units
         }])
         .select()
         .single();
@@ -181,8 +178,7 @@ const Dashboard = () => {
       const units = Array.from({ length: propertyData.units }, (_, i) => ({
         property_id: data.id,
         unit_number: `${i + 1}`,
-        is_available: true,
-        user_id: user.id
+        is_available: true
       }));
 
       const { error: unitsError } = await supabase

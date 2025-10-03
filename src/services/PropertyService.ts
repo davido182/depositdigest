@@ -19,7 +19,6 @@ export class PropertyService extends BaseService {
     const { data, error } = await supabase
       .from('properties')
       .select('*')
-      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -34,7 +33,6 @@ export class PropertyService extends BaseService {
     const user = await this.ensureAuthenticated();
     
     const propertyData = {
-      user_id: user.id,
       name: property.name,
       address: property.address,
       total_units: property.total_units,
@@ -62,7 +60,6 @@ export class PropertyService extends BaseService {
       .from('properties')
       .update(updates)
       .eq('id', id)
-      .eq('user_id', user.id)
       .select()
       .single();
 
@@ -81,7 +78,6 @@ export class PropertyService extends BaseService {
     const { data: tenants, error: tenantsError } = await supabase
       .from('tenants')
       .select('id')
-      .eq('user_id', user.id)
       .eq('property_id', id)
       .eq('status', 'active');
 
@@ -97,8 +93,7 @@ export class PropertyService extends BaseService {
     const { error } = await supabase
       .from('properties')
       .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('id', id);
 
     if (error) {
       console.error('Error deleting property:', error);

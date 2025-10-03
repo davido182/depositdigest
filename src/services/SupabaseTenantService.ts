@@ -11,7 +11,6 @@ export class SupabaseTenantService extends BaseService {
     const { data, error } = await this.supabase
       .from('tenants')
       .select('*')
-      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -52,9 +51,7 @@ export class SupabaseTenantService extends BaseService {
         lease_start_date: tenant.moveInDate,
         lease_end_date: tenant.leaseEndDate || null,
         rent_amount: tenant.rentAmount,
-        status: tenant.status,
-        user_id: (await this.supabase.auth.getUser()).data.user?.id!,
-        landlord_id: (await this.supabase.auth.getUser()).data.user?.id!,
+        status: tenant.status
       })
       .select()
       .single();

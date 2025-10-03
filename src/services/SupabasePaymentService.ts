@@ -12,7 +12,6 @@ export class SupabasePaymentService extends SupabaseService {
     const { data, error } = await supabase
       .from('payments')
       .select('*')
-      .eq('user_id', user.id)
       .order('payment_date', { ascending: false });
 
     if (error) {
@@ -26,9 +25,9 @@ export class SupabasePaymentService extends SupabaseService {
   async createPayment(paymentData: any): Promise<string> {
     console.log('SupabasePaymentService: Creating payment with data:', paymentData);
     
-    // Ensure authenticated user and attach user_id for RLS policies
+    // Ensure authenticated user
     const user = await this.ensureAuthenticated();
-    const payload = { ...paymentData, user_id: user.id };
+    const payload = { ...paymentData };
     
     const { data, error } = await supabase
       .from('payments')
@@ -56,8 +55,7 @@ export class SupabasePaymentService extends SupabaseService {
     const { error } = await supabase
       .from('payments')
       .update(updateData)
-      .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('id', id);
 
     if (error) {
       console.error('SupabasePaymentService: Error updating payment:', error);
@@ -74,8 +72,7 @@ export class SupabasePaymentService extends SupabaseService {
     const { error } = await supabase
       .from('payments')
       .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('id', id);
 
     if (error) {
       console.error('Error deleting payment:', error);
