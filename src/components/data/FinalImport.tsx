@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Download, FileSpreadsheet } from "lucide-react";
+import { Download, FileSpreadsheet, Users, Building, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,23 +19,23 @@ export function FinalImport({ isOpen, onClose, onImportComplete }: FinalImportPr
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const downloadTemplate = () => {
-    // Plantilla completa con todos los campos necesarios
-    const csvContent = `tipo,nombre,email,telefono,numero_unidad,monto_alquiler,fecha_inicio_contrato,fecha_fin_contrato,direccion,descripcion,total_unidades,fecha_pago,metodo_pago,estado,notas
-inquilino,Juan Pérez,juan@email.com,555-0123,101,1200,2024-01-01,2024-12-31,,,,,,,Inquilino puntual
-inquilino,María García,maria@email.com,555-0124,102,1300,2024-02-01,2024-12-31,,,,,,,Excelente inquilina
-propiedad,Edificio Central,,,,,"Calle Principal 123","Edificio residencial moderno",10,,,,,
-pago,,juan@email.com,,,1200,,,,,,"2024-01-01",transferencia,completed,Pago enero`;
-    
+    // Plantilla universal con TODOS los campos reales de las tablas
+    const csvContent = `tipo,name,email,phone,unit_number,lease_start_date,lease_end_date,rent_amount,status,notes,address,total_units,description,tenant_email,amount,payment_date,payment_method
+inquilino,Juan Pérez,juan@email.com,555-0123,101,2024-01-01,2024-12-31,1200,active,Inquilino puntual,,,,,,
+inquilino,María García,maria@email.com,555-0124,102,2024-02-01,2024-12-31,1300,active,Excelente inquilina,,,,,,
+propiedad,Edificio Central,,,,,,,,,,"Calle Principal 123",10,"Edificio residencial moderno",,,,
+pago,,,,,,,,,,,,,juan@email.com,1200,2024-01-01,bank_transfer`;
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'plantilla_rentaflux.csv');
+    link.setAttribute('download', 'plantilla_universal_rentaflux.csv');
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('Plantilla universal descargada');
+    toast.success('Plantilla universal descargada con todos los campos');
   };
 
   const parseCSV = (text: string): any[] => {
@@ -44,7 +44,7 @@ pago,,juan@email.com,,,1200,,,,,,"2024-01-01",transferencia,completed,Pago enero
 
     const headers = lines[0].split(',').map(h => h.trim());
     const data = [];
-    
+
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',').map(v => v.trim());
       if (values.length >= headers.length) {
@@ -59,22 +59,25 @@ pago,,juan@email.com,,,1200,,,,,,"2024-01-01",transferencia,completed,Pago enero
   };
 
   const importTenants = async (tenantRows: any[]) => {
+    if (!user) throw new Error('Usuario no autenticado');
+
     const tenants = tenantRows.map(row => ({
-      // Usar nombres de columna exactos de la base de datos
-      name: row.nombre || row.name || 'Sin nombre',
-      email: row.email || '',
-      phone: row.telefono || row.phone || null,
-      unit: row.numero_unidad || row.unit || null,
-      move_in_date: row.fecha_inicio_contrato || new Date().toISOString().split('T')[0],
-      lease_end_date: row.fecha_fin_contrato || null,
-      rent_amount: parseFloat(row.monto_alquiler || '0') || 0,
-      status: row.estado || 'active',
-      notes: row.notas || null,
-      user_id: user?.id
+      // Campos obligatorios
+      name: row.name || 'Sin nombre',
+      email: row.email,
+      lease_start_date: row.lease_start_date || new Date().toISOString().split('T')[0],
+      rent_amount: parseFloat(row.rent_amount || '0') || 0,
+      unit_number: row.unit_number || '',
+      user_id: user.id,
+      // Campos opcionales
+      phone: row.phone || null,
+      lease_end_date: row.lease_end_date || null,
+      status: row.status || 'active',
+      notes: row.notes || null,
+      landlord_id: user.id
     }));
 
-    console.log('📤 Intentando insertar inquilinos con estructura:', tenants[0]);
-    console.log('📊 Total inquilinos a insertar:', tenants.length);
+    console.log('📤 Insertando inquilinos:', tenants);
 
     const { data, error } = await supabase
       .from('tenants')
@@ -82,32 +85,28 @@ pago,,juan@email.com,,,1200,,,,,,"2024-01-01",transferencia,completed,Pago enero
       .select();
 
     if (error) {
-      console.error('❌ Error insertando inquilinos:', error);
-      
-      // Mensaje de error específico
-      if (error.message.includes('Could not find')) {
-        const missingColumn = error.message.match(/'([^']+)'/)?.[1];
-        throw new Error(`La columna '${missingColumn}' no existe en la tabla de inquilinos. Verifica la estructura de tu base de datos.`);
-      }
-      
+      console.error('❌ Error:', error);
       throw new Error(`Error en inquilinos: ${error.message}`);
     }
-    
-    console.log('✅ Inquilinos insertados exitosamente:', data?.length);
+
+    console.log('✅ Inquilinos insertados:', data?.length);
     return data?.length || 0;
   };
 
   const importProperties = async (propertyRows: any[]) => {
+    if (!user) throw new Error('Usuario no autenticado');
+
     const properties = propertyRows.map(row => ({
-      name: row.nombre || 'Propiedad',
-      address: row.direccion || null,
-      description: row.descripcion || null,
-      total_units: parseInt(row.total_unidades || '1') || 1,
-      user_id: user?.id
+      // Campos obligatorios
+      name: row.name || 'Propiedad',
+      user_id: user.id,
+      // Campos opcionales
+      address: row.address || null,
+      description: row.description || null,
+      total_units: parseInt(row.total_units || '1') || 1
     }));
 
-    console.log('📤 Intentando insertar propiedades con estructura:', properties[0]);
-    console.log('🏠 Total propiedades a insertar:', properties.length);
+    console.log('📤 Insertando propiedades:', properties);
 
     const { data, error } = await supabase
       .from('properties')
@@ -115,39 +114,33 @@ pago,,juan@email.com,,,1200,,,,,,"2024-01-01",transferencia,completed,Pago enero
       .select();
 
     if (error) {
-      console.error('❌ Error insertando propiedades:', error);
-      
-      // Mensaje de error específico
-      if (error.message.includes('Could not find')) {
-        const missingColumn = error.message.match(/'([^']+)'/)?.[1];
-        throw new Error(`La columna '${missingColumn}' no existe en la tabla de propiedades. Verifica la estructura de tu base de datos.`);
-      }
-      
+      console.error('❌ Error:', error);
       throw new Error(`Error en propiedades: ${error.message}`);
     }
-    
-    console.log('✅ Propiedades insertadas exitosamente:', data?.length);
+
+    console.log('✅ Propiedades insertadas:', data?.length);
     return data?.length || 0;
   };
 
   const importPayments = async (paymentRows: any[]) => {
+    if (!user) throw new Error('Usuario no autenticado');
+
     let successCount = 0;
-    let errors = [];
-    
+
     console.log('💰 Procesando pagos:', paymentRows.length);
-    
+
     for (const row of paymentRows) {
       try {
         // Buscar el tenant por email
         const { data: tenant, error: tenantError } = await supabase
           .from('tenants')
           .select('id')
-          .eq('email', row.email)
-          .eq('user_id', user?.id)
+          .eq('email', row.tenant_email)
+          .eq('user_id', user.id)
           .single();
 
         if (tenantError || !tenant) {
-          errors.push(`No se encontró inquilino con email: ${row.email}`);
+          console.warn(`No se encontró inquilino: ${row.tenant_email}`);
           continue;
         }
 
@@ -155,36 +148,25 @@ pago,,juan@email.com,,,1200,,,,,,"2024-01-01",transferencia,completed,Pago enero
           .from('payments')
           .insert({
             tenant_id: tenant.id,
-            amount: parseFloat(row.monto_alquiler || row.amount || '0') || 0,
-            payment_date: row.fecha_pago || new Date().toISOString().split('T')[0],
-            payment_method: row.metodo_pago || 'cash',
-            status: row.estado || 'completed',
-            notes: row.notas || null,
-            user_id: user?.id
+            amount: parseFloat(row.amount || '0') || 0,
+            payment_date: row.payment_date || new Date().toISOString().split('T')[0],
+            payment_method: row.payment_method || 'cash',
+            status: row.status || 'completed',
+            notes: row.notes || null,
+            user_id: user.id
           });
 
-        if (error) {
-          console.error('❌ Error insertando pago:', error);
-          if (error.message.includes('Could not find')) {
-            const missingColumn = error.message.match(/'([^']+)'/)?.[1];
-            errors.push(`La columna '${missingColumn}' no existe en la tabla de pagos`);
-          } else {
-            errors.push(`Error en pago para ${row.email}: ${error.message}`);
-          }
-        } else {
+        if (!error) {
           successCount++;
+        } else {
+          console.error('❌ Error en pago:', error);
         }
       } catch (error: any) {
-        errors.push(`Error procesando pago para ${row.email}: ${error.message}`);
+        console.error('Error procesando pago:', error);
       }
     }
-    
-    if (errors.length > 0) {
-      console.warn('⚠️ Errores en pagos:', errors);
-      throw new Error(`Errores en pagos: ${errors.join(', ')}`);
-    }
-    
-    console.log('✅ Pagos insertados exitosamente:', successCount);
+
+    console.log('✅ Pagos procesados:', successCount);
     return successCount;
   };
 
@@ -195,7 +177,7 @@ pago,,juan@email.com,,,1200,,,,,,"2024-01-01",transferencia,completed,Pago enero
     try {
       const text = await selectedFile.text();
       const data = parseCSV(text);
-      
+
       if (data.length === 0) {
         toast.error('No se encontraron datos válidos');
         return;
@@ -203,23 +185,42 @@ pago,,juan@email.com,,,1200,,,,,,"2024-01-01",transferencia,completed,Pago enero
 
       console.log('📊 Datos parseados:', data);
 
-      // Separar por tipo con validación de campos obligatorios
+      // Separar por tipo usando la columna 'tipo' y validar campos obligatorios
       const tenantRows = data.filter(row => {
-        const isInquilino = row.tipo === 'inquilino' || (!row.tipo && row.nombre && row.email);
-        const hasRequired = row.nombre && row.email;
-        return isInquilino && hasRequired;
+        if (row.tipo !== 'inquilino') return false;
+
+        // Validar campos obligatorios
+        if (!row.name || !row.email) {
+          console.error(`❌ Inquilino inválido - falta name o email:`, row);
+          return false;
+        }
+        return true;
       });
-      
+
       const propertyRows = data.filter(row => {
-        const isPropiedad = row.tipo === 'propiedad' || (!row.tipo && row.direccion);
-        const hasRequired = row.nombre;
-        return isPropiedad && hasRequired;
+        if (row.tipo !== 'propiedad') return false;
+
+        // Validar campos obligatorios
+        if (!row.name) {
+          console.error(`❌ Propiedad inválida - falta name:`, row);
+          return false;
+        }
+        return true;
       });
-      
+
       const paymentRows = data.filter(row => {
-        const isPago = row.tipo === 'pago' || (!row.tipo && row.fecha_pago);
-        const hasRequired = row.email && (row.monto_alquiler || row.amount);
-        return isPago && hasRequired;
+        if (row.tipo !== 'pago') return false;
+
+        // Validar campos obligatorios
+        if (!row.tenant_email) {
+          console.error(`❌ Pago inválido - falta tenant_email:`, row);
+          return false;
+        }
+        if (!row.amount) {
+          console.error(`❌ Pago inválido - falta amount:`, row);
+          return false;
+        }
+        return true;
       });
 
       console.log('📋 Filas separadas:', {
@@ -273,12 +274,19 @@ pago,,juan@email.com,,,1200,,,,,,"2024-01-01",transferencia,completed,Pago enero
         }
       }
 
+      // Mostrar resumen detallado
       if (results.length > 0) {
-        toast.success(`Importados: ${results.join(', ')}`);
+        toast.success(`✅ Importados: ${results.join(', ')}`);
         onImportComplete();
         onClose();
       } else {
-        toast.error('No se pudo importar ningún dato');
+        // Dar información específica sobre por qué no se importó nada
+        const totalRows = tenantRows.length + propertyRows.length + paymentRows.length;
+        if (totalRows === 0) {
+          toast.error('❌ No se encontraron filas válidas. Verifica que:\n• Tengas la columna "tipo" con valores: inquilino, propiedad, pago\n• Los campos obligatorios estén completos');
+        } else {
+          toast.error('❌ No se pudo importar ningún dato. Revisa los errores en la consola.');
+        }
       }
 
     } catch (error: any) {
@@ -312,9 +320,10 @@ pago,,juan@email.com,,,1200,,,,,,"2024-01-01",transferencia,completed,Pago enero
               onClick={downloadTemplate}
               className="w-full flex items-center gap-2 h-auto py-3"
             >
+              <FileSpreadsheet className="h-4 w-4" />
               <div className="text-left">
                 <div className="font-medium">Plantilla Completa</div>
-                <div className="text-xs text-muted-foreground">Inquilinos, Propiedades y Pagos</div>
+                <div className="text-xs text-muted-foreground">Todos los campos - Inquilinos, Propiedades y Pagos</div>
               </div>
               <Download className="h-4 w-4 ml-auto" />
             </Button>
@@ -343,13 +352,16 @@ pago,,juan@email.com,,,1200,,,,,,"2024-01-01",transferencia,completed,Pago enero
           <div className="p-4 bg-blue-50 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">💡 Instrucciones:</h4>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Descarga la plantilla completa con todos los campos</li>
-              <li>• <strong>Campos obligatorios:</strong> Inquilinos (nombre, email), Propiedades (nombre), Pagos (email, monto)</li>
-              <li>• Usa la columna "tipo" para especificar: inquilino, propiedad, pago</li>
-              <li>• Los campos opcionales pueden quedar vacíos</li>
+              <li>• Descarga la plantilla universal con todos los campos</li>
+              <li>• <strong>Campos obligatorios por tipo:</strong></li>
+              <li>&nbsp;&nbsp;- Inquilinos: tipo="inquilino" + name + email</li>
+              <li>&nbsp;&nbsp;- Propiedades: tipo="propiedad" + name</li>
+              <li>&nbsp;&nbsp;- Pagos: tipo="pago" + tenant_email + amount</li>
+              <li>• <strong>Campos opcionales:</strong> Puedes dejarlos vacíos sin problema</li>
+              <li>• Usa la columna "tipo" para especificar qué estás importando</li>
               <li>• Guarda como CSV y súbelo aquí</li>
               <li>• Los datos aparecerán automáticamente en cada sección</li>
-              <li>• Si hay errores, el mensaje te dirá exactamente qué está mal</li>
+              <li>• Si omites campos obligatorios, te dirá exactamente cuáles faltan</li>
             </ul>
           </div>
         </div>
