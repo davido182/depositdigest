@@ -70,10 +70,10 @@ const ProtectedRoute = () => {
     );
   }
 
-  // Redirect to home (landing) if not authenticated
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
-    console.log("🚫 ProtectedRoute: user not authenticated, redirecting to home");
-    return <Navigate to="/" replace />;
+    console.log("🚫 ProtectedRoute: user not authenticated, redirecting to login");
+    return <Navigate to="/login" replace />;
   }
 
   console.log("✅ ProtectedRoute: user authenticated, rendering outlet");

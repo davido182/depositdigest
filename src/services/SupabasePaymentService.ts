@@ -9,6 +9,7 @@ export class SupabasePaymentService extends SupabaseService {
     
     const user = await this.ensureAuthenticated();
     
+    console.log('🔍 Fetching ALL payments from database...');
     const { data, error } = await supabase
       .from('payments')
       .select('*')

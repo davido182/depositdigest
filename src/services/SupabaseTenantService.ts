@@ -8,6 +8,7 @@ export class SupabaseTenantService extends BaseService {
     
     const user = await this.ensureAuthenticated();
     
+    console.log('🔍 Fetching ALL tenants from database...');
     const { data, error } = await this.supabase
       .from('tenants')
       .select('*')
