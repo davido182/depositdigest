@@ -338,12 +338,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(session);
           setIsLoading(false);
           
-          // Create role for new user
-          setTimeout(() => {
-            if (isMounted) {
-              refreshUserRole(session.user);
-            }
-          }, 100);
+          // Force create role for new user immediately
+          console.log("🚀 FORCING role creation for new signup");
+          const trialEndDate = new Date();
+          trialEndDate.setDate(trialEndDate.getDate() + 7);
+          
+          supabase
+            .from('user_roles')
+            .upsert({
+              user_id: session.user.id,
+              role: 'landlord_premium',
+              trial_end_date: trialEndDate.toISOString()
+            }, {
+              onConflict: 'user_id'
+            })
+            .then(({ data, error }) => {
+              console.log("🚀 New user role creation result:", { data, error });
+              if (!error) {
+                setUserRole('landlord_premium');
+              }
+            });
+          
           return;
         }
         

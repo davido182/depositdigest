@@ -100,24 +100,71 @@ const Settings = () => {
                 User ID: {user?.id}<br />
                 Current Role: {userRole}
               </p>
-              <Button
-                onClick={async () => {
-                  if (user) {
-                    console.log("🔄 Manual role refresh triggered for:", user.id);
-                    try {
-                      await refreshUserRole(user);
-                      toast.success("Role refresh completed - check console");
-                    } catch (error) {
-                      console.error("Error refreshing role:", error);
-                      toast.error("Error refreshing role");
+              <div className="flex gap-2">
+                <Button
+                  onClick={async () => {
+                    if (user) {
+                      console.log("🔄 Manual role refresh triggered for:", user.id);
+                      try {
+                        await refreshUserRole(user);
+                        toast.success("Role refresh completed - check console");
+                      } catch (error) {
+                        console.error("Error refreshing role:", error);
+                        toast.error("Error refreshing role");
+                      }
                     }
-                  }
-                }}
-                variant="outline"
-                size="sm"
-              >
-                🔄 Force Role Creation
-              </Button>
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  🔄 Refresh Role
+                </Button>
+
+                <Button
+                  onClick={async () => {
+                    if (user) {
+                      console.log("💪 FORCE inserting role for:", user.id);
+                      try {
+                        const trialEndDate = new Date();
+                        trialEndDate.setDate(trialEndDate.getDate() + 7);
+
+                        const { data, error } = await supabase
+                          .from('user_roles')
+                          .upsert({
+                            user_id: user.id,
+                            role: 'landlord_premium',
+                            trial_end_date: trialEndDate.toISOString()
+                          }, {
+                            onConflict: 'user_id'
+                          })
+                          .select();
+
+                        console.log("💪 FORCE insert result:", { data, error });
+
+                        if (error) {
+                          toast.error(`Error: ${error.message}`);
+                        } else {
+                          toast.success("Role FORCE created! Check Supabase");
+                        }
+
+                        // Verificar en Supabase
+                        const { data: allRoles } = await supabase
+                          .from('user_roles')
+                          .select('*');
+                        console.log("🔍 ALL roles after force:", allRoles);
+
+                      } catch (error) {
+                        console.error("Error force creating role:", error);
+                        toast.error("Error force creating role");
+                      }
+                    }
+                  }}
+                  variant="destructive"
+                  size="sm"
+                >
+                  💪 FORCE Create
+                </Button>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
