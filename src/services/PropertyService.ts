@@ -37,7 +37,8 @@ export class PropertyService extends BaseService {
       name: property.name,
       address: property.address,
       total_units: property.total_units,
-      description: property.description
+      description: property.description,
+      user_id: user.id  // ¡ESTE ERA EL CAMPO FALTANTE!
     };
 
     const { data, error } = await supabase

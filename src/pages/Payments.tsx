@@ -135,7 +135,9 @@ const Payments = () => {
           <TabsList>
             <TabsTrigger value="tracker">Seguimiento de Pagos</TabsTrigger>
             <TabsTrigger value="payments">Lista de Pagos</TabsTrigger>
-            <TabsTrigger value="processor">Procesar Comprobantes</TabsTrigger>
+            {userRole === 'landlord_premium' && (
+              <TabsTrigger value="processor">Procesar Comprobantes</TabsTrigger>
+            )}
           </TabsList>
           
           <TabsContent value="tracker">
@@ -159,12 +161,14 @@ const Payments = () => {
             )}
           </TabsContent>
           
-          <TabsContent value="processor">
-            <ReceiptProcessor
-              tenants={tenants}
-              onPaymentCreated={handleReceiptPaymentCreated}
-            />
-          </TabsContent>
+          {userRole === 'landlord_premium' && (
+            <TabsContent value="processor">
+              <ReceiptProcessor
+                tenants={tenants}
+                onPaymentCreated={handleReceiptPaymentCreated}
+              />
+            </TabsContent>
+          )}
         </Tabs>
       </section>
     </Layout>

@@ -147,6 +147,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .single();
           
         console.log("📝 Insert result:", { newRoleData, createError });
+        
+        // Verificar que se insertó correctamente
+        if (!createError && newRoleData) {
+          console.log("✅ Role created successfully in database");
+          
+          // Verificar inmediatamente en la base de datos
+          const { data: verifyData, error: verifyError } = await supabase
+            .from('user_roles')
+            .select('*')
+            .eq('user_id', userToCheck.id);
+          
+          console.log("🔍 Verification query result:", { verifyData, verifyError });
+        }
           
         if (createError) {
           console.error("❌ Error creating user role:", createError);

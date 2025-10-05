@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AuthDebugger from "@/components/AuthDebugger";
@@ -119,22 +119,27 @@ const App = () => {
               <Route path="/landing" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/tenant-signup" element={<TenantSignup />} />
+
+              {/* Protected routes with shared Layout */}
               <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-                <Route path="/app" element={<Layout><Dashboard /></Layout>} />
-                <Route path="/properties" element={<Layout><Properties /></Layout>} />
-                <Route path="/tenants" element={<Layout><Tenants /></Layout>} />
-                <Route path="/payments" element={<Layout><Payments /></Layout>} />
-                <Route path="/maintenance" element={<Layout><Maintenance /></Layout>} />
-                <Route path="/accounting" element={<Layout><Accounting /></Layout>} />
-                <Route path="/assistant" element={<Layout><Assistant /></Layout>} />
-                <Route path="/reports" element={<Layout><Reports /></Layout>} />
-                <Route path="/analytics" element={<Layout><Analytics /></Layout>} />
-                <Route path="/settings" element={<Layout><Settings /></Layout>} />
-                <Route path="/invite-tenant" element={<Layout><InviteTenant /></Layout>} />
-                <Route path="/subscription-success" element={<Layout><SubscriptionSuccess /></Layout>} />
-                <Route path="/payment-success" element={<Layout><PaymentSuccess /></Layout>} />
+                <Route element={<Layout><Outlet /></Layout>}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/app" element={<Dashboard />} />
+                  <Route path="/properties" element={<Properties />} />
+                  <Route path="/tenants" element={<Tenants />} />
+                  <Route path="/payments" element={<Payments />} />
+                  <Route path="/maintenance" element={<Maintenance />} />
+                  <Route path="/accounting" element={<Accounting />} />
+                  <Route path="/assistant" element={<Assistant />} />
+                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/invite-tenant" element={<InviteTenant />} />
+                  <Route path="/subscription-success" element={<SubscriptionSuccess />} />
+                  <Route path="/payment-success" element={<PaymentSuccess />} />
+                </Route>
               </Route>
+
               <Route path="*" element={<NotFound />} />
             </Routes>
             <AuthDebugger />

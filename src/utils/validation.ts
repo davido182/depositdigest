@@ -74,8 +74,9 @@ export const sanitizeInput = (input: string): string => {
 };
 
 export const validateUnitNumber = (unit: string, existingUnits: string[], currentTenantId?: string, tenants?: any[]): void => {
+  // Unit number is optional - only validate if provided
   if (!unit || unit.trim() === '') {
-    throw new ValidationError('Unit number is required');
+    return; // Unit is optional, no validation needed
   }
   
   // Check if unit is occupied by another active tenant
