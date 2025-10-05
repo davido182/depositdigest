@@ -93,10 +93,9 @@ const Settings = () => {
           <TabsContent value="data">
             <DataSettings />
           </TabsContent>
-        </TabsContent>
-      </Tabs>
-    </section>
-    </Layout >
+        </Tabs>
+      </section>
+    </Layout>
   );
 };
 
