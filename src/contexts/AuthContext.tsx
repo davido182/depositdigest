@@ -148,17 +148,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
         console.log("📝 Insert result:", { newRoleData, createError });
         
-        // Verificar que se insertó correctamente
-        if (!createError && newRoleData) {
-          console.log("✅ Role created successfully in database");
+        if (createError) {
+          console.error("❌ Error creating user role:", createError);
+          console.log("🔧 Fallback: setting role to landlord_free");
+          setUserRole('landlord_free');
+        } else {
+          console.log("✅ Created new premium trial role:", newRoleData?.role);
+          setUserRole(newRoleData?.role || 'landlord_free');
           
           // Verificar inmediatamente en la base de datos
+          console.log("🔍 Verifying role was actually inserted...");
           const { data: verifyData, error: verifyError } = await supabase
             .from('user_roles')
             .select('*')
             .eq('user_id', userToCheck.id);
           
           console.log("🔍 Verification query result:", { verifyData, verifyError });
+          
+          // También verificar en toda la tabla
+          const { data: allRoles, error: allError } = await supabase
+            .from('user_roles')
+            .select('*');
+          
+          console.log("🔍 ALL user_roles in database:", { allRoles, allError });
         }
           
         if (createError) {

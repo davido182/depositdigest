@@ -17,7 +17,7 @@ import { toast } from "sonner";
 
 
 const Settings = () => {
-  const { userRole } = useAuth();
+  const { userRole, user, refreshUserRole } = useAuth();
 
   const handleUpgradeToPremium = async () => {
     try {
@@ -92,6 +92,33 @@ const Settings = () => {
 
           <TabsContent value="data">
             <DataSettings />
+
+            {/* Debug button temporal */}
+            <div className="mt-6 p-4 border rounded-lg bg-muted/50">
+              <h3 className="font-semibold mb-2">🔧 Debug user_roles</h3>
+              <p className="text-sm text-muted-foreground mb-2">
+                User ID: {user?.id}<br />
+                Current Role: {userRole}
+              </p>
+              <Button
+                onClick={async () => {
+                  if (user) {
+                    console.log("🔄 Manual role refresh triggered for:", user.id);
+                    try {
+                      await refreshUserRole(user);
+                      toast.success("Role refresh completed - check console");
+                    } catch (error) {
+                      console.error("Error refreshing role:", error);
+                      toast.error("Error refreshing role");
+                    }
+                  }
+                }}
+                variant="outline"
+                size="sm"
+              >
+                🔄 Force Role Creation
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
       </section>
