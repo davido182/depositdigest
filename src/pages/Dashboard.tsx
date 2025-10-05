@@ -214,8 +214,8 @@ const Dashboard = () => {
           <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
             <SmartNotifications />
             
-            {/* Botón de importar datos - visible si no hay datos */}
-            {tenants.length === 0 && properties.length === 0 && (
+            {/* Botón de importar datos - solo para usuarios premium */}
+            {userRole === 'landlord_premium' && tenants.length === 0 && properties.length === 0 && (
               <Button 
                 onClick={() => setIsImportModalOpen(true)} 
                 variant="default" 

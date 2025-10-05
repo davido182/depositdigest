@@ -9,7 +9,7 @@ export function SmartHome() {
 
   // Debug database structure on load
   useEffect(() => {
-    console.log('🏠 SmartHome: Component mounted');
+    console.log('🏠 SmartHome: Component mounted - ALWAYS showing landing');
     debugDatabaseStructure();
   }, []);
 

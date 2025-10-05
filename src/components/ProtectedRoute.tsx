@@ -7,10 +7,10 @@ const ProtectedRoute = () => {
   const { isAuthenticated, isLoading, userRole, user } = useAuth();
   const [showTimeoutError, setShowTimeoutError] = useState(false);
 
-  console.log("🛡️ ProtectedRoute render:", { 
-    isAuthenticated, 
-    isLoading, 
-    userRole, 
+  console.log("🛡️ ProtectedRoute render:", {
+    isAuthenticated,
+    isLoading,
+    userRole,
     hasUser: !!user,
     showTimeoutError,
     timestamp: new Date().toISOString()
@@ -43,7 +43,7 @@ const ProtectedRoute = () => {
           <p className="text-muted-foreground">
             Hubo un problema al cargar la aplicación. Por favor, recarga la página.
           </p>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 transition-colors"
           >

@@ -84,7 +84,7 @@ const Landing = () => {
       });
 
       // Usar Formspree (servicio gratuito)
-      const response = await fetch('https://formspree.io/f/xpwzgkqr', {
+      const response = await fetch('https://formspree.io/f/mzzjvrre', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
