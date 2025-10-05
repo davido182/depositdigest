@@ -31,7 +31,6 @@ const Landing = () => {
       "Gestión básica de inquilinos",
       "Registro de pagos",
       "Solicitudes de mantenimiento",
-      "Invitaciones premium a inquilinos",
       "Reportes básicos",
       "1 propiedad, hasta 3 unidades"
     ],
@@ -64,7 +63,7 @@ const Landing = () => {
       window.open("https://apps.apple.com/search?term=rentaflux", "_blank");
     } else {
       // Redirect to Google Play when available
-      window.open("https://play.google.com/store/search?q=rentaflux", "_blank");
+      window.open("https://play.google.com/apps/test/com.rentaflux.app/1", "_blank");
     }
   };
 

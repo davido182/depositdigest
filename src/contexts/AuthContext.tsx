@@ -96,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log("🔄 refreshUserRole called:", { 
       hasUser: !!userToCheck, 
       userId: userToCheck?.id,
+      email: userToCheck?.email,
       timestamp: new Date().toISOString()
     });
     
@@ -106,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      console.log("📡 Fetching user role from database...");
+      console.log("📡 Fetching user role from database for user:", userToCheck.id);
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role, trial_end_date')
@@ -114,6 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+        
+      console.log("📡 Query result:", { roleData, roleError });
 
       if (roleError) {
         console.error("❌ Error fetching user role:", roleError);
@@ -123,9 +126,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!roleData) {
-        console.log("📝 No role found, creating 7-day premium trial...");
+        console.log("📝 No role found, creating 7-day premium trial for user:", userToCheck.id);
         const trialEndDate = new Date();
         trialEndDate.setDate(trialEndDate.getDate() + 7); // 7 días de prueba premium
+        
+        console.log("📝 Inserting new role with data:", {
+          user_id: userToCheck.id,
+          role: 'landlord_premium',
+          trial_end_date: trialEndDate.toISOString()
+        });
         
         const { data: newRoleData, error: createError } = await supabase
           .from('user_roles')
@@ -136,6 +145,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }])
           .select('role, trial_end_date')
           .single();
+          
+        console.log("📝 Insert result:", { newRoleData, createError });
           
         if (createError) {
           console.error("❌ Error creating user role:", createError);
@@ -296,6 +307,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         
+        if (event === 'SIGNED_UP' && session?.user) {
+          console.log("📝 User signed up, creating role...");
+          setUser(session.user);
+          setSession(session);
+          setIsLoading(false);
+          
+          // Create role for new user
+          setTimeout(() => {
+            if (isMounted) {
+              refreshUserRole(session.user);
+            }
+          }, 100);
+          return;
+        }
+        
         if (event === 'SIGNED_OUT') {
           console.log("👋 User signed out");
           setIsPasswordRecovery(false);
@@ -368,6 +394,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       console.log("✅ SignUp successful:", data.user?.email);
+      
+      // If user is created and confirmed, create role immediately
+      if (data.user && !data.user.email_confirmed_at) {
+        console.log("📝 User created but needs email confirmation");
+      } else if (data.user) {
+        console.log("📝 User created and confirmed, creating role...");
+        // Create role immediately for confirmed users
+        setTimeout(() => {
+          refreshUserRole(data.user);
+        }, 500);
+      }
     } finally {
       setIsLoading(false);
     }
