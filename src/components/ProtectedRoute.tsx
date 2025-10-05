@@ -3,7 +3,11 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 
-const ProtectedRoute = () => {
+interface ProtectedRouteProps {
+  children?: React.ReactNode;
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, userRole, user } = useAuth();
   const [showTimeoutError, setShowTimeoutError] = useState(false);
 
@@ -76,8 +80,8 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  console.log("✅ ProtectedRoute: user authenticated, rendering outlet");
-  return <Outlet />;
+  console.log("✅ ProtectedRoute: user authenticated, rendering children or outlet");
+  return children ? <>{children}</> : <Outlet />;
 };
 
 export default ProtectedRoute;

@@ -353,12 +353,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(session);
           setIsLoading(false);
           
-          // Defer role fetching
-          setTimeout(() => {
-            if (isMounted) {
-              refreshUserRole(session.user);
-            }
-          }, 100);
+          // Force role creation/refresh immediately
+          console.log("🔄 Forcing role refresh for signed in user");
+          refreshUserRole(session.user);
           return;
         }
         
@@ -439,7 +436,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       console.log("✅ SignIn successful:", data.user?.email);
-      // The auth state listener will handle the rest
+      
+      // Force role refresh after successful login
+      if (data.user) {
+        console.log("🔄 Manually triggering role refresh after login");
+        setTimeout(() => {
+          refreshUserRole(data.user);
+        }, 1000);
+      }
     } catch (error) {
       console.error("💥 SignIn exception:", error);
       setIsLoading(false);

@@ -121,24 +121,28 @@ const App = () => {
               <Route path="/tenant-signup" element={<TenantSignup />} />
 
               {/* Protected routes with shared Layout */}
-              <Route element={<ProtectedRoute />}>
-                <Route element={<Layout><Outlet /></Layout>}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/app" element={<Dashboard />} />
-                  <Route path="/properties" element={<Properties />} />
-                  <Route path="/tenants" element={<Tenants />} />
-                  <Route path="/payments" element={<Payments />} />
-                  <Route path="/maintenance" element={<Maintenance />} />
-                  <Route path="/accounting" element={<Accounting />} />
-                  <Route path="/assistant" element={<Assistant />} />
-                  <Route path="/reports" element={<Reports />} />
-                  <Route path="/analytics" element={<Analytics />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/invite-tenant" element={<InviteTenant />} />
-                  <Route path="/subscription-success" element={<SubscriptionSuccess />} />
-                  <Route path="/payment-success" element={<PaymentSuccess />} />
-                </Route>
-              </Route>
+              <Route path="/*" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Routes>
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/app" element={<Dashboard />} />
+                      <Route path="/properties" element={<Properties />} />
+                      <Route path="/tenants" element={<Tenants />} />
+                      <Route path="/payments" element={<Payments />} />
+                      <Route path="/maintenance" element={<Maintenance />} />
+                      <Route path="/accounting" element={<Accounting />} />
+                      <Route path="/assistant" element={<Assistant />} />
+                      <Route path="/reports" element={<Reports />} />
+                      <Route path="/analytics" element={<Analytics />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/invite-tenant" element={<InviteTenant />} />
+                      <Route path="/subscription-success" element={<SubscriptionSuccess />} />
+                      <Route path="/payment-success" element={<PaymentSuccess />} />
+                    </Routes>
+                  </Layout>
+                </ProtectedRoute>
+              } />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
