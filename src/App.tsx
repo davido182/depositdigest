@@ -33,34 +33,7 @@ import { useDeviceFeatures } from "./hooks/use-device-features";
 import { logger } from "@/utils/logger";
 import { config } from "@/utils/config";
 import { liveUpdatesService } from "@/services/LiveUpdatesService";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
-import { Layout } from "lucide-react";
+import { Layout } from "@/components/Layout";
 
 // Create a new query client instance with simplified configuration
 const queryClient = new QueryClient({
