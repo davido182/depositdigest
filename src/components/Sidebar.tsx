@@ -61,13 +61,13 @@ const Sidebar = () => {
     console.log("Getting navigation items for role:", userRole);
     
     const baseItems = [
-      { name: "Dashboard", href: "/", icon: Building2 },
+      { name: "Dashboard", href: "/dashboard", icon: Building2 },
     ];
 
     // Tenant view - limited options
     if (userRole === 'tenant') {
       return [
-        { name: "Mi Unidad", href: "/", icon: Building2 },
+        { name: "Mi Unidad", href: "/dashboard", icon: Building2 },
         { name: "Mis Pagos", href: "/payments", icon: CreditCard },
         { name: "Mantenimiento", href: "/maintenance", icon: Wrench },
         { name: "Configuración", href: "/settings", icon: Settings },
@@ -81,12 +81,12 @@ const Sidebar = () => {
         { name: "Propiedades", href: "/properties", icon: Building2 },
          { name: "Inquilinos", href: "/tenants", icon: Users },
          { name: "Pagos", href: "/payments", icon: CreditCard },
-        { name: "Mantenimiento", href: "/maintenance", icon: Wrench },
       ];
 
       // Premium-only features
       if (userRole === 'landlord_premium') {
         landlordItems.push(
+          { name: "Mantenimiento", href: "/maintenance", icon: Wrench },
           { name: "Invitar Inquilino", href: "/invite-tenant", icon: UserPlus },
           { name: "Contabilidad", href: "/accounting", icon: Calculator },
           { name: "Asistente IA", href: "/assistant", icon: MessageCircle },

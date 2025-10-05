@@ -24,7 +24,8 @@ export function SmartHome() {
     );
   }
 
-  // SIEMPRE mostrar landing en la ruta raíz, sin importar si está autenticado
-  console.log('🏠 SmartHome: Showing landing (root path always shows landing)');
+  // SIEMPRE mostrar landing en la ruta raíz (/), sin importar si está autenticado
+  // Los usuarios autenticados deben ir a /dashboard manualmente
+  console.log('🏠 SmartHome: Showing landing (/ always shows landing)');
   return <Landing />;
 }

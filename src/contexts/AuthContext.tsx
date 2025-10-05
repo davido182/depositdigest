@@ -28,6 +28,7 @@ type AuthContextType = {
   createTenantInvitation: (unitNumber: string, email?: string) => Promise<any>;
   acceptTenantInvitation: (invitationCode: string) => Promise<any>;
   refreshUserRole: (currentUser?: User) => Promise<void>;
+  upgradeUserToPremium: (userId?: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -55,6 +56,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isPremium = userRole === 'landlord_premium';
   const hasActivePremium = userRole === 'landlord_premium';
 
+  // Manual function to upgrade user to premium (for testing)
+  const upgradeUserToPremium = async (userId?: string) => {
+    const targetUserId = userId || user?.id;
+    if (!targetUserId) {
+      console.error("❌ No user ID provided for premium upgrade");
+      return;
+    }
+
+    try {
+      console.log("🚀 Upgrading user to premium:", targetUserId);
+      
+      const { error } = await supabase
+        .from('user_roles')
+        .upsert({
+          user_id: targetUserId,
+          role: 'landlord_premium' as UserRole
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) {
+        console.error("❌ Error upgrading to premium:", error);
+        throw error;
+      }
+
+      console.log("✅ Successfully upgraded to premium");
+      // Refresh the role
+      await refreshUserRole();
+      
+    } catch (error) {
+      console.error("💥 Exception upgrading to premium:", error);
+    }
+  };
+
   const refreshUserRole = async (currentUser?: User) => {
     const userToCheck = currentUser || user;
     
@@ -74,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("📡 Fetching user role from database...");
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
-        .select('role')
+        .select('role, trial_end_date')
         .eq('user_id', userToCheck.id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -88,17 +123,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!roleData) {
-        console.log("📝 No role found, creating default premium trial role...");
+        console.log("📝 No role found, creating 7-day premium trial...");
         const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 30); // 30 días de prueba
+        trialEndDate.setDate(trialEndDate.getDate() + 7); // 7 días de prueba premium
         
         const { data: newRoleData, error: createError } = await supabase
           .from('user_roles')
           .insert([{
             user_id: userToCheck.id,
-            role: 'landlord_free' as UserRole
+            role: 'landlord_premium' as UserRole, // Empezar con premium trial
+            trial_end_date: trialEndDate.toISOString()
           }])
-          .select('role')
+          .select('role, trial_end_date')
           .single();
           
         if (createError) {
@@ -106,12 +142,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log("🔧 Fallback: setting role to landlord_free");
           setUserRole('landlord_free');
         } else {
-          console.log("✅ Created new role:", newRoleData.role);
+          console.log("✅ Created new premium trial role:", newRoleData.role);
           setUserRole(newRoleData.role);
         }
       } else {
         console.log("✅ Found existing role:", roleData.role);
-        setUserRole(roleData.role);
+        
+        // Check if trial has expired for premium users
+        if (roleData.role === 'landlord_premium' && roleData.trial_end_date) {
+          const trialEndDate = new Date(roleData.trial_end_date);
+          const now = new Date();
+          
+          if (now > trialEndDate) {
+            console.log("⏰ Premium trial expired, downgrading to free...");
+            
+            // Update role to free in database
+            const { error: updateError } = await supabase
+              .from('user_roles')
+              .update({ role: 'landlord_free' })
+              .eq('user_id', userToCheck.id);
+              
+            if (updateError) {
+              console.error("❌ Error downgrading expired trial:", updateError);
+            } else {
+              console.log("✅ Successfully downgraded expired trial to free");
+            }
+            
+            setUserRole('landlord_free');
+          } else {
+            console.log("✅ Premium trial still active");
+            setUserRole(roleData.role);
+          }
+        } else {
+          setUserRole(roleData.role);
+        }
       }
     } catch (error) {
       console.error("💥 Exception in refreshUserRole:", error);
@@ -431,7 +495,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     createCheckoutSession,
     createTenantInvitation,
     acceptTenantInvitation,
-    refreshUserRole
+    refreshUserRole,
+    upgradeUserToPremium
   };
 
   console.log("📊 AuthProvider context value:", {

@@ -14,23 +14,25 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+
+
 const Settings = () => {
   const { userRole } = useAuth();
-  
+
   const handleUpgradeToPremium = async () => {
     try {
       console.log('Creating checkout session...');
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { 
+        body: {
           priceId: 'price_1QdFz0DKXqPjJWpJqwgNLYkr'
         }
       });
-      
+
       if (error) {
         console.error('Stripe function error:', error);
         throw error;
       }
-      
+
       if (data?.url) {
         console.log('Opening checkout URL:', data.url);
         window.open(data.url, '_blank');
@@ -54,7 +56,7 @@ const Settings = () => {
             </Button>
           )}
         </div>
-        
+
         <Tabs defaultValue="account" className="w-full">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="account">Cuenta</TabsTrigger>
@@ -64,36 +66,37 @@ const Settings = () => {
             <TabsTrigger value="mobile">Móvil</TabsTrigger>
             <TabsTrigger value="data">Datos</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="account">
             <AccountSettings />
           </TabsContent>
-          
+
           <TabsContent value="stripe">
             <StripeSettings />
           </TabsContent>
-          
+
           <TabsContent value="theme">
             <ThemeSettings />
           </TabsContent>
-          
+
           <TabsContent value="language">
             <LanguageSettings />
           </TabsContent>
-          
+
           <TabsContent value="mobile">
             <div className="space-y-6">
               <MobileFeatureToggle />
               <LiveUpdatesStatus />
             </div>
           </TabsContent>
-          
+
           <TabsContent value="data">
             <DataSettings />
           </TabsContent>
-        </Tabs>
-      </section>
-    </Layout>
+        </TabsContent>
+      </Tabs>
+    </section>
+    </Layout >
   );
 };
 
