@@ -35,15 +35,11 @@ const Analytics = () => {
         setIsLoading(true);
         
         // Fetch all data from Supabase directly
-        const queryYear = new Date().getFullYear();
-        const queryMonth = new Date().getMonth() + 1; // 1-indexed
         const [tenantsResult, paymentsResult, propertiesResult, unitsResult] = await Promise.all([
           supabase.from('tenants').select('*'),
           supabase.from('payments').select('*'),
           supabase.from('properties').select('*'),
           supabase.from('units').select('*')
-        ]);
-            .eq('has_receipt', true)
         ]);
 
         if (tenantsResult.error) throw tenantsResult.error;
@@ -95,7 +91,6 @@ const Analytics = () => {
           currentYear,
           totalPayments: payments.length,
           currentMonthPayments: currentMonthPayments.length,
-          receiptsCount: receipts.length,
           activeTenants: activeTenants.length,
           paidTenantIds: Array.from(paidTenantIds),
           collectionRate
