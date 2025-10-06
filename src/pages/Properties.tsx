@@ -39,11 +39,11 @@ const Properties = () => {
       try {
         setIsLoading(true);
         console.log('Loading properties and calculating stats...');
-        
+
         // Load properties from database
         const dbProperties = await propertyService.getProperties();
         console.log('DB Properties loaded:', dbProperties.length);
-        
+
         // Get tenants and units to calculate occupancy
         const [tenantsResult, unitsResult] = await Promise.all([
           supabase.from('tenants').select('*'),
@@ -64,7 +64,7 @@ const Properties = () => {
 
         const tenants = tenantsResult.data || [];
         const units = unitsResult.data || [];
-        
+
         console.log('Tenants loaded:', tenants.length);
         console.log('Units loaded:', units.length);
 
@@ -73,16 +73,16 @@ const Properties = () => {
           // Get units for this property
           const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
           const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
-          
+
           console.log(`Property ${dbProp.name}:`, {
             totalUnits: propertyUnits.length,
             occupiedUnits: occupiedUnits.length,
             propertyUnits: propertyUnits.map(u => ({ id: u.id, unit_number: u.unit_number, is_available: u.is_available, rent_amount: u.rent_amount }))
           });
-          
+
           // Calculate revenue from occupied units
           const monthlyRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
-          
+
           return {
             id: dbProp.id,
             name: dbProp.name,
@@ -145,11 +145,11 @@ const Properties = () => {
 
     try {
       setIsLoading(true);
-      
+
       // Load properties from database
       const dbProperties = await propertyService.getProperties();
       console.log('Reloading properties after save...');
-      
+
       // Get tenants and units to calculate occupancy
       const [tenantsResult, unitsResult] = await Promise.all([
         supabase.from('tenants').select('*'),
@@ -176,10 +176,10 @@ const Properties = () => {
         // Get units for this property
         const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
         const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
-        
+
         // Calculate revenue from occupied units
         const monthlyRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
-        
+
         return {
           id: dbProp.id,
           name: dbProp.name,
@@ -192,7 +192,7 @@ const Properties = () => {
       });
 
       setProperties(mappedProperties);
-      
+
       if (selectedProperty) {
         toast.success("Propiedad actualizada exitosamente");
       } else {
@@ -246,129 +246,129 @@ const Properties = () => {
           </Card>
         ) : (
           <>
-          {/* Summary Card - Moved to top of properties */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Resumen de Propiedades</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {properties.length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Total Propiedades</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-emerald-600">
-                    {properties.reduce((acc, prop) => acc + prop.units, 0)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Total Unidades</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {properties.reduce((acc, prop) => acc + prop.occupied_units, 0)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Unidades Ocupadas</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-amber-600">
-                    {properties.reduce((acc, prop) => acc + prop.units, 0) - properties.reduce((acc, prop) => acc + prop.occupied_units, 0)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Unidades Disponibles</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {properties.map((property) => (
-              <Card key={property.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Building className="h-5 w-5" />
-                      {property.name}
-                    </CardTitle>
-                    <Badge variant={property.occupied_units === property.units ? "default" : "secondary"}>
-                      {property.occupied_units === property.units ? "Completo" : "Disponible"}
-                    </Badge>
-                  </div>
-                  <CardDescription className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    {property.address}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">Ocupación</span>
+            {/* Summary Card - Moved to top of properties */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Resumen de Propiedades</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {properties.length}
                     </div>
-                    <span className="font-medium">
-                      {property.occupied_units}/{property.units} unidades
-                    </span>
+                    <div className="text-sm text-muted-foreground">Total Propiedades</div>
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">Ingresos</span>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-emerald-600">
+                      {properties.reduce((acc, prop) => acc + prop.units, 0)}
                     </div>
-                    <span className="font-medium text-green-600">
-                      €{property.monthly_revenue.toLocaleString()}/mes
-                    </span>
+                    <div className="text-sm text-muted-foreground">Total Unidades</div>
                   </div>
-
-
-                  {/* Units List */}
-                  <div className="border-t pt-4 space-y-2">
-                    <h4 className="text-sm font-medium flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Unidades ({property.units})
-                    </h4>
-                    <UnitsDisplay propertyId={property.id} />
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      {properties.reduce((acc, prop) => acc + prop.occupied_units, 0)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Unidades Ocupadas</div>
                   </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-amber-600">
+                      {properties.reduce((acc, prop) => acc + prop.units, 0) - properties.reduce((acc, prop) => acc + prop.occupied_units, 0)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Unidades Disponibles</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                  <div className="pt-4 space-y-2">
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
-                      size="sm"
-                      onClick={() => handleViewProperty(property)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Gestionar Unidades
-                    </Button>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="ghost" 
-                        className="flex-1" 
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {properties.map((property) => (
+                <Card key={property.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Building className="h-5 w-5" />
+                        {property.name}
+                      </CardTitle>
+                      <Badge variant={property.occupied_units === property.units ? "default" : "secondary"}>
+                        {property.occupied_units === property.units ? "Completo" : "Disponible"}
+                      </Badge>
+                    </div>
+                    <CardDescription className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4" />
+                      {property.address}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Ocupación</span>
+                      </div>
+                      <span className="font-medium">
+                        {property.occupied_units}/{property.units} unidades
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Ingresos</span>
+                      </div>
+                      <span className="font-medium text-green-600">
+                        €{property.monthly_revenue.toLocaleString()}/mes
+                      </span>
+                    </div>
+
+
+                    {/* Units List */}
+                    <div className="border-t pt-4 space-y-2">
+                      <h4 className="text-sm font-medium flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Unidades ({property.units})
+                      </h4>
+                      <UnitsDisplay propertyId={property.id} />
+                    </div>
+
+                    <div className="pt-4 space-y-2">
+                      <Button
+                        variant="outline"
+                        className="w-full"
                         size="sm"
-                        onClick={() => handleEditProperty(property)}
+                        onClick={() => handleViewProperty(property)}
                       >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Editar
+                        <Plus className="h-4 w-4 mr-2" />
+                        Gestionar Unidades
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        className="flex-1 text-destructive hover:text-destructive" 
-                        size="sm"
-                        onClick={() => {
-                          if (confirm("¿Estás seguro de que quieres eliminar esta propiedad? Esta acción no se puede deshacer.")) {
-                            handleDeleteProperty(property);
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Eliminar
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          className="flex-1"
+                          size="sm"
+                          onClick={() => handleEditProperty(property)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="flex-1 text-destructive hover:text-destructive"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm("¿Estás seguro de que quieres eliminar esta propiedad? Esta acción no se puede deshacer.")) {
+                              handleDeleteProperty(property);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Eliminar
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </>
         )}
 

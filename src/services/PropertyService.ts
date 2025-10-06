@@ -111,7 +111,7 @@ export class PropertyService extends BaseService {
     }
 
     // Check if property has active tenants in this specific property
-    const { data: units, error: unitsError } = await supabase
+    const { data: units, error: tenantsCheckError } = await supabase
       .from('units')
       .select(`
         id,
@@ -120,8 +120,8 @@ export class PropertyService extends BaseService {
       .eq('property_id', id)
       .eq('tenants.is_active', true);
 
-    if (unitsError) {
-      console.error('Error checking tenants:', unitsError);
+    if (tenantsCheckError) {
+      console.error('Error checking tenants:', tenantsCheckError);
       // Continue anyway, we'll try to delete
     }
 
@@ -129,23 +129,14 @@ export class PropertyService extends BaseService {
       throw new Error('No se puede eliminar una propiedad con inquilinos activos');
     }
 
-    if (tenantsError) {
-      console.error('Error checking tenants:', tenantsError);
-      throw tenantsError;
-    }
-
-    if (tenants && tenants.length > 0) {
-      throw new Error('No se puede eliminar una propiedad con inquilinos activos');
-    }
-
     // Delete units first (cascade should handle this, but let's be explicit)
-    const { error: unitsError } = await supabase
+    const { error: unitsDeleteError } = await supabase
       .from('units')
       .delete()
       .eq('property_id', id);
 
-    if (unitsError) {
-      console.error('Error deleting units:', unitsError);
+    if (unitsDeleteError) {
+      console.error('Error deleting units:', unitsDeleteError);
       // Continue anyway, cascade should handle it
     }
 
