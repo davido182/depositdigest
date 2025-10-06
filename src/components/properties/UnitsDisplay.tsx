@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
-import { unitsService } from "@/services/UnitsService";
+import { Edit, Trash2, UserPlus, UserMinus } from "lucide-react";
+import { unitService } from "@/services/UnitService";
 import { UnitEditForm } from "../units/UnitEditForm";
+import { toast } from "sonner";
 
 interface Unit {
   id: string;
@@ -30,7 +31,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
   const loadUnits = async () => {
     try {
       setLoading(true);
-      const data = await unitsService.getUnits(propertyId);
+      const data = await unitService.getUnitsByProperty(propertyId);
       setUnits(data.slice(0, 3)); // Only show first 3 units in card
     } catch (error) {
       console.error('Error loading units:', error);
@@ -46,22 +47,37 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
 
   const handleSaveUnit = async (updatedUnit: Unit) => {
     try {
-      await unitsService.updateUnit(updatedUnit.id, {
+      await unitService.updateUnit(updatedUnit.id, {
         unit_number: updatedUnit.unit_number,
-        rent_amount: updatedUnit.rent_amount
+        monthly_rent: updatedUnit.rent_amount || 0,
+        is_available: updatedUnit.is_available
       });
 
       // Update local state
       setUnits(prev => prev.map(unit => 
-        unit.id === updatedUnit.id 
-          ? { ...unit, unit_number: updatedUnit.unit_number, rent_amount: updatedUnit.rent_amount }
-          : unit
+        unit.id === updatedUnit.id ? updatedUnit : unit
       ));
 
       setShowEditForm(false);
       setEditingUnit(null);
     } catch (error) {
       console.error('Error updating unit:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteUnit = async (unit: Unit) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar la unidad ${unit.unit_number}?`)) {
+      return;
+    }
+
+    try {
+      await unitService.deleteUnit(unit.id);
+      setUnits(prev => prev.filter(u => u.id !== unit.id));
+      toast.success("Unidad eliminada correctamente");
+    } catch (error) {
+      console.error('Error deleting unit:', error);
+      toast.error("Error al eliminar la unidad");
     }
   };
 
@@ -97,17 +113,27 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
                 {unit.is_available ? "Disponible" : "Ocupada"}
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">
-                €{unit.rent_amount || 0}/mes
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground text-xs">
+                €{unit.rent_amount || 0}
               </span>
               <Button
                 size="sm"
                 variant="ghost"
                 className="h-6 w-6 p-0"
                 onClick={() => handleEditUnit(unit)}
+                title="Editar unidad"
               >
                 <Edit className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                onClick={() => handleDeleteUnit(unit)}
+                title="Eliminar unidad"
+              >
+                <Trash2 className="h-3 w-3" />
               </Button>
             </div>
           </div>

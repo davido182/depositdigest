@@ -220,7 +220,7 @@ const Dashboard = () => {
               <Button
                 onClick={() => setIsImportModalOpen(true)}
                 variant="outline"
-                className="gap-2 bg-blue-250 hover:bg-blue-400"
+                className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                 size={isMobile ? "sm" : "default"}
               >
                 <FileSpreadsheet className="h-4 w-4" />

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus, UserMinus, Trash2, Plus, Edit } from "lucide-react";
-import { unitsService } from "@/services/UnitsService";
+import { unitService } from "@/services/UnitService";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UnitEditForm } from "./UnitEditForm";
@@ -67,7 +67,7 @@ export function UnitManagementModal({
     setIsLoading(true);
     try {
       // Load units for this property
-      const unitsData = await unitsService.getUnits(propertyId);
+      const unitsData = await unitService.getUnitsByProperty(propertyId);
       setUnits(unitsData);
 
       // Load available tenants (those without assigned units)
@@ -108,9 +108,10 @@ export function UnitManagementModal({
     }
 
     try {
-      await unitsService.createUnit({
+      await unitService.createUnit({
         property_id: propertyId,
         unit_number: newUnitNumber,
+        monthly_rent: 0,
         is_available: true,
       });
       
@@ -130,7 +131,7 @@ export function UnitManagementModal({
     }
 
     try {
-      await unitsService.deleteUnit(unitId);
+      await unitService.deleteUnit(unitId);
       await loadData();
       onUnitsUpdated();
       toast.success("Unidad eliminada correctamente");
@@ -147,11 +148,11 @@ export function UnitManagementModal({
     }
 
     try {
-      await unitsService.assignTenant(
-        assigningTenant.id,
-        selectedTenantId,
-        parseFloat(rentAmount)
-      );
+      await unitService.updateUnit(assigningTenant.id, {
+        tenant_id: selectedTenantId,
+        monthly_rent: parseFloat(rentAmount),
+        is_available: false
+      });
       
       setAssigningTenant(null);
       setSelectedTenantId("");
@@ -171,7 +172,10 @@ export function UnitManagementModal({
     }
     
     try {
-      await unitsService.unassignTenant(unit.id);
+      await unitService.updateUnit(unit.id, {
+        tenant_id: null,
+        is_available: true
+      });
       await loadData();
       onUnitsUpdated();
       toast.success("Inquilino desasignado correctamente");
@@ -183,9 +187,9 @@ export function UnitManagementModal({
 
   const handleEditUnit = async (unit: Unit) => {
     try {
-      await unitsService.updateUnit(unit.id, {
+      await unitService.updateUnit(unit.id, {
         unit_number: unit.unit_number,
-        rent_amount: unit.rent_amount,
+        monthly_rent: unit.rent_amount || 0,
       });
       await loadData();
       onUnitsUpdated();

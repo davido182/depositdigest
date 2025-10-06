@@ -101,21 +101,26 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm() && unit) {
-      const updatedUnit: Unit = {
-        ...unit,
-        unit_number: formData.unit_number,
-        rent_amount: formData.rent_amount,
-        tenant_id: formData.tenant_id || null,
-        is_available: !formData.tenant_id,
-      };
-      
-      onSave(updatedUnit);
-      onClose();
-      toast.success("Unidad actualizada correctamente");
+      try {
+        const updatedUnit: Unit = {
+          ...unit,
+          unit_number: formData.unit_number,
+          rent_amount: formData.rent_amount,
+          tenant_id: formData.tenant_id || null,
+          is_available: !formData.tenant_id,
+        };
+        
+        await onSave(updatedUnit);
+        onClose();
+        toast.success("Unidad actualizada correctamente");
+      } catch (error) {
+        console.error('Error saving unit:', error);
+        toast.error("Error al actualizar la unidad");
+      }
     }
   };
 
@@ -173,7 +178,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
                   <SelectItem value="">Sin inquilino</SelectItem>
                   {availableTenants.map((tenant) => (
                     <SelectItem key={tenant.id} value={tenant.id}>
-                      {tenant.name} - {tenant.email}
+                      {tenant.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
