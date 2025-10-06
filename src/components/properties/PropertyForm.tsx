@@ -115,8 +115,12 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
           // Create new property
           await propertyService.createProperty({
             name: formData.name,
-            address: formData.address,
             description: formData.description,
+            address: formData.address,
+            city: 'Madrid', // Default
+            postal_code: '28001', // Default  
+            country: 'España',
+            property_type: 'apartment',
             total_units: formData.units
           });
           toast.success("Propiedad creada correctamente");

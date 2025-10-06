@@ -1,11 +1,11 @@
 
-import SimpleSidebar from "./SimpleSidebar";
+import Sidebar from "./Sidebar";
 import { useState, useEffect } from "react";
 import { OfflineBanner } from "./ui/offline-banner";
 import { useDeviceFeatures } from "@/hooks/use-device-features";
 import { useOrientation } from "@/hooks/use-orientation";
 import { useAuth } from "@/contexts/AuthContext";
-// Removed shadcn sidebar components
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { MobileOrientationWrapper } from "./MobileOrientationWrapper";
 import { cn } from "@/lib/utils";
 import { liveUpdatesService } from "@/services/LiveUpdatesService";
