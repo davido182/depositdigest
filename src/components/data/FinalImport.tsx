@@ -72,17 +72,30 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
   };
 
   const importTenants = async (tenantRows: any[]) => {
-    const tenants = tenantRows.map(row => ({
-      name: row.name || 'Sin nombre',
-      email: row.email,
-      phone: row.phone || null,
-      unit_number: row.unit_number || '1',
-      lease_start_date: row.lease_start_date || new Date().toISOString().split('T')[0],
-      lease_end_date: row.lease_end_date || null,
-      rent_amount: parseFloat(row.rent_amount || '0') || 0,
-      status: row.status || 'active',
-      notes: row.notes || null
-    }));
+    if (!user) throw new Error('Usuario no autenticado');
+
+    const tenants = tenantRows.map(row => {
+      // Split name into first_name and last_name
+      const fullName = row.name || 'Sin nombre';
+      const nameParts = fullName.trim().split(' ');
+      const firstName = nameParts[0] || 'Sin nombre';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      return {
+        landlord_id: user.id,
+        first_name: firstName,
+        last_name: lastName,
+        email: row.email || null,
+        phone: row.phone || null,
+        move_in_date: row.move_in_date || row.lease_start_date || null,
+        move_out_date: row.move_out_date || row.lease_end_date || null,
+        monthly_rent: parseFloat(row.monthly_rent || row.rent_amount || '0') || 0,
+        deposit_paid: parseFloat(row.deposit_paid || row.deposit_amount || '0') || 0,
+        is_active: (row.status || 'active') === 'active',
+        notes: row.notes || null
+        // unit_id: null // Por ahora sin unidad específica
+      };
+    });
 
     console.log('📤 Insertando inquilinos:', tenants);
 
@@ -101,11 +114,22 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
   };
 
   const importProperties = async (propertyRows: any[]) => {
+    if (!user) throw new Error('Usuario no autenticado');
+
     const properties = propertyRows.map(row => ({
+      landlord_id: user.id,
       name: row.name || 'Propiedad',
-      address: row.address || null,
       description: row.description || null,
-      total_units: parseInt(row.total_units || '1') || 1
+      address: row.address || 'Dirección no especificada',
+      city: row.city || 'Madrid',
+      postal_code: row.postal_code || '28001',
+      country: row.country || 'España',
+      property_type: row.property_type || 'apartment',
+      total_units: parseInt(row.total_units || '1') || 1,
+      purchase_price: parseFloat(row.purchase_price || '0') || null,
+      current_value: parseFloat(row.current_value || '0') || null,
+      purchase_date: row.purchase_date || null,
+      is_active: true
     }));
 
     console.log('📤 Insertando propiedades:', properties);
@@ -188,23 +212,23 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
       // Detectar automáticamente el tipo de archivo por sus columnas
       const headers = Object.keys(data[0] || {});
       console.log('📋 Headers detectados:', headers);
-      
+
       let tenantRows = [];
       let propertyRows = [];
       let paymentRows = [];
-      
+
       // Detectar si es archivo de inquilinos
       if (headers.includes('name') && headers.includes('email') && !headers.includes('tenant_email')) {
         tenantRows = data.filter(row => row.name && row.email);
         console.log('👥 Detectado archivo de inquilinos');
       }
-      
+
       // Detectar si es archivo de propiedades
       if (headers.includes('name') && headers.includes('address') && !headers.includes('email')) {
         propertyRows = data.filter(row => row.name);
         console.log('🏠 Detectado archivo de propiedades');
       }
-      
+
       // Detectar si es archivo de pagos
       if (headers.includes('tenant_email') && headers.includes('amount')) {
         paymentRows = data.filter(row => row.tenant_email && row.amount);
@@ -265,13 +289,13 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
       // Mostrar resumen detallado
       if (results.length > 0) {
         toast.success(`✅ Importados: ${results.join(', ')}`);
-        
+
         // Mostrar mensaje adicional y recargar
         setTimeout(() => {
           toast.info('🔄 Recargando página para mostrar los datos...');
           window.location.reload();
         }, 2000);
-        
+
         onImportComplete();
         onClose();
       } else {
@@ -284,7 +308,7 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
           paymentRows: paymentRows.length,
           sampleData: data.slice(0, 2)
         });
-        
+
         if (totalRows === 0) {
           toast.error('❌ No se encontraron filas válidas. Verifica que:\n• Tengas la columna "tipo" con valores: inquilino, propiedad, pago\n• Los campos obligatorios estén completos');
         } else {
