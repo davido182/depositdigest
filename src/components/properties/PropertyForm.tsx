@@ -58,7 +58,6 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
       setErrors({});
     }
   }, [isOpen, property]);
-  }, [property, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PropertyForm } from "@/components/properties/PropertyForm";
 import { PropertyDetails } from "@/components/properties/PropertyDetails";
+import { FinalImport } from "@/components/data/FinalImport";
 import { propertyService, Property as PropertyType } from "@/services/PropertyService";
 import { useUserLimits } from "@/hooks/use-user-limits";
 
@@ -30,10 +31,10 @@ const Properties = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [showPropertyDetails, setShowPropertyDetails] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
-  useEffect(() => {
-    const loadProperties = async () => {
+  const loadProperties = async () => {
       if (!user) return;
 
       try {
@@ -102,8 +103,9 @@ const Properties = () => {
       } finally {
         setIsLoading(false);
       }
-    };
+  };
 
+  useEffect(() => {
     loadProperties();
   }, [user]);
 
@@ -224,10 +226,20 @@ const Properties = () => {
             <h1 className="text-3xl font-semibold tracking-tight">Propiedades</h1>
             <p className="text-muted-foreground">Gestiona tus propiedades inmobiliarias</p>
           </div>
-          <Button onClick={handleAddProperty} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Agregar Propiedad
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowImportModal(true)} 
+              className="gap-2"
+            >
+              <Building className="h-4 w-4" />
+              Importar Datos
+            </Button>
+            <Button onClick={handleAddProperty} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Agregar Propiedad
+            </Button>
+          </div>
         </div>
 
         {properties.length === 0 ? (
@@ -405,6 +417,15 @@ const Properties = () => {
             };
             setSelectedProperty(stateProperty);
             setShowPropertyForm(true);
+          }}
+        />
+
+        <FinalImport
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          onImportComplete={() => {
+            setShowImportModal(false);
+            loadProperties(); // Reload properties after import
           }}
         />
       </div>
