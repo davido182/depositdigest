@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building, MapPin, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
+import { errors } from "undici-types";
 
 interface Property {
   id?: string;
@@ -36,18 +37,27 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
     units: property?.units || 1,
   });
 
+  // Estado para las unidades individuales
+  const [unitRents, setUnitRents] = useState<number[]>([]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   React.useEffect(() => {
     if (isOpen) {
+      const units = property?.units || 1;
       setFormData({
         name: property?.name || "",
         address: property?.address || "",
         description: property?.description || "",
-        units: property?.units || 1,
+        units: units,
       });
+      
+      // Inicializar rentas de unidades
+      const initialRents = Array(units).fill(0);
+      setUnitRents(initialRents);
       setErrors({});
     }
+  }, [isOpen, property]);
   }, [property, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -69,6 +79,21 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
     }
     
     setFormData(prev => ({ ...prev, units: newUnits }));
+    
+    // Ajustar array de rentas
+    const newRents = [...unitRents];
+    if (increment) {
+      newRents.push(0); // Nueva unidad sin renta definida
+    } else {
+      newRents.pop(); // Quitar última unidad
+    }
+    setUnitRents(newRents);
+  };
+
+  const updateUnitRent = (unitIndex: number, rent: number) => {
+    const newRents = [...unitRents];
+    newRents[unitIndex] = rent;
+    setUnitRents(newRents);
   };
 
   const validateForm = () => {
@@ -80,6 +105,12 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
     
     if (!formData.address.trim()) {
       newErrors.address = "La dirección es requerida";
+    }
+
+    // Validar que todas las unidades tengan renta definida
+    const emptyRents = unitRents.filter(rent => rent <= 0);
+    if (emptyRents.length > 0) {
+      newErrors.units = "Todas las unidades deben tener una renta definida";
     }
     
     if (formData.units < 1) {
@@ -113,7 +144,7 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
           toast.success("Propiedad actualizada correctamente");
         } else {
           // Create new property
-          await propertyService.createProperty({
+          const newProperty = await propertyService.createProperty({
             name: formData.name,
             description: formData.description,
             address: formData.address,
@@ -123,7 +154,22 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
             property_type: 'apartment',
             total_units: formData.units
           });
-          toast.success("Propiedad creada correctamente");
+
+          // Create units with individual rents
+          const { unitService } = await import("@/services/UnitService");
+          
+          for (let i = 0; i < formData.units; i++) {
+            await unitService.createUnit({
+              property_id: newProperty.id,
+              unit_number: (i + 1).toString(),
+              bedrooms: 1,
+              bathrooms: 1,
+              monthly_rent: unitRents[i],
+              is_available: true
+            });
+          }
+          
+          toast.success(`Propiedad creada con ${formData.units} unidades`);
         }
         
         onSave(formData);
@@ -229,6 +275,36 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
+                  </div>
+
+                  {/* Campos de Renta por Unidad */}
+                  <div className="space-y-3">
+                    <Label>Renta Mensual por Unidad (€)</Label>
+                    {Array.from({ length: formData.units }, (_, index) => (
+                      <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                        <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-full">
+                          <span className="text-sm font-medium">{index + 1}</span>
+                        </div>
+                        <div className="flex-1">
+                          <Label htmlFor={`unit-${index}`} className="text-sm">
+                            Unidad {index + 1}
+                          </Label>
+                          <Input
+                            id={`unit-${index}`}
+                            type="number"
+                            min="0"
+                            step="50"
+                            value={unitRents[index] || ''}
+                            onChange={(e) => updateUnitRent(index, parseFloat(e.target.value) || 0)}
+                            placeholder="Ej: 800"
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    {errors.units && (
+                      <p className="text-sm text-red-500">{errors.units}</p>
+                    )}
                   </div>
                   
                   {userRole === 'landlord_free' && (

@@ -51,7 +51,7 @@ const Dashboard = () => {
       try {
         setIsLoading(true);
         console.log('Loading tenants and properties from Supabase...');
-        
+
         // Load tenants
         const loadedTenants = await tenantService.getTenants();
         console.log(`Dashboard: Loaded ${loadedTenants.length} tenants`);
@@ -74,7 +74,7 @@ const Dashboard = () => {
                 const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
                 const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
                 const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
-                
+
                 return {
                   id: dbProp.id,
                   name: dbProp.name,
@@ -148,7 +148,7 @@ const Dashboard = () => {
         setTenants([...tenants, newTenant]);
         toast.success("Inquilino agregado exitosamente");
       }
-      
+
       refetch();
       setIsEditModalOpen(false);
     } catch (error) {
@@ -213,20 +213,20 @@ const Dashboard = () => {
           <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>Dashboard</h1>
           <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
             <SmartNotifications />
-            
+
             {/* Botón de importar datos - solo para usuarios premium */}
-            {userRole === 'landlord_premium' && tenants.length === 0 && properties.length === 0 && (
-              <Button 
-                onClick={() => setIsImportModalOpen(true)} 
-                variant="default" 
-                className="gap-2 bg-green-600 hover:bg-green-700"
+            {userRole === 'landlord_premium' && (
+              <Button
+                onClick={() => setIsImportModalOpen(true)}
+                variant="default"
+                className="gap-2 bg-green-250 hover:bg-green-400"
                 size={isMobile ? "sm" : "default"}
               >
                 <FileSpreadsheet className="h-4 w-4" />
                 Importar Datos
               </Button>
             )}
-            
+
             {userRole === 'landlord_premium' && (
               <Button onClick={handleAddTenant} className="gap-2" size={isMobile ? "sm" : "default"}>
                 <Plus className="h-4 w-4" />
@@ -234,9 +234,9 @@ const Dashboard = () => {
               </Button>
             )}
             {(userRole === 'landlord_free' && properties.length === 0) || userRole === 'landlord_premium' ? (
-              <Button 
-                onClick={handleAddProperty} 
-                variant="outline" 
+              <Button
+                onClick={handleAddProperty}
+                variant="outline"
                 className="gap-2"
                 size={isMobile ? "sm" : "default"}
               >
@@ -246,7 +246,7 @@ const Dashboard = () => {
             ) : null}
           </div>
         </div>
-        
+
         <DashboardSummary />
 
         <IntelligentDashboard stats={stats} />
@@ -310,7 +310,7 @@ const Dashboard = () => {
             try {
               const loadedTenants = await tenantService.getTenants();
               setTenants(loadedTenants);
-              
+
               if (user) {
                 const { data: dbProperties, error: propsError } = await supabase
                   .from('properties')
@@ -326,7 +326,7 @@ const Dashboard = () => {
                       const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
                       const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
                       const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
-                      
+
                       return {
                         id: dbProp.id,
                         name: dbProp.name,
@@ -341,7 +341,7 @@ const Dashboard = () => {
                   }
                 }
               }
-              
+
               refetch(); // Recargar stats
               toast.success('Datos actualizados correctamente');
             } catch (error) {
@@ -349,7 +349,7 @@ const Dashboard = () => {
               toast.error('Error al actualizar los datos');
             }
           };
-          
+
           loadData();
         }}
       />
