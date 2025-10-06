@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Building, Users, DollarSign, MapPin, Calendar, Edit, Eye, Trash2 } from "lucide-react";
+import { Plus, Building, Users, DollarSign, MapPin, Edit, Trash2 } from "lucide-react";
 import { UnitsDisplay } from "@/components/properties/UnitsDisplay";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { PropertyForm } from "@/components/properties/PropertyForm";
 import { PropertyDetails } from "@/components/properties/PropertyDetails";
 import { FinalImport } from "@/components/data/FinalImport";
-import { propertyService, Property as PropertyType } from "@/services/PropertyService";
+import { propertyService } from "@/services/PropertyService";
 import { useUserLimits } from "@/hooks/use-user-limits";
 
 interface Property {

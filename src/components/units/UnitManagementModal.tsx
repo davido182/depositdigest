@@ -74,8 +74,8 @@ export function UnitManagementModal({
       const { data: tenantsData, error } = await supabase
         .from('tenants')
         .select('*')
-        .eq('status', 'active')
-        .is('property_id', null);
+        .eq('is_active', true)
+        .is('unit_id', null);
 
       if (error) {
         console.error('Error loading tenants:', error);

@@ -3,6 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface Unit {
@@ -10,6 +13,13 @@ interface Unit {
   unit_number: string;
   rent_amount?: number | null;
   is_available: boolean;
+  tenant_id?: string | null;
+}
+
+interface Tenant {
+  id: string;
+  name: string;
+  email: string;
 }
 
 interface UnitEditFormProps {
@@ -23,7 +33,9 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
   const [formData, setFormData] = useState({
     unit_number: "",
     rent_amount: 0,
+    tenant_id: "",
   });
+  const [availableTenants, setAvailableTenants] = useState<Tenant[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -31,10 +43,27 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
       setFormData({
         unit_number: unit.unit_number,
         rent_amount: unit.rent_amount || 0,
+        tenant_id: unit.tenant_id || "",
       });
       setErrors({});
+      loadAvailableTenants();
     }
   }, [unit, isOpen]);
+
+  const loadAvailableTenants = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tenants')
+        .select('id, name, email')
+        .eq('is_active', true)
+        .is('unit_id', null);
+
+      if (error) throw error;
+      setAvailableTenants(data || []);
+    } catch (error) {
+      console.error('Error loading tenants:', error);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -47,6 +76,13 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleTenantChange = (value: string) => {
+    setFormData(prev => ({ ...prev, tenant_id: value }));
+    if (errors.tenant_id) {
+      setErrors(prev => ({ ...prev, tenant_id: "" }));
     }
   };
 
@@ -73,6 +109,8 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         ...unit,
         unit_number: formData.unit_number,
         rent_amount: formData.rent_amount,
+        tenant_id: formData.tenant_id || null,
+        is_available: !formData.tenant_id,
       };
       
       onSave(updatedUnit);
@@ -123,6 +161,28 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
               {errors.rent_amount && (
                 <p className="text-xs text-destructive">{errors.rent_amount}</p>
               )}
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-sm">Inquilino Asignado</Label>
+              <Select value={formData.tenant_id} onValueChange={handleTenantChange}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Sin inquilino asignado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sin inquilino</SelectItem>
+                  {availableTenants.map((tenant) => (
+                    <SelectItem key={tenant.id} value={tenant.id}>
+                      {tenant.name} - {tenant.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant={formData.tenant_id ? "default" : "secondary"}>
+                  {formData.tenant_id ? "Ocupada" : "Disponible"}
+                </Badge>
+              </div>
             </div>
           </div>
 

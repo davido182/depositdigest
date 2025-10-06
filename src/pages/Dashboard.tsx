@@ -219,8 +219,8 @@ const Dashboard = () => {
             {userRole === 'landlord_premium' && (
               <Button
                 onClick={() => setIsImportModalOpen(true)}
-                variant="default"
-                className="gap-2 bg-green-250 hover:bg-green-400"
+                variant="outline"
+                className="gap-2 bg-blue-250 hover:bg-blue-400"
                 size={isMobile ? "sm" : "default"}
               >
                 <FileSpreadsheet className="h-4 w-4" />

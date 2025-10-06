@@ -81,33 +81,33 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
     try {
       setIsLoading(true);
       
-      // Load payment tracking records (simplified without payment_receipts)
-      const trackingRecords = [];
-      const trackingError = null;
+      // Load payment tracking records from payments table
+      const { data: paymentsData, error: paymentsError } = await supabase
+        .from('payments')
+        .select('tenant_id, amount, payment_date, status')
+        .eq('status', 'completed');
 
-      if (trackingError) throw trackingError;
+      if (paymentsError) throw paymentsError;
 
       const records: PaymentRecord[] = [];
       
-      trackingRecords?.forEach(record => {
-        if (record.has_receipt) {
+      paymentsData?.forEach(payment => {
+        const paymentDate = new Date(payment.payment_date);
+        if (paymentDate.getFullYear() === selectedYear) {
           records.push({
-            tenantId: record.tenant_id,
-            year: record.year,
-            month: record.month - 1, // Convert to 0-indexed for local state
+            tenantId: payment.tenant_id,
+            year: paymentDate.getFullYear(),
+            month: paymentDate.getMonth(), // Already 0-indexed
             paid: true
           });
         }
       });
 
-      // Load receipt records (simplified without payment_receipts)
-      const receipts = [];
-      const receiptsError = null;
-
-      if (receiptsError) throw receiptsError;
+      // For now, we'll use a simple approach for receipts
+      const receipts: PaymentReceipt[] = [];
 
       setPaymentRecords(records);
-      setPaymentReceipts(receipts || []);
+      setPaymentReceipts(receipts);
     } catch (error) {
       console.error('Error loading payment records:', error);
       toast.error('Error al cargar los registros de pagos');
@@ -147,8 +147,19 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
     
     try {
       if (checked === true) {
-        // Simplified tracking without payment_receipts table
-        const error = null;
+        // Create payment record
+        const paymentDate = new Date(selectedYear, monthIndex, 1);
+        
+        const { error } = await supabase
+          .from('payments')
+          .insert({
+            tenant_id: tenantId,
+            amount: tenant.rentAmount,
+            payment_date: paymentDate.toISOString(),
+            status: 'completed',
+            payment_method: 'manual_tracking',
+            description: `Pago de ${monthName} ${selectedYear}`
+          });
 
         if (error) throw error;
         
@@ -160,8 +171,18 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
         
         toast.success(`Pago de ${monthName} para ${tenant.name} marcado como pagado`);
       } else {
-        // Simplified tracking without payment_receipts table
-        const error = null;
+        // Delete payment record
+        const paymentDate = new Date(selectedYear, monthIndex, 1);
+        const startOfMonth = new Date(selectedYear, monthIndex, 1);
+        const endOfMonth = new Date(selectedYear, monthIndex + 1, 0);
+        
+        const { error } = await supabase
+          .from('payments')
+          .delete()
+          .eq('tenant_id', tenantId)
+          .gte('payment_date', startOfMonth.toISOString())
+          .lte('payment_date', endOfMonth.toISOString())
+          .eq('payment_method', 'manual_tracking');
 
         if (error) throw error;
         

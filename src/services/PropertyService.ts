@@ -110,22 +110,19 @@ export class PropertyService extends BaseService {
       throw new Error('Propiedad no encontrada o sin permisos');
     }
 
-    // Check if property has active tenants in this specific property
-    const { data: units, error: tenantsCheckError } = await supabase
-      .from('units')
-      .select(`
-        id,
-        tenants!inner(id, is_active)
-      `)
+    // Check if property has active tenants
+    const { data: activeTenants, error: tenantsCheckError } = await supabase
+      .from('tenants')
+      .select('id')
       .eq('property_id', id)
-      .eq('tenants.is_active', true);
+      .eq('is_active', true);
 
     if (tenantsCheckError) {
       console.error('Error checking tenants:', tenantsCheckError);
-      // Continue anyway, we'll try to delete
+      throw new Error('Error al verificar inquilinos activos');
     }
 
-    if (units && units.length > 0) {
+    if (activeTenants && activeTenants.length > 0) {
       throw new Error('No se puede eliminar una propiedad con inquilinos activos');
     }
 

@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building, MapPin, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
-import { errors } from "undici-types";
 
 interface Property {
   id?: string;

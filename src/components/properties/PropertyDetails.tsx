@@ -188,13 +188,7 @@ export function PropertyDetails({ property, isOpen, onClose, onEdit }: PropertyD
                    <div className="text-center py-6 text-muted-foreground">
                      <Building className="h-12 w-12 mx-auto mb-2 opacity-50" />
                      <p>No hay unidades configuradas</p>
-                     <Button 
-                       size="sm" 
-                       className="mt-2"
-                       onClick={() => setShowUnitManagement(true)}
-                     >
-                       Agregar Primera Unidad
-                     </Button>
+                     <p className="text-sm">Usa el botón "Gestionar Unidades" para agregar unidades</p>
                    </div>
                  )}
                </CardContent>
