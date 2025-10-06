@@ -215,6 +215,7 @@ const Dashboard = () => {
             <SmartNotifications />
 
             {/* Botón de importar datos - solo para usuarios premium */}
+            {console.log('Dashboard: userRole =', userRole)}
             {userRole === 'landlord_premium' && (
               <Button
                 onClick={() => setIsImportModalOpen(true)}

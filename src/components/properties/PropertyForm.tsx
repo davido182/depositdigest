@@ -38,7 +38,7 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
   });
 
   // Estado para las unidades individuales
-  const [unitRents, setUnitRents] = useState<number[]>([]);
+  const [unitRents, setUnitRents] = useState<number[]>([0]); // Inicializar con al menos una unidad
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 

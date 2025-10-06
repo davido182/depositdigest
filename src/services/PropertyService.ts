@@ -98,12 +98,36 @@ export class PropertyService extends BaseService {
   async deleteProperty(id: string): Promise<void> {
     const user = await this.ensureAuthenticated();
     
-    // First check if property has active tenants
-    const { data: tenants, error: tenantsError } = await supabase
-      .from('tenants')
-      .select('id')
+    // Verify property belongs to user
+    const { data: property, error: propertyError } = await supabase
+      .from('properties')
+      .select('id, name')
+      .eq('id', id)
+      .eq('landlord_id', user.id)
+      .single();
+
+    if (propertyError || !property) {
+      throw new Error('Propiedad no encontrada o sin permisos');
+    }
+
+    // Check if property has active tenants in this specific property
+    const { data: units, error: unitsError } = await supabase
+      .from('units')
+      .select(`
+        id,
+        tenants!inner(id, is_active)
+      `)
       .eq('property_id', id)
-      .eq('status', 'active');
+      .eq('tenants.is_active', true);
+
+    if (unitsError) {
+      console.error('Error checking tenants:', unitsError);
+      // Continue anyway, we'll try to delete
+    }
+
+    if (units && units.length > 0) {
+      throw new Error('No se puede eliminar una propiedad con inquilinos activos');
+    }
 
     if (tenantsError) {
       console.error('Error checking tenants:', tenantsError);
@@ -114,10 +138,23 @@ export class PropertyService extends BaseService {
       throw new Error('No se puede eliminar una propiedad con inquilinos activos');
     }
 
+    // Delete units first (cascade should handle this, but let's be explicit)
+    const { error: unitsError } = await supabase
+      .from('units')
+      .delete()
+      .eq('property_id', id);
+
+    if (unitsError) {
+      console.error('Error deleting units:', unitsError);
+      // Continue anyway, cascade should handle it
+    }
+
+    // Delete property
     const { error } = await supabase
       .from('properties')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('landlord_id', user.id);
 
     if (error) {
       console.error('Error deleting property:', error);
