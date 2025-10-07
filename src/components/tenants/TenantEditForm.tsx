@@ -76,8 +76,14 @@ export function TenantEditForm({
   useEffect(() => {
     if (isOpen) {
       console.log('TenantEditForm: Modal opened with tenant:', tenant);
-      // Force clean state reset
+      
+      // Always load properties and units first
+      loadProperties();
+      loadAvailableUnits();
+      
+      // Then set form data
       if (tenant) {
+        console.log('TenantEditForm: Setting tenant data:', tenant);
         setFormData({ ...tenant });
         setHasDeposit(tenant.depositAmount > 0);
         setSelectedPropertyId(''); // Simplified for now
@@ -87,17 +93,7 @@ export function TenantEditForm({
         setHasDeposit(false);
         setSelectedPropertyId('');
       }
-      setErrors({});
-      setContractFile(null);
-      setExistingContract(null);
-      loadProperties();
-      loadAvailableUnits();
-    } else {
-      // Clean up state when modal closes
-      console.log('TenantEditForm: Modal closed, cleaning up state');
-      setFormData({ ...emptyTenant });
-      setHasDeposit(false);
-      setSelectedPropertyId('');
+      
       setErrors({});
       setContractFile(null);
       setExistingContract(null);
@@ -129,19 +125,45 @@ export function TenantEditForm({
     try {
       setIsLoadingUnits(true);
       
-      // Simplified approach - just create a basic list of units
-      const fallbackUnits = Array.from({ length: 20 }, (_, i) => (i + 1).toString());
+      // Load actual units from database
+      const { data: unitsData, error } = await supabase
+        .from('units')
+        .select('unit_number, is_available, property_id, properties(name)')
+        .eq('is_available', true);
+
+      if (error) {
+        console.error('Error loading units:', error);
+        // Fallback to basic units if needed
+        const fallbackUnits = ["1", "2", "3", "4", "5"];
+        if (tenant && tenant.unit && !fallbackUnits.includes(tenant.unit)) {
+          fallbackUnits.push(tenant.unit);
+        }
+        setAvailableUnits(fallbackUnits);
+        return;
+      }
+
+      // Extract unit numbers from database
+      const availableUnitNumbers = (unitsData || []).map(unit => unit.unit_number);
       
       // If editing, always include current tenant's unit
+      if (tenant && tenant.unit && !availableUnitNumbers.includes(tenant.unit)) {
+        availableUnitNumbers.push(tenant.unit);
+      }
+      
+      setAvailableUnits(availableUnitNumbers.sort((a, b) => {
+        const aNum = parseInt(a) || 0;
+        const bNum = parseInt(b) || 0;
+        return aNum - bNum;
+      }));
+      
+      console.log(`Loaded ${availableUnitNumbers.length} available units from database`);
+    } catch (error) {
+      console.error("Error loading available units:", error);
+      // Minimal fallback
+      const fallbackUnits = ["1", "2", "3"];
       if (tenant && tenant.unit && !fallbackUnits.includes(tenant.unit)) {
         fallbackUnits.push(tenant.unit);
       }
-      
-      setAvailableUnits(fallbackUnits.sort((a, b) => parseInt(a) - parseInt(b)));
-      console.log(`Loaded ${fallbackUnits.length} available units`);
-    } catch (error) {
-      console.error("Error loading available units:", error);
-      const fallbackUnits = Array.from({ length: 20 }, (_, i) => (i + 1).toString());
       setAvailableUnits(fallbackUnits);
     } finally {
       setIsLoadingUnits(false);

@@ -343,15 +343,6 @@ const Properties = () => {
                     </div>
 
                     <div className="pt-4 space-y-2">
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        size="sm"
-                        onClick={() => handleViewProperty(property)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Gestionar Unidades
-                      </Button>
                       <div className="flex gap-2">
                         <Button
                           variant="ghost"

@@ -56,13 +56,22 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
         is_available: updatedUnit.is_available
       });
 
-      // Update local state
+      // Update local state with the correct field mapping
       setUnits(prev => prev.map(unit => 
-        unit.id === updatedUnit.id ? updatedUnit : unit
+        unit.id === updatedUnit.id ? {
+          ...unit,
+          unit_number: updatedUnit.unit_number,
+          rent_amount: updatedUnit.rent_amount,
+          is_available: updatedUnit.is_available,
+          tenant_id: updatedUnit.tenant_id
+        } : unit
       ));
 
       setShowEditForm(false);
       setEditingUnit(null);
+      
+      // Force reload to ensure data consistency
+      await loadUnits();
     } catch (error) {
       console.error('Error updating unit:', error);
       throw error;

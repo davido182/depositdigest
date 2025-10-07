@@ -52,22 +52,41 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
   const loadAvailableTenants = async () => {
     try {
-      // Load all active tenants - we'll filter logic later
+      console.log('Loading tenants for unit assignment...');
+      
+      // Simple query to get all tenants
       const { data, error } = await supabase
         .from('tenants')
-        .select('id, name, email')
-        .eq('is_active', true);
+        .select('id, name, email');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error loading tenants:', error);
+        throw error;
+      }
       
-      // For now, show all active tenants
-      // TODO: Filter out tenants already assigned to other units
+      console.log('Raw tenants data:', data);
       setAvailableTenants(data || []);
       console.log('Loaded tenants for unit assignment:', data?.length || 0);
     } catch (error) {
       console.error('Error loading tenants:', error);
-      // Fallback to empty array
-      setAvailableTenants([]);
+      // Try to load from a different approach
+      try {
+        const { data: fallbackData } = await supabase
+          .from('tenants')
+          .select('*');
+        
+        const mappedTenants = (fallbackData || []).map(t => ({
+          id: t.id,
+          name: t.name || 'Sin nombre',
+          email: t.email || 'Sin email'
+        }));
+        
+        setAvailableTenants(mappedTenants);
+        console.log('Fallback tenants loaded:', mappedTenants.length);
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+        setAvailableTenants([]);
+      }
     }
   };
 
