@@ -81,7 +81,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
       // Map the data to our interface
       const mappedTenants = (data || []).map(tenant => ({
         id: tenant.id,
-        name: tenant.name || `Inquilino ${tenant.id.slice(0, 8)}`,
+        name: `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || `Inquilino ${tenant.id.slice(0, 8)}`,
         email: tenant.email || 'Sin email'
       }));
       
@@ -174,13 +174,13 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid gap-2">
             <div className="space-y-1">
-              <Label htmlFor="unit_number" className="text-sm">Número de Unidad</Label>
+              <Label htmlFor="unit_number" className="text-sm">Nombre/Número de Unidad</Label>
               <Input
                 id="unit_number"
                 name="unit_number"
                 value={formData.unit_number}
                 onChange={handleChange}
-                placeholder="Ej: 101, A, 1A"
+                placeholder="Ej: 101, Apartamento A, Suite Principal"
                 className={`h-9 ${errors.unit_number ? "border-destructive" : ""}`}
               />
               {errors.unit_number && (
@@ -216,7 +216,10 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
                   <SelectItem value="">Sin inquilino</SelectItem>
                   {availableTenants.map((tenant) => (
                     <SelectItem key={tenant.id} value={tenant.id}>
-                      {tenant.name}
+                      <div className="flex flex-col">
+                        <span className="font-medium">{tenant.name}</span>
+                        <span className="text-xs text-muted-foreground">{tenant.email}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>

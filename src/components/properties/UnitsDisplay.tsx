@@ -35,10 +35,20 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
   useEffect(() => {
     const interval = setInterval(() => {
       loadUnits();
-    }, 10000); // Refresh every 10 seconds for better sync
+    }, 5000); // Refresh every 5 seconds for better sync
 
     return () => clearInterval(interval);
   }, [propertyId]);
+
+  // Also reload when window gets focus (user comes back to tab)
+  useEffect(() => {
+    const handleFocus = () => {
+      loadUnits();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const loadUnits = async () => {
     try {
@@ -65,13 +75,9 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
       const updateData = {
         unit_number: updatedUnit.unit_number,
         monthly_rent: updatedUnit.rent_amount || 0,
-        is_available: updatedUnit.is_available
+        is_available: updatedUnit.is_available,
+        tenant_id: updatedUnit.tenant_id || null
       };
-      
-      // Add tenant_id if it exists
-      if (updatedUnit.tenant_id) {
-        updateData.tenant_id = updatedUnit.tenant_id;
-      }
       
       console.log('Update data being sent:', updateData);
       
@@ -79,6 +85,21 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
       await unitService.updateUnit(updatedUnit.id, updateData);
       
       console.log('Unit updated successfully in database');
+      
+      // If assigning a tenant, also update the tenant record
+      if (updatedUnit.tenant_id) {
+        try {
+          const { supabase } = await import("@/integrations/supabase/client");
+          await supabase
+            .from('tenants')
+            .update({ unit_id: updatedUnit.id })
+            .eq('id', updatedUnit.tenant_id);
+          
+          console.log('Tenant assigned to unit successfully');
+        } catch (tenantError) {
+          console.error('Error updating tenant assignment:', tenantError);
+        }
+      }
       
       // Force reload to get fresh data from database
       await loadUnits();

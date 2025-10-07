@@ -139,7 +139,41 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
             description: formData.description,
             total_units: formData.units
           });
-          toast.success("Propiedad actualizada correctamente");
+
+          // Update units for existing property
+          const { unitService } = await import("@/services/UnitService");
+          
+          // Get current units
+          const currentUnits = await unitService.getUnitsByProperty(property.id);
+          
+          // If we need more units, create them
+          if (formData.units > currentUnits.length) {
+            for (let i = currentUnits.length; i < formData.units; i++) {
+              await unitService.createUnit({
+                property_id: property.id,
+                unit_number: (i + 1).toString(),
+                bedrooms: 1,
+                bathrooms: 1,
+                monthly_rent: unitRents[i] || 0,
+                is_available: true
+              });
+            }
+          }
+          // If we need fewer units, delete the excess ones
+          else if (formData.units < currentUnits.length) {
+            for (let i = formData.units; i < currentUnits.length; i++) {
+              await unitService.deleteUnit(currentUnits[i].id);
+            }
+          }
+          
+          // Update existing units with new rent amounts
+          for (let i = 0; i < Math.min(formData.units, currentUnits.length); i++) {
+            await unitService.updateUnit(currentUnits[i].id, {
+              monthly_rent: unitRents[i] || 0
+            });
+          }
+          
+          toast.success("Propiedad y unidades actualizadas correctamente");
         } else {
           // Create new property
           const newProperty = await propertyService.createProperty({
