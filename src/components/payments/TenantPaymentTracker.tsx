@@ -117,6 +117,31 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
       receipt.has_receipt
     );
   };
+
+  const getPaymentStatus = (tenantId: string, monthIndex: number) => {
+    const isPaid = hasPaymentForMonth(tenantId, monthIndex);
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+    
+    // If it's paid, return paid status
+    if (isPaid) {
+      return 'paid';
+    }
+    
+    // If it's a future month, return future status
+    if (selectedYear > currentYear || (selectedYear === currentYear && monthIndex > currentMonth)) {
+      return 'future';
+    }
+    
+    // If it's the current month, return pending
+    if (selectedYear === currentYear && monthIndex === currentMonth) {
+      return 'pending';
+    }
+    
+    // If it's a past month and not paid, return overdue
+    return 'overdue';
+  };
   
   const handleCheckboxChange = async (
     checked: boolean | "indeterminate", 
@@ -136,7 +161,7 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
         // Update local state and localStorage
         const newRecord = { tenantId, year: selectedYear, month: monthIndex, paid: true };
         const updatedRecords = [
-          ...paymentRecords.filter(r => !(r.tenantId === tenantId && r.month === monthIndex)),
+          ...paymentRecords.filter(r => !(r.tenantId === tenantId && r.year === selectedYear && r.month === monthIndex)),
           newRecord
         ];
         
@@ -195,8 +220,14 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
           <Badge variant="outline" className="bg-emerald-100 text-emerald-800 border-emerald-200">
             Pagado
           </Badge>
-          <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">
+          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">
             Pendiente
+          </Badge>
+          <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+            Vencido
+          </Badge>
+          <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-200">
+            Futuro
           </Badge>
         </div>
       </div>
@@ -264,13 +295,28 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
                      {months.map((month) => {
                        const isPaid = hasPaymentForMonth(tenant.id, month.index);
                        const hasReceipt = hasReceiptForMonth(tenant.id, month.index);
+                       const paymentStatus = getPaymentStatus(tenant.id, month.index);
+                       
+                       const statusStyles = {
+                         paid: "bg-emerald-50 border-emerald-200",
+                         pending: "bg-yellow-50 border-yellow-200",
+                         overdue: "bg-red-50 border-red-200",
+                         future: "bg-gray-50 border-gray-200"
+                       };
+                       
+                       const checkboxStyles = {
+                         paid: "border-emerald-500 data-[state=checked]:bg-emerald-500",
+                         pending: "border-yellow-500",
+                         overdue: "border-red-500",
+                         future: "border-gray-400"
+                       };
                        
                        return (
                          <TableCell key={month.index} className="text-center">
                            <div 
                              className={cn(
-                               "flex flex-col items-center gap-1 p-1 rounded-md",
-                               isPaid ? "bg-emerald-50" : ""
+                               "flex flex-col items-center gap-1 p-1 rounded-md border",
+                               statusStyles[paymentStatus]
                              )}
                            >
                              <Checkbox
@@ -283,10 +329,8 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
                                    month.full
                                  )
                                }
-                               className={cn(
-                                 isPaid ? "border-emerald-500 data-[state=checked]:bg-emerald-500" : ""
-                               )}
-                               aria-label={`${month.full} pago para ${tenant.name}`}
+                               className={cn(checkboxStyles[paymentStatus])}
+                               aria-label={`${month.full} pago para ${tenant.name} - ${paymentStatus}`}
                              />
                               <div className="flex gap-1">
                                 {hasReceipt ? (

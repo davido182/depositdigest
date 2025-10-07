@@ -404,25 +404,37 @@ export function TenantEditForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (validateForm()) {
-      try {
-        const updatedTenant = {
-          ...formData,
-          updatedAt: new Date().toISOString(),
-          id: formData.id || `tenant-${Date.now()}`,
-          propertyId: selectedPropertyId, // Include selected property
-        };
+    if (!validateForm()) {
+      return;
+    }
 
-        console.log("Submitting tenant data:", updatedTenant);
-        onSave(updatedTenant);
+    try {
+      console.log("🔄 Submitting tenant data:", formData);
+      
+      const updatedTenant = {
+        ...formData,
+        updatedAt: new Date().toISOString(),
+        id: formData.id || `tenant-${Date.now()}`,
+        propertyId: selectedPropertyId, // Include selected property
+      };
 
-        if (contractFile && updatedTenant.id) {
-          await handleContractUpload(contractFile);
-        }
-      } catch (error) {
-        console.error("Error submitting tenant:", error);
-        toast.error("Error saving tenant. Please try again.");
+      console.log("📤 Final tenant data to save:", updatedTenant);
+      
+      // Call onSave and wait for it to complete
+      await onSave(updatedTenant);
+      
+      console.log("✅ Tenant saved successfully");
+
+      if (contractFile && updatedTenant.id) {
+        await handleContractUpload(contractFile);
       }
+      
+      // Close the form after successful save
+      onClose();
+      toast.success(tenant ? "Inquilino actualizado correctamente" : "Inquilino creado correctamente");
+    } catch (error) {
+      console.error("❌ Error submitting tenant:", error);
+      toast.error("Error al guardar inquilino. Inténtalo de nuevo.");
     }
   };
 

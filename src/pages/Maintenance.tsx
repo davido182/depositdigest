@@ -4,10 +4,13 @@ import { MaintenanceRequest } from "@/types";
 import { Layout } from "@/components/Layout";
 import { MaintenanceRequestList } from "@/components/maintenance/MaintenanceRequestList";
 import { MaintenanceRequestForm } from "@/components/maintenance/MaintenanceRequestForm";
+import { MaintenanceHistory } from "@/components/maintenance/MaintenanceHistory";
+import { ProviderManagement } from "@/components/maintenance/ProviderManagement";
+import { MaintenanceStats } from "@/components/maintenance/MaintenanceStats";
 import TenantMaintenanceList from "@/components/maintenance/TenantMaintenanceList";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, History, Users } from "lucide-react";
 import { DatabaseService } from "@/services/DatabaseService";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -88,7 +91,14 @@ const Maintenance = () => {
           <h1 className="text-3xl font-bold tracking-tight">
             Solicitudes de Mantenimiento
           </h1>
+          <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
+            <PlusCircle className="h-4 w-4" />
+            Nueva Solicitud
+          </Button>
         </div>
+        
+        {/* Statistics Dashboard */}
+        <MaintenanceStats />
         
         {showForm ? (
           <div className="bg-card p-6 rounded-lg shadow-sm border">
@@ -102,11 +112,19 @@ const Maintenance = () => {
           </div>
         ) : (
           <Tabs defaultValue="all" className="w-full">
-            <TabsList>
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="all">Todas</TabsTrigger>
               <TabsTrigger value="pending">Pendientes</TabsTrigger>
               <TabsTrigger value="in_progress">En Progreso</TabsTrigger>
               <TabsTrigger value="completed">Completadas</TabsTrigger>
+              <TabsTrigger value="providers" className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                Proveedores
+              </TabsTrigger>
+              <TabsTrigger value="history" className="flex items-center gap-1">
+                <History className="h-4 w-4" />
+                Historial
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="all">
               <MaintenanceRequestList 
@@ -143,6 +161,12 @@ const Maintenance = () => {
                 onStatusChange={handleStatusChange}
                 onDelete={handleDelete}
               />
+            </TabsContent>
+            <TabsContent value="providers">
+              <ProviderManagement />
+            </TabsContent>
+            <TabsContent value="history">
+              <MaintenanceHistory />
             </TabsContent>
           </Tabs>
         )}

@@ -90,6 +90,14 @@ export class DatabaseService {
     return await maintenanceService.deleteMaintenanceRequest(id);
   }
 
+  async getMaintenanceRequestsByProperty(propertyId: string) {
+    return await maintenanceService.getMaintenanceRequestsByProperty(propertyId);
+  }
+
+  async assignProvider(requestId: string, providerId: string, notes?: string, scheduledDate?: string) {
+    return await maintenanceService.assignProvider(requestId, providerId, notes, scheduledDate);
+  }
+
   // Accounting methods
   async getAccounts() {
     const accountingInstance = accountingService.getInstance();

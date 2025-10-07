@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { MaintenanceRequest } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDistanceToNow } from "date-fns";
-import { Trash2 } from "lucide-react";
+import { Trash2, UserPlus, Eye } from "lucide-react";
+import { AssignProviderDialog } from "./AssignProviderDialog";
 
 interface MaintenanceRequestListProps {
   requests: MaintenanceRequest[];
@@ -37,6 +39,13 @@ export function MaintenanceRequestList({
   onStatusChange,
   onDelete 
 }: MaintenanceRequestListProps) {
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
+
+  const handleAssignProvider = (request: MaintenanceRequest) => {
+    setSelectedRequest(request);
+    setAssignDialogOpen(true);
+  };
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -151,19 +160,44 @@ export function MaintenanceRequestList({
                 {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })}
               </TableCell>
               <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onDelete(request.id)}
-                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-1">
+                  {request.status === 'pending' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleAssignProvider(request)}
+                      className="h-8 w-8 text-blue-600 hover:text-blue-600 hover:bg-blue-50"
+                      title="Asignar proveedor"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onDelete(request.id)}
+                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      
+      {/* Assign Provider Dialog */}
+      {selectedRequest && (
+        <AssignProviderDialog
+          isOpen={assignDialogOpen}
+          onClose={() => {
+            setAssignDialogOpen(false);
+            setSelectedRequest(null);
+          }}
+          maintenanceRequest={selectedRequest}
+        />
+      )}
     </div>
   );
 }

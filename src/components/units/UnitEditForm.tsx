@@ -31,23 +31,13 @@ interface UnitEditFormProps {
 }
 
 export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProps) {
-  const [formData, setFormData] = useState({
-    unit_number: "",
-    rent_amount: 0,
-    tenant_id: "",
-  });
+  const [selectedTenantId, setSelectedTenantId] = useState("");
   const [availableTenants, setAvailableTenants] = useState<Tenant[]>([]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && unit) {
-      // Solo cargar datos de inquilino
-      setFormData({
-        unit_number: unit.unit_number,
-        rent_amount: unit.monthly_rent || unit.rent_amount || 0,
-        tenant_id: unit.tenant_id || "",
-      });
-      setErrors({});
+      setSelectedTenantId(unit.tenant_id || "");
       loadAvailableTenants();
     }
   }, [isOpen, unit]);
@@ -96,25 +86,8 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    if (name === "rent_amount") {
-      setFormData(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
-    
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
-    }
-  };
-
   const handleTenantChange = (value: string) => {
-    setFormData(prev => ({ ...prev, tenant_id: value }));
-    if (errors.tenant_id) {
-      setErrors(prev => ({ ...prev, tenant_id: "" }));
-    }
+    setSelectedTenantId(value);
   };
 
   const checkRentDifference = async (tenantId: string, unitRent: number) => {
@@ -172,20 +145,21 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     }
 
     try {
-      console.log('🔄 Assigning tenant to unit:', formData.tenant_id);
+      setIsLoading(true);
+      console.log('🔄 Assigning tenant to unit:', selectedTenantId);
       
       // Solo actualizar la asignación de inquilino
       const updatedUnit: Unit = {
         ...unit,
-        tenant_id: formData.tenant_id || null,
-        is_available: !formData.tenant_id,
+        tenant_id: selectedTenantId || null,
+        is_available: !selectedTenantId,
       };
       
       console.log('🔄 Updated unit object:', updatedUnit);
       
       // Verificar si hay diferencia de renta con el inquilino
-      if (formData.tenant_id) {
-        await checkRentDifference(formData.tenant_id, unit.monthly_rent || 0);
+      if (selectedTenantId) {
+        await checkRentDifference(selectedTenantId, unit.monthly_rent || 0);
       }
       
       // Call the onSave function and wait for it
@@ -199,6 +173,8 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     } catch (error) {
       console.error('❌ Error assigning tenant:', error);
       toast.error(`Error al asignar inquilino: ${error.message || error}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -229,7 +205,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
             <div className="space-y-1">
               <Label className="text-sm">Inquilino Asignado</Label>
-              <Select value={formData.tenant_id} onValueChange={handleTenantChange}>
+              <Select value={selectedTenantId} onValueChange={handleTenantChange}>
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Sin inquilino asignado" />
                 </SelectTrigger>
@@ -246,18 +222,20 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
                 </SelectContent>
               </Select>
               <div className="flex items-center gap-2 mt-1">
-                <Badge variant={formData.tenant_id ? "default" : "secondary"}>
-                  {formData.tenant_id ? "Ocupada" : "Disponible"}
+                <Badge variant={selectedTenantId ? "default" : "secondary"}>
+                  {selectedTenantId ? "Ocupada" : "Disponible"}
                 </Badge>
               </div>
             </div>
           </div>
 
           <DialogFooter className="gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} size="sm">
+            <Button type="button" variant="outline" onClick={onClose} size="sm" disabled={isLoading}>
               Cancelar
             </Button>
-            <Button type="submit" size="sm">Guardar Cambios</Button>
+            <Button type="submit" size="sm" disabled={isLoading}>
+              {isLoading ? "Guardando..." : "Guardar Cambios"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

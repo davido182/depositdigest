@@ -52,12 +52,66 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
         units: units,
       });
       
-      // Inicializar rentas de unidades
-      const initialRents = Array(units).fill(0);
-      setUnitRents(initialRents);
+      // Cargar datos reales de unidades si estamos editando
+      if (property?.id) {
+        loadExistingUnits(property.id, units);
+      } else {
+        // Inicializar para nueva propiedad
+        const initialRents = Array(units).fill(0);
+        const initialNames = Array.from({ length: units }, (_, i) => `Unidad ${i + 1}`);
+        setUnitRents(initialRents);
+        setUnitNames(initialNames);
+      }
+      
       setErrors({});
     }
   }, [isOpen, property]);
+
+  const loadExistingUnits = async (propertyId: string, expectedUnits: number) => {
+    try {
+      console.log('🔍 Loading existing units for property:', propertyId, 'expected units:', expectedUnits);
+      
+      const { unitService } = await import("@/services/UnitService");
+      const existingUnits = await unitService.getUnitsByProperty(propertyId);
+      
+      console.log('📊 Existing units from database:', existingUnits);
+      
+      // Ordenar unidades por unit_number para mantener consistencia
+      const sortedUnits = existingUnits.sort((a, b) => {
+        const aNum = parseInt(a.unit_number) || 0;
+        const bNum = parseInt(b.unit_number) || 0;
+        return aNum - bNum;
+      });
+      
+      // Crear arrays con los datos existentes
+      const rents = Array(expectedUnits).fill(0);
+      const names = Array.from({ length: expectedUnits }, (_, i) => `Unidad ${i + 1}`);
+      
+      // Llenar con datos reales de las unidades existentes
+      sortedUnits.forEach((unit, index) => {
+        if (index < expectedUnits) {
+          rents[index] = Number(unit.monthly_rent) || 0;
+          names[index] = unit.unit_number || `Unidad ${index + 1}`;
+          console.log(`📝 Unit ${index}: name="${names[index]}", rent=${rents[index]}`);
+        }
+      });
+      
+      setUnitRents(rents);
+      setUnitNames(names);
+      
+      console.log('✅ Successfully loaded unit data:');
+      console.log('💰 Unit rents:', rents);
+      console.log('🏠 Unit names:', names);
+    } catch (error) {
+      console.error('❌ Error loading existing units:', error);
+      // Fallback to default values
+      const initialRents = Array(expectedUnits).fill(0);
+      const initialNames = Array.from({ length: expectedUnits }, (_, i) => `Unidad ${i + 1}`);
+      setUnitRents(initialRents);
+      setUnitNames(initialNames);
+      console.log('🔄 Using fallback values due to error');
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -178,15 +232,47 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
           }
           
           // Update existing units with new rent amounts and names
-          console.log('Updating units with rents:', unitRents, 'and names:', unitNames);
+          console.log('🔄 Updating existing units with rents:', unitRents, 'and names:', unitNames);
           for (let i = 0; i < Math.min(formData.units, currentUnits.length); i++) {
-            const rentAmount = unitRents[i] || 0;
+            const rentAmount = Number(unitRents[i]) || 0;
             const unitName = unitNames[i] || `Unidad ${i + 1}`;
-            console.log(`Updating unit ${currentUnits[i].id} with rent ${rentAmount} and name ${unitName}`);
-            await unitService.updateUnit(currentUnits[i].id, {
-              monthly_rent: rentAmount,
-              unit_number: unitName
-            });
+            console.log(`📝 Updating unit ${currentUnits[i].id}: name="${unitName}", rent=${rentAmount}`);
+            
+            try {
+              await unitService.updateUnit(currentUnits[i].id, {
+                monthly_rent: rentAmount,
+                unit_number: unitName
+              });
+              console.log(`✅ Successfully updated unit ${currentUnits[i].id}`);
+            } catch (error) {
+              console.error(`❌ Error updating unit ${currentUnits[i].id}:`, error);
+              throw error;
+            }
+          }
+          
+          // Create new units if needed
+          if (formData.units > currentUnits.length) {
+            console.log(`🆕 Creating ${formData.units - currentUnits.length} new units`);
+            for (let i = currentUnits.length; i < formData.units; i++) {
+              const rentAmount = Number(unitRents[i]) || 0;
+              const unitName = unitNames[i] || `Unidad ${i + 1}`;
+              console.log(`📝 Creating new unit: name="${unitName}", rent=${rentAmount}`);
+              
+              try {
+                await unitService.createUnit({
+                  property_id: property.id,
+                  unit_number: unitName,
+                  bedrooms: 1,
+                  bathrooms: 1,
+                  monthly_rent: rentAmount,
+                  is_available: true
+                });
+                console.log(`✅ Successfully created unit ${unitName}`);
+              } catch (error) {
+                console.error(`❌ Error creating unit ${unitName}:`, error);
+                throw error;
+              }
+            }
           }
           
           toast.success("Propiedad y unidades actualizadas correctamente");

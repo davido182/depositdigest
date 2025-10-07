@@ -138,6 +138,69 @@ export class SupabaseMaintenanceService extends SupabaseService {
     return true;
   }
 
+  async getMaintenanceRequestsByProperty(propertyId: string): Promise<MaintenanceRequest[]> {
+    const user = await this.ensureAuthenticated();
+    
+    const { data, error } = await supabase
+      .from('maintenance_requests')
+      .select(`
+        *,
+        tenants!inner (
+          property_id
+        )
+      `)
+      .eq('tenants.property_id', propertyId)
+      .eq('landlord_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching property maintenance requests:', error);
+      throw error;
+    }
+
+    return data.map(this.mapSupabaseMaintenanceToMaintenance);
+  }
+
+  async assignProvider(requestId: string, providerId: string, notes?: string, scheduledDate?: string): Promise<boolean> {
+    const user = await this.ensureAuthenticated();
+    
+    // Update maintenance request
+    const { error: updateError } = await supabase
+      .from('maintenance_requests')
+      .update({
+        assigned_to: providerId,
+        status: 'assigned',
+        assignment_notes: notes,
+        scheduled_date: scheduledDate
+      })
+      .eq('id', requestId)
+      .eq('landlord_id', user.id);
+
+    if (updateError) {
+      console.error('Error updating maintenance request:', updateError);
+      throw updateError;
+    }
+
+    // Create assignment record
+    const { error: assignmentError } = await supabase
+      .from('maintenance_assignments')
+      .insert({
+        maintenance_request_id: requestId,
+        provider_id: providerId,
+        assigned_by: user.id,
+        notes: notes,
+        scheduled_date: scheduledDate,
+        status: 'assigned'
+      });
+
+    if (assignmentError) {
+      console.error('Error creating assignment record:', assignmentError);
+      throw assignmentError;
+    }
+
+    return true;
+  }
+
   private mapSupabaseMaintenanceToMaintenance(data: any): MaintenanceRequest {
     return {
       id: data.id,
@@ -145,7 +208,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
       unit: data.unit || data.unit_number,
       title: data.title,
       description: data.description,
-      category: 'plumbing' as MaintenanceRequest['category'],
+      category: (data.category || 'other') as MaintenanceRequest['category'],
       priority: data.priority as MaintenanceRequest['priority'],
       status: data.status as MaintenanceRequest['status'],
       assignedTo: data.assigned_to || undefined,

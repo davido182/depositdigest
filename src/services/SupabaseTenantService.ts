@@ -162,12 +162,30 @@ export class SupabaseTenantService extends BaseService {
       throw new Error(`Failed to update tenant: ${error.message}`);
     }
 
+    // Get unit information if unit_id exists
+    let unitNumber = 'Sin unidad';
+    if (data.unit_id) {
+      try {
+        const { data: unitData } = await this.supabase
+          .from('units')
+          .select('unit_number')
+          .eq('id', data.unit_id)
+          .single();
+        
+        if (unitData) {
+          unitNumber = unitData.unit_number;
+        }
+      } catch (error) {
+        console.log('Could not fetch unit number for tenant:', error);
+      }
+    }
+
     return {
       id: data.id,
-      name: `${data.first_name} ${data.last_name}`.trim(),
+      name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Sin nombre',
       email: data.email || '',
       phone: data.phone || '',
-      unit: 'Sin unidad',
+      unit: unitNumber,
       moveInDate: data.move_in_date || '',
       leaseEndDate: data.move_out_date || '',
       rentAmount: Number(data.monthly_rent || 0),

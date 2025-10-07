@@ -42,7 +42,10 @@ export function MaintenanceNotifications() {
           created_at,
           unit_number,
           tenants (
-            name
+            name,
+            properties (
+              name
+            )
           )
         `)
         .eq('landlord_id', user?.id)
@@ -61,12 +64,14 @@ export function MaintenanceNotifications() {
         priority: item.priority,
         status: item.status,
         created_at: item.created_at,
-        tenant_name: item.tenants?.[0]?.name || 'Inquilino',
-        unit_number: item.unit_number
+        tenant_name: item.tenants?.name || 'Inquilino',
+        unit_number: item.unit_number,
+        property_name: item.tenants?.properties?.name
       })) || [];
 
       setNotifications(formattedData);
-      setUnreadCount(formattedData.length);
+      // Only count pending requests as truly urgent
+      setUnreadCount(formattedData.filter(n => n.status === 'pending').length);
     } catch (error) {
       console.error('Error loading notifications:', error);
     }
