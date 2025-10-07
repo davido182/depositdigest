@@ -73,7 +73,9 @@ const Dashboard = () => {
               const mappedProperties = dbProperties.map(dbProp => {
                 const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
                 const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
-                const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
+                const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.monthly_rent || unit.rent_amount || 0), 0);
+
+                console.log(`Property ${dbProp.name}: ${propertyUnits.length} units, ${occupiedUnits.length} occupied, €${totalRevenue} revenue`);
 
                 return {
                   id: dbProp.id,

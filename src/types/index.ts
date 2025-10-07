@@ -16,6 +16,9 @@ export interface Tenant {
   createdAt: string;
   updatedAt: string;
   landlordId?: string;
+  // Información de la propiedad
+  propertyName?: string;
+  propertyAddress?: string;
 }
 
 export type TenantStatus = 'active' | 'inactive' | 'late' | 'notice';

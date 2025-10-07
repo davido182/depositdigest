@@ -107,6 +107,15 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
     return "overdue";
   };
 
+  const getNextPaymentDate = (tenant: Tenant) => {
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    return nextMonth.toLocaleDateString('es-ES', { 
+      day: 'numeric', 
+      month: 'short' 
+    });
+  };
+
   const getPaymentStatusIcon = (status: string) => {
     switch (status) {
       case "paid":
@@ -190,13 +199,14 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
               <TableHead className="min-w-[180px] hidden sm:table-cell">Email</TableHead>
               <TableHead className="min-w-[80px]">Estado</TableHead>
               <TableHead className="min-w-[100px] text-right">Renta</TableHead>
+              <TableHead className="min-w-[120px] hidden md:table-cell">Próximo Pago</TableHead>
               <TableHead className="w-20 text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredAndSortedTenants.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   No se encontraron inquilinos
                 </TableCell>
               </TableRow>
@@ -209,7 +219,9 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
                       {getPaymentStatusIcon(paymentStatus)}
                     </TableCell>
                     <TableCell className="font-medium text-sm">
-                      Edificio {tenant.unit?.substring(0, 1) || "1"}
+                      <div className="truncate max-w-[120px]" title={tenant.propertyName}>
+                        {tenant.propertyName || "Sin propiedad"}
+                      </div>
                     </TableCell>
                     <TableCell className="font-medium text-sm">{tenant.unit}</TableCell>
                     <TableCell className="text-sm">
@@ -224,6 +236,12 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
                     <TableCell>{getStatusBadge(tenant.status)}</TableCell>
                     <TableCell className="text-right font-medium text-sm">
                       €{tenant.rentAmount?.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground hidden md:table-cell">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {getNextPaymentDate(tenant)}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-1">

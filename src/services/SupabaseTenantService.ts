@@ -15,7 +15,11 @@ export class SupabaseTenantService extends BaseService {
         units:unit_id (
           unit_number,
           monthly_rent,
-          property_id
+          property_id,
+          properties (
+            name,
+            address
+          )
         )
       `)
       .eq('landlord_id', user.id)
@@ -32,12 +36,14 @@ export class SupabaseTenantService extends BaseService {
     return (data || []).map(tenant => {
       const unitNumber = tenant.units?.unit_number || 'Sin unidad';
       const rentAmount = Number(tenant.monthly_rent || tenant.units?.monthly_rent || 0);
+      const propertyName = tenant.units?.properties?.name || 'Sin propiedad';
+      const propertyAddress = tenant.units?.properties?.address || '';
 
-      console.log(`Tenant ${tenant.first_name} ${tenant.last_name}: unit=${unitNumber}, rent=${rentAmount}`);
+      console.log(`Tenant ${tenant.first_name} ${tenant.last_name}: unit=${unitNumber}, rent=${rentAmount}, property=${propertyName}`);
 
       return {
         id: tenant.id,
-        name: `${tenant.first_name} ${tenant.last_name}`.trim(),
+        name: `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || 'Sin nombre',
         email: tenant.email || '',
         phone: tenant.phone || '',
         unit: unitNumber,
@@ -48,6 +54,9 @@ export class SupabaseTenantService extends BaseService {
         status: tenant.is_active ? 'active' : 'inactive',
         paymentHistory: [],
         createdAt: tenant.created_at,
+        // Agregar información de la propiedad
+        propertyName: propertyName,
+        propertyAddress: propertyAddress,
         updatedAt: tenant.updated_at,
       };
     });

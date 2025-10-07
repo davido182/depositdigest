@@ -110,14 +110,14 @@ export function useAppData() {
       
       console.log('useAppData: Units analysis:', {
         totalUnits,
-        occupiedUnits: units.filter(u => !u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number, rent_amount: u.rent_amount })),
+        occupiedUnits: units.filter(u => !u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number, rent_amount: u.monthly_rent || u.rent_amount })),
         vacantUnits: units.filter(u => u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number }))
       });
       
       // Calculate monthly revenue from occupied units
       const monthlyRevenue = units
         .filter(u => !u.is_available)
-        .reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
+        .reduce((sum, unit) => sum + (unit.monthly_rent || unit.rent_amount || 0), 0);
       
       const occupancyRate = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
 
