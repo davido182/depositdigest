@@ -167,9 +167,13 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
           }
           
           // Update existing units with new rent amounts
+          console.log('Updating units with rents:', unitRents);
           for (let i = 0; i < Math.min(formData.units, currentUnits.length); i++) {
+            const rentAmount = unitRents[i] || 0;
+            console.log(`Updating unit ${currentUnits[i].id} with rent ${rentAmount}`);
             await unitService.updateUnit(currentUnits[i].id, {
-              monthly_rent: unitRents[i] || 0
+              monthly_rent: rentAmount,
+              unit_number: (i + 1).toString() // Also update unit number
             });
           }
           

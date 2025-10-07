@@ -101,20 +101,26 @@ export class UnitService extends BaseService {
       throw new Error('Unit not found or access denied');
     }
 
+    console.log('🔄 Updating unit with data:', updates);
+    
+    const updatePayload = {
+      ...(updates.unit_number && { unit_number: updates.unit_number }),
+      ...(updates.bedrooms && { bedrooms: updates.bedrooms }),
+      ...(updates.bathrooms && { bathrooms: updates.bathrooms }),
+      ...(updates.square_meters && { square_meters: updates.square_meters }),
+      ...(updates.monthly_rent !== undefined && { monthly_rent: updates.monthly_rent }),
+      ...(updates.deposit_amount !== undefined && { deposit_amount: updates.deposit_amount }),
+      ...(updates.is_furnished !== undefined && { is_furnished: updates.is_furnished }),
+      ...(updates.is_available !== undefined && { is_available: updates.is_available }),
+      ...(updates.description !== undefined && { description: updates.description }),
+      ...(updates.tenant_id !== undefined && { tenant_id: updates.tenant_id })
+    };
+    
+    console.log('🔄 Update payload:', updatePayload);
+
     const { data, error } = await supabase
       .from('units')
-      .update({
-        ...(updates.unit_number && { unit_number: updates.unit_number }),
-        ...(updates.bedrooms && { bedrooms: updates.bedrooms }),
-        ...(updates.bathrooms && { bathrooms: updates.bathrooms }),
-        ...(updates.square_meters && { square_meters: updates.square_meters }),
-        ...(updates.monthly_rent !== undefined && { monthly_rent: updates.monthly_rent }),
-        ...(updates.deposit_amount !== undefined && { deposit_amount: updates.deposit_amount }),
-        ...(updates.is_furnished !== undefined && { is_furnished: updates.is_furnished }),
-        ...(updates.is_available !== undefined && { is_available: updates.is_available }),
-        ...(updates.description !== undefined && { description: updates.description }),
-        ...(updates.tenant_id !== undefined && { tenant_id: updates.tenant_id })
-      })
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();

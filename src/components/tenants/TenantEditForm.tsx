@@ -162,25 +162,27 @@ export function TenantEditForm({
   const loadUnitsForProperty = async (propertyId: string) => {
     try {
       setIsLoadingUnits(true);
+      console.log('🔍 Loading units for property:', propertyId);
       
-      // Load units for specific property
+      // Load ALL units for specific property (not just available ones)
       const { data: unitsData, error } = await supabase
         .from('units')
-        .select('unit_number, is_available, id')
-        .eq('property_id', propertyId)
-        .eq('is_available', true);
+        .select('unit_number, is_available, id, monthly_rent')
+        .eq('property_id', propertyId);
 
       if (error) {
-        console.error('Error loading units for property:', error);
+        console.error('❌ Error loading units for property:', error);
         setAvailableUnits([]);
         return;
       }
+
+      console.log('📊 Units data for property:', unitsData);
 
       // Extract unit numbers from database
       const availableUnitNumbers = (unitsData || []).map(unit => unit.unit_number);
       
       // If editing, always include current tenant's unit
-      if (tenant && tenant.unit && !availableUnitNumbers.includes(tenant.unit)) {
+      if (tenant && tenant.unit && tenant.unit !== 'Sin unidad' && !availableUnitNumbers.includes(tenant.unit)) {
         availableUnitNumbers.push(tenant.unit);
       }
       
@@ -190,9 +192,9 @@ export function TenantEditForm({
         return aNum - bNum;
       }));
       
-      console.log(`Loaded ${availableUnitNumbers.length} available units for property ${propertyId}`);
+      console.log(`✅ Loaded ${availableUnitNumbers.length} units for property ${propertyId}:`, availableUnitNumbers);
     } catch (error) {
-      console.error("Error loading units for property:", error);
+      console.error("❌ Error loading units for property:", error);
       setAvailableUnits([]);
     } finally {
       setIsLoadingUnits(false);
@@ -548,22 +550,26 @@ export function TenantEditForm({
                       // Load rent amount for selected unit
                       if (unitValue && selectedPropertyId) {
                         try {
-                          const { data: unitData } = await supabase
+                          console.log('🔍 Loading rent for unit:', unitValue, 'in property:', selectedPropertyId);
+                          const { data: unitData, error } = await supabase
                             .from('units')
-                            .select('monthly_rent')
+                            .select('monthly_rent, id')
                             .eq('unit_number', unitValue)
                             .eq('property_id', selectedPropertyId)
                             .single();
                           
-                          if (unitData && unitData.monthly_rent) {
+                          if (error) {
+                            console.error('❌ Error loading unit rent:', error);
+                          } else if (unitData) {
+                            console.log('💰 Found unit rent:', unitData.monthly_rent);
                             setFormData(prev => ({ 
                               ...prev, 
                               unit: unitValue,
-                              rentAmount: unitData.monthly_rent 
+                              rentAmount: unitData.monthly_rent || prev.rentAmount
                             }));
                           }
                         } catch (error) {
-                          console.error('Error loading unit rent:', error);
+                          console.error('❌ Error loading unit rent:', error);
                         }
                       }
                     }}

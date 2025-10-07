@@ -60,24 +60,22 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
 
   const handleSaveUnit = async (updatedUnit: Unit) => {
     try {
-      console.log('Saving unit in UnitsDisplay:', updatedUnit);
+      console.log('🔄 Saving unit in UnitsDisplay:', updatedUnit);
       
       // Prepare the update data
       const updateData = {
         unit_number: updatedUnit.unit_number,
-        monthly_rent: updatedUnit.rent_amount || 0,
+        monthly_rent: updatedUnit.rent_amount || updatedUnit.monthly_rent || 0,
         is_available: updatedUnit.is_available,
         tenant_id: updatedUnit.tenant_id || null
       };
       
-      console.log('Update data being sent:', updateData);
-      
-      console.log('Updating unit with data:', updateData);
+      console.log('🔄 Update data being sent:', updateData);
       
       // Update in database
       const result = await unitService.updateUnit(updatedUnit.id, updateData);
       
-      console.log('Unit updated successfully in database:', result);
+      console.log('✅ Unit updated successfully in database:', result);
       
       // If assigning a tenant, also update the tenant record
       if (updatedUnit.tenant_id) {

@@ -136,11 +136,13 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     e.preventDefault();
     
     if (!validateForm() || !unit) {
+      console.log('Validation failed or no unit');
       return;
     }
 
     try {
-      console.log('Saving unit with data:', formData);
+      console.log('🔄 Saving unit with data:', formData);
+      console.log('🔄 Original unit:', unit);
       
       const updatedUnit: Unit = {
         ...unit,
@@ -151,17 +153,19 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         is_available: !formData.tenant_id,
       };
       
-      console.log('Updated unit object:', updatedUnit);
+      console.log('🔄 Updated unit object:', updatedUnit);
       
       // Call the onSave function and wait for it
       await onSave(updatedUnit);
+      
+      console.log('✅ Unit saved successfully');
       
       // Close the form and show success message
       onClose();
       toast.success("Unidad actualizada correctamente");
     } catch (error) {
-      console.error('Error saving unit:', error);
-      toast.error("Error al actualizar la unidad");
+      console.error('❌ Error saving unit:', error);
+      toast.error(`Error al actualizar la unidad: ${error.message || error}`);
     }
   };
 
