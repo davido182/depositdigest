@@ -41,16 +41,16 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
   useEffect(() => {
     if (isOpen && unit) {
-      // Always use the latest unit data
+      // Solo cargar datos de inquilino
       setFormData({
         unit_number: unit.unit_number,
-        rent_amount: unit.monthly_rent || unit.rent_amount || 0, // Try monthly_rent first
+        rent_amount: unit.monthly_rent || unit.rent_amount || 0,
         tenant_id: unit.tenant_id || "",
       });
       setErrors({});
       loadAvailableTenants();
     }
-  }, [isOpen, unit]); // Keep unit dependency but handle it better
+  }, [isOpen, unit]);
 
   const loadAvailableTenants = async () => {
     try {
@@ -117,55 +117,88 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     }
   };
 
+  const checkRentDifference = async (tenantId: string, unitRent: number) => {
+    try {
+      // Obtener la renta actual del inquilino
+      const { data: tenantData, error } = await supabase
+        .from('tenants')
+        .select('monthly_rent, first_name, last_name')
+        .eq('id', tenantId)
+        .single();
+
+      if (error || !tenantData) {
+        console.log('No se pudo obtener datos del inquilino');
+        return;
+      }
+
+      const tenantRent = tenantData.monthly_rent || 0;
+      const tenantName = `${tenantData.first_name} ${tenantData.last_name}`.trim();
+
+      if (Math.abs(tenantRent - unitRent) > 0.01) { // Diferencia mayor a 1 centavo
+        const confirmed = confirm(
+          `⚠️ DIFERENCIA DE RENTA DETECTADA\n\n` +
+          `Inquilino: ${tenantName}\n` +
+          `Renta en perfil del inquilino: €${tenantRent}\n` +
+          `Renta de la unidad: €${unitRent}\n\n` +
+          `¿Deseas actualizar la renta del inquilino a €${unitRent}?`
+        );
+
+        if (confirmed) {
+          // Actualizar la renta del inquilino
+          await supabase
+            .from('tenants')
+            .update({ monthly_rent: unitRent })
+            .eq('id', tenantId);
+          
+          toast.success(`Renta del inquilino actualizada a €${unitRent}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking rent difference:', error);
+    }
+  };
+
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    
-    if (!formData.unit_number.trim()) {
-      newErrors.unit_number = "El número de unidad es requerido";
-    }
-    
-    if (formData.rent_amount < 0) {
-      newErrors.rent_amount = "La renta debe ser mayor o igual a 0";
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // No validation needed for tenant assignment
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm() || !unit) {
-      console.log('Validation failed or no unit');
+    if (!unit) {
+      console.log('No unit provided');
       return;
     }
 
     try {
-      console.log('🔄 Saving unit with data:', formData);
-      console.log('🔄 Original unit:', unit);
+      console.log('🔄 Assigning tenant to unit:', formData.tenant_id);
       
+      // Solo actualizar la asignación de inquilino
       const updatedUnit: Unit = {
         ...unit,
-        unit_number: formData.unit_number,
-        rent_amount: formData.rent_amount,
-        monthly_rent: formData.rent_amount, // Ensure both fields are updated
         tenant_id: formData.tenant_id || null,
         is_available: !formData.tenant_id,
       };
       
       console.log('🔄 Updated unit object:', updatedUnit);
       
+      // Verificar si hay diferencia de renta con el inquilino
+      if (formData.tenant_id) {
+        await checkRentDifference(formData.tenant_id, unit.monthly_rent || 0);
+      }
+      
       // Call the onSave function and wait for it
       await onSave(updatedUnit);
       
-      console.log('✅ Unit saved successfully');
+      console.log('✅ Unit assignment saved successfully');
       
       // Close the form and show success message
       onClose();
-      toast.success("Unidad actualizada correctamente");
+      toast.success("Inquilino asignado correctamente");
     } catch (error) {
-      console.error('❌ Error saving unit:', error);
-      toast.error(`Error al actualizar la unidad: ${error.message || error}`);
+      console.error('❌ Error assigning tenant:', error);
+      toast.error(`Error al asignar inquilino: ${error.message || error}`);
     }
   };
 
@@ -180,37 +213,18 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid gap-2">
+            {/* Información de la unidad (solo lectura) */}
             <div className="space-y-1">
-              <Label htmlFor="unit_number" className="text-sm">Nombre/Número de Unidad</Label>
-              <Input
-                id="unit_number"
-                name="unit_number"
-                value={formData.unit_number}
-                onChange={handleChange}
-                placeholder="Ej: 101, Apartamento A, Suite Principal"
-                className={`h-9 ${errors.unit_number ? "border-destructive" : ""}`}
-              />
-              {errors.unit_number && (
-                <p className="text-xs text-destructive">{errors.unit_number}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="rent_amount" className="text-sm">Renta Mensual (€)</Label>
-              <Input
-                id="rent_amount"
-                name="rent_amount"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.rent_amount}
-                onChange={handleChange}
-                placeholder="0.00"
-                className={`h-9 ${errors.rent_amount ? "border-destructive" : ""}`}
-              />
-              {errors.rent_amount && (
-                <p className="text-xs text-destructive">{errors.rent_amount}</p>
-              )}
+              <Label className="text-sm">Unidad</Label>
+              <div className="p-2 bg-muted rounded-md">
+                <span className="font-medium">{unit?.unit_number}</span>
+                <span className="text-sm text-muted-foreground ml-2">
+                  €{unit?.monthly_rent || 0}/mes
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Para cambiar nombre o renta, edita la propiedad
+              </p>
             </div>
 
             <div className="space-y-1">

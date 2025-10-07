@@ -38,6 +38,7 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
 
   // Estado para las unidades individuales
   const [unitRents, setUnitRents] = useState<number[]>([0]); // Inicializar con al menos una unidad
+  const [unitNames, setUnitNames] = useState<string[]>(['Unidad 1']); // Nombres de unidades
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -80,18 +81,28 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
     
     // Ajustar array de rentas
     const newRents = [...unitRents];
+    const newNames = [...unitNames];
     if (increment) {
       newRents.push(0); // Nueva unidad sin renta definida
+      newNames.push(`Unidad ${newUnits}`); // Nuevo nombre por defecto
     } else {
       newRents.pop(); // Quitar última unidad
+      newNames.pop(); // Quitar último nombre
     }
     setUnitRents(newRents);
+    setUnitNames(newNames);
   };
 
   const updateUnitRent = (unitIndex: number, rent: number) => {
     const newRents = [...unitRents];
     newRents[unitIndex] = rent;
     setUnitRents(newRents);
+  };
+
+  const updateUnitName = (unitIndex: number, name: string) => {
+    const newNames = [...unitNames];
+    newNames[unitIndex] = name;
+    setUnitNames(newNames);
   };
 
   const validateForm = () => {
@@ -166,14 +177,15 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
             }
           }
           
-          // Update existing units with new rent amounts
-          console.log('Updating units with rents:', unitRents);
+          // Update existing units with new rent amounts and names
+          console.log('Updating units with rents:', unitRents, 'and names:', unitNames);
           for (let i = 0; i < Math.min(formData.units, currentUnits.length); i++) {
             const rentAmount = unitRents[i] || 0;
-            console.log(`Updating unit ${currentUnits[i].id} with rent ${rentAmount}`);
+            const unitName = unitNames[i] || `Unidad ${i + 1}`;
+            console.log(`Updating unit ${currentUnits[i].id} with rent ${rentAmount} and name ${unitName}`);
             await unitService.updateUnit(currentUnits[i].id, {
               monthly_rent: rentAmount,
-              unit_number: (i + 1).toString() // Also update unit number
+              unit_number: unitName
             });
           }
           
@@ -313,28 +325,43 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
                     </div>
                   </div>
 
-                  {/* Campos de Renta por Unidad */}
+                  {/* Campos de Nombre y Renta por Unidad */}
                   <div className="space-y-3">
-                    <Label>Renta Mensual por Unidad (€)</Label>
+                    <Label>Configuración de Unidades</Label>
                     {Array.from({ length: formData.units }, (_, index) => (
                       <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
                         <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-full">
                           <span className="text-sm font-medium">{index + 1}</span>
                         </div>
-                        <div className="flex-1">
-                          <Label htmlFor={`unit-${index}`} className="text-sm">
-                            Unidad {index + 1}
-                          </Label>
-                          <Input
-                            id={`unit-${index}`}
-                            type="number"
-                            min="0"
-                            step="50"
-                            value={unitRents[index] || ''}
-                            onChange={(e) => updateUnitRent(index, parseFloat(e.target.value) || 0)}
-                            placeholder="Ej: 800"
-                            className="mt-1"
-                          />
+                        <div className="flex-1 grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor={`unit-name-${index}`} className="text-sm">
+                              Nombre de Unidad
+                            </Label>
+                            <Input
+                              id={`unit-name-${index}`}
+                              type="text"
+                              value={unitNames[index] || `Unidad ${index + 1}`}
+                              onChange={(e) => updateUnitName(index, e.target.value)}
+                              placeholder={`Unidad ${index + 1}`}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`unit-rent-${index}`} className="text-sm">
+                              Renta Mensual (€)
+                            </Label>
+                            <Input
+                              id={`unit-rent-${index}`}
+                              type="number"
+                              min="0"
+                              step="50"
+                              value={unitRents[index] || ''}
+                              onChange={(e) => updateUnitRent(index, parseFloat(e.target.value) || 0)}
+                              placeholder="Ej: 800"
+                              className="mt-1"
+                            />
+                          </div>
                         </div>
                       </div>
                     ))}
