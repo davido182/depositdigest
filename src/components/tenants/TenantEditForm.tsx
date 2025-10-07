@@ -74,32 +74,37 @@ export function TenantEditForm({
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("");
 
   useEffect(() => {
-    if (isOpen && tenant) {
+    if (isOpen) {
       console.log('TenantEditForm: Modal opened with tenant:', tenant);
       
-      // Immediately set form data when modal opens
-      setFormData({ ...tenant });
-      setHasDeposit(tenant.depositAmount > 0);
-      setSelectedPropertyId('');
-      setErrors({});
-      setContractFile(null);
-      setExistingContract(null);
-      
-      // Load additional data
+      // Always load properties first
       loadProperties();
-      loadAvailableUnits();
-    } else if (isOpen && !tenant) {
-      console.log('TenantEditForm: New tenant form');
-      setFormData({ ...emptyTenant });
-      setHasDeposit(false);
-      setSelectedPropertyId('');
-      setErrors({});
-      setContractFile(null);
-      setExistingContract(null);
       
-      // Load additional data
-      loadProperties();
-      loadAvailableUnits();
+      if (tenant) {
+        // Set form data immediately
+        setFormData({ ...tenant });
+        setHasDeposit(tenant.depositAmount > 0);
+        setSelectedPropertyId(''); // Will be determined by unit
+        setErrors({});
+        setContractFile(null);
+        setExistingContract(null);
+        
+        // If tenant has a unit, try to find the property
+        if (tenant.unit && tenant.unit !== 'Sin unidad') {
+          findPropertyByUnit(tenant.unit);
+        } else {
+          loadAvailableUnits();
+        }
+      } else {
+        console.log('TenantEditForm: New tenant form');
+        setFormData({ ...emptyTenant });
+        setHasDeposit(false);
+        setSelectedPropertyId('');
+        setErrors({});
+        setContractFile(null);
+        setExistingContract(null);
+        loadAvailableUnits();
+      }
     }
   }, [isOpen, tenant]);
 
@@ -110,6 +115,36 @@ export function TenantEditForm({
     } catch (error) {
       console.error("Error loading properties:", error);
       toast.error("Error al cargar propiedades");
+    }
+  };
+
+  const findPropertyByUnit = async (unitNumber: string) => {
+    try {
+      const { data: unitData, error } = await supabase
+        .from('units')
+        .select('property_id, monthly_rent')
+        .eq('unit_number', unitNumber)
+        .single();
+
+      if (error || !unitData) {
+        console.log('Unit not found, loading all units');
+        loadAvailableUnits();
+        return;
+      }
+
+      console.log('Found unit data:', unitData);
+      setSelectedPropertyId(unitData.property_id);
+      
+      // Update rent amount if available
+      if (unitData.monthly_rent && unitData.monthly_rent > 0) {
+        setFormData(prev => ({ ...prev, rentAmount: unitData.monthly_rent }));
+      }
+      
+      // Load units for this property
+      loadUnitsForProperty(unitData.property_id);
+    } catch (error) {
+      console.error('Error finding property by unit:', error);
+      loadAvailableUnits();
     }
   };
 
@@ -506,7 +541,32 @@ export function TenantEditForm({
                   <Home className="w-4 h-4 mr-2 text-muted-foreground" />
                   <Select
                     value={formData.unit || "none"}
-                    onValueChange={handleUnitChange}
+                    onValueChange={async (value) => {
+                      const unitValue = value === "none" ? "" : value;
+                      setFormData(prev => ({ ...prev, unit: unitValue }));
+                      
+                      // Load rent amount for selected unit
+                      if (unitValue && selectedPropertyId) {
+                        try {
+                          const { data: unitData } = await supabase
+                            .from('units')
+                            .select('monthly_rent')
+                            .eq('unit_number', unitValue)
+                            .eq('property_id', selectedPropertyId)
+                            .single();
+                          
+                          if (unitData && unitData.monthly_rent) {
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              unit: unitValue,
+                              rentAmount: unitData.monthly_rent 
+                            }));
+                          }
+                        } catch (error) {
+                          console.error('Error loading unit rent:', error);
+                        }
+                      }
+                    }}
                     disabled={isLoadingUnits}
                   >
                     <SelectTrigger>
@@ -535,7 +595,7 @@ export function TenantEditForm({
                   </Select>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Puedes asignar la unidad más tarde
+                  {selectedPropertyId ? "Unidades de la propiedad seleccionada" : "Selecciona una propiedad primero"}
                 </p>
               </div>
 

@@ -12,6 +12,7 @@ interface Unit {
   id: string;
   unit_number: string;
   rent_amount?: number | null;
+  monthly_rent?: number | null;
   is_available: boolean;
   tenant_id?: string | null;
 }
@@ -145,6 +146,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         ...unit,
         unit_number: formData.unit_number,
         rent_amount: formData.rent_amount,
+        monthly_rent: formData.rent_amount, // Ensure both fields are updated
         tenant_id: formData.tenant_id || null,
         is_available: !formData.tenant_id,
       };

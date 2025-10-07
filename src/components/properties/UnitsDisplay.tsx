@@ -72,21 +72,27 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
       
       console.log('Update data being sent:', updateData);
       
-      // Update in database
-      await unitService.updateUnit(updatedUnit.id, updateData);
+      console.log('Updating unit with data:', updateData);
       
-      console.log('Unit updated successfully in database');
+      // Update in database
+      const result = await unitService.updateUnit(updatedUnit.id, updateData);
+      
+      console.log('Unit updated successfully in database:', result);
       
       // If assigning a tenant, also update the tenant record
       if (updatedUnit.tenant_id) {
         try {
           const { supabase } = await import("@/integrations/supabase/client");
-          await supabase
+          const { error: tenantError } = await supabase
             .from('tenants')
             .update({ unit_id: updatedUnit.id })
             .eq('id', updatedUnit.tenant_id);
           
-          console.log('Tenant assigned to unit successfully');
+          if (tenantError) {
+            console.error('Error updating tenant assignment:', tenantError);
+          } else {
+            console.log('Tenant assigned to unit successfully');
+          }
         } catch (tenantError) {
           console.error('Error updating tenant assignment:', tenantError);
         }

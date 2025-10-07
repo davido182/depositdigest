@@ -29,21 +29,28 @@ export class SupabaseTenantService extends BaseService {
     console.log('Fetched tenants:', data);
 
     // Transform database format to app format
-    return (data || []).map(tenant => ({
-      id: tenant.id,
-      name: `${tenant.first_name} ${tenant.last_name}`.trim(),
-      email: tenant.email || '',
-      phone: tenant.phone || '',
-      unit: tenant.units?.unit_number || 'Sin unidad',
-      moveInDate: tenant.move_in_date || '',
-      leaseEndDate: tenant.move_out_date || '',
-      rentAmount: Number(tenant.monthly_rent || tenant.units?.monthly_rent || 0),
-      depositAmount: Number(tenant.deposit_paid || 0),
-      status: tenant.is_active ? 'active' : 'inactive',
-      paymentHistory: [],
-      createdAt: tenant.created_at,
-      updatedAt: tenant.updated_at,
-    }));
+    return (data || []).map(tenant => {
+      const unitNumber = tenant.units?.unit_number || 'Sin unidad';
+      const rentAmount = Number(tenant.monthly_rent || tenant.units?.monthly_rent || 0);
+
+      console.log(`Tenant ${tenant.first_name} ${tenant.last_name}: unit=${unitNumber}, rent=${rentAmount}`);
+
+      return {
+        id: tenant.id,
+        name: `${tenant.first_name} ${tenant.last_name}`.trim(),
+        email: tenant.email || '',
+        phone: tenant.phone || '',
+        unit: unitNumber,
+        moveInDate: tenant.move_in_date || '',
+        leaseEndDate: tenant.move_out_date || '',
+        rentAmount: rentAmount,
+        depositAmount: Number(tenant.deposit_paid || 0),
+        status: tenant.is_active ? 'active' : 'inactive',
+        paymentHistory: [],
+        createdAt: tenant.created_at,
+        updatedAt: tenant.updated_at,
+      };
+    });
   }
 
   async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt' | 'paymentHistory'>): Promise<Tenant> {
