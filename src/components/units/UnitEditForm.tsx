@@ -148,28 +148,82 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
       setIsLoading(true);
       console.log('🔄 Assigning tenant to unit:', selectedTenantId);
       
-      // Solo actualizar la asignación de inquilino
-      const updatedUnit: Unit = {
-        ...unit,
-        tenant_id: selectedTenantId || null,
-        is_available: !selectedTenantId,
-      };
-      
-      console.log('🔄 Updated unit object:', updatedUnit);
-      
-      // Verificar si hay diferencia de renta con el inquilino
+      // Verificar si hay diferencia de renta con el inquilino ANTES de asignar
       if (selectedTenantId) {
         await checkRentDifference(selectedTenantId, unit.monthly_rent || 0);
       }
       
-      // Call the onSave function and wait for it
-      await onSave(updatedUnit);
+      // En lugar de actualizar la tabla units (que no tiene tenant_id aún),
+      // actualizamos la tabla tenants para asignar/desasignar la unidad
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuario no autenticado');
+      }
+
+      if (selectedTenantId) {
+        // Asignar inquilino a esta unidad
+        console.log('🔄 Assigning tenant to unit via tenants table');
+        const { error: assignError } = await supabase
+          .from('tenants')
+          .update({ unit_id: unit.id })
+          .eq('id', selectedTenantId)
+          .eq('landlord_id', user.id);
+
+        if (assignError) {
+          console.error('❌ Error assigning tenant:', assignError);
+          throw assignError;
+        }
+
+        // Marcar unidad como ocupada
+        const { error: unitError } = await supabase
+          .from('units')
+          .update({ is_available: false })
+          .eq('id', unit.id);
+
+        if (unitError) {
+          console.error('❌ Error updating unit availability:', unitError);
+          throw unitError;
+        }
+      } else {
+        // Desasignar inquilino de esta unidad
+        console.log('🔄 Unassigning tenant from unit');
+        const { error: unassignError } = await supabase
+          .from('tenants')
+          .update({ unit_id: null })
+          .eq('unit_id', unit.id)
+          .eq('landlord_id', user.id);
+
+        if (unassignError) {
+          console.error('❌ Error unassigning tenant:', unassignError);
+          throw unassignError;
+        }
+
+        // Marcar unidad como disponible
+        const { error: unitError } = await supabase
+          .from('units')
+          .update({ is_available: true })
+          .eq('id', unit.id);
+
+        if (unitError) {
+          console.error('❌ Error updating unit availability:', unitError);
+          throw unitError;
+        }
+      }
       
       console.log('✅ Unit assignment saved successfully');
       
       // Close the form and show success message
       onClose();
       toast.success("Inquilino asignado correctamente");
+      
+      // Refresh parent component
+      if (onSave) {
+        const updatedUnit: Unit = {
+          ...unit,
+          is_available: !selectedTenantId,
+        };
+        onSave(updatedUnit);
+      }
     } catch (error) {
       console.error('❌ Error assigning tenant:', error);
       toast.error(`Error al asignar inquilino: ${error.message || error}`);

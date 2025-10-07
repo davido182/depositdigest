@@ -11,6 +11,7 @@ interface Unit {
   id: string;
   unit_number: string;
   rent_amount?: number | null;
+  monthly_rent?: number | null;
   is_available: boolean;
   tenant_id?: string | null;
 }
@@ -65,9 +66,9 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
       // Prepare the update data
       const updateData = {
         unit_number: updatedUnit.unit_number,
-        monthly_rent: updatedUnit.rent_amount || updatedUnit.monthly_rent || 0,
-        is_available: updatedUnit.is_available,
-        tenant_id: updatedUnit.tenant_id || null
+        monthly_rent: updatedUnit.monthly_rent || updatedUnit.rent_amount || 0,
+        is_available: updatedUnit.is_available
+        // No incluir tenant_id aquí ya que la tabla units no lo tiene aún
       };
       
       console.log('🔄 Update data being sent:', updateData);
@@ -180,7 +181,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
             </div>
             <div className="flex items-center gap-1">
               <span className="text-muted-foreground text-xs">
-                €{unit.rent_amount || 0}
+                €{unit.monthly_rent || unit.rent_amount || 0}
               </span>
               <Button
                 size="sm"

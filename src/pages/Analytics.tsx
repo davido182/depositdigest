@@ -61,7 +61,7 @@ const Analytics = () => {
         const occupancyRate = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
         
         // Calculate monthly revenue from actual unit rents
-        const monthlyRevenue = units.filter(u => !u.is_available).reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
+        const monthlyRevenue = units.filter(u => !u.is_available).reduce((sum, unit) => sum + (unit.monthly_rent || unit.rent_amount || 0), 0);
         
         // Calculate collection rate for current month
         const currentMonth = new Date().getMonth() + 1;
