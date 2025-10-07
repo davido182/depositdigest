@@ -31,6 +31,15 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
     loadUnits();
   }, [propertyId]);
 
+  // Add a refresh function that can be called externally
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadUnits();
+    }, 10000); // Refresh every 10 seconds for better sync
+
+    return () => clearInterval(interval);
+  }, [propertyId]);
+
   const loadUnits = async () => {
     try {
       setLoading(true);
@@ -50,30 +59,34 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
 
   const handleSaveUnit = async (updatedUnit: Unit) => {
     try {
-      await unitService.updateUnit(updatedUnit.id, {
+      console.log('Saving unit in UnitsDisplay:', updatedUnit);
+      
+      // Prepare the update data
+      const updateData = {
         unit_number: updatedUnit.unit_number,
         monthly_rent: updatedUnit.rent_amount || 0,
         is_available: updatedUnit.is_available
-      });
-
-      // Update local state with the correct field mapping
-      setUnits(prev => prev.map(unit => 
-        unit.id === updatedUnit.id ? {
-          ...unit,
-          unit_number: updatedUnit.unit_number,
-          rent_amount: updatedUnit.rent_amount,
-          is_available: updatedUnit.is_available,
-          tenant_id: updatedUnit.tenant_id
-        } : unit
-      ));
-
-      setShowEditForm(false);
-      setEditingUnit(null);
+      };
       
-      // Force reload to ensure data consistency
+      // Add tenant_id if it exists
+      if (updatedUnit.tenant_id) {
+        updateData.tenant_id = updatedUnit.tenant_id;
+      }
+      
+      console.log('Update data being sent:', updateData);
+      
+      // Update in database
+      await unitService.updateUnit(updatedUnit.id, updateData);
+      
+      console.log('Unit updated successfully in database');
+      
+      // Force reload to get fresh data from database
       await loadUnits();
+      
+      toast.success("Unidad actualizada correctamente");
     } catch (error) {
       console.error('Error updating unit:', error);
+      toast.error("Error al actualizar la unidad");
       throw error;
     }
   };

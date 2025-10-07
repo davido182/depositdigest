@@ -52,41 +52,45 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
   const loadAvailableTenants = async () => {
     try {
-      console.log('Loading tenants for unit assignment...');
+      console.log('🔍 Loading tenants for unit assignment...');
       
-      // Simple query to get all tenants
+      // Get current user to filter tenants
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('❌ No authenticated user');
+        setAvailableTenants([]);
+        return;
+      }
+      
+      console.log('👤 Current user:', user.id);
+      
+      // Get all tenants for this user
       const { data, error } = await supabase
         .from('tenants')
-        .select('id, name, email');
+        .select('*')
+        .eq('landlord_id', user.id);
 
       if (error) {
-        console.error('Supabase error loading tenants:', error);
-        throw error;
+        console.error('❌ Supabase error loading tenants:', error);
+        setAvailableTenants([]);
+        return;
       }
       
-      console.log('Raw tenants data:', data);
-      setAvailableTenants(data || []);
-      console.log('Loaded tenants for unit assignment:', data?.length || 0);
+      console.log('📊 Raw tenants data from supabase:', data);
+      
+      // Map the data to our interface
+      const mappedTenants = (data || []).map(tenant => ({
+        id: tenant.id,
+        name: tenant.name || `Inquilino ${tenant.id.slice(0, 8)}`,
+        email: tenant.email || 'Sin email'
+      }));
+      
+      console.log('✅ Mapped tenants for selection:', mappedTenants);
+      setAvailableTenants(mappedTenants);
+      console.log(`🎯 Successfully loaded ${mappedTenants.length} tenants for unit assignment`);
     } catch (error) {
-      console.error('Error loading tenants:', error);
-      // Try to load from a different approach
-      try {
-        const { data: fallbackData } = await supabase
-          .from('tenants')
-          .select('*');
-        
-        const mappedTenants = (fallbackData || []).map(t => ({
-          id: t.id,
-          name: t.name || 'Sin nombre',
-          email: t.email || 'Sin email'
-        }));
-        
-        setAvailableTenants(mappedTenants);
-        console.log('Fallback tenants loaded:', mappedTenants.length);
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
-        setAvailableTenants([]);
-      }
+      console.error('💥 Error loading tenants:', error);
+      setAvailableTenants([]);
     }
   };
 
@@ -129,23 +133,32 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (validateForm() && unit) {
-      try {
-        const updatedUnit: Unit = {
-          ...unit,
-          unit_number: formData.unit_number,
-          rent_amount: formData.rent_amount,
-          tenant_id: formData.tenant_id || null,
-          is_available: !formData.tenant_id,
-        };
-        
-        await onSave(updatedUnit);
-        onClose();
-        toast.success("Unidad actualizada correctamente");
-      } catch (error) {
-        console.error('Error saving unit:', error);
-        toast.error("Error al actualizar la unidad");
-      }
+    if (!validateForm() || !unit) {
+      return;
+    }
+
+    try {
+      console.log('Saving unit with data:', formData);
+      
+      const updatedUnit: Unit = {
+        ...unit,
+        unit_number: formData.unit_number,
+        rent_amount: formData.rent_amount,
+        tenant_id: formData.tenant_id || null,
+        is_available: !formData.tenant_id,
+      };
+      
+      console.log('Updated unit object:', updatedUnit);
+      
+      // Call the onSave function and wait for it
+      await onSave(updatedUnit);
+      
+      // Close the form and show success message
+      onClose();
+      toast.success("Unidad actualizada correctamente");
+    } catch (error) {
+      console.error('Error saving unit:', error);
+      toast.error("Error al actualizar la unidad");
     }
   };
 

@@ -4,9 +4,9 @@ import { Tenant } from '@/types';
 export class SupabaseTenantService extends BaseService {
   async getTenants(): Promise<Tenant[]> {
     console.log('Fetching tenants from Supabase...');
-    
+
     const user = await this.ensureAuthenticated();
-    
+
     console.log('🔍 Fetching tenants for landlord:', user.id);
     const { data, error } = await this.supabase
       .from('tenants')
@@ -27,7 +27,7 @@ export class SupabaseTenantService extends BaseService {
     }
 
     console.log('Fetched tenants:', data);
-    
+
     // Transform database format to app format
     return (data || []).map(tenant => ({
       id: tenant.id,
@@ -48,14 +48,14 @@ export class SupabaseTenantService extends BaseService {
 
   async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt' | 'paymentHistory'>): Promise<Tenant> {
     console.log('Creating tenant in Supabase:', tenant);
-    
+
     const user = await this.ensureAuthenticated();
-    
+
     // Split name into first_name and last_name
     const nameParts = tenant.name.trim().split(' ');
     const firstName = nameParts[0] || 'Sin nombre';
     const lastName = nameParts.slice(1).join(' ') || '';
-    
+
     const { data, error } = await this.supabase
       .from('tenants')
       .insert({
@@ -101,7 +101,7 @@ export class SupabaseTenantService extends BaseService {
 
   async updateTenant(id: string, updates: Partial<Tenant>): Promise<Tenant> {
     console.log('Updating tenant in Supabase:', id, updates);
-    
+
     // Split name if provided
     let firstName, lastName;
     if (updates.name) {
@@ -109,7 +109,22 @@ export class SupabaseTenantService extends BaseService {
       firstName = nameParts[0];
       lastName = nameParts.slice(1).join(' ');
     }
-    
+
+    // Handle unit assignment
+    let unitId = null;
+    if (updates.unit && updates.unit !== 'Sin unidad' && updates.unit !== '') {
+      // Find the unit by unit_number
+      const { data: unitData } = await this.supabase
+        .from('units')
+        .select('id')
+        .eq('unit_number', updates.unit)
+        .single();
+
+      if (unitData) {
+        unitId = unitData.id;
+      }
+    }
+
     const { data, error } = await this.supabase
       .from('tenants')
       .update({
@@ -122,7 +137,8 @@ export class SupabaseTenantService extends BaseService {
         ...(updates.rentAmount && { monthly_rent: updates.rentAmount }),
         ...(updates.depositAmount && { deposit_paid: updates.depositAmount }),
         ...(updates.status && { is_active: updates.status === 'active' }),
-        ...(updates.notes && { notes: updates.notes })
+        ...(updates.notes && { notes: updates.notes }),
+        ...(unitId !== null && { unit_id: unitId })
       })
       .eq('id', id)
       .select()
@@ -152,7 +168,7 @@ export class SupabaseTenantService extends BaseService {
 
   async deleteTenant(id: string): Promise<boolean> {
     console.log('Deleting tenant from Supabase:', id);
-    
+
     const { error } = await this.supabase
       .from('tenants')
       .delete()

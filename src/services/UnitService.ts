@@ -12,6 +12,7 @@ export interface Unit {
   deposit_amount?: number;
   is_furnished?: boolean;
   is_available: boolean;
+  tenant_id?: string | null;
   description?: string;
   photos?: string[];
   created_at: string;
@@ -107,11 +108,12 @@ export class UnitService extends BaseService {
         ...(updates.bedrooms && { bedrooms: updates.bedrooms }),
         ...(updates.bathrooms && { bathrooms: updates.bathrooms }),
         ...(updates.square_meters && { square_meters: updates.square_meters }),
-        ...(updates.monthly_rent && { monthly_rent: updates.monthly_rent }),
+        ...(updates.monthly_rent !== undefined && { monthly_rent: updates.monthly_rent }),
         ...(updates.deposit_amount !== undefined && { deposit_amount: updates.deposit_amount }),
         ...(updates.is_furnished !== undefined && { is_furnished: updates.is_furnished }),
         ...(updates.is_available !== undefined && { is_available: updates.is_available }),
-        ...(updates.description !== undefined && { description: updates.description })
+        ...(updates.description !== undefined && { description: updates.description }),
+        ...(updates.tenant_id !== undefined && { tenant_id: updates.tenant_id })
       })
       .eq('id', id)
       .select()

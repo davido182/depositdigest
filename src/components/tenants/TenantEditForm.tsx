@@ -74,31 +74,34 @@ export function TenantEditForm({
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("");
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && tenant) {
       console.log('TenantEditForm: Modal opened with tenant:', tenant);
       
-      // Always load properties and units first
-      loadProperties();
-      loadAvailableUnits();
-      
-      // Then set form data
-      if (tenant) {
-        console.log('TenantEditForm: Setting tenant data:', tenant);
-        setFormData({ ...tenant });
-        setHasDeposit(tenant.depositAmount > 0);
-        setSelectedPropertyId(''); // Simplified for now
-      } else {
-        console.log('TenantEditForm: Resetting to empty tenant');
-        setFormData({ ...emptyTenant });
-        setHasDeposit(false);
-        setSelectedPropertyId('');
-      }
-      
+      // Immediately set form data when modal opens
+      setFormData({ ...tenant });
+      setHasDeposit(tenant.depositAmount > 0);
+      setSelectedPropertyId('');
       setErrors({});
       setContractFile(null);
       setExistingContract(null);
+      
+      // Load additional data
+      loadProperties();
+      loadAvailableUnits();
+    } else if (isOpen && !tenant) {
+      console.log('TenantEditForm: New tenant form');
+      setFormData({ ...emptyTenant });
+      setHasDeposit(false);
+      setSelectedPropertyId('');
+      setErrors({});
+      setContractFile(null);
+      setExistingContract(null);
+      
+      // Load additional data
+      loadProperties();
+      loadAvailableUnits();
     }
-  }, [tenant, isOpen]);
+  }, [isOpen, tenant]);
 
   const loadProperties = async () => {
     try {
