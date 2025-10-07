@@ -124,24 +124,20 @@ export function TenantEditForm({
     return;
   };
 
-  const loadAvailableUnits = async () => {
+  const loadUnitsForProperty = async (propertyId: string) => {
     try {
       setIsLoadingUnits(true);
       
-      // Load actual units from database
+      // Load units for specific property
       const { data: unitsData, error } = await supabase
         .from('units')
-        .select('unit_number, is_available, property_id, properties(name)')
+        .select('unit_number, is_available, id')
+        .eq('property_id', propertyId)
         .eq('is_available', true);
 
       if (error) {
-        console.error('Error loading units:', error);
-        // Fallback to basic units if needed
-        const fallbackUnits = ["1", "2", "3", "4", "5"];
-        if (tenant && tenant.unit && !fallbackUnits.includes(tenant.unit)) {
-          fallbackUnits.push(tenant.unit);
-        }
-        setAvailableUnits(fallbackUnits);
+        console.error('Error loading units for property:', error);
+        setAvailableUnits([]);
         return;
       }
 
@@ -159,17 +155,54 @@ export function TenantEditForm({
         return aNum - bNum;
       }));
       
-      console.log(`Loaded ${availableUnitNumbers.length} available units from database`);
+      console.log(`Loaded ${availableUnitNumbers.length} available units for property ${propertyId}`);
     } catch (error) {
-      console.error("Error loading available units:", error);
-      // Minimal fallback
-      const fallbackUnits = ["1", "2", "3"];
-      if (tenant && tenant.unit && !fallbackUnits.includes(tenant.unit)) {
-        fallbackUnits.push(tenant.unit);
-      }
-      setAvailableUnits(fallbackUnits);
+      console.error("Error loading units for property:", error);
+      setAvailableUnits([]);
     } finally {
       setIsLoadingUnits(false);
+    }
+  };
+
+  const loadAvailableUnits = async () => {
+    // If a property is selected, load units for that property
+    if (selectedPropertyId) {
+      await loadUnitsForProperty(selectedPropertyId);
+    } else {
+      // Load all available units if no property selected
+      try {
+        setIsLoadingUnits(true);
+        
+        const { data: unitsData, error } = await supabase
+          .from('units')
+          .select('unit_number, is_available, property_id, properties(name)')
+          .eq('is_available', true);
+
+        if (error) {
+          console.error('Error loading units:', error);
+          setAvailableUnits([]);
+          return;
+        }
+
+        const availableUnitNumbers = (unitsData || []).map(unit => unit.unit_number);
+        
+        if (tenant && tenant.unit && !availableUnitNumbers.includes(tenant.unit)) {
+          availableUnitNumbers.push(tenant.unit);
+        }
+        
+        setAvailableUnits(availableUnitNumbers.sort((a, b) => {
+          const aNum = parseInt(a) || 0;
+          const bNum = parseInt(b) || 0;
+          return aNum - bNum;
+        }));
+        
+        console.log(`Loaded ${availableUnitNumbers.length} available units from all properties`);
+      } catch (error) {
+        console.error("Error loading available units:", error);
+        setAvailableUnits([]);
+      } finally {
+        setIsLoadingUnits(false);
+      }
     }
   };
 
@@ -340,6 +373,7 @@ export function TenantEditForm({
           ...formData,
           updatedAt: new Date().toISOString(),
           id: formData.id || `tenant-${Date.now()}`,
+          propertyId: selectedPropertyId, // Include selected property
         };
 
         console.log("Submitting tenant data:", updatedTenant);
@@ -423,23 +457,34 @@ export function TenantEditForm({
 
             <div className="grid gap-2">
               <Label htmlFor="property">
-                Propiedad (Opcional)
+                Propiedad
               </Label>
               <div className="flex items-center">
                 <Building className="w-4 h-4 mr-2 text-muted-foreground" />
                 <Select
                   value={selectedPropertyId || "none"}
-                  onValueChange={(value) => setSelectedPropertyId(value === "none" ? "" : value)}
+                  onValueChange={(value) => {
+                    const propertyId = value === "none" ? "" : value;
+                    setSelectedPropertyId(propertyId);
+                    // Reset unit selection when property changes
+                    setFormData(prev => ({ ...prev, unit: "" }));
+                    // Reload units for the new property
+                    if (propertyId) {
+                      loadUnitsForProperty(propertyId);
+                    } else {
+                      setAvailableUnits([]);
+                    }
+                  }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar propiedad (opcional)" />
+                    <SelectValue placeholder="Seleccionar propiedad" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sin asignar</SelectItem>
                     {properties.length > 0 ? (
                       properties.map(property => (
                         <SelectItem key={property.id} value={property.id}>
-                          {property.name}
+                          {property.name} - {property.address}
                         </SelectItem>
                       ))
                     ) : (
@@ -450,9 +495,6 @@ export function TenantEditForm({
                   </SelectContent>
                 </Select>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Puedes asignar la propiedad más tarde
-              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

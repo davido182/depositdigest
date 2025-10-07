@@ -99,7 +99,7 @@ export class SupabaseTenantService extends BaseService {
     };
   }
 
-  async updateTenant(id: string, updates: Partial<Tenant>): Promise<Tenant> {
+  async updateTenant(id: string, updates: Partial<Tenant & { propertyId?: string }>): Promise<Tenant> {
     console.log('Updating tenant in Supabase:', id, updates);
 
     // Split name if provided
@@ -113,11 +113,17 @@ export class SupabaseTenantService extends BaseService {
     // Handle unit assignment
     let unitId = null;
     if (updates.unit && updates.unit !== 'Sin unidad' && updates.unit !== '') {
-      // Find the unit by unit_number
-      const { data: unitData } = await this.supabase
+      // Find the unit by unit_number and property_id if provided
+      let unitQuery = this.supabase
         .from('units')
         .select('id')
-        .eq('unit_number', updates.unit)
+        .eq('unit_number', updates.unit);
+
+      if (updates.propertyId) {
+        unitQuery = unitQuery.eq('property_id', updates.propertyId);
+      }
+
+      const { data: unitData } = await unitQuery
         .single();
 
       if (unitData) {

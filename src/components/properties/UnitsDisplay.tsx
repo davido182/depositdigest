@@ -31,16 +31,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
     loadUnits();
   }, [propertyId]);
 
-  // Add a refresh function that can be called externally
-  useEffect(() => {
-    const interval = setInterval(() => {
-      loadUnits();
-    }, 5000); // Refresh every 5 seconds for better sync
-
-    return () => clearInterval(interval);
-  }, [propertyId]);
-
-  // Also reload when window gets focus (user comes back to tab)
+  // Only reload when window gets focus (user comes back to tab)
   useEffect(() => {
     const handleFocus = () => {
       loadUnits();

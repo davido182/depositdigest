@@ -40,15 +40,16 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
   useEffect(() => {
     if (isOpen && unit) {
+      // Always use the latest unit data
       setFormData({
         unit_number: unit.unit_number,
-        rent_amount: unit.rent_amount || 0,
+        rent_amount: unit.monthly_rent || unit.rent_amount || 0, // Try monthly_rent first
         tenant_id: unit.tenant_id || "",
       });
       setErrors({});
       loadAvailableTenants();
     }
-  }, [unit, isOpen]);
+  }, [isOpen, unit]); // Keep unit dependency but handle it better
 
   const loadAvailableTenants = async () => {
     try {
