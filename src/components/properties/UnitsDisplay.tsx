@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, UserPlus, UserMinus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Edit, Trash2, Plus } from "lucide-react";
 import { unitService } from "@/services/UnitService";
 import { UnitEditForm } from "../units/UnitEditForm";
 import { toast } from "sonner";
@@ -23,6 +24,8 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
   const [loading, setLoading] = useState(true);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newUnitNumber, setNewUnitNumber] = useState("");
 
   useEffect(() => {
     loadUnits();
@@ -32,7 +35,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
     try {
       setLoading(true);
       const data = await unitService.getUnitsByProperty(propertyId);
-      setUnits(data.slice(0, 3)); // Only show first 3 units in card
+      setUnits(data); // Show all units now
     } catch (error) {
       console.error('Error loading units:', error);
     } finally {
@@ -78,6 +81,30 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
     } catch (error) {
       console.error('Error deleting unit:', error);
       toast.error("Error al eliminar la unidad");
+    }
+  };
+
+  const handleCreateUnit = async () => {
+    if (!newUnitNumber.trim()) {
+      toast.error("El número de unidad es requerido");
+      return;
+    }
+
+    try {
+      const newUnit = await unitService.createUnit({
+        property_id: propertyId,
+        unit_number: newUnitNumber,
+        monthly_rent: 0,
+        is_available: true,
+      });
+      
+      setUnits(prev => [...prev, newUnit]);
+      setNewUnitNumber("");
+      setShowCreateForm(false);
+      toast.success("Unidad creada correctamente");
+    } catch (error) {
+      console.error('Error creating unit:', error);
+      toast.error("Error al crear unidad");
     }
   };
 
@@ -138,10 +165,45 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
             </div>
           </div>
         ))}
-        {units.length === 3 && (
-          <div className="text-xs text-muted-foreground text-center">
-            Y más...
+        
+        {/* Create new unit form */}
+        {showCreateForm ? (
+          <div className="flex items-center gap-2 p-2 border rounded bg-muted/50">
+            <Input
+              value={newUnitNumber}
+              onChange={(e) => setNewUnitNumber(e.target.value)}
+              placeholder="Número de unidad"
+              className="h-7 text-xs"
+            />
+            <Button
+              size="sm"
+              onClick={handleCreateUnit}
+              className="h-7 px-2 text-xs"
+            >
+              Crear
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setShowCreateForm(false);
+                setNewUnitNumber("");
+              }}
+              className="h-7 px-2 text-xs"
+            >
+              Cancelar
+            </Button>
           </div>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowCreateForm(true)}
+            className="w-full h-7 text-xs"
+          >
+            <Plus className="h-3 w-3 mr-1" />
+            Agregar Unidad
+          </Button>
         )}
       </div>
 

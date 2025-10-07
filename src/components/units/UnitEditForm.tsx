@@ -52,16 +52,22 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
   const loadAvailableTenants = async () => {
     try {
+      // Load all active tenants - we'll filter logic later
       const { data, error } = await supabase
         .from('tenants')
         .select('id, name, email')
-        .eq('is_active', true)
-        .is('unit_id', null);
+        .eq('is_active', true);
 
       if (error) throw error;
+      
+      // For now, show all active tenants
+      // TODO: Filter out tenants already assigned to other units
       setAvailableTenants(data || []);
+      console.log('Loaded tenants for unit assignment:', data?.length || 0);
     } catch (error) {
       console.error('Error loading tenants:', error);
+      // Fallback to empty array
+      setAvailableTenants([]);
     }
   };
 

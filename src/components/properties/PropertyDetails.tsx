@@ -3,8 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building, MapPin, Users, Plus } from "lucide-react";
-import { UnitManagementModal } from "../units/UnitManagementModal";
+import { Building, MapPin, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Property {
@@ -35,7 +34,6 @@ interface PropertyDetailsProps {
 }
 
 export function PropertyDetails({ property, isOpen, onClose, onEdit }: PropertyDetailsProps) {
-  const [showUnitManagement, setShowUnitManagement] = useState(false);
   
   const [units, setUnits] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -146,19 +144,11 @@ export function PropertyDetails({ property, isOpen, onClose, onEdit }: PropertyD
 
             {/* Units Section */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <CardHeader>
                  <CardTitle className="text-base flex items-center gap-2">
                    <Users className="h-4 w-4" />
                    Unidades ({units.length})
                  </CardTitle>
-                <Button 
-                  size="sm" 
-                  onClick={() => setShowUnitManagement(true)}
-                  className="gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Gestionar Unidades
-                </Button>
               </CardHeader>
                <CardContent>
                  {loading ? (
@@ -206,17 +196,7 @@ export function PropertyDetails({ property, isOpen, onClose, onEdit }: PropertyD
         </DialogContent>
       </Dialog>
 
-      {showUnitManagement && (
-        <UnitManagementModal
-          isOpen={showUnitManagement}
-          onClose={() => setShowUnitManagement(false)}
-          propertyId={property.id!}
-          onUnitsUpdated={() => {
-            loadUnits(); // Reload units when updated
-            setShowUnitManagement(false);
-          }}
-        />
-      )}
+
     </>
   );
 }
