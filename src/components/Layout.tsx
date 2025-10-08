@@ -7,6 +7,7 @@ import { useOrientation } from "@/hooks/use-orientation";
 import { useAuth } from "@/contexts/AuthContext";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { MobileOrientationWrapper } from "./MobileOrientationWrapper";
+import { SmartNotifications } from "./dashboard/SmartNotifications";
 import { cn } from "@/lib/utils";
 import { liveUpdatesService } from "@/services/LiveUpdatesService";
 
@@ -93,7 +94,8 @@ export function Layout({ children }: LayoutProps) {
               isNative && isLandscape ? "h-12" : "h-16"
             )}>
               <SidebarTrigger className="-ml-1" />
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-2">
+                <SmartNotifications />
                 <OfflineBanner />
               </div>
             </header>

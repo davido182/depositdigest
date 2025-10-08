@@ -293,12 +293,15 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
           const { unitService } = await import("@/services/UnitService");
           
           for (let i = 0; i < formData.units; i++) {
+            const unitName = unitNames[i] || `Unidad ${i + 1}`;
+            const rentAmount = Number(unitRents[i]) || 0;
+            
             await unitService.createUnit({
               property_id: newProperty.id,
-              unit_number: (i + 1).toString(),
+              unit_number: unitName,
               bedrooms: 1,
               bathrooms: 1,
-              monthly_rent: unitRents[i],
+              monthly_rent: rentAmount,
               is_available: true
             });
           }

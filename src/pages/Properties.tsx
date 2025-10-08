@@ -82,7 +82,7 @@ const Properties = () => {
           });
 
           // Calculate revenue from occupied units
-          const monthlyRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
+          const monthlyRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.monthly_rent || unit.rent_amount || 0), 0);
 
           return {
             id: dbProp.id,
@@ -180,7 +180,7 @@ const Properties = () => {
         const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
 
         // Calculate revenue from occupied units
-        const monthlyRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
+        const monthlyRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.monthly_rent || unit.rent_amount || 0), 0);
 
         return {
           id: dbProp.id,

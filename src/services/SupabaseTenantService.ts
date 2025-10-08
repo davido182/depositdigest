@@ -180,7 +180,7 @@ export class SupabaseTenantService extends BaseService {
           .select('unit_number')
           .eq('id', data.unit_id)
           .single();
-        
+
         if (unitData) {
           unitNumber = unitData.unit_number;
         }

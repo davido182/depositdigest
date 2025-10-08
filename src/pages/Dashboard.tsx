@@ -46,6 +46,35 @@ const Dashboard = () => {
     return <TenantDashboard />;
   }
 
+  // Function to create a test maintenance request
+  const createTestMaintenanceRequest = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('maintenance_requests')
+        .insert({
+          user_id: user?.id,
+          landlord_id: user?.id,
+          title: 'Prueba de Notificación',
+          description: 'Esta es una solicitud de mantenimiento de prueba para verificar las notificaciones.',
+          priority: 'high',
+          status: 'pending',
+          unit_number: '101'
+        });
+
+      if (error) {
+        console.error('Error creating test maintenance request:', error);
+        toast.error('Error al crear solicitud de prueba');
+      } else {
+        toast.success('Solicitud de mantenimiento de prueba creada');
+        // Refresh the page to see the notification
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error al crear solicitud de prueba');
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {

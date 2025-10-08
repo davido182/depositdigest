@@ -174,7 +174,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
             className="flex items-center justify-between p-2 border rounded text-xs"
           >
             <div className="flex items-center gap-2">
-              <span className="font-medium">Unidad {unit.unit_number}</span>
+              <span className="font-medium">{unit.unit_number}</span>
               <Badge variant={unit.is_available ? "secondary" : "default"} className="text-xs">
                 {unit.is_available ? "Disponible" : "Ocupada"}
               </Badge>

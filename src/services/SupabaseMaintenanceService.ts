@@ -6,7 +6,7 @@ import { MaintenanceRequest } from "@/types";
 export class SupabaseMaintenanceService extends SupabaseService {
   async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
     const user = await this.ensureAuthenticated();
-    
+
     const { data, error } = await supabase
       .from('maintenance_requests')
       .select('*')
@@ -22,7 +22,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
 
   async getMaintenanceRequestById(id: string): Promise<MaintenanceRequest | null> {
     const user = await this.ensureAuthenticated();
-    
+
     const { data, error } = await supabase
       .from('maintenance_requests')
       .select('*')
@@ -42,7 +42,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
 
   async getMaintenanceRequestsByTenant(tenantId: string): Promise<MaintenanceRequest[]> {
     const user = await this.ensureAuthenticated();
-    
+
     const { data, error } = await supabase
       .from('maintenance_requests')
       .select('*')
@@ -59,21 +59,21 @@ export class SupabaseMaintenanceService extends SupabaseService {
 
   async createMaintenanceRequest(request: Omit<MaintenanceRequest, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const user = await this.ensureAuthenticated();
-    
+
     // Find tenant's landlord to set landlord_id
     const { data: tenantData } = await supabase
       .from('tenants')
       .select('landlord_id')
       .eq('id', request.tenantId)
       .single();
-    
+
     const requestData = {
       user_id: user.id,
       tenant_id: request.tenantId,
       landlord_id: tenantData?.landlord_id || null,
       title: request.title,
       description: request.description,
-      
+
       priority: request.priority,
       status: request.status,
       unit_number: request.unit,
@@ -96,11 +96,11 @@ export class SupabaseMaintenanceService extends SupabaseService {
 
   async updateMaintenanceRequest(id: string, updates: Partial<MaintenanceRequest>): Promise<boolean> {
     const user = await this.ensureAuthenticated();
-    
+
     const updateData: any = {};
     if (updates.title) updateData.title = updates.title;
     if (updates.description) updateData.description = updates.description;
-    
+
     if (updates.priority) updateData.priority = updates.priority;
     if (updates.status) updateData.status = updates.status;
     if (updates.unit) {
@@ -124,7 +124,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
 
   async deleteMaintenanceRequest(id: string): Promise<boolean> {
     const user = await this.ensureAuthenticated();
-    
+
     const { error } = await supabase
       .from('maintenance_requests')
       .delete()
@@ -140,7 +140,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
 
   async getMaintenanceRequestsByProperty(propertyId: string): Promise<MaintenanceRequest[]> {
     const user = await this.ensureAuthenticated();
-    
+
     const { data, error } = await supabase
       .from('maintenance_requests')
       .select(`
@@ -163,7 +163,7 @@ export class SupabaseMaintenanceService extends SupabaseService {
 
   async assignProvider(requestId: string, providerId: string, notes?: string, scheduledDate?: string): Promise<boolean> {
     const user = await this.ensureAuthenticated();
-    
+
     // Update maintenance request
     const { error: updateError } = await supabase
       .from('maintenance_requests')
