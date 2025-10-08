@@ -109,8 +109,8 @@ export function SecureChatAssistant() {
         return handleRentaFluxQueries(normalizedQuery);
       }
 
-      // Preguntas sobre ayuda/manual
-      if (normalizedQuery.includes('ayuda') || normalizedQuery.includes('como') || normalizedQuery.includes('manual') || normalizedQuery.includes('usar')) {
+      // Preguntas sobre ayuda/manual (más específicas)
+      if (normalizedQuery.match(/(ayuda|como|manual|usar|guia|instruccion)/)) {
         return handleHelpQueries(normalizedQuery);
       }
 
@@ -323,27 +323,37 @@ export function SecureChatAssistant() {
   };
 
   const handleRentaFluxQueries = (query: string): string => {
-    return `🏠 **RentaFlux** es tu plataforma completa de gestión inmobiliaria! 🚀\n\nTe ayuda a:\n• 🏢 **Gestionar propiedades** y unidades\n• 👥 **Administrar inquilinos** y contratos\n• 💰 **Controlar pagos** y finanzas\n• 🔧 **Manejar mantenimiento** y solicitudes\n• 📊 **Analizar tu negocio** con reportes\n\n¡Todo en un solo lugar para que tu negocio inmobiliario sea más eficiente! ✨`;
+    return `🏠 **RentaFlux** es tu plataforma completa de gestión inmobiliaria! 🚀\n\n**¿Qué es RentaFlux?**\nEs un sistema integral que te permite administrar todo tu negocio inmobiliario desde un solo lugar.\n\n**Funcionalidades principales:**\n• 🏢 **Gestión de Propiedades**: Crear, editar y organizar tus inmuebles\n• 🏠 **Administración de Unidades**: Configurar rentas y disponibilidad\n• 👥 **Control de Inquilinos**: Gestionar contratos y datos de contacto\n• 💰 **Seguimiento de Pagos**: Tabla mensual para marcar pagos recibidos\n• 📊 **Analytics y Reportes**: Visualizar ingresos y ocupación\n• 🔧 **Mantenimiento**: Registrar y dar seguimiento a solicitudes\n• 📱 **Asistente IA**: ¡Soy yo! Te ayudo con dudas y consultas\n\n**Beneficios:**\n✅ Centraliza toda tu información\n✅ Automatiza cálculos financieros\n✅ Mejora la comunicación con inquilinos\n✅ Genera reportes profesionales\n✅ Optimiza tu tiempo y rentabilidad\n\n¿Te gustaría que te explique alguna función específica? 😊`;
   };
 
   const handleHelpQueries = (query: string): string => {
-    if (query.match(/(como.*agregar.*inquilino|crear.*inquilino)/)) {
-      return `¡Perfecto! 😊 **Manual: Agregar Inquilino**\n\n📋 **Pasos detallados:**\n1️⃣ Ve a la sección "Inquilinos" en el menú lateral\n2️⃣ Haz clic en "Agregar Inquilino" 👤\n3️⃣ **Datos básicos**: nombre, apellido, email, teléfono\n4️⃣ **Datos financieros**: renta mensual, depósito\n5️⃣ **Fechas**: inicio y fin de contrato\n6️⃣ **Asignar unidad** (opcional, puedes hacerlo después)\n7️⃣ ¡Guarda y listo! 🎉\n\n💡 **Tip**: Crea primero las propiedades para tener unidades disponibles.`;
+    // Preguntas específicas sobre agregar inquilinos
+    if (query.match(/(como.*agregar.*inquilino|crear.*inquilino|añadir.*inquilino)/)) {
+      return `👥 **MANUAL: Cómo Agregar un Inquilino**\n\n**Paso a paso:**\n1️⃣ **Navega**: Ve al menú lateral → "Inquilinos"\n2️⃣ **Crear**: Haz clic en "Agregar Inquilino" (botón azul ➕)\n3️⃣ **Datos personales**:\n   • Nombre completo\n   • Email de contacto\n   • Teléfono\n4️⃣ **Datos del contrato**:\n   • Renta mensual (€)\n   • Depósito de garantía\n   • Fecha de inicio del contrato\n   • Fecha de fin del contrato\n5️⃣ **Asignación** (opcional):\n   • Selecciona una unidad disponible\n   • O déjalo sin asignar para hacerlo después\n6️⃣ **Guardar**: Haz clic en "Crear Inquilino"\n\n✅ **¡Listo!** El inquilino aparecerá en tu lista y podrás gestionar sus pagos.\n\n💡 **Consejo**: Si no tienes propiedades creadas, créalas primero para tener unidades disponibles.`;
     }
 
-    if (query.match(/(como.*crear.*propiedad|agregar.*propiedad)/)) {
-      return `🏠 **Manual: Crear Propiedad**\n\n📋 **Proceso completo:**\n1️⃣ Ve a "Propiedades" → "Agregar Propiedad" ➕\n2️⃣ **Información básica**:\n   • Nombre de la propiedad\n   • Dirección completa\n   • Descripción (opcional)\n3️⃣ **Configurar unidades**:\n   • Número de unidades\n   • Nombres personalizados (Ej: 101, 102, A, B)\n   • Renta mensual por unidad\n4️⃣ **Guardar** 💾\n\n🎯 **Después podrás**: editar unidades, asignar inquilinos, gestionar pagos.`;
+    // Preguntas sobre crear propiedades
+    if (query.match(/(como.*crear.*propiedad|agregar.*propiedad|nueva.*propiedad)/)) {
+      return `🏠 **MANUAL: Cómo Crear una Propiedad**\n\n**Proceso completo:**\n1️⃣ **Acceder**: Menú lateral → "Propiedades"\n2️⃣ **Crear**: Botón "Agregar Propiedad" ➕\n3️⃣ **Información básica**:\n   • Nombre descriptivo (ej: "Edificio Centro")\n   • Dirección completa\n   • Descripción opcional\n4️⃣ **Configurar unidades**:\n   • Ajusta el número total de unidades\n   • Personaliza nombres (101, 102, A, B, etc.)\n   • Define renta mensual por unidad\n5️⃣ **Guardar**: El sistema creará la propiedad y todas sus unidades\n\n**Después podrás:**\n• ✏️ Editar unidades individualmente\n• 👥 Asignar inquilinos a unidades específicas\n• 💰 Gestionar pagos por unidad\n• 📊 Ver reportes de ocupación\n\n🎯 **Límites**: Plan gratuito = máx. 3 unidades por propiedad`;
     }
 
-    if (query.match(/(como.*marcar.*pago|registrar.*pago)/)) {
-      return `💰 **Manual: Gestión de Pagos**\n\n📋 **Tabla de Seguimiento:**\n1️⃣ Ve a "Pagos" → "Tabla de Seguimiento"\n2️⃣ Selecciona el año que quieres ver\n3️⃣ **Marcar pago**: haz clic en la casilla del mes ✅\n4️⃣ El sistema guarda automáticamente\n\n📊 **Procesador de Comprobantes:**\n1️⃣ Ve a "Pagos" → "Procesar Comprobantes"\n2️⃣ Sube archivos PDF/imágenes de recibos\n3️⃣ El sistema extrae la información automáticamente\n4️⃣ Confirma y guarda\n\n🎨 **Estados de pago**: Verde=Pagado, Amarillo=Pendiente, Rojo=Vencido, Gris=Futuro`;
+    // Preguntas sobre pagos
+    if (query.match(/(como.*marcar.*pago|registrar.*pago|tabla.*pago|seguimiento.*pago)/)) {
+      return `💰 **MANUAL: Gestión de Pagos**\n\n**Tabla de Seguimiento de Pagos:**\n1️⃣ **Acceder**: Menú → "Pagos" → "Tabla de Seguimiento"\n2️⃣ **Seleccionar año**: Usa el selector para cambiar de año\n3️⃣ **Marcar pagos**:\n   • ✅ Clic en casilla = Pago recibido\n   • ❌ Sin marcar = Pago pendiente\n   • 🔴 Rojo = Pago vencido\n   • 🟡 Amarillo = Mes actual pendiente\n   • ⚪ Gris = Meses futuros\n   • N/A = No aplica (inquilino no vivía ahí)\n\n**Estados automáticos:**\n• El sistema respeta fechas de inicio de contrato\n• No marca como vencido meses anteriores al ingreso\n• Calcula automáticamente pagos pendientes\n\n**Procesador de Comprobantes:**\n1️⃣ "Pagos" → "Procesar Comprobantes"\n2️⃣ Sube PDF/imágenes de recibos\n3️⃣ IA extrae información automáticamente\n4️⃣ Confirma y guarda\n\n💡 **Tip**: Los datos de esta tabla alimentan todos los reportes financieros.`;
     }
 
-    if (query.match(/(como.*usar.*contabilidad|contabilidad)/)) {
-      return `📊 **Manual: Contabilidad**\n\n💰 **Sección de Ingresos:**\n• Ve a "Contabilidad" para ver resumen financiero\n• Los ingresos se calculan automáticamente desde la tabla de pagos\n• Puedes ver ingresos mensuales y anuales\n\n📈 **Gastos e Impuestos:**\n• Registra gastos de mantenimiento\n• Configura impuestos y deducciones\n• El sistema calcula automáticamente el neto\n\n📋 **Reportes**: Exporta reportes en PDF para contabilidad externa.`;
+    // Preguntas sobre contabilidad
+    if (query.match(/(contabilidad|finanzas|ingresos|gastos|reportes)/)) {
+      return `📊 **MANUAL: Contabilidad y Finanzas**\n\n**Sección Contabilidad:**\n1️⃣ **Acceder**: Menú → "Contabilidad"\n2️⃣ **Ingresos automáticos**:\n   • Se calculan desde la tabla de seguimiento de pagos\n   • Muestra ingresos reales (no estimados)\n   • Desglose mensual y anual\n\n**Analytics Avanzados:**\n1️⃣ **Acceder**: Menú → "Analytics"\n2️⃣ **Reportes disponibles**:\n   • 📈 Gráfico de ingresos anuales (barras)\n   • 🏠 Tasa de ocupación por propiedad\n   • 💰 Tasa de cobranza mensual\n   • 👥 Análisis de inquilinos\n\n**Gestión de Gastos:**\n• Registra gastos de mantenimiento\n• Configura impuestos y deducciones\n• El sistema calcula neto automáticamente\n\n**Exportar Reportes:**\n• PDF para contabilidad externa\n• Excel para análisis detallado\n• Filtros por fecha, propiedad, inquilino\n\n💡 **Importante**: Todos los cálculos se basan en datos reales de la tabla de pagos.`;
     }
 
-    return `📚 **Manual de Usuario - RentaFlux**\n\n🏠 **PROPIEDADES:**\n• Crear/editar propiedades\n• Configurar unidades y rentas\n• Gestionar disponibilidad\n\n👥 **INQUILINOS:**\n• Agregar inquilinos con contratos\n• Asignar a unidades específicas\n• Gestionar fechas de entrada/salida\n\n💰 **PAGOS:**\n• Tabla de seguimiento mensual\n• Procesador de comprobantes\n• Estados: Pagado/Pendiente/Vencido\n\n📊 **CONTABILIDAD:**\n• Ingresos automáticos\n• Registro de gastos\n• Cálculo de impuestos\n\n¿Sobre qué sección específica te gustaría saber más? 🤔`;
+    // Preguntas sobre mantenimiento
+    if (query.match(/(mantenimiento|reparacion|solicitud|problema)/)) {
+      return `🔧 **MANUAL: Gestión de Mantenimiento**\n\n**Crear Solicitud:**\n1️⃣ **Acceder**: Menú → "Mantenimiento"\n2️⃣ **Nueva solicitud**: Botón "Agregar Solicitud"\n3️⃣ **Completar datos**:\n   • Título descriptivo\n   • Descripción detallada del problema\n   • Unidad afectada\n   • Prioridad (Baja/Media/Alta/Emergencia)\n   • Fotos (opcional)\n\n**Gestionar Solicitudes:**\n• 📋 Ver todas las solicitudes\n• 🔄 Cambiar estados (Pendiente/En progreso/Completado)\n• 👷 Asignar a proveedores\n• 💰 Registrar costos\n• 📝 Agregar notas y seguimiento\n\n**Estados de Prioridad:**\n• 🆘 **Emergencia**: Requiere atención inmediata\n• ⚠️ **Alta**: Resolver en 24-48 horas\n• 📋 **Media**: Resolver en una semana\n• ✅ **Baja**: Resolver cuando sea conveniente\n\n💡 **Tip**: Las solicitudes urgentes aparecen en notificaciones del dashboard.`;
+    }
+
+    // Manual general
+    return `📚 **MANUAL COMPLETO - RentaFlux**\n\n**🏠 GESTIÓN DE PROPIEDADES:**\n• Crear propiedades con múltiples unidades\n• Configurar rentas individuales por unidad\n• Gestionar disponibilidad y ocupación\n• Editar información y características\n\n**👥 ADMINISTRACIÓN DE INQUILINOS:**\n• Agregar inquilinos con datos completos\n• Asignar a unidades específicas\n• Gestionar contratos y fechas\n• Historial de pagos y comunicación\n\n**💰 CONTROL FINANCIERO:**\n• Tabla de seguimiento mensual de pagos\n• Procesador automático de comprobantes\n• Cálculo de ingresos reales\n• Reportes y analytics detallados\n\n**🔧 MANTENIMIENTO:**\n• Registro de solicitudes por prioridad\n• Seguimiento de reparaciones\n• Gestión de proveedores\n• Control de costos\n\n**📊 REPORTES Y ANALYTICS:**\n• Dashboard con métricas clave\n• Gráficos de ingresos y ocupación\n• Exportación a PDF/Excel\n• Análisis de rentabilidad\n\n**🤖 ASISTENTE IA:**\n• Consultas sobre tu negocio\n• Ayuda con el uso de la plataforma\n• Análisis de datos en tiempo real\n• Recomendaciones personalizadas\n\n**¿Qué función específica te gustaría aprender?** 🤔\nPuedes preguntar: "¿Cómo agrego un inquilino?", "¿Cómo marco un pago?", etc.`;
   };
 
   const generateConversationalResponse = (query: string): string => {

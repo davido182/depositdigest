@@ -211,26 +211,6 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
           // Get current units
           const currentUnits = await unitService.getUnitsByProperty(property.id);
           
-          // If we need more units, create them
-          if (formData.units > currentUnits.length) {
-            for (let i = currentUnits.length; i < formData.units; i++) {
-              await unitService.createUnit({
-                property_id: property.id,
-                unit_number: (i + 1).toString(),
-                bedrooms: 1,
-                bathrooms: 1,
-                monthly_rent: unitRents[i] || 0,
-                is_available: true
-              });
-            }
-          }
-          // If we need fewer units, delete the excess ones
-          else if (formData.units < currentUnits.length) {
-            for (let i = formData.units; i < currentUnits.length; i++) {
-              await unitService.deleteUnit(currentUnits[i].id);
-            }
-          }
-          
           // Update existing units with new rent amounts and names
           console.log('🔄 Updating existing units with rents:', unitRents, 'and names:', unitNames);
           for (let i = 0; i < Math.min(formData.units, currentUnits.length); i++) {

@@ -129,15 +129,16 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
       return 'paid';
     }
     
-    // Check if tenant started after this month (don't mark as overdue)
+    // Check if tenant started after this month (mark as N/A)
     const tenant = tenants.find(t => t.id === tenantId);
     if (tenant && tenant.moveInDate) {
       const moveInDate = new Date(tenant.moveInDate);
       const monthDate = new Date(selectedYear, monthIndex, 1);
+      const monthEndDate = new Date(selectedYear, monthIndex + 1, 0); // Last day of the month
       
-      // If tenant moved in after this month, don't mark as overdue
-      if (moveInDate > monthDate) {
-        return 'future'; // Not applicable for this tenant
+      // If tenant moved in after this entire month, mark as N/A
+      if (moveInDate > monthEndDate) {
+        return 'na'; // Not applicable - tenant wasn't living here yet
       }
     }
     
@@ -241,6 +242,9 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
           <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-200">
             Futuro
           </Badge>
+          <Badge variant="outline" className="bg-slate-100 text-slate-600 border-slate-200">
+            N/A
+          </Badge>
         </div>
       </div>
       
@@ -313,14 +317,16 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
                          paid: "bg-emerald-50 border-emerald-200",
                          pending: "bg-yellow-50 border-yellow-200",
                          overdue: "bg-red-50 border-red-200",
-                         future: "bg-gray-50 border-gray-200"
+                         future: "bg-gray-50 border-gray-200",
+                         na: "bg-slate-50 border-slate-200"
                        };
                        
                        const checkboxStyles = {
                          paid: "border-emerald-500 data-[state=checked]:bg-emerald-500",
                          pending: "border-yellow-500",
                          overdue: "border-red-500",
-                         future: "border-gray-400"
+                         future: "border-gray-400",
+                         na: "border-slate-400"
                        };
                        
                        return (
@@ -331,19 +337,23 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
                                statusStyles[paymentStatus]
                              )}
                            >
-                             <Checkbox
-                               checked={isPaid}
-                               onCheckedChange={(checked) => 
-                                 handleCheckboxChange(
-                                   checked, 
-                                   tenant.id, 
-                                   month.index, 
-                                   month.full
-                                 )
-                               }
-                               className={cn(checkboxStyles[paymentStatus])}
-                               aria-label={`${month.full} pago para ${tenant.name} - ${paymentStatus}`}
-                             />
+                             {paymentStatus === 'na' ? (
+                               <div className="text-xs text-slate-500 font-medium">N/A</div>
+                             ) : (
+                               <Checkbox
+                                 checked={isPaid}
+                                 onCheckedChange={(checked) => 
+                                   handleCheckboxChange(
+                                     checked, 
+                                     tenant.id, 
+                                     month.index, 
+                                     month.full
+                                   )
+                                 }
+                                 className={cn(checkboxStyles[paymentStatus])}
+                                 aria-label={`${month.full} pago para ${tenant.name} - ${paymentStatus}`}
+                               />
+                             )}
                               <div className="flex gap-1">
                                 {hasReceipt ? (
                                   <div title="Tiene comprobante">
