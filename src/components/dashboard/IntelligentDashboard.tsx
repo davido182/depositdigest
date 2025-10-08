@@ -104,7 +104,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
   const { userRole, user } = useAuth();
   const isPremium = userRole === 'landlord_premium';
 
-  // Calculate real revenue trend from payment tracking
+  // Calculate real revenue trend from payment tracking (tabla de seguimiento de pagos)
   const getRevenueData = () => {
     const currentDate = new Date();
     const months = [];
@@ -115,7 +115,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
       const year = date.getFullYear();
       const month = date.getMonth();
       
-      // Get payment records for this month
+      // Get payment records for this month from localStorage (tabla de seguimiento)
       const storageKey = `payment_records_${user?.id}_${year}`;
       const storedRecords = localStorage.getItem(storageKey);
       let monthlyRevenue = 0;
@@ -127,11 +127,12 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             r.year === year && r.month === month && r.paid
           );
           
-          // Calculate revenue from paid records (would need tenant rent amounts)
-          // For now, use a proportion of current monthly revenue
-          const paidCount = monthRecords.length;
-          const totalTenants = Math.max(stats.totalTenants, 1);
-          monthlyRevenue = (stats.monthlyRevenue * paidCount) / totalTenants;
+          // Calculate actual revenue from paid records
+          if (monthRecords.length > 0) {
+            // Estimate based on average rent per tenant
+            const avgRentPerTenant = stats.monthlyRevenue / Math.max(stats.totalTenants, 1);
+            monthlyRevenue = monthRecords.length * avgRentPerTenant;
+          }
         } catch (error) {
           console.error('Error parsing payment records:', error);
         }

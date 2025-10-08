@@ -63,38 +63,30 @@ const Analytics = () => {
         // Calculate monthly revenue from actual unit rents
         const monthlyRevenue = units.filter(u => !u.is_available).reduce((sum, unit) => sum + (unit.monthly_rent || unit.rent_amount || 0), 0);
         
-        // Calculate collection rate for current month
-        const currentMonth = new Date().getMonth() + 1;
+        // Calculate collection rate from payment tracking table (tabla de seguimiento)
+        const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
         
-        const currentMonthPayments = payments.filter(p => {
-          const paymentDate = new Date(p.payment_date);
-          return paymentDate.getMonth() + 1 === currentMonth && 
-                 paymentDate.getFullYear() === currentYear &&
-                 p.status === 'completed';
-        });
+        const activeTenants = tenants.filter(t => t.is_active);
         
-        const activeTenants = tenants.filter(t => t.status === 'active');
+        // Get payment tracking data from localStorage (tabla de seguimiento de pagos)
+        const storageKey = `payment_records_${user?.id}_${currentYear}`;
+        const storedRecords = localStorage.getItem(storageKey);
+        let collectionRate = 0;
         
-        // Simplificar cálculo sin payment_receipts
-        const paidByReceipts = new Set();
-        const paidByPayments = new Set(currentMonthPayments.map(p => p.tenant_id));
-        const paidTenantIds = new Set([
-          ...Array.from(paidByPayments),
-          ...Array.from(paidByReceipts)
-        ]);
-        
-        const collectionRate = activeTenants.length > 0 ? (paidTenantIds.size / activeTenants.length) * 100 : 0;
-        
-        console.log('Analytics: Payment analysis:', {
-          currentMonth,
-          currentYear,
-          totalPayments: payments.length,
-          currentMonthPayments: currentMonthPayments.length,
-          activeTenants: activeTenants.length,
-          paidTenantIds: Array.from(paidTenantIds),
-          collectionRate
-        });
+        if (storedRecords && activeTenants.length > 0) {
+          try {
+            const records = JSON.parse(storedRecords);
+            const currentMonthPaidRecords = records.filter((r: any) => 
+              r.year === currentYear && r.month === currentMonth && r.paid
+            );
+            
+            collectionRate = (currentMonthPaidRecords.length / activeTenants.length) * 100;
+          } catch (error) {
+            console.error('Error calculating collection rate:', error);
+            collectionRate = 0;
+          }
+        }
 
         setKpis({
           totalUnits,
@@ -138,7 +130,41 @@ const Analytics = () => {
     return acc;
   }, {} as Record<string, number>);
   
-  // Generate occupancy and revenue trends with real data
+  // Generate real revenue data from payment tracking (tabla de seguimiento)
+  const getRealRevenueData = () => {
+    const currentYear = new Date().getFullYear();
+    const months = [];
+    
+    for (let month = 0; month < 12; month++) {
+      const monthName = new Date(currentYear, month, 1).toLocaleDateString('es-ES', { month: 'short' });
+      const storageKey = `payment_records_${user?.id}_${currentYear}`;
+      const storedRecords = localStorage.getItem(storageKey);
+      let monthlyRevenue = 0;
+      
+      if (storedRecords) {
+        try {
+          const records = JSON.parse(storedRecords);
+          const monthRecords = records.filter((r: any) => 
+            r.year === currentYear && r.month === month && r.paid
+          );
+          
+          // Calculate actual revenue from paid records
+          const avgRentPerTenant = kpis.monthlyRevenue / Math.max(kpis.activeTenants, 1);
+          monthlyRevenue = monthRecords.length * avgRentPerTenant;
+        } catch (error) {
+          console.error('Error parsing payment records:', error);
+        }
+      }
+      
+      months.push({
+        month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+        amount: Math.max(monthlyRevenue, 0)
+      });
+    }
+    
+    return months;
+  };
+
   const occupancyTrend = [
     { month: 'Ene', rate: Math.max(kpis.occupancyRate - 20, 45) },
     { month: 'Feb', rate: Math.max(kpis.occupancyRate - 15, 50) },
@@ -148,14 +174,7 @@ const Analytics = () => {
     { month: 'Jun', rate: kpis.occupancyRate },
   ];
   
-  const revenueTrend = [
-    { month: 'Ene', amount: Math.max(kpis.monthlyRevenue * 0.85, 0) },
-    { month: 'Feb', amount: Math.max(kpis.monthlyRevenue * 0.90, 0) },
-    { month: 'Mar', amount: Math.max(kpis.monthlyRevenue * 0.92, 0) },
-    { month: 'Abr', amount: Math.max(kpis.monthlyRevenue * 0.95, 0) },
-    { month: 'May', amount: Math.max(kpis.monthlyRevenue * 0.98, 0) },
-    { month: 'Jun', amount: Math.max(kpis.monthlyRevenue, 0) },
-  ];
+  const revenueTrend = getRealRevenueData();
   
   return (
     <Layout>
@@ -267,13 +286,16 @@ const Analytics = () => {
               {/* Revenue Tab */}
               <TabsContent value="revenue" className="space-y-6">
                 <Card className="p-6">
-                  <h3 className="text-lg font-medium mb-4">Tendencia de Ingresos</h3>
+                  <h3 className="text-lg font-medium mb-4">Ingresos Reales del Año {new Date().getFullYear()}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Basado en la tabla de seguimiento de pagos
+                  </p>
                   <div className="h-64">
-                    <AreaChart
+                    <BarChart
                       data={revenueTrend}
                       index="month"
                       categories={["amount"]}
-                      colors={["green"]}
+                      colors={["emerald"]}
                       valueFormatter={(value) => `€${value.toLocaleString()}`}
                     />
                   </div>

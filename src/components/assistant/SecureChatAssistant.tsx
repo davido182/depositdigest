@@ -30,7 +30,7 @@ export function SecureChatAssistant() {
     {
       id: '1',
       type: 'assistant',
-      content: '¡Hola! Soy tu asistente de RentaFlux. Puedo ayudarte con información sobre tus propiedades, inquilinos, pagos y más. ¿En qué puedo ayudarte?',
+      content: '¡Hola! 👋 Soy tu asistente personal de RentaFlux 🏠✨\n\n¡Estoy aquí para ayudarte con todo lo relacionado a tu negocio inmobiliario! 😊 Puedo contarte sobre tus propiedades, inquilinos, pagos, y hasta ayudarte a usar la aplicación.\n\n¿Qué te gustaría saber? 🤔',
       timestamp: new Date()
     }
   ]);
@@ -55,7 +55,7 @@ export function SecureChatAssistant() {
   const loadUserData = async () => {
     try {
       console.log('🔍 Loading user data for assistant...');
-      
+
       // Load all user data in parallel with error handling
       const [propertiesRes, tenantsRes, unitsRes, paymentsRes, maintenanceRes] = await Promise.all([
         supabase.from('properties').select('*').eq('landlord_id', user?.id).limit(50),
@@ -88,184 +88,226 @@ export function SecureChatAssistant() {
 
   const processUserQuery = async (query: string): Promise<string> => {
     if (!userData) {
-      return "Aún estoy cargando tus datos. Por favor espera un momento e intenta de nuevo.";
+      return "¡Un momentito! 🔄 Estoy cargando toda tu información para darte la mejor respuesta posible... ¡Ya casi termino! 😊";
     }
 
-    const lowerQuery = query.toLowerCase();
-    
-    // Análisis de intención seguro y limitado
+    // Normalizar query para mejor comprensión (tolerancia a errores de tipeo)
+    const normalizedQuery = query.toLowerCase()
+      .replace(/[áàäâ]/g, 'a')
+      .replace(/[éèëê]/g, 'e')
+      .replace(/[íìïî]/g, 'i')
+      .replace(/[óòöô]/g, 'o')
+      .replace(/[úùüû]/g, 'u')
+      .replace(/ñ/g, 'n')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
     try {
-      // Preguntas sobre propiedades
-      if (lowerQuery.includes('propiedad') || lowerQuery.includes('edificio')) {
-        return handlePropertyQueries(lowerQuery);
+      // Preguntas sobre ayuda/manual
+      if (normalizedQuery.includes('ayuda') || normalizedQuery.includes('como') || normalizedQuery.includes('manual') || normalizedQuery.includes('usar')) {
+        return handleHelpQueries(normalizedQuery);
       }
-      
-      // Preguntas sobre inquilinos
-      if (lowerQuery.includes('inquilino') || lowerQuery.includes('tenant')) {
-        return handleTenantQueries(lowerQuery);
+
+      // Preguntas sobre propiedades (más tolerante)
+      if (normalizedQuery.match(/(propiedad|edificio|inmueble|casa|departamento)/)) {
+        return handlePropertyQueries(normalizedQuery);
       }
-      
-      // Preguntas sobre pagos
-      if (lowerQuery.includes('pago') || lowerQuery.includes('renta') || lowerQuery.includes('dinero')) {
-        return handlePaymentQueries(lowerQuery);
+
+      // Preguntas sobre inquilinos (más tolerante)
+      if (normalizedQuery.match(/(inquilino|tenant|arrendatario|huesped)/)) {
+        return handleTenantQueries(normalizedQuery);
       }
-      
-      // Preguntas sobre unidades
-      if (lowerQuery.includes('unidad') || lowerQuery.includes('apartamento')) {
-        return handleUnitQueries(lowerQuery);
+
+      // Preguntas sobre pagos (más tolerante)
+      if (normalizedQuery.match(/(pago|renta|dinero|ingreso|cobro|plata|euro|ganancia)/)) {
+        return handlePaymentQueries(normalizedQuery);
       }
-      
-      // Preguntas sobre mantenimiento
-      if (lowerQuery.includes('mantenimiento') || lowerQuery.includes('reparación')) {
-        return handleMaintenanceQueries(lowerQuery);
+
+      // Preguntas sobre unidades (más tolerante)
+      if (normalizedQuery.match(/(unidad|apartamento|cuarto|habitacion|depto)/)) {
+        return handleUnitQueries(normalizedQuery);
       }
-      
-      // Resumen general
-      if (lowerQuery.includes('resumen') || lowerQuery.includes('estado') || lowerQuery.includes('todo')) {
+
+      // Preguntas sobre mantenimiento (más tolerante)
+      if (normalizedQuery.match(/(mantenimiento|reparacion|arreglo|problema|falla)/)) {
+        return handleMaintenanceQueries(normalizedQuery);
+      }
+
+      // Resumen general (más tolerante)
+      if (normalizedQuery.match(/(resumen|estado|todo|general|negocio|situacion)/)) {
         return handleGeneralSummary();
       }
-      
-      // Respuesta por defecto
+
+      // Saludos
+      if (normalizedQuery.match(/(hola|buenos|buenas|saludos)/)) {
+        return "¡Hola! 😊 ¡Qué gusto verte por aquí! 🎉 ¿En qué puedo ayudarte hoy con tu negocio inmobiliario? 🏠✨";
+      }
+
+      // Respuesta por defecto más amigable
       return generateHelpfulResponse();
-      
+
     } catch (error) {
       console.error('Error processing query:', error);
-      return "Lo siento, hubo un error procesando tu consulta. ¿Puedes intentar reformularla?";
+      return "¡Ups! 😅 Parece que tuve un pequeño problema procesando tu consulta. ¿Podrías intentar preguntármelo de otra manera? ¡Estoy aquí para ayudarte! 💪";
     }
   };
 
   const handlePropertyQueries = (query: string): string => {
     const { properties, units } = userData!;
-    
+
     if (query.includes('cuántas') || query.includes('total')) {
       return `Tienes ${properties.length} propiedades registradas con un total de ${units.length} unidades.`;
     }
-    
+
     if (query.includes('vacías') || query.includes('disponibles')) {
       const vacantUnits = units.filter(u => u.is_available);
       return `Actualmente tienes ${vacantUnits.length} unidades disponibles de ${units.length} totales.`;
     }
-    
+
     if (properties.length === 0) {
       return "Aún no tienes propiedades registradas. ¿Te gustaría que te ayude a crear tu primera propiedad?";
     }
-    
+
     const propertyList = properties.slice(0, 5).map(p => `• ${p.name} (${p.address})`).join('\n');
     return `Tienes ${properties.length} propiedades:\n${propertyList}${properties.length > 5 ? '\n... y más' : ''}`;
   };
 
   const handleTenantQueries = (query: string): string => {
     const { tenants } = userData!;
-    
+
     if (query.includes('cuántos') || query.includes('total')) {
       const activeTenants = tenants.filter(t => t.is_active);
       return `Tienes ${activeTenants.length} inquilinos activos de ${tenants.length} totales.`;
     }
-    
+
     if (query.includes('activos')) {
       const activeTenants = tenants.filter(t => t.is_active);
       if (activeTenants.length === 0) {
         return "No tienes inquilinos activos en este momento.";
       }
-      const tenantList = activeTenants.slice(0, 5).map(t => 
+      const tenantList = activeTenants.slice(0, 5).map(t =>
         `• ${t.first_name} ${t.last_name} - €${t.monthly_rent || 0}/mes`
       ).join('\n');
       return `Inquilinos activos (${activeTenants.length}):\n${tenantList}${activeTenants.length > 5 ? '\n... y más' : ''}`;
     }
-    
+
     if (tenants.length === 0) {
       return "Aún no tienes inquilinos registrados. ¿Te gustaría agregar tu primer inquilino?";
     }
-    
+
     return `Tienes ${tenants.length} inquilinos registrados, ${tenants.filter(t => t.is_active).length} están activos.`;
   };
 
   const handlePaymentQueries = (query: string): string => {
-    const { tenants, payments } = userData!;
-    
-    // Calcular ingresos mensuales potenciales
+    const { tenants } = userData!;
+
+    // Calcular ingresos mensuales reales
     const activeTenants = tenants.filter(t => t.is_active);
     const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.monthly_rent || 0), 0);
-    
-    if (query.includes('ingresos') || query.includes('gano')) {
-      return `Tus ingresos mensuales potenciales son €${monthlyRevenue.toLocaleString()} de ${activeTenants.length} inquilinos activos.`;
+
+    if (query.match(/(ingreso|gano|ganancia|dinero|plata)/)) {
+      if (monthlyRevenue === 0) {
+        return "🤔 Veo que aún no tienes ingresos configurados. ¡No te preocupes! 💪 Puedes agregar inquilinos con sus rentas en la sección de Inquilinos para empezar a generar ingresos. ¿Te ayudo con eso? 😊";
+      }
+      return `¡Excelente! 💰 Tus ingresos mensuales potenciales son de €${monthlyRevenue.toLocaleString()} provenientes de ${activeTenants.length} inquilinos activos. ¡Tu negocio está generando buenos resultados! 🎉`;
     }
-    
-    if (query.includes('pendientes') || query.includes('deben')) {
-      // Usar localStorage para pagos pendientes (como en el tracker)
+
+    if (query.match(/(pendiente|debe|pagar|cobrar)/)) {
+      // Usar localStorage para pagos pendientes (datos reales del tracker)
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth();
       const storageKey = `payment_records_${user?.id}_${currentYear}`;
       const storedRecords = localStorage.getItem(storageKey);
-      
+
       if (storedRecords) {
-        const records = JSON.parse(storedRecords);
-        const currentMonthRecords = records.filter((r: any) => 
-          r.year === currentYear && r.month === currentMonth && r.paid
-        );
-        const paidCount = currentMonthRecords.length;
-        const pendingCount = activeTenants.length - paidCount;
-        
-        if (pendingCount > 0) {
-          return `Tienes ${pendingCount} inquilinos con pagos pendientes este mes de ${activeTenants.length} totales.`;
-        } else {
-          return "¡Excelente! Todos tus inquilinos están al día con sus pagos este mes.";
+        try {
+          const records = JSON.parse(storedRecords);
+          const currentMonthRecords = records.filter((r: any) =>
+            r.year === currentYear && r.month === currentMonth && r.paid
+          );
+          const paidCount = currentMonthRecords.length;
+          const pendingCount = activeTenants.length - paidCount;
+
+          if (pendingCount > 0) {
+            return `📋 Tienes ${pendingCount} inquilinos con pagos pendientes este mes de ${activeTenants.length} totales. ¡Puedes revisar quiénes son en la tabla de seguimiento de pagos! 💼`;
+          } else {
+            return "¡Fantástico! 🎊 Todos tus inquilinos están al día con sus pagos este mes. ¡Excelente gestión! 👏";
+          }
+        } catch (error) {
+          console.error('Error parsing payment records:', error);
         }
       }
-      
-      return `Tienes ${activeTenants.length} inquilinos activos. Revisa la tabla de seguimiento de pagos para ver el estado actual.`;
+
+      if (activeTenants.length === 0) {
+        return "🏠 Aún no tienes inquilinos activos registrados. ¡Vamos a cambiar eso! Puedes agregar inquilinos en la sección correspondiente. ¿Te gustaría que te explique cómo? 😊";
+      }
+
+      return `📊 Tienes ${activeTenants.length} inquilinos activos. Para ver el estado exacto de los pagos, revisa la tabla de seguimiento en la sección de Pagos. ¡Ahí tienes todo el detalle! 📈`;
     }
-    
-    return `Tienes ${payments.length} registros de pagos en total. Tus ingresos mensuales potenciales son €${monthlyRevenue.toLocaleString()}.`;
+
+    if (activeTenants.length === 0) {
+      return "🏠 Veo que aún no tienes inquilinos activos. ¡Pero eso puede cambiar pronto! 🚀 Agrega tus primeros inquilinos para empezar a generar ingresos. ¿Te ayudo con el proceso? 😊";
+    }
+
+    return `💼 Tienes ${activeTenants.length} inquilinos activos generando €${monthlyRevenue.toLocaleString()} mensuales potenciales. ¡Tu negocio está en marcha! 🎯`;
   };
 
   const handleUnitQueries = (query: string): string => {
     const { units } = userData!;
-    
+
+    if (units.length === 0) {
+      return "🏠 Veo que aún no tienes unidades registradas. ¡Pero eso es fácil de solucionar! 😊 Crea tu primera propiedad y configura las unidades. ¿Te ayudo con el proceso? 🚀";
+    }
+
     const totalUnits = units.length;
     const occupiedUnits = units.filter(u => !u.is_available).length;
     const vacantUnits = totalUnits - occupiedUnits;
     const occupancyRate = totalUnits > 0 ? ((occupiedUnits / totalUnits) * 100).toFixed(1) : '0';
-    
-    if (query.includes('ocupación') || query.includes('ocupadas')) {
-      return `Tienes ${occupiedUnits} unidades ocupadas de ${totalUnits} totales (${occupancyRate}% de ocupación).`;
-    }
-    
-    if (query.includes('vacías') || query.includes('libres')) {
-      if (vacantUnits === 0) {
-        return "¡Excelente! Todas tus unidades están ocupadas.";
+
+    if (query.match(/(ocupacion|ocupada)/)) {
+      if (occupancyRate === '100.0') {
+        return `¡WOW! 🎉 ¡Tienes el 100% de ocupación! Todas tus ${totalUnits} unidades están ocupadas. ¡Eres un crack gestionando propiedades! 👏🏆`;
       }
-      return `Tienes ${vacantUnits} unidades disponibles de ${totalUnits} totales.`;
+      return `📊 Tienes ${occupiedUnits} unidades ocupadas de ${totalUnits} totales. ¡Eso es un ${occupancyRate}% de ocupación! ${parseFloat(occupancyRate) > 80 ? '¡Excelente trabajo! 🎯' : '¡Vamos por más! 💪'}`;
     }
-    
-    return `Resumen de unidades: ${totalUnits} totales, ${occupiedUnits} ocupadas, ${vacantUnits} disponibles (${occupancyRate}% ocupación).`;
+
+    if (query.match(/(vacia|libre|disponible)/)) {
+      if (vacantUnits === 0) {
+        return "¡INCREÍBLE! 🎊 ¡Todas tus unidades están ocupadas! No tienes ninguna vacía. ¡Eres todo un profesional! 🏆✨";
+      }
+      return `🏘️ Tienes ${vacantUnits} unidades disponibles de ${totalUnits} totales. ¡Oportunidades para crecer! 📈 ¿Necesitas ayuda para promocionarlas? 😊`;
+    }
+
+    const emoji = parseFloat(occupancyRate) > 80 ? '🎯' : parseFloat(occupancyRate) > 60 ? '📈' : '💪';
+    return `🏠 **Resumen de tus unidades:**\n• ${totalUnits} unidades totales\n• ${occupiedUnits} ocupadas ${emoji}\n• ${vacantUnits} disponibles\n• ${occupancyRate}% de ocupación\n\n${parseFloat(occupancyRate) > 80 ? '¡Excelente gestión! 👏' : '¡Sigamos creciendo! 🚀'}`;
   };
 
   const handleMaintenanceQueries = (query: string): string => {
     const { maintenance } = userData!;
-    
+
     const pendingMaintenance = maintenance.filter(m => m.status === 'pending');
     const urgentMaintenance = maintenance.filter(m => m.priority === 'high' || m.priority === 'emergency');
-    
+
     if (query.includes('pendientes') || query.includes('urgentes')) {
       if (pendingMaintenance.length === 0) {
         return "No tienes solicitudes de mantenimiento pendientes. ¡Todo está en orden!";
       }
       return `Tienes ${pendingMaintenance.length} solicitudes de mantenimiento pendientes, ${urgentMaintenance.length} son urgentes.`;
     }
-    
+
     return `Tienes ${maintenance.length} solicitudes de mantenimiento en total, ${pendingMaintenance.length} están pendientes.`;
   };
 
   const handleGeneralSummary = (): string => {
     const { properties, tenants, units, maintenance } = userData!;
-    
+
     const activeTenants = tenants.filter(t => t.is_active);
     const occupiedUnits = units.filter(u => !u.is_available).length;
     const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.monthly_rent || 0), 0);
     const pendingMaintenance = maintenance.filter(m => m.status === 'pending').length;
     const occupancyRate = units.length > 0 ? ((occupiedUnits / units.length) * 100).toFixed(1) : '0';
-    
+
     return `📊 **Resumen de tu negocio:**
 • ${properties.length} propiedades con ${units.length} unidades
 • ${activeTenants.length} inquilinos activos (${occupancyRate}% ocupación)
@@ -275,16 +317,24 @@ export function SecureChatAssistant() {
 ¿Te gustaría información más específica sobre algún área?`;
   };
 
-  const generateHelpfulResponse = (): string => {
-    return `Puedo ayudarte con información sobre:
-• **Propiedades**: "¿Cuántas propiedades tengo?" o "¿Qué unidades están vacías?"
-• **Inquilinos**: "¿Cuántos inquilinos activos tengo?" o "Lista mis inquilinos"
-• **Pagos**: "¿Cuáles son mis ingresos?" o "¿Quién debe pagos?"
-• **Unidades**: "¿Cuál es mi tasa de ocupación?" o "¿Qué unidades están libres?"
-• **Mantenimiento**: "¿Tengo solicitudes pendientes?" o "¿Hay algo urgente?"
-• **Resumen**: "Dame un resumen general" o "¿Cómo está mi negocio?"
+  const handleHelpQueries = (query: string): string => {
+    if (query.match(/(como.*agregar.*inquilino|crear.*inquilino)/)) {
+      return `¡Perfecto! 😊 Te explico cómo agregar un inquilino:\n\n1️⃣ Ve a la sección "Inquilinos" en el menú\n2️⃣ Haz clic en "Agregar Inquilino" 👤\n3️⃣ Llena los datos: nombre, email, teléfono, renta mensual\n4️⃣ Asigna una unidad (opcional)\n5️⃣ ¡Guarda y listo! 🎉\n\n💡 Tip: Asegúrate de tener propiedades creadas primero para asignar unidades.`;
+    }
 
-¿Qué te gustaría saber?`;
+    if (query.match(/(como.*crear.*propiedad|agregar.*propiedad)/)) {
+      return `¡Excelente pregunta! 🏠 Aquí te explico:\n\n1️⃣ Ve a "Propiedades" en el menú\n2️⃣ Clic en "Agregar Propiedad" ➕\n3️⃣ Ingresa: nombre, dirección, descripción\n4️⃣ Configura el número de unidades\n5️⃣ Personaliza nombres y rentas por unidad\n6️⃣ ¡Guarda! 💾\n\n🎯 Después podrás asignar inquilinos a las unidades.`;
+    }
+
+    if (query.match(/(como.*marcar.*pago|registrar.*pago)/)) {
+      return `¡Te ayudo con los pagos! 💰\n\n1️⃣ Ve a la sección "Pagos"\n2️⃣ Busca la tabla de seguimiento\n3️⃣ Marca la casilla del mes correspondiente ✅\n4️⃣ El sistema guarda automáticamente\n\n📊 También puedes usar el procesador de comprobantes para registrar pagos con archivos.`;
+    }
+
+    return `¡Hola! 👋 Soy tu asistente personal y estoy aquí para ayudarte con TODO sobre RentaFlux. ¡Pregúntame lo que necesites! 😊\n\n🔥 **Puedo ayudarte con:**\n• 🏠 **Propiedades**: "¿Cuántas propiedades tengo?"\n• 👥 **Inquilinos**: "¿Quiénes son mis inquilinos activos?"\n• 💰 **Pagos**: "¿Cuáles son mis ingresos?" \n• 🏘️ **Unidades**: "¿Qué unidades están libres?"\n• 🔧 **Mantenimiento**: "¿Tengo solicitudes urgentes?"\n• 📊 **Resumen**: "¿Cómo está mi negocio?"\n• ❓ **Ayuda**: "¿Cómo agrego un inquilino?"\n\n¡Pregúntame cualquier cosa! 🚀`;
+  };
+
+  const generateHelpfulResponse = (): string => {
+    return `¡Hola! 👋 Soy tu asistente personal y estoy aquí para ayudarte con TODO sobre RentaFlux. ¡Pregúntame lo que necesites! 😊\n\n🔥 **Puedo ayudarte con:**\n• 🏠 **Propiedades**: "¿Cuántas propiedades tengo?"\n• 👥 **Inquilinos**: "¿Quiénes son mis inquilinos activos?"\n• 💰 **Pagos**: "¿Cuáles son mis ingresos?" \n• 🏘️ **Unidades**: "¿Qué unidades están libres?"\n• 🔧 **Mantenimiento**: "¿Tengo solicitudes urgentes?"\n• 📊 **Resumen**: "¿Cómo está mi negocio?"\n• ❓ **Ayuda**: "¿Cómo agrego un inquilino?"\n\n¡Pregúntame cualquier cosa! 🚀`;
   };
 
   const handleSendMessage = async () => {
@@ -304,9 +354,9 @@ export function SecureChatAssistant() {
     try {
       // Simular tiempo de procesamiento
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       const response = await processUserQuery(userMessage.content);
-      
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
@@ -347,7 +397,7 @@ export function SecureChatAssistant() {
           </Badge>
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent className="flex-1 flex flex-col p-0">
         <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
           <div className="space-y-4 pb-4">
@@ -357,30 +407,28 @@ export function SecureChatAssistant() {
                 className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`flex gap-2 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    message.type === 'user' 
-                      ? 'bg-primary text-primary-foreground' 
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === 'user'
+                      ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-muted-foreground'
-                  }`}>
+                    }`}>
                     {message.type === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                   </div>
-                  <div className={`rounded-lg px-3 py-2 ${
-                    message.type === 'user'
+                  <div className={`rounded-lg px-3 py-2 ${message.type === 'user'
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-foreground'
-                  }`}>
+                    }`}>
                     <div className="text-sm whitespace-pre-wrap">{message.content}</div>
                     <div className="text-xs opacity-70 mt-1">
-                      {message.timestamp.toLocaleTimeString('es-ES', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
+                      {message.timestamp.toLocaleTimeString('es-ES', {
+                        hour: '2-digit',
+                        minute: '2-digit'
                       })}
                     </div>
                   </div>
                 </div>
               </div>
             ))}
-            
+
             {isLoading && (
               <div className="flex gap-3 justify-start">
                 <div className="flex gap-2">
@@ -398,7 +446,7 @@ export function SecureChatAssistant() {
             )}
           </div>
         </ScrollArea>
-        
+
         <div className="border-t p-4">
           <div className="flex gap-2">
             <Input
@@ -409,8 +457,8 @@ export function SecureChatAssistant() {
               disabled={isLoading}
               className="flex-1"
             />
-            <Button 
-              onClick={handleSendMessage} 
+            <Button
+              onClick={handleSendMessage}
               disabled={!inputValue.trim() || isLoading}
               size="icon"
             >

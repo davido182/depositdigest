@@ -129,6 +129,18 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
       return 'paid';
     }
     
+    // Check if tenant started after this month (don't mark as overdue)
+    const tenant = tenants.find(t => t.id === tenantId);
+    if (tenant && tenant.move_in_date) {
+      const moveInDate = new Date(tenant.move_in_date);
+      const monthDate = new Date(selectedYear, monthIndex, 1);
+      
+      // If tenant moved in after this month, don't mark as overdue
+      if (moveInDate > monthDate) {
+        return 'future'; // Not applicable for this tenant
+      }
+    }
+    
     // If it's a future month, return future status
     if (selectedYear > currentYear || (selectedYear === currentYear && monthIndex > currentMonth)) {
       return 'future';

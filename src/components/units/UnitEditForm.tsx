@@ -38,7 +38,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
   useEffect(() => {
     if (isOpen && unit) {
       console.log('🔄 UnitEditForm opened with unit:', unit);
-      
+
       // Load tenants first, then set the selected tenant
       loadAvailableTenants().then(() => {
         // Find the tenant assigned to this unit
@@ -50,7 +50,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
   const findAssignedTenant = async (unitId: string) => {
     try {
       console.log('🔍 Finding tenant assigned to unit:', unitId);
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -78,7 +78,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
   const loadAvailableTenants = async () => {
     try {
       console.log('🔍 Loading tenants for unit assignment...');
-      
+
       // Get current user to filter tenants
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -86,9 +86,9 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         setAvailableTenants([]);
         return;
       }
-      
+
       console.log('👤 Current user:', user.id);
-      
+
       // Get all tenants for this user
       const { data, error } = await supabase
         .from('tenants')
@@ -100,16 +100,16 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         setAvailableTenants([]);
         return;
       }
-      
+
       console.log('📊 Raw tenants data from supabase:', data);
-      
+
       // Map the data to our interface
       const mappedTenants = (data || []).map(tenant => ({
         id: tenant.id,
         name: `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || `Inquilino ${tenant.id.slice(0, 8)}`,
         email: tenant.email || 'Sin email'
       }));
-      
+
       console.log('✅ Mapped tenants for selection:', mappedTenants);
       setAvailableTenants(mappedTenants);
       console.log(`🎯 Successfully loaded ${mappedTenants.length} tenants for unit assignment`);
@@ -155,7 +155,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
             .from('tenants')
             .update({ monthly_rent: unitRent })
             .eq('id', tenantId);
-          
+
           toast.success(`Renta del inquilino actualizada a €${unitRent}`);
         }
       }
@@ -171,7 +171,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!unit) {
       console.log('No unit provided');
       return;
@@ -180,7 +180,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     try {
       setIsLoading(true);
       console.log('🔄 Processing tenant assignment:', selectedTenantId);
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('Usuario no autenticado');
@@ -204,7 +204,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
           const tenantName = `${existingAssignment.first_name} ${existingAssignment.last_name}`.trim();
           const currentUnit = existingAssignment.units?.unit_number || 'Unidad desconocida';
           const currentProperty = existingAssignment.units?.properties?.name || 'Propiedad desconocida';
-          
+
           const confirmed = confirm(
             `⚠️ INQUILINO YA ASIGNADO\n\n` +
             `${tenantName} ya está asignado a:\n` +
@@ -223,7 +223,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         } else {
           // Verificar diferencia de renta
           await checkRentDifference(selectedTenantId, unit.monthly_rent || 0);
-          
+
           // Asignación normal
           await assignTenantToUnit(selectedTenantId, unit.id, user.id);
         }
@@ -231,13 +231,13 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         // Desasignar inquilino de esta unidad
         await unassignTenantFromUnit(unit.id, user.id);
       }
-      
+
       console.log('✅ Unit assignment processed successfully');
-      
+
       // Close the form and show success message
       onClose();
       toast.success("Cambios guardados correctamente");
-      
+
       // Refresh parent component
       if (onSave) {
         const updatedUnit: Unit = {
@@ -341,7 +341,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         <DialogHeader>
           <DialogTitle>Editar Unidad</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid gap-2">
             {/* Información de la unidad (solo lectura) */}
