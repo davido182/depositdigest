@@ -77,14 +77,14 @@ María García,maria@email.com,555-0124`;
       // Intentar importar como inquilinos con diferentes nombres de columna
       const tenants = data.map(row => {
         const tenant: any = {
-          user_id: user.id,
-          status: 'active'
+          landlord_id: user.id,
+          is_active: true
         };
 
         // Probar diferentes nombres de columna para nombre
         if (row.nombre) tenant.name = row.nombre;
         else if (row.name) tenant.name = row.name;
-        else if (row.full_name) tenant.full_name = row.full_name;
+        else if (row.full_name) tenant.name = row.full_name;
         else tenant.name = 'Sin nombre';
 
         // Email
@@ -95,7 +95,7 @@ María García,maria@email.com,555-0124`;
         else if (row.phone) tenant.phone = row.phone;
 
         // Otros campos opcionales
-        if (row.numero_unidad) tenant.unit_number = row.numero_unidad;
+        if (row.numero_unidad) tenant.property_name = row.numero_unidad;
         if (row.monto_alquiler) tenant.rent_amount = parseFloat(row.monto_alquiler) || 0;
 
         return tenant;

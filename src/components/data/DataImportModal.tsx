@@ -157,14 +157,15 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
       name: row.nombre.trim(),
       email: row.email.trim(),
       phone: row.telefono?.trim() || null,
-      unit_number: row.numero_unidad?.trim() || null,
+      property_name: row.numero_unidad?.trim() || null,
       lease_start_date: row.fecha_inicio_contrato || null,
       lease_end_date: row.fecha_fin_contrato || null,
       rent_amount: parseFloat(row.monto_alquiler) || 0,
       deposit_amount: parseFloat(row.deposito) || 0,
       status: row.estado?.trim() || 'active',
       notes: row.notas?.trim() || null,
-      user_id: user?.id
+      landlord_id: user?.id,
+      is_active: true
     }));
 
     console.log('📤 Enviando a Supabase:', tenants);
@@ -188,7 +189,8 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
       name: row.nombre,
       address: row.direccion || null,
       description: row.descripcion || null,
-      total_units: parseInt(row.total_unidades) || 1
+      total_units: parseInt(row.total_unidades) || 1,
+      landlord_id: user?.id
     }));
 
     const { data: result, error } = await supabase

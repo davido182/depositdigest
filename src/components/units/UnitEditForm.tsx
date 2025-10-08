@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -54,11 +53,11 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Find tenant with this unit_id
+      // Find tenant with this property_id (unit assignment)
       const { data: tenant, error } = await supabase
         .from('tenants')
-        .select('id, first_name, last_name')
-        .eq('unit_id', unitId)
+        .select('id, name')
+        .eq('property_id', unitId)
         .eq('landlord_id', user.id)
         .single();
 
@@ -103,10 +102,10 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
       console.log('📊 Raw tenants data from supabase:', data);
 
-      // Map the data to our interface
+      // Map the data to our interface using correct field names
       const mappedTenants = (data || []).map(tenant => ({
         id: tenant.id,
-        name: `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || `Inquilino ${tenant.id.slice(0, 8)}`,
+        name: tenant.name || `Inquilino ${tenant.id.slice(0, 8)}`,
         email: tenant.email || 'Sin email'
       }));
 
@@ -128,7 +127,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
       // Obtener la renta actual del inquilino
       const { data: tenantData, error } = await supabase
         .from('tenants')
-        .select('monthly_rent, first_name, last_name')
+        .select('rent_amount, name')
         .eq('id', tenantId)
         .single();
 
@@ -137,8 +136,8 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         return;
       }
 
-      const tenantRent = tenantData.monthly_rent || 0;
-      const tenantName = `${tenantData.first_name} ${tenantData.last_name}`.trim();
+      const tenantRent = tenantData.rent_amount || 0;
+      const tenantName = tenantData.name;
 
       if (Math.abs(tenantRent - unitRent) > 0.01) { // Diferencia mayor a 1 centavo
         const confirmed = confirm(
@@ -153,7 +152,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
           // Actualizar la renta del inquilino
           await supabase
             .from('tenants')
-            .update({ monthly_rent: unitRent })
+            .update({ rent_amount: unitRent })
             .eq('id', tenantId);
 
           toast.success(`Renta del inquilino actualizada a €${unitRent}`);
@@ -164,10 +163,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     }
   };
 
-  const validateForm = () => {
-    // No validation needed for tenant assignment
-    return true;
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,7 +187,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         // Verificar si el inquilino ya tiene otra unidad asignada
         const { data: existingAssignment, error: checkError } = await supabase
           .from('tenants')
-          .select('id, first_name, last_name, unit_id, units(unit_number, properties(name))')
+          .select('id, name, property_id')
           .eq('id', selectedTenantId)
           .single();
 
@@ -200,10 +196,10 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         }
 
         // Si el inquilino ya tiene una unidad asignada
-        if (existingAssignment.unit_id && existingAssignment.unit_id !== unit.id) {
-          const tenantName = `${existingAssignment.first_name} ${existingAssignment.last_name}`.trim();
-          const currentUnit = existingAssignment.units?.unit_number || 'Unidad desconocida';
-          const currentProperty = existingAssignment.units?.properties?.name || 'Propiedad desconocida';
+        if (existingAssignment.property_id && existingAssignment.property_id !== unit.id) {
+          const tenantName = existingAssignment.name;
+          const currentUnit = 'Otra unidad';
+          const currentProperty = 'Otra propiedad';
 
           const confirmed = confirm(
             `⚠️ INQUILINO YA ASIGNADO\n\n` +
@@ -258,7 +254,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     // Asignar inquilino a esta unidad
     const { error: assignError } = await supabase
       .from('tenants')
-      .update({ unit_id: unitId })
+      .update({ property_id: unitId })
       .eq('id', tenantId)
       .eq('landlord_id', userId);
 
@@ -281,8 +277,8 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     // Desasignar inquilino de esta unidad
     const { error: unassignError } = await supabase
       .from('tenants')
-      .update({ unit_id: null })
-      .eq('unit_id', unitId)
+      .update({ property_id: null })
+      .eq('property_id', unitId)
       .eq('landlord_id', userId);
 
     if (unassignError) {
@@ -306,13 +302,12 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
       .from('tenants')
       .insert({
         landlord_id: userId,
-        first_name: originalTenant.first_name,
-        last_name: originalTenant.last_name,
+        name: originalTenant.name,
         email: originalTenant.email,
         phone: originalTenant.phone,
-        unit_id: targetUnit.id,
-        monthly_rent: targetUnit.monthly_rent || 0,
-        move_in_date: new Date().toISOString().split('T')[0],
+        property_id: targetUnit.id,
+        rent_amount: targetUnit.monthly_rent || 0,
+        lease_start_date: new Date().toISOString().split('T')[0],
         is_active: true
       });
 

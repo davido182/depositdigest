@@ -9,13 +9,17 @@ export interface Tenant {
   moveInDate: string;
   leaseEndDate: string;
   rentAmount: number;
+  rent_amount?: number; // Alias para compatibilidad con BD
   depositAmount: number;
   status: TenantStatus;
+  is_active?: boolean; // Campo de BD
   paymentHistory: Payment[];
   notes?: string;
   createdAt: string;
   updatedAt: string;
   landlordId?: string;
+  landlord_id?: string; // Campo de BD
+  property_id?: string; // Campo de BD para asignación de unidad
   // Información de la propiedad
   propertyName?: string;
   propertyAddress?: string;

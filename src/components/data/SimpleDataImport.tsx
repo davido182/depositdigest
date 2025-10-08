@@ -91,10 +91,11 @@ pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed`;
           name: row.nombre || row.name || '',
           email: row.email || '',
           phone: row.telefono || row.phone || null,
-          unit_number: row.numero_unidad || row.unit_number || null,
+          property_name: row.numero_unidad || row.unit_number || null,
           rent_amount: parseFloat(row.monto_alquiler || row.rent_amount || '0') || 0,
           status: row.estado || 'active',
-          user_id: user?.id
+          landlord_id: user?.id,
+          is_active: true
         });
       } else if (tipo === 'propiedad' || (tipo === 'auto' && row.direccion)) {
         properties.push({
@@ -102,7 +103,7 @@ pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed`;
           address: row.direccion || row.address || '',
           description: row.descripcion || row.description || null,
           total_units: parseInt(row.total_unidades || row.total_units || '1') || 1,
-          user_id: user?.id
+          landlord_id: user?.id
         });
       } else if (tipo === 'pago' || (tipo === 'auto' && row.fecha_pago)) {
         // Para pagos, necesitamos encontrar el tenant_id por email

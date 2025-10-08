@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar, DollarSign, FileCheck, FileX } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+
 import { useAuth } from "@/contexts/AuthContext";
 
 interface PaymentRecord {
@@ -131,8 +131,8 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
     
     // Check if tenant started after this month (don't mark as overdue)
     const tenant = tenants.find(t => t.id === tenantId);
-    if (tenant && tenant.move_in_date) {
-      const moveInDate = new Date(tenant.move_in_date);
+    if (tenant && tenant.moveInDate) {
+      const moveInDate = new Date(tenant.moveInDate);
       const monthDate = new Date(selectedYear, monthIndex, 1);
       
       // If tenant moved in after this month, don't mark as overdue

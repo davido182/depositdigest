@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Send, Bot, User, Loader2, MessageCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+
 
 interface Message {
   id: string;
@@ -104,6 +104,11 @@ export function SecureChatAssistant() {
       .trim();
 
     try {
+      // Preguntas sobre RentaFlux
+      if (normalizedQuery.match(/(que es|rentaflux|aplicacion|plataforma|sistema)/)) {
+        return handleRentaFluxQueries(normalizedQuery);
+      }
+
       // Preguntas sobre ayuda/manual
       if (normalizedQuery.includes('ayuda') || normalizedQuery.includes('como') || normalizedQuery.includes('manual') || normalizedQuery.includes('usar')) {
         return handleHelpQueries(normalizedQuery);
@@ -144,8 +149,8 @@ export function SecureChatAssistant() {
         return "¡Hola! 😊 ¡Qué gusto verte por aquí! 🎉 ¿En qué puedo ayudarte hoy con tu negocio inmobiliario? 🏠✨";
       }
 
-      // Respuesta por defecto más amigable
-      return generateHelpfulResponse();
+      // Respuesta conversacional por defecto
+      return generateConversationalResponse(normalizedQuery);
 
     } catch (error) {
       console.error('Error processing query:', error);
@@ -187,7 +192,7 @@ export function SecureChatAssistant() {
         return "No tienes inquilinos activos en este momento.";
       }
       const tenantList = activeTenants.slice(0, 5).map(t =>
-        `• ${t.first_name} ${t.last_name} - €${t.monthly_rent || 0}/mes`
+        `• ${t.name} - €${t.rent_amount || 0}/mes`
       ).join('\n');
       return `Inquilinos activos (${activeTenants.length}):\n${tenantList}${activeTenants.length > 5 ? '\n... y más' : ''}`;
     }
@@ -204,7 +209,7 @@ export function SecureChatAssistant() {
 
     // Calcular ingresos mensuales reales
     const activeTenants = tenants.filter(t => t.is_active);
-    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.monthly_rent || 0), 0);
+    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.rent_amount || 0), 0);
 
     if (query.match(/(ingreso|gano|ganancia|dinero|plata)/)) {
       if (monthlyRevenue === 0) {
@@ -304,7 +309,7 @@ export function SecureChatAssistant() {
 
     const activeTenants = tenants.filter(t => t.is_active);
     const occupiedUnits = units.filter(u => !u.is_available).length;
-    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.monthly_rent || 0), 0);
+    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.rent_amount || 0), 0);
     const pendingMaintenance = maintenance.filter(m => m.status === 'pending').length;
     const occupancyRate = units.length > 0 ? ((occupiedUnits / units.length) * 100).toFixed(1) : '0';
 
@@ -317,25 +322,43 @@ export function SecureChatAssistant() {
 ¿Te gustaría información más específica sobre algún área?`;
   };
 
+  const handleRentaFluxQueries = (query: string): string => {
+    return `🏠 **RentaFlux** es tu plataforma completa de gestión inmobiliaria! 🚀\n\nTe ayuda a:\n• 🏢 **Gestionar propiedades** y unidades\n• 👥 **Administrar inquilinos** y contratos\n• 💰 **Controlar pagos** y finanzas\n• 🔧 **Manejar mantenimiento** y solicitudes\n• 📊 **Analizar tu negocio** con reportes\n\n¡Todo en un solo lugar para que tu negocio inmobiliario sea más eficiente! ✨`;
+  };
+
   const handleHelpQueries = (query: string): string => {
     if (query.match(/(como.*agregar.*inquilino|crear.*inquilino)/)) {
-      return `¡Perfecto! 😊 Te explico cómo agregar un inquilino:\n\n1️⃣ Ve a la sección "Inquilinos" en el menú\n2️⃣ Haz clic en "Agregar Inquilino" 👤\n3️⃣ Llena los datos: nombre, email, teléfono, renta mensual\n4️⃣ Asigna una unidad (opcional)\n5️⃣ ¡Guarda y listo! 🎉\n\n💡 Tip: Asegúrate de tener propiedades creadas primero para asignar unidades.`;
+      return `¡Perfecto! 😊 **Manual: Agregar Inquilino**\n\n📋 **Pasos detallados:**\n1️⃣ Ve a la sección "Inquilinos" en el menú lateral\n2️⃣ Haz clic en "Agregar Inquilino" 👤\n3️⃣ **Datos básicos**: nombre, apellido, email, teléfono\n4️⃣ **Datos financieros**: renta mensual, depósito\n5️⃣ **Fechas**: inicio y fin de contrato\n6️⃣ **Asignar unidad** (opcional, puedes hacerlo después)\n7️⃣ ¡Guarda y listo! 🎉\n\n💡 **Tip**: Crea primero las propiedades para tener unidades disponibles.`;
     }
 
     if (query.match(/(como.*crear.*propiedad|agregar.*propiedad)/)) {
-      return `¡Excelente pregunta! 🏠 Aquí te explico:\n\n1️⃣ Ve a "Propiedades" en el menú\n2️⃣ Clic en "Agregar Propiedad" ➕\n3️⃣ Ingresa: nombre, dirección, descripción\n4️⃣ Configura el número de unidades\n5️⃣ Personaliza nombres y rentas por unidad\n6️⃣ ¡Guarda! 💾\n\n🎯 Después podrás asignar inquilinos a las unidades.`;
+      return `🏠 **Manual: Crear Propiedad**\n\n📋 **Proceso completo:**\n1️⃣ Ve a "Propiedades" → "Agregar Propiedad" ➕\n2️⃣ **Información básica**:\n   • Nombre de la propiedad\n   • Dirección completa\n   • Descripción (opcional)\n3️⃣ **Configurar unidades**:\n   • Número de unidades\n   • Nombres personalizados (Ej: 101, 102, A, B)\n   • Renta mensual por unidad\n4️⃣ **Guardar** 💾\n\n🎯 **Después podrás**: editar unidades, asignar inquilinos, gestionar pagos.`;
     }
 
     if (query.match(/(como.*marcar.*pago|registrar.*pago)/)) {
-      return `¡Te ayudo con los pagos! 💰\n\n1️⃣ Ve a la sección "Pagos"\n2️⃣ Busca la tabla de seguimiento\n3️⃣ Marca la casilla del mes correspondiente ✅\n4️⃣ El sistema guarda automáticamente\n\n📊 También puedes usar el procesador de comprobantes para registrar pagos con archivos.`;
+      return `💰 **Manual: Gestión de Pagos**\n\n📋 **Tabla de Seguimiento:**\n1️⃣ Ve a "Pagos" → "Tabla de Seguimiento"\n2️⃣ Selecciona el año que quieres ver\n3️⃣ **Marcar pago**: haz clic en la casilla del mes ✅\n4️⃣ El sistema guarda automáticamente\n\n📊 **Procesador de Comprobantes:**\n1️⃣ Ve a "Pagos" → "Procesar Comprobantes"\n2️⃣ Sube archivos PDF/imágenes de recibos\n3️⃣ El sistema extrae la información automáticamente\n4️⃣ Confirma y guarda\n\n🎨 **Estados de pago**: Verde=Pagado, Amarillo=Pendiente, Rojo=Vencido, Gris=Futuro`;
     }
 
-    return `¡Hola! 👋 Soy tu asistente personal y estoy aquí para ayudarte con TODO sobre RentaFlux. ¡Pregúntame lo que necesites! 😊\n\n🔥 **Puedo ayudarte con:**\n• 🏠 **Propiedades**: "¿Cuántas propiedades tengo?"\n• 👥 **Inquilinos**: "¿Quiénes son mis inquilinos activos?"\n• 💰 **Pagos**: "¿Cuáles son mis ingresos?" \n• 🏘️ **Unidades**: "¿Qué unidades están libres?"\n• 🔧 **Mantenimiento**: "¿Tengo solicitudes urgentes?"\n• 📊 **Resumen**: "¿Cómo está mi negocio?"\n• ❓ **Ayuda**: "¿Cómo agrego un inquilino?"\n\n¡Pregúntame cualquier cosa! 🚀`;
+    if (query.match(/(como.*usar.*contabilidad|contabilidad)/)) {
+      return `📊 **Manual: Contabilidad**\n\n💰 **Sección de Ingresos:**\n• Ve a "Contabilidad" para ver resumen financiero\n• Los ingresos se calculan automáticamente desde la tabla de pagos\n• Puedes ver ingresos mensuales y anuales\n\n📈 **Gastos e Impuestos:**\n• Registra gastos de mantenimiento\n• Configura impuestos y deducciones\n• El sistema calcula automáticamente el neto\n\n📋 **Reportes**: Exporta reportes en PDF para contabilidad externa.`;
+    }
+
+    return `📚 **Manual de Usuario - RentaFlux**\n\n🏠 **PROPIEDADES:**\n• Crear/editar propiedades\n• Configurar unidades y rentas\n• Gestionar disponibilidad\n\n👥 **INQUILINOS:**\n• Agregar inquilinos con contratos\n• Asignar a unidades específicas\n• Gestionar fechas de entrada/salida\n\n💰 **PAGOS:**\n• Tabla de seguimiento mensual\n• Procesador de comprobantes\n• Estados: Pagado/Pendiente/Vencido\n\n📊 **CONTABILIDAD:**\n• Ingresos automáticos\n• Registro de gastos\n• Cálculo de impuestos\n\n¿Sobre qué sección específica te gustaría saber más? 🤔`;
   };
 
-  const generateHelpfulResponse = (): string => {
-    return `¡Hola! 👋 Soy tu asistente personal y estoy aquí para ayudarte con TODO sobre RentaFlux. ¡Pregúntame lo que necesites! 😊\n\n🔥 **Puedo ayudarte con:**\n• 🏠 **Propiedades**: "¿Cuántas propiedades tengo?"\n• 👥 **Inquilinos**: "¿Quiénes son mis inquilinos activos?"\n• 💰 **Pagos**: "¿Cuáles son mis ingresos?" \n• 🏘️ **Unidades**: "¿Qué unidades están libres?"\n• 🔧 **Mantenimiento**: "¿Tengo solicitudes urgentes?"\n• 📊 **Resumen**: "¿Cómo está mi negocio?"\n• ❓ **Ayuda**: "¿Cómo agrego un inquilino?"\n\n¡Pregúntame cualquier cosa! 🚀`;
+  const generateConversationalResponse = (query: string): string => {
+    // Respuestas más conversacionales basadas en el contexto
+    const responses = [
+      "🤔 Hmm, no estoy seguro de entender exactamente lo que necesitas. ¿Podrías ser más específico? Por ejemplo, ¿te refieres a propiedades, inquilinos, o pagos?",
+      "😊 ¡Interesante pregunta! Para ayudarte mejor, ¿podrías decirme si buscas información sobre tus datos actuales o necesitas ayuda para usar alguna función?",
+      "🎯 Quiero asegurarme de darte la información correcta. ¿Tu consulta es sobre el estado actual de tu negocio o necesitas ayuda con algún proceso específico?",
+      "💡 ¡Perfecto! Estoy aquí para ayudarte. ¿Te gustaría que te muestre un resumen de tu negocio o prefieres que te explique cómo usar alguna función específica?"
+    ];
+
+    return responses[Math.floor(Math.random() * responses.length)];
   };
+
+
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -379,7 +402,7 @@ export function SecureChatAssistant() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -408,14 +431,14 @@ export function SecureChatAssistant() {
               >
                 <div className={`flex gap-2 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground'
                     }`}>
                     {message.type === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                   </div>
                   <div className={`rounded-lg px-3 py-2 ${message.type === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-foreground'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-foreground'
                     }`}>
                     <div className="text-sm whitespace-pre-wrap">{message.content}</div>
                     <div className="text-xs opacity-70 mt-1">
@@ -452,7 +475,7 @@ export function SecureChatAssistant() {
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               placeholder="Pregúntame sobre tus propiedades, inquilinos, pagos..."
               disabled={isLoading}
               className="flex-1"

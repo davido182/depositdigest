@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Edit, Trash2, Plus } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { unitService } from "@/services/UnitService";
 import { UnitEditForm } from "../units/UnitEditForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,13 +16,13 @@ const TenantName = ({ unitId }: { unitId: string }) => {
       try {
         const { data: tenant, error } = await supabase
           .from('tenants')
-          .select('first_name, last_name')
-          .eq('unit_id', unitId)
+          .select('name')
+          .eq('property_id', unitId)
+          .eq('is_active', true)
           .single();
 
         if (!error && tenant) {
-          const name = `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim();
-          setTenantName(name || 'Inquilino');
+          setTenantName(tenant.name || 'Inquilino');
         }
       } catch (error) {
         console.log('Could not load tenant name for unit:', unitId);
@@ -60,6 +59,8 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
   const [loading, setLoading] = useState(true);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [newUnitNumber, setNewUnitNumber] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
 
   useEffect(() => {
@@ -113,12 +114,27 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
       console.log('✅ Unit updated successfully in database:', result);
 
       // If assigning a tenant, also update the tenant record
-      if (updatedUnit.tenant_id) {
+      if (updatedUnit.tenant_id && updatedUnit.tenant_id !== 'empty-value' && updatedUnit.tenant_id !== '') {
         try {
           const { supabase } = await import("@/integrations/supabase/client");
+          
+          // Validate that the tenant_id is a valid UUID
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+          if (!uuidRegex.test(updatedUnit.tenant_id)) {
+            console.log('Invalid tenant ID, skipping tenant assignment');
+            return;
+          }
+
+          // First, clear any existing tenant assignments for this unit
+          await supabase
+            .from('tenants')
+            .update({ property_id: null })
+            .eq('property_id', updatedUnit.id);
+
+          // Then assign the new tenant
           const { error: tenantError } = await supabase
             .from('tenants')
-            .update({ unit_id: updatedUnit.id })
+            .update({ property_id: updatedUnit.id })
             .eq('id', updatedUnit.tenant_id);
 
           if (tenantError) {
@@ -157,29 +173,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
     }
   };
 
-  const handleCreateUnit = async () => {
-    if (!newUnitNumber.trim()) {
-      toast.error("El número de unidad es requerido");
-      return;
-    }
 
-    try {
-      const newUnit = await unitService.createUnit({
-        property_id: propertyId,
-        unit_number: newUnitNumber,
-        monthly_rent: 0,
-        is_available: true,
-      });
-
-      setUnits(prev => [...prev, newUnit]);
-      setNewUnitNumber("");
-      setShowCreateForm(false);
-      toast.success("Unidad creada correctamente");
-    } catch (error) {
-      console.error('Error creating unit:', error);
-      toast.error("Error al crear unidad");
-    }
-  };
 
   if (loading) {
     return (
