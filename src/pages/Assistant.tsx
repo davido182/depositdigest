@@ -1,6 +1,6 @@
 
 import { Layout } from "@/components/Layout";
-import { ChatAssistantImproved as ChatAssistant } from "@/components/assistant/ChatAssistantImproved";
+import { SecureChatAssistant as ChatAssistant } from "@/components/assistant/SecureChatAssistant";
 
 const Assistant = () => {
   return (

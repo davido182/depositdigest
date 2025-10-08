@@ -20,7 +20,7 @@ import { tenantService } from "@/services/TenantService";
 import { useAppData } from "@/hooks/use-app-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { SmartNotifications } from "@/components/dashboard/SmartNotifications";
+
 
 interface Property {
   id: string;
@@ -244,7 +244,6 @@ const Dashboard = () => {
         <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between items-center'}`}>
           <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>Dashboard</h1>
           <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
-            <SmartNotifications />
 
             {/* Botón de importar datos - solo para usuarios premium */}
             {console.log('Dashboard: userRole =', userRole)}
