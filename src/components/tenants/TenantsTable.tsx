@@ -37,6 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TenantsTableProps {
   tenants: Tenant[];
@@ -45,6 +46,7 @@ interface TenantsTableProps {
 }
 
 export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsTableProps) {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("unit");
@@ -99,12 +101,39 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
   };
 
   const getCurrentMonthPaymentStatus = (tenant: Tenant) => {
-    // Simulación del estado de pago del mes actual
-    // En una implementación real, esto vendría de la base de datos
-    const random = Math.random();
-    if (random > 0.7) return "paid";
-    if (random > 0.4) return "pending";
-    return "overdue";
+    try {
+      // Get payment tracking from localStorage (same as TenantPaymentTracker)
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth();
+      const currentDay = new Date().getDate();
+      
+      // Get payment records for current user
+      const storageKey = `payment_records_${user?.id}_${currentYear}`;
+      const storedRecords = localStorage.getItem(storageKey);
+      
+      if (storedRecords) {
+        const records = JSON.parse(storedRecords);
+        const tenantPayment = records.find((r: any) => 
+          r.tenantId === tenant.id && 
+          r.year === currentYear && 
+          r.month === currentMonth
+        );
+        
+        if (tenantPayment && tenantPayment.paid) {
+          return "paid";
+        }
+      }
+      
+      // If not paid, determine if overdue or pending
+      if (currentDay > 5) {
+        return "overdue"; // Consider overdue after 5th of month
+      } else {
+        return "pending"; // Still within grace period
+      }
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      return "pending";
+    }
   };
 
   const getNextPaymentDate = (tenant: Tenant) => {

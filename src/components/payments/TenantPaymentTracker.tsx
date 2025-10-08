@@ -284,7 +284,7 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
                    <TableRow key={tenant.id}>
                      <TableCell className="font-medium">
                        <div className="text-xs text-muted-foreground">
-                         Edificio {tenant.unit.substring(0, 1)}
+                         {tenant.propertyName || 'Sin propiedad'}
                        </div>
                      </TableCell>
                      <TableCell className="font-medium">

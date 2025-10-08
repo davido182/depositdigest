@@ -47,58 +47,34 @@ export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessor
 
   const processReceipt = async (file: File) => {
     setIsProcessing(true);
-    console.log('Iniciando procesamiento del comprobante:', file.name);
+    console.log('Procesando comprobante:', file.name);
     
     try {
-      // Simular procesamiento OCR mejorado
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simular tiempo de procesamiento
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Datos simulados más realistas basados en el nombre del archivo
-      const fileName = file.name.toLowerCase();
-      let amount = 800; // Default amount
-      
-      // Intentar extraer monto del nombre del archivo
-      const amountMatch = fileName.match(/(\d+(?:\.\d{2})?)/);
-      if (amountMatch) {
-        amount = parseFloat(amountMatch[1]);
-      }
-      
-      // Intentar extraer fecha del nombre del archivo
-      let extractedDate = new Date().toISOString().split('T')[0];
-      const dateMatch = fileName.match(/(\d{4}[-_]\d{2}[-_]\d{2})|(\d{2}[-_]\d{2}[-_]\d{4})/);
-      if (dateMatch) {
-        const dateStr = dateMatch[0].replace(/_/g, '-');
-        try {
-          const parsedDate = new Date(dateStr);
-          if (!isNaN(parsedDate.getTime())) {
-            extractedDate = parsedDate.toISOString().split('T')[0];
-          }
-        } catch (e) {
-          console.log('Could not parse date from filename');
-        }
-      }
-      
+      // En lugar de inventar datos, solo preparar el formulario para entrada manual
       const mockExtractedData: ExtractedData = {
-        amount: amount,
-        date: extractedDate,
-        description: `Pago de renta - ${file.name}`,
-        reference: `REF${Date.now()}`,
-        fileName: file.name
+        fileName: file.name,
+        description: `Comprobante: ${file.name}`,
+        date: new Date().toISOString().split('T')[0], // Fecha actual por defecto
+        // No inventar monto - dejar que el usuario lo ingrese
       };
       
-      console.log('Datos extraídos:', mockExtractedData);
+      console.log('Archivo cargado:', mockExtractedData);
       
       setExtractedData(mockExtractedData);
       setVerificationData(prev => ({
         ...prev,
-        amount: mockExtractedData.amount?.toString() || '',
-        date: mockExtractedData.date || ''
+        date: mockExtractedData.date || '',
+        // No pre-llenar el monto - usuario debe ingresarlo manualmente
+        amount: ''
       }));
       
-      toast.success(`Comprobante "${file.name}" procesado exitosamente`);
+      toast.success(`Archivo "${file.name}" cargado. Por favor ingresa los datos manualmente.`);
     } catch (error) {
       console.error('Error processing receipt:', error);
-      toast.error("Error al procesar el comprobante");
+      toast.error("Error al cargar el comprobante");
     } finally {
       setIsProcessing(false);
     }
@@ -239,16 +215,13 @@ Procesado: ${new Date().toLocaleString()}`;
 
           {extractedData && !isProcessing && (
             <div className="space-y-4">
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Datos Extraídos del Comprobante:</h4>
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h4 className="font-medium mb-2 text-blue-800">Archivo Cargado:</h4>
                 <div className="text-sm space-y-1">
-                  <p><strong>Archivo:</strong> {extractedData.fileName}</p>
-                  <p><strong>Cantidad:</strong> ${extractedData.amount?.toLocaleString()}</p>
-                  <p><strong>Fecha:</strong> {extractedData.date}</p>
-                  <p><strong>Descripción:</strong> {extractedData.description}</p>
-                  {extractedData.reference && (
-                    <p><strong>Referencia:</strong> {extractedData.reference}</p>
-                  )}
+                  <p><strong>Nombre:</strong> {extractedData.fileName}</p>
+                  <p className="text-blue-700">
+                    📝 Por favor ingresa los datos del comprobante manualmente en los campos de abajo
+                  </p>
                 </div>
               </div>
 

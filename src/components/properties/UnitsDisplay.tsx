@@ -5,7 +5,42 @@ import { Input } from "@/components/ui/input";
 import { Edit, Trash2, Plus } from "lucide-react";
 import { unitService } from "@/services/UnitService";
 import { UnitEditForm } from "../units/UnitEditForm";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+// Component to show tenant name for occupied units
+const TenantName = ({ unitId }: { unitId: string }) => {
+  const [tenantName, setTenantName] = useState<string>("");
+
+  useEffect(() => {
+    const loadTenantName = async () => {
+      try {
+        const { data: tenant, error } = await supabase
+          .from('tenants')
+          .select('first_name, last_name')
+          .eq('unit_id', unitId)
+          .single();
+
+        if (!error && tenant) {
+          const name = `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim();
+          setTenantName(name || 'Inquilino');
+        }
+      } catch (error) {
+        console.log('Could not load tenant name for unit:', unitId);
+      }
+    };
+
+    loadTenantName();
+  }, [unitId]);
+
+  if (!tenantName) return null;
+
+  return (
+    <span className="text-xs text-muted-foreground">
+      👤 {tenantName}
+    </span>
+  );
+};
 
 interface Unit {
   id: string;
@@ -25,8 +60,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
   const [loading, setLoading] = useState(true);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newUnitNumber, setNewUnitNumber] = useState("");
+
 
   useEffect(() => {
     loadUnits();
@@ -62,7 +96,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
   const handleSaveUnit = async (updatedUnit: Unit) => {
     try {
       console.log('🔄 Saving unit in UnitsDisplay:', updatedUnit);
-      
+
       // Prepare the update data
       const updateData = {
         unit_number: updatedUnit.unit_number,
@@ -70,14 +104,14 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
         is_available: updatedUnit.is_available
         // No incluir tenant_id aquí ya que la tabla units no lo tiene aún
       };
-      
+
       console.log('🔄 Update data being sent:', updateData);
-      
+
       // Update in database
       const result = await unitService.updateUnit(updatedUnit.id, updateData);
-      
+
       console.log('✅ Unit updated successfully in database:', result);
-      
+
       // If assigning a tenant, also update the tenant record
       if (updatedUnit.tenant_id) {
         try {
@@ -86,7 +120,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
             .from('tenants')
             .update({ unit_id: updatedUnit.id })
             .eq('id', updatedUnit.tenant_id);
-          
+
           if (tenantError) {
             console.error('Error updating tenant assignment:', tenantError);
           } else {
@@ -96,10 +130,10 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
           console.error('Error updating tenant assignment:', tenantError);
         }
       }
-      
+
       // Force reload to get fresh data from database
       await loadUnits();
-      
+
       toast.success("Unidad actualizada correctamente");
     } catch (error) {
       console.error('Error updating unit:', error);
@@ -136,7 +170,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
         monthly_rent: 0,
         is_available: true,
       });
-      
+
       setUnits(prev => [...prev, newUnit]);
       setNewUnitNumber("");
       setShowCreateForm(false);
@@ -169,15 +203,20 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
     <>
       <div className="space-y-2">
         {units.map((unit) => (
-          <div 
+          <div
             key={unit.id}
             className="flex items-center justify-between p-2 border rounded text-xs"
           >
-            <div className="flex items-center gap-2">
-              <span className="font-medium">{unit.unit_number}</span>
-              <Badge variant={unit.is_available ? "secondary" : "default"} className="text-xs">
-                {unit.is_available ? "Disponible" : "Ocupada"}
-              </Badge>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">{unit.unit_number}</span>
+                <Badge variant={unit.is_available ? "secondary" : "default"} className="text-xs">
+                  {unit.is_available ? "Disponible" : "Ocupada"}
+                </Badge>
+              </div>
+              {!unit.is_available && (
+                <TenantName unitId={unit.id} />
+              )}
             </div>
             <div className="flex items-center gap-1">
               <span className="text-muted-foreground text-xs">
@@ -204,46 +243,8 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
             </div>
           </div>
         ))}
-        
-        {/* Create new unit form */}
-        {showCreateForm ? (
-          <div className="flex items-center gap-2 p-2 border rounded bg-muted/50">
-            <Input
-              value={newUnitNumber}
-              onChange={(e) => setNewUnitNumber(e.target.value)}
-              placeholder="Número de unidad"
-              className="h-7 text-xs"
-            />
-            <Button
-              size="sm"
-              onClick={handleCreateUnit}
-              className="h-7 px-2 text-xs"
-            >
-              Crear
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setShowCreateForm(false);
-                setNewUnitNumber("");
-              }}
-              className="h-7 px-2 text-xs"
-            >
-              Cancelar
-            </Button>
-          </div>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowCreateForm(true)}
-            className="w-full h-7 text-xs"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Agregar Unidad
-          </Button>
-        )}
+
+
       </div>
 
       <UnitEditForm

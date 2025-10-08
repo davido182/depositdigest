@@ -37,10 +37,43 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
   useEffect(() => {
     if (isOpen && unit) {
-      setSelectedTenantId(unit.tenant_id || "");
-      loadAvailableTenants();
+      console.log('🔄 UnitEditForm opened with unit:', unit);
+      
+      // Load tenants first, then set the selected tenant
+      loadAvailableTenants().then(() => {
+        // Find the tenant assigned to this unit
+        findAssignedTenant(unit.id);
+      });
     }
   }, [isOpen, unit]);
+
+  const findAssignedTenant = async (unitId: string) => {
+    try {
+      console.log('🔍 Finding tenant assigned to unit:', unitId);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Find tenant with this unit_id
+      const { data: tenant, error } = await supabase
+        .from('tenants')
+        .select('id, first_name, last_name')
+        .eq('unit_id', unitId)
+        .eq('landlord_id', user.id)
+        .single();
+
+      if (!error && tenant) {
+        console.log('✅ Found assigned tenant:', tenant);
+        setSelectedTenantId(tenant.id);
+      } else {
+        console.log('📭 No tenant assigned to this unit');
+        setSelectedTenantId("");
+      }
+    } catch (error) {
+      console.error('Error finding assigned tenant:', error);
+      setSelectedTenantId("");
+    }
+  };
 
   const loadAvailableTenants = async () => {
     try {

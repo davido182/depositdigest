@@ -101,8 +101,50 @@ const CircularProgress = ({ value, label }: { value: number; label: string }) =>
 };
 
 export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
-  const { userRole } = useAuth();
+  const { userRole, user } = useAuth();
   const isPremium = userRole === 'landlord_premium';
+
+  // Calculate real revenue trend from payment tracking
+  const getRevenueData = () => {
+    const currentDate = new Date();
+    const months = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const monthName = date.toLocaleDateString('es-ES', { month: 'short' });
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      
+      // Get payment records for this month
+      const storageKey = `payment_records_${user?.id}_${year}`;
+      const storedRecords = localStorage.getItem(storageKey);
+      let monthlyRevenue = 0;
+      
+      if (storedRecords) {
+        try {
+          const records = JSON.parse(storedRecords);
+          const monthRecords = records.filter((r: any) => 
+            r.year === year && r.month === month && r.paid
+          );
+          
+          // Calculate revenue from paid records (would need tenant rent amounts)
+          // For now, use a proportion of current monthly revenue
+          const paidCount = monthRecords.length;
+          const totalTenants = Math.max(stats.totalTenants, 1);
+          monthlyRevenue = (stats.monthlyRevenue * paidCount) / totalTenants;
+        } catch (error) {
+          console.error('Error parsing payment records:', error);
+        }
+      }
+      
+      months.push({
+        month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+        amount: Math.max(monthlyRevenue, 0)
+      });
+    }
+    
+    return months;
+  };
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -228,16 +270,11 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                 <BarChart3 className="h-5 w-5" />
                 Evolución de Ingresos
               </CardTitle>
-              <CardDescription>Últimos 4 meses</CardDescription>
+              <CardDescription>Últimos 6 meses</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {[
-                  { month: 'Mar', amount: Math.max(stats.monthlyRevenue * 0.85, 0) },
-                  { month: 'Abr', amount: Math.max(stats.monthlyRevenue * 1.1, 0) },
-                  { month: 'May', amount: Math.max(stats.monthlyRevenue * 0.95, 0) },
-                  { month: 'Jun', amount: Math.max(stats.monthlyRevenue, 0) },
-                ].map((item, index) => (
+                {getRevenueData().map((item, index) => (
                   <div key={item.month} className="flex items-center space-x-3">
                     <span className="text-sm font-medium w-8">{item.month}</span>
                     <div className="flex-1">

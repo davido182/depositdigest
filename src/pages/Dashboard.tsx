@@ -1,7 +1,7 @@
 import { Layout } from "@/components/Layout";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { IntelligentDashboard } from "@/components/dashboard/IntelligentDashboard";
-import { SmartNotifications } from "@/components/dashboard/SmartNotifications";
+
 import { TenantCard } from "@/components/tenants/TenantCard";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import { PropertyForm } from "@/components/properties/PropertyForm";
@@ -20,6 +20,7 @@ import { tenantService } from "@/services/TenantService";
 import { useAppData } from "@/hooks/use-app-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SmartNotifications } from "@/components/dashboard/SmartNotifications";
 
 interface Property {
   id: string;
