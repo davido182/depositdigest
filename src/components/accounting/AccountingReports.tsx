@@ -79,7 +79,7 @@ function AccountingStatsCards() {
         return sum + (typeof rent === 'string' ? parseFloat(rent) : rent);
       }, 0);
 
-      // Use localStorage payment tracking as backup
+      // Use localStorage payment tracking (same as Analytics)
       const storageKey = `payment_records_${user?.id}_${currentYear}`;
       const storedRecords = localStorage.getItem(storageKey);
       let totalIncomeFromTracking = 0;
@@ -89,26 +89,20 @@ function AccountingStatsCards() {
           const records = JSON.parse(storedRecords);
           const paidRecords = records.filter((r: any) => r.paid);
           
-          // Calculate income from tracking records
-          totalIncomeFromTracking = paidRecords.reduce((sum: number, record: any) => {
-            const tenant = tenants.find((t: any) => t.id === record.tenantId);
-            if (tenant) {
-              const rent = tenant.monthly_rent || 0;
-              return sum + (typeof rent === 'string' ? parseFloat(rent) : rent);
-            }
-            return sum;
-          }, 0);
+          // Calculate income from tracking records using average rent
+          const avgRentPerTenant = monthlyRevenueFromUnits / Math.max(occupiedUnits.length, 1);
+          totalIncomeFromTracking = paidRecords.length * avgRentPerTenant;
         } catch (error) {
           console.error('Error parsing payment tracking records:', error);
         }
       }
 
-      // Use the highest income calculation available
-      const totalIncome = Math.max(
-        totalIncomeFromPayments,
-        totalIncomeFromTracking,
-        monthlyRevenueFromUnits * 6 // Estimate 6 months of revenue if no payments
-      );
+      // Prioritize tracking data (same as Analytics), fallback to payments, then potential
+      const totalIncome = totalIncomeFromTracking > 0 
+        ? totalIncomeFromTracking 
+        : totalIncomeFromPayments > 0 
+          ? totalIncomeFromPayments 
+          : monthlyRevenueFromUnits;
 
       // For expenses, use a simple estimation since accounting entries might not exist
       const estimatedExpenses = totalIncome * 0.3; // Estimate 30% expenses

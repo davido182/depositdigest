@@ -38,6 +38,7 @@ export function SecureChatAssistant() {
   const [isLoading, setIsLoading] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -60,7 +61,10 @@ export function SecureChatAssistant() {
       const [propertiesRes, tenantsRes, unitsRes, paymentsRes, maintenanceRes] = await Promise.all([
         supabase.from('properties').select('*').eq('landlord_id', user?.id).limit(50),
         supabase.from('tenants').select('*').eq('landlord_id', user?.id).limit(100),
-        supabase.from('units').select('*').eq('user_id', user?.id).limit(200),
+        supabase.from('units').select(`
+          *,
+          properties!inner(landlord_id)
+        `).eq('properties.landlord_id', user?.id).limit(200),
         supabase.from('payments').select('*').eq('user_id', user?.id).limit(500),
         supabase.from('maintenance_requests').select('*').eq('landlord_id', user?.id).limit(100)
       ]);
@@ -383,6 +387,11 @@ export function SecureChatAssistant() {
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsLoading(true);
+    
+    // Mantener focus en el input
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
 
     try {
       // Simular tiempo de procesamiento
@@ -483,12 +492,14 @@ export function SecureChatAssistant() {
         <div className="border-t p-4">
           <div className="flex gap-2">
             <Input
+              ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Pregúntame sobre tus propiedades, inquilinos, pagos..."
               disabled={isLoading}
               className="flex-1"
+              autoFocus
             />
             <Button
               onClick={handleSendMessage}

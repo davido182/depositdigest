@@ -69,8 +69,7 @@ export class UnitService extends BaseService {
         deposit_amount: unit.deposit_amount || null,
         is_furnished: unit.is_furnished || false,
         is_available: unit.is_available !== false, // Default true
-        description: unit.description || null,
-        user_id: user.id
+        description: unit.description || null
       })
       .select()
       .single();

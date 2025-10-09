@@ -1,7 +1,6 @@
 -- Ensure maintenance_requests table exists with correct structure
 CREATE TABLE IF NOT EXISTS maintenance_requests (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   landlord_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   title VARCHAR(255) NOT NULL,
@@ -30,22 +29,23 @@ DROP POLICY IF EXISTS "Landlords can view tenant maintenance requests" ON mainte
 DROP POLICY IF EXISTS "Users can insert their own maintenance requests" ON maintenance_requests;
 DROP POLICY IF EXISTS "Users can update their own maintenance requests" ON maintenance_requests;
 DROP POLICY IF EXISTS "Landlords can update tenant maintenance requests" ON maintenance_requests;
+DROP POLICY IF EXISTS "Landlords can view their maintenance requests" ON maintenance_requests;
+DROP POLICY IF EXISTS "Landlords can insert maintenance requests" ON maintenance_requests;
+DROP POLICY IF EXISTS "Landlords can update their maintenance requests" ON maintenance_requests;
+DROP POLICY IF EXISTS "Landlords can delete their maintenance requests" ON maintenance_requests;
 
 -- Create RLS policies
-CREATE POLICY "Users can view their own maintenance requests" ON maintenance_requests
-  FOR SELECT USING (user_id = auth.uid());
-
-CREATE POLICY "Landlords can view tenant maintenance requests" ON maintenance_requests
+CREATE POLICY "Landlords can view their maintenance requests" ON maintenance_requests
   FOR SELECT USING (landlord_id = auth.uid());
 
-CREATE POLICY "Users can insert their own maintenance requests" ON maintenance_requests
-  FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Landlords can insert maintenance requests" ON maintenance_requests
+  FOR INSERT WITH CHECK (landlord_id = auth.uid());
 
-CREATE POLICY "Users can update their own maintenance requests" ON maintenance_requests
-  FOR UPDATE USING (user_id = auth.uid());
-
-CREATE POLICY "Landlords can update tenant maintenance requests" ON maintenance_requests
+CREATE POLICY "Landlords can update their maintenance requests" ON maintenance_requests
   FOR UPDATE USING (landlord_id = auth.uid());
+
+CREATE POLICY "Landlords can delete their maintenance requests" ON maintenance_requests
+  FOR DELETE USING (landlord_id = auth.uid());
 
 -- Update trigger
 CREATE OR REPLACE FUNCTION update_maintenance_requests_updated_at()

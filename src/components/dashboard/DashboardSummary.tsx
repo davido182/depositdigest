@@ -19,11 +19,11 @@ interface DashboardSummaryProps {
   monthlyRevenue?: number;
 }
 
-export function DashboardSummary({ 
+export function DashboardSummary({
   totalProperties,
   totalUnits,
   occupiedUnits,
-  monthlyRevenue 
+  monthlyRevenue
 }: DashboardSummaryProps = {}) {
   const isMobile = useIsMobile();
   const { stats, isLoading } = useAppData();
@@ -34,6 +34,7 @@ export function DashboardSummary({
     totalUnits: totalUnits ?? stats.totalUnits,
     occupiedUnits: occupiedUnits ?? stats.occupiedUnits,
     vacantUnits: (totalUnits ?? stats.totalUnits) - (occupiedUnits ?? stats.occupiedUnits),
+    monthlyRevenue: monthlyRevenue ?? stats.monthlyRevenue,
     isLoading: isLoading
   };
 
@@ -50,7 +51,7 @@ export function DashboardSummary({
   }
 
   return (
-    <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
+    <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5'}`}>
       <StatsCard
         title="Total Propiedades"
         value={displayStats.totalProperties}
@@ -74,6 +75,12 @@ export function DashboardSummary({
         value={displayStats.vacantUnits}
         icon={Home}
         description="Listas para alquilar"
+      />
+      <StatsCard
+        title="Ingresos Mensuales"
+        value={`$${displayStats.monthlyRevenue.toLocaleString()}`}
+        icon={DollarSign}
+        description="Ingresos del mes actual"
       />
     </div>
   );

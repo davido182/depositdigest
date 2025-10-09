@@ -19,7 +19,7 @@ ADD COLUMN IF NOT EXISTS property_name text DEFAULT 'Edificio Principal';
 -- Create properties table for better property management
 CREATE TABLE IF NOT EXISTS public.properties (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id uuid NOT NULL,
+  landlord_id uuid NOT NULL,
   name text NOT NULL,
   address text,
   total_units integer NOT NULL DEFAULT 1,
@@ -35,24 +35,25 @@ ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own properties" 
 ON public.properties 
 FOR SELECT 
-USING (auth.uid() = user_id);
+USING (auth.uid() = landlord_id);
 
 CREATE POLICY "Users can create their own properties" 
 ON public.properties 
 FOR INSERT 
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK (auth.uid() = landlord_id);
 
 CREATE POLICY "Users can update their own properties" 
 ON public.properties 
 FOR UPDATE 
-USING (auth.uid() = user_id);
+USING (auth.uid() = landlord_id);
 
 CREATE POLICY "Users can delete their own properties" 
 ON public.properties 
 FOR DELETE 
-USING (auth.uid() = user_id);
+USING (auth.uid() = landlord_id);
 
 -- Create trigger for automatic timestamp updates on properties
+DROP TRIGGER IF EXISTS update_properties_updated_at ON public.properties;
 CREATE TRIGGER update_properties_updated_at
 BEFORE UPDATE ON public.properties
 FOR EACH ROW
@@ -101,6 +102,7 @@ FOR DELETE
 USING (auth.uid() = user_id);
 
 -- Create trigger for automatic timestamp updates on payment_receipts
+DROP TRIGGER IF EXISTS update_payment_receipts_updated_at ON public.payment_receipts;
 CREATE TRIGGER update_payment_receipts_updated_at
 BEFORE UPDATE ON public.payment_receipts
 FOR EACH ROW

@@ -4,11 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { 
-  TrendingUp, 
-  Building2, 
-  AlertCircle, 
-  Users, 
+import {
+  TrendingUp,
+  Building2,
+  AlertCircle,
+  Users,
   DollarSign,
   BarChart3,
   Crown,
@@ -22,16 +22,16 @@ interface IntelligentDashboardProps {
 }
 
 // Animated Counter Component
-const AnimatedCounter = ({ 
-  value, 
-  duration = 1500, 
-  prefix = "", 
-  suffix = "" 
-}: { 
-  value: number; 
-  duration?: number; 
-  prefix?: string; 
-  suffix?: string; 
+const AnimatedCounter = ({
+  value,
+  duration = 1500,
+  prefix = "",
+  suffix = ""
+}: {
+  value: number;
+  duration?: number;
+  prefix?: string;
+  suffix?: string;
 }) => {
   const [count, setCount] = useState(0);
 
@@ -42,9 +42,9 @@ const AnimatedCounter = ({
     const updateCount = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
-      
+
       setCount(Math.floor(progress * value));
-      
+
       if (progress < 1) {
         animationFrame = requestAnimationFrame(updateCount);
       }
@@ -108,25 +108,25 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
   const getRevenueData = () => {
     const currentDate = new Date();
     const months = [];
-    
+
     for (let i = 5; i >= 0; i--) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
       const monthName = date.toLocaleDateString('es-ES', { month: 'short' });
       const year = date.getFullYear();
       const month = date.getMonth();
-      
+
       // Get payment records for this month from localStorage (tabla de seguimiento)
       const storageKey = `payment_records_${user?.id}_${year}`;
       const storedRecords = localStorage.getItem(storageKey);
       let monthlyRevenue = 0;
-      
+
       if (storedRecords) {
         try {
           const records = JSON.parse(storedRecords);
-          const monthRecords = records.filter((r: any) => 
+          const monthRecords = records.filter((r: any) =>
             r.year === year && r.month === month && r.paid
           );
-          
+
           // Calculate actual revenue from paid records
           if (monthRecords.length > 0) {
             // Estimate based on average rent per tenant
@@ -137,13 +137,13 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
           console.error('Error parsing payment records:', error);
         }
       }
-      
+
       months.push({
         month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
         amount: Math.max(monthlyRevenue, 0)
       });
     }
-    
+
     return months;
   };
 
@@ -227,7 +227,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pagos Pendientes</CardTitle>
               <motion.div
-                animate={{ 
+                animate={{
                   rotate: stats.pendingDeposits > 0 ? [0, 10, -10, 0] : 0,
                   scale: stats.pendingDeposits > 0 ? [1, 1.1, 1] : 1
                 }}
@@ -279,8 +279,8 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                   <div key={item.month} className="flex items-center space-x-3">
                     <span className="text-sm font-medium w-8">{item.month}</span>
                     <div className="flex-1">
-                      <Progress 
-                        value={stats.monthlyRevenue > 0 ? Math.min((item.amount / stats.monthlyRevenue) * 100, 100) : 0} 
+                      <Progress
+                        value={stats.monthlyRevenue > 0 ? Math.min((item.amount / stats.monthlyRevenue) * 100, 100) : 0}
                         className="h-2"
                       />
                     </div>

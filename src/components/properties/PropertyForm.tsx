@@ -170,10 +170,10 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
       newErrors.address = "La dirección es requerida";
     }
 
-    // Validar que todas las unidades tengan renta definida
-    const emptyRents = unitRents.filter(rent => rent <= 0);
-    if (emptyRents.length > 0) {
-      newErrors.units = "Todas las unidades deben tener una renta definida";
+    // Validar que todas las unidades tengan renta válida (puede ser 0 para unidades gratuitas)
+    const invalidRents = unitRents.filter(rent => rent < 0 || isNaN(rent));
+    if (invalidRents.length > 0) {
+      newErrors.units = "Todas las unidades deben tener una renta válida (mínimo 0)";
     }
     
     if (formData.units < 1) {
@@ -230,8 +230,9 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
             }
           }
           
-          // Create new units if needed
+          // Handle unit count changes
           if (formData.units > currentUnits.length) {
+            // Create new units
             console.log(`🆕 Creating ${formData.units - currentUnits.length} new units`);
             for (let i = currentUnits.length; i < formData.units; i++) {
               const rentAmount = Number(unitRents[i]) || 0;
@@ -251,6 +252,18 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
               } catch (error) {
                 console.error(`❌ Error creating unit ${unitName}:`, error);
                 throw error;
+              }
+            }
+          } else if (formData.units < currentUnits.length) {
+            // Delete excess units
+            console.log(`🗑️ Deleting ${currentUnits.length - formData.units} excess units`);
+            for (let i = formData.units; i < currentUnits.length; i++) {
+              try {
+                await unitService.deleteUnit(currentUnits[i].id);
+                console.log(`✅ Successfully deleted unit ${currentUnits[i].id}`);
+              } catch (error) {
+                console.error(`❌ Error deleting unit ${currentUnits[i].id}:`, error);
+                // Continue with other deletions even if one fails
               }
             }
           }
@@ -424,10 +437,10 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
                               id={`unit-rent-${index}`}
                               type="number"
                               min="0"
-                              step="50"
+                              step="0.01"
                               value={unitRents[index] || ''}
                               onChange={(e) => updateUnitRent(index, parseFloat(e.target.value) || 0)}
-                              placeholder="Ej: 800"
+                              placeholder="Ej: 202.50"
                               className="mt-1"
                             />
                           </div>

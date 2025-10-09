@@ -131,14 +131,30 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
     
     // Check if tenant started after this month (mark as N/A)
     const tenant = tenants.find(t => t.id === tenantId);
-    if (tenant && tenant.moveInDate) {
-      const moveInDate = new Date(tenant.moveInDate);
-      const monthDate = new Date(selectedYear, monthIndex, 1);
-      const monthEndDate = new Date(selectedYear, monthIndex + 1, 0); // Last day of the month
+    if (tenant) {
+      // Try different date fields that might be available
+      let startDate = null;
       
-      // If tenant moved in after this entire month, mark as N/A
-      if (moveInDate > monthEndDate) {
-        return 'na'; // Not applicable - tenant wasn't living here yet
+      if (tenant.moveInDate) {
+        startDate = new Date(tenant.moveInDate);
+      } else if ((tenant as any).move_in_date) {
+        startDate = new Date((tenant as any).move_in_date);
+      } else if (tenant.leaseStartDate) {
+        startDate = new Date(tenant.leaseStartDate);
+      } else if ((tenant as any).lease_start_date) {
+        startDate = new Date((tenant as any).lease_start_date);
+      } else if ((tenant as any).created_at) {
+        // Fallback to creation date if no move-in date is available
+        startDate = new Date((tenant as any).created_at);
+      }
+      
+      if (startDate) {
+        const monthEndDate = new Date(selectedYear, monthIndex + 1, 0); // Last day of the month
+        
+        // If tenant started after this entire month, mark as N/A
+        if (startDate > monthEndDate) {
+          return 'na'; // Not applicable - tenant wasn't living here yet
+        }
       }
     }
     

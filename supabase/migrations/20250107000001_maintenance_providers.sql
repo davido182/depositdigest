@@ -58,7 +58,7 @@ CREATE POLICY "Users can view assignments for their requests" ON maintenance_ass
     EXISTS (
       SELECT 1 FROM maintenance_requests mr 
       WHERE mr.id = maintenance_request_id 
-      AND (mr.landlord_id = auth.uid() OR mr.user_id = auth.uid())
+      AND mr.landlord_id = auth.uid()
     )
   );
 

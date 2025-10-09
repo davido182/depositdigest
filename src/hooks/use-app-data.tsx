@@ -77,10 +77,13 @@ export function useAppData() {
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth() + 1; // 1-indexed for DB
       const [tenantsResult, paymentsResult, propertiesResult, unitsResult] = await Promise.all([
-        supabase.from('tenants').select('*'),
-        supabase.from('payments').select('*'),
-        supabase.from('properties').select('*'),
-        supabase.from('units').select('*')
+        supabase.from('tenants').select('*').eq('landlord_id', user.id),
+        supabase.from('payments').select('*').eq('user_id', user.id),
+        supabase.from('properties').select('*').eq('landlord_id', user.id),
+        supabase.from('units').select(`
+          *,
+          properties!inner(landlord_id)
+        `).eq('properties.landlord_id', user.id)
       ]);
 
       // Check for errors
@@ -114,31 +117,49 @@ export function useAppData() {
         vacantUnits: units.filter(u => u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number }))
       });
       
-      // Calculate monthly revenue from occupied units
-      const monthlyRevenue = units
+      // Calculate monthly revenue from payment tracking table (like Analytics)
+      const activeTenantsList = tenants.filter(t => t.status === 'active');
+      const potentialMonthlyRevenue = units
         .filter(u => !u.is_available)
         .reduce((sum, unit) => sum + (unit.monthly_rent || unit.rent_amount || 0), 0);
       
-      const occupancyRate = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
-
-      // Calculate collection rate for current month (simplified)
-      const activeTenantsList = tenants.filter(t => t.status === 'active');
-      const currentMonthPayments = payments.filter(p => {
-        try {
-          const paymentDate = new Date(p.payment_date || p.created_at);
-          return paymentDate.getMonth() + 1 === currentMonth && 
-                 paymentDate.getFullYear() === currentYear &&
-                 p.status === 'completed';
-        } catch {
-          return false;
-        }
-      });
+      // Get real revenue from payment tracking table
+      const storageKey = `payment_records_${user.id}_${currentYear}`;
+      const storedRecords = localStorage.getItem(storageKey);
+      let realMonthlyRevenue = 0;
+      let collectionRate = 0;
+      let overduePayments = 0;
       
-      const paidTenantIds = new Set(currentMonthPayments.map(p => p.tenant_id));
-      const collectionRate = activeTenantsList.length > 0 ? (paidTenantIds.size / activeTenantsList.length) * 100 : 0;
-
-      // Simplified overdue calculation
-      const overduePayments = Math.max(activeTenantsList.length - paidTenantIds.size, 0);
+      if (storedRecords && activeTenantsList.length > 0) {
+        try {
+          const records = JSON.parse(storedRecords);
+          const currentMonthRecords = records.filter((r: any) => 
+            r.year === currentYear && r.month === (currentMonth - 1) && r.paid // month is 0-indexed in localStorage
+          );
+          
+          // Calculate real revenue based on actual payments
+          const avgRentPerTenant = potentialMonthlyRevenue / Math.max(activeTenantsList.length, 1);
+          realMonthlyRevenue = currentMonthRecords.length * avgRentPerTenant;
+          
+          // Calculate collection rate
+          collectionRate = (currentMonthRecords.length / activeTenantsList.length) * 100;
+          
+          // Calculate overdue payments
+          overduePayments = activeTenantsList.length - currentMonthRecords.length;
+        } catch (error) {
+          console.error('Error parsing payment records:', error);
+          realMonthlyRevenue = potentialMonthlyRevenue;
+          collectionRate = 0;
+          overduePayments = activeTenantsList.length;
+        }
+      } else {
+        // Fallback to potential revenue if no tracking data
+        realMonthlyRevenue = potentialMonthlyRevenue;
+        collectionRate = 0;
+        overduePayments = activeTenantsList.length;
+      }
+      
+      const occupancyRate = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
       const pendingDeposits = overduePayments;
 
       setData({
@@ -155,7 +176,8 @@ export function useAppData() {
         totalUnits,
         occupiedUnits,
         vacantUnits,
-        monthlyRevenue,
+        potentialMonthlyRevenue,
+        realMonthlyRevenue,
         activeTenants: activeTenantsList.length,
         occupancyRate: occupancyRate.toFixed(2),
         collectionRate: collectionRate.toFixed(2),
@@ -168,7 +190,7 @@ export function useAppData() {
         totalUnits,
         occupiedUnits,
         vacantUnits,
-        monthlyRevenue,
+        monthlyRevenue: realMonthlyRevenue,
         activeTenants: activeTenantsList.length,
         occupancyRate,
         collectionRate,
