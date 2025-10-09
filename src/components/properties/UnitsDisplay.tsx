@@ -8,29 +8,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // Component to show tenant name for occupied units
-const TenantName = ({ unitId }: { unitId: string }) => {
+const TenantName = ({ tenantId }: { tenantId?: string | null }) => {
   const [tenantName, setTenantName] = useState<string>("");
 
   useEffect(() => {
     const loadTenantName = async () => {
+      if (!tenantId) return;
+      
       try {
         const { data: tenant, error } = await supabase
           .from('tenants')
           .select('name')
-          .eq('property_id', unitId)
-          .eq('is_active', true)
+          .eq('id', tenantId)
           .single();
 
         if (!error && tenant) {
           setTenantName(tenant.name || 'Inquilino');
         }
       } catch (error) {
-        console.log('Could not load tenant name for unit:', unitId);
+        console.log('Could not load tenant name for tenant:', tenantId);
       }
     };
 
     loadTenantName();
-  }, [unitId]);
+  }, [tenantId]);
 
   if (!tenantName) return null;
 
@@ -59,8 +60,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
   const [loading, setLoading] = useState(true);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
-  const [newUnitNumber, setNewUnitNumber] = useState('');
-  const [showCreateForm, setShowCreateForm] = useState(false);
+
 
 
   useEffect(() => {
@@ -209,7 +209,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
                 </Badge>
               </div>
               {!unit.is_available && (
-                <TenantName unitId={unit.id} />
+                <TenantName tenantId={unit.tenant_id} />
               )}
             </div>
             <div className="flex items-center gap-1">

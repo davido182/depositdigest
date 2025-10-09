@@ -24,7 +24,7 @@ function AccountingStatsCards() {
   const loadAccountingStats = async () => {
     try {
       const currentYear = new Date().getFullYear();
-      
+
       console.log('AccountingReports: Loading data for year:', currentYear);
 
       // Load data from existing tables
@@ -37,13 +37,19 @@ function AccountingStatsCards() {
         // Get units with their rent amounts
         supabase
           .from('units')
-          .select('id, monthly_rent, rent_amount, is_available, tenant_id')
-          .eq('user_id', user?.id),
+          .select(`
+            id, monthly_rent, rent_amount, is_available, tenant_id,
+            properties!inner(landlord_id)
+          `)
+          .eq('properties.landlord_id', user?.id),
         // Get actual payments
         supabase
           .from('payments')
-          .select('amount, payment_date, status, tenant_id')
-          .eq('user_id', user?.id)
+          .select(`
+            amount, payment_date, status, tenant_id,
+            tenants!inner(landlord_id)
+          `)
+          .eq('tenants.landlord_id', user?.id)
           .gte('payment_date', `${currentYear}-01-01`)
           .lte('payment_date', `${currentYear}-12-31`)
       ]);
@@ -52,10 +58,10 @@ function AccountingStatsCards() {
         tenants: tenantsRes.data?.length || 0,
         units: unitsRes.data?.length || 0,
         payments: paymentsRes.data?.length || 0,
-        errors: { 
-          tenantsError: tenantsRes.error, 
-          unitsError: unitsRes.error, 
-          paymentsError: paymentsRes.error 
+        errors: {
+          tenantsError: tenantsRes.error,
+          unitsError: unitsRes.error,
+          paymentsError: paymentsRes.error
         }
       });
 
@@ -83,12 +89,12 @@ function AccountingStatsCards() {
       const storageKey = `payment_records_${user?.id}_${currentYear}`;
       const storedRecords = localStorage.getItem(storageKey);
       let totalIncomeFromTracking = 0;
-      
+
       if (storedRecords) {
         try {
           const records = JSON.parse(storedRecords);
           const paidRecords = records.filter((r: any) => r.paid);
-          
+
           // Calculate income from tracking records using average rent
           const avgRentPerTenant = monthlyRevenueFromUnits / Math.max(occupiedUnits.length, 1);
           totalIncomeFromTracking = paidRecords.length * avgRentPerTenant;
@@ -98,10 +104,10 @@ function AccountingStatsCards() {
       }
 
       // Prioritize tracking data (same as Analytics), fallback to payments, then potential
-      const totalIncome = totalIncomeFromTracking > 0 
-        ? totalIncomeFromTracking 
-        : totalIncomeFromPayments > 0 
-          ? totalIncomeFromPayments 
+      const totalIncome = totalIncomeFromTracking > 0
+        ? totalIncomeFromTracking
+        : totalIncomeFromPayments > 0
+          ? totalIncomeFromPayments
           : monthlyRevenueFromUnits;
 
       // For expenses, use a simple estimation since accounting entries might not exist
@@ -115,7 +121,7 @@ function AccountingStatsCards() {
         estimatedExpenses,
         netProfit: totalIncome - estimatedExpenses
       });
-      
+
       setStats({
         totalIncome,
         totalExpenses: estimatedExpenses,
