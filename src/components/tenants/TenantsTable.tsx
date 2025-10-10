@@ -60,7 +60,7 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
         tenant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tenant.unit.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesStatus = statusFilter === "all" || (tenant.status === statusFilter || (statusFilter === "active" && tenant.is_active) || (statusFilter === "inactive" && !tenant.is_active));
+      const matchesStatus = statusFilter === "all" || tenant.status === statusFilter;
       
       return matchesSearch && matchesStatus;
     })
@@ -85,12 +85,18 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
       }
     });
 
-  const getStatusBadge = (tenant: any) => {
-    const isActive = tenant.is_active || tenant.status === 'active';
-    if (isActive) {
-      return <Badge className="bg-emerald-100 text-emerald-800">Activo</Badge>;
-    } else {
-      return <Badge className="bg-gray-100 text-gray-800">Inactivo</Badge>;
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Badge className="bg-emerald-100 text-emerald-800">Activo</Badge>;
+      case "late":
+        return <Badge className="bg-red-100 text-red-800">Atrasado</Badge>;
+      case "notice":
+        return <Badge className="bg-amber-100 text-amber-800">Aviso</Badge>;
+      case "inactive":
+        return <Badge className="bg-gray-100 text-gray-800">Inactivo</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
     }
   };
 
@@ -256,7 +262,7 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
                     <TableCell className="text-muted-foreground text-sm hidden sm:table-cell">
                       {tenant.email}
                     </TableCell>
-                    <TableCell>{getStatusBadge(tenant)}</TableCell>
+                    <TableCell>{getStatusBadge(tenant.status)}</TableCell>
                     <TableCell className="text-right font-medium text-sm">
                       €{tenant.rentAmount?.toLocaleString()}
                     </TableCell>

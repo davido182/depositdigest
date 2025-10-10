@@ -87,7 +87,7 @@ export function SmartNotifications() {
         .from('tenants')
         .select('id, name, property_id')
         .eq('landlord_id', user?.id)
-        .eq('is_active', true)
+        .eq('status', 'active')
         .is('property_id', null);
 
       if (!error && tenants && tenants.length > 0) {
@@ -126,9 +126,9 @@ export function SmartNotifications() {
         // Get all active tenants
         const { data: tenants, error } = await supabase
           .from('tenants')
-          .select('id, name, monthly_rent')
+          .select('id, name, rent_amount')
           .eq('landlord_id', user?.id)
-          .eq('is_active', true);
+          .eq('status', 'active');
 
         if (!error && tenants) {
           const paidTenantIds = new Set(currentMonthRecords.filter((r: any) => r.paid).map((r: any) => r.tenantId));
@@ -142,10 +142,10 @@ export function SmartNotifications() {
                 id: `payment-overdue-${tenant.id}`,
                 type: 'payment_overdue',
                 title: isOverdue ? 'Pago vencido' : 'Pago pendiente',
-                description: `${name} - €${tenant.monthly_rent || 0} del mes actual`,
+                description: `${name} - €${tenant.rent_amount || 0} del mes actual`,
                 priority: isOverdue ? 'high' : 'medium',
                 created_at: new Date().toISOString(),
-                data: { tenantId: tenant.id, tenantName: name, amount: tenant.monthly_rent }
+                data: { tenantId: tenant.id, tenantName: name, amount: tenant.rent_amount }
               });
             }
           });
@@ -161,7 +161,7 @@ export function SmartNotifications() {
       const { data: maintenance, error } = await supabase
         .from('maintenance_requests')
         .select('id, title, priority, unit_number, created_at')
-        .eq('landlord_id', user?.id)
+        .eq('user_id', user?.id)
         .in('status', ['pending'])
         .in('priority', ['emergency', 'high']);
 
@@ -192,7 +192,7 @@ export function SmartNotifications() {
         .from('tenants')
         .select('id, name, lease_end_date')
         .eq('landlord_id', user?.id)
-        .eq('is_active', true)
+        .eq('status', 'active')
         .not('lease_end_date', 'is', null)
         .lte('lease_end_date', thirtyDaysFromNow.toISOString().split('T')[0]);
 
@@ -221,11 +221,8 @@ export function SmartNotifications() {
     try {
       const { data: units, error } = await supabase
         .from('units')
-        .select(`
-          id, unit_number, updated_at,
-          properties!inner(name, landlord_id)
-        `)
-        .eq('properties.landlord_id', user?.id)
+        .select('id, unit_number, updated_at')
+        .eq('user_id', user?.id)
         .eq('is_available', true);
 
       if (!error && units && units.length > 0) {

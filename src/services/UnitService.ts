@@ -9,6 +9,7 @@ export interface Unit {
   rent_amount?: number; // Campo real de la BD
   is_available: boolean;
   tenant_id?: string | null;
+  user_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -20,12 +21,9 @@ export class UnitService extends BaseService {
     console.log('🔍 Fetching units for property:', propertyId);
     const { data, error } = await supabase
       .from('units')
-      .select(`
-        *,
-        properties!inner(landlord_id)
-      `)
+      .select('*')
       .eq('property_id', propertyId)
-      .eq('properties.landlord_id', user.id)
+      .eq('user_id', user.id)
       .order('unit_number');
 
     if (error) {
@@ -36,7 +34,7 @@ export class UnitService extends BaseService {
     // Transform data to match interface
     return (data || []).map(unit => ({
       ...unit,
-      monthly_rent: unit.monthly_rent || 0 // Asegurar que monthly_rent existe
+      monthly_rent: unit.rent_amount || 0 // Mapear rent_amount a monthly_rent
     }));
   }
 
@@ -48,7 +46,7 @@ export class UnitService extends BaseService {
       .from('properties')
       .select('id')
       .eq('id', unit.property_id)
-      .eq('landlord_id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (propertyError || !property) {
@@ -62,8 +60,9 @@ export class UnitService extends BaseService {
       .insert({
         property_id: unit.property_id,
         unit_number: unit.unit_number,
-        monthly_rent: unit.monthly_rent || 0,
-        is_available: unit.is_available !== false // Default true
+        rent_amount: unit.monthly_rent || 0,
+        is_available: unit.is_available !== false,
+        user_id: user.id
       })
       .select()
       .single();
@@ -76,22 +75,19 @@ export class UnitService extends BaseService {
     console.log('✅ Unit created:', data);
     return {
       ...data,
-      monthly_rent: data.monthly_rent || 0
+      monthly_rent: data.rent_amount || 0
     };
   }
 
   async updateUnit(id: string, updates: Partial<Unit>): Promise<Unit> {
     const user = await this.ensureAuthenticated();
     
-    // Verify unit belongs to user's property
+    // Verify unit belongs to user
     const { data: unit, error: unitError } = await supabase
       .from('units')
-      .select(`
-        *,
-        properties!inner(landlord_id)
-      `)
+      .select('*')
       .eq('id', id)
-      .eq('properties.landlord_id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (unitError || !unit) {
@@ -102,7 +98,7 @@ export class UnitService extends BaseService {
     
     const updatePayload = {
       ...(updates.unit_number && { unit_number: updates.unit_number }),
-      ...(updates.monthly_rent !== undefined && { monthly_rent: updates.monthly_rent }),
+      ...(updates.monthly_rent !== undefined && { rent_amount: updates.monthly_rent }),
       ...(updates.is_available !== undefined && { is_available: updates.is_available }),
       ...(updates.tenant_id !== undefined && { tenant_id: updates.tenant_id })
     };
@@ -123,22 +119,19 @@ export class UnitService extends BaseService {
 
     return {
       ...data,
-      monthly_rent: data.monthly_rent || 0
+      monthly_rent: data.rent_amount || 0
     };
   }
 
   async deleteUnit(id: string): Promise<boolean> {
     const user = await this.ensureAuthenticated();
     
-    // Verify unit belongs to user's property
+    // Verify unit belongs to user
     const { data: unit, error: unitError } = await supabase
       .from('units')
-      .select(`
-        *,
-        properties!inner(landlord_id)
-      `)
+      .select('*')
       .eq('id', id)
-      .eq('properties.landlord_id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (unitError || !unit) {
