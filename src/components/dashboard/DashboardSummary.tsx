@@ -1,13 +1,9 @@
 
 import { StatsCard } from "@/components/ui/StatsCard";
 import {
-  BarChart3,
   Building,
-  CalendarClock,
-  DollarSign,
   Home,
   Users,
-  Wallet,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAppData } from "@/hooks/use-app-data";
@@ -48,7 +44,7 @@ export function DashboardSummary({
   }
 
   return (
-    <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5'}`}>
+    <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
       <StatsCard
         title="Total Propiedades"
         value={displayStats.totalProperties}

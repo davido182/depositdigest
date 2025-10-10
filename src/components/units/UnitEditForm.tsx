@@ -53,17 +53,16 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Find tenant with this property_id (unit assignment)
-      const { data: tenant, error } = await supabase
-        .from('tenants')
-        .select('id, name')
-        .eq('property_id', unitId)
-        .eq('landlord_id', user.id)
+      // Check if unit has tenant_id assigned
+      const { data: unitData, error: unitError } = await supabase
+        .from('units')
+        .select('tenant_id')
+        .eq('id', unitId)
         .single();
 
-      if (!error && tenant) {
-        console.log('✅ Found assigned tenant:', tenant);
-        setSelectedTenantId(tenant.id);
+      if (!unitError && unitData?.tenant_id) {
+        console.log('✅ Found assigned tenant ID:', unitData.tenant_id);
+        setSelectedTenantId(unitData.tenant_id);
       } else {
         console.log('📭 No tenant assigned to this unit');
         setSelectedTenantId("");
@@ -187,7 +186,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         // Verificar si el inquilino ya tiene otra unidad asignada
         const { data: existingAssignment, error: checkError } = await supabase
           .from('tenants')
-          .select('id, name, property_id')
+          .select('id, name')
           .eq('id', selectedTenantId)
           .single();
 
@@ -195,18 +194,18 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
           throw new Error('Error al verificar inquilino: ' + checkError.message);
         }
 
-        // Si el inquilino ya tiene una unidad asignada
-        if (existingAssignment.property_id && existingAssignment.property_id !== unit.id) {
-          const tenantName = existingAssignment.name;
-          const currentUnit = 'Otra unidad';
-          const currentProperty = 'Otra propiedad';
+        // Check if tenant is already assigned to another unit
+        const { data: currentUnit, error: unitCheckError } = await supabase
+          .from('units')
+          .select('id, unit_number')
+          .eq('tenant_id', selectedTenantId)
+          .single();
 
+        if (!unitCheckError && currentUnit && currentUnit.id !== unit.id) {
           const confirmed = confirm(
             `⚠️ INQUILINO YA ASIGNADO\n\n` +
-            `${tenantName} ya está asignado a:\n` +
-            `${currentUnit} en ${currentProperty}\n\n` +
-            `¿Deseas asignarlo también a esta unidad?\n` +
-            `Esto creará una nueva entrada en el seguimiento de pagos.`
+            `${existingAssignment.name} ya está asignado a la unidad ${currentUnit.unit_number}\n\n` +
+            `¿Deseas reasignarlo a esta unidad?`
           );
 
           if (!confirmed) {
@@ -214,15 +213,18 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
             return;
           }
 
-          // Crear una nueva entrada de inquilino para esta unidad
-          await createDuplicateTenantEntry(existingAssignment, unit, user.id);
-        } else {
-          // Verificar diferencia de renta
-          await checkRentDifference(selectedTenantId, unit.monthly_rent || 0);
-
-          // Asignación normal
-          await assignTenantToUnit(selectedTenantId, unit.id, user.id);
+          // Unassign from current unit first
+          await supabase
+            .from('units')
+            .update({ tenant_id: null, is_available: true })
+            .eq('id', currentUnit.id);
         }
+
+        // Verificar diferencia de renta
+        await checkRentDifference(selectedTenantId, unit.monthly_rent || 0);
+
+        // Asignación normal
+        await assignTenantToUnit(selectedTenantId, unit.id, user.id);
       } else {
         // Desasignar inquilino de esta unidad
         await unassignTenantFromUnit(unit.id, user.id);
@@ -251,82 +253,36 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
   };
 
   const assignTenantToUnit = async (tenantId: string, unitId: string, userId: string) => {
-    // Asignar inquilino a esta unidad
-    const { error: assignError } = await supabase
-      .from('tenants')
-      .update({ property_id: unitId })
-      .eq('id', tenantId)
-      .eq('landlord_id', userId);
-
-    if (assignError) {
-      throw new Error('Error al asignar inquilino: ' + assignError.message);
-    }
-
-    // Marcar unidad como ocupada
+    // Marcar unidad como ocupada y asignar inquilino
     const { error: unitError } = await supabase
       .from('units')
-      .update({ is_available: false })
+      .update({ 
+        is_available: false,
+        tenant_id: tenantId
+      })
       .eq('id', unitId);
 
     if (unitError) {
-      throw new Error('Error al actualizar disponibilidad: ' + unitError.message);
+      throw new Error('Error al asignar inquilino a unidad: ' + unitError.message);
     }
   };
 
   const unassignTenantFromUnit = async (unitId: string, userId: string) => {
-    // Desasignar inquilino de esta unidad
-    const { error: unassignError } = await supabase
-      .from('tenants')
-      .update({ property_id: null })
-      .eq('property_id', unitId)
-      .eq('landlord_id', userId);
-
-    if (unassignError) {
-      throw new Error('Error al desasignar inquilino: ' + unassignError.message);
-    }
-
-    // Marcar unidad como disponible
+    // Marcar unidad como disponible y desasignar inquilino
     const { error: unitError } = await supabase
       .from('units')
-      .update({ is_available: true })
+      .update({ 
+        is_available: true,
+        tenant_id: null
+      })
       .eq('id', unitId);
 
     if (unitError) {
-      throw new Error('Error al actualizar disponibilidad: ' + unitError.message);
+      throw new Error('Error al desasignar inquilino: ' + unitError.message);
     }
   };
 
-  const createDuplicateTenantEntry = async (originalTenant: any, targetUnit: Unit, userId: string) => {
-    // Crear una nueva entrada de inquilino para la nueva unidad
-    const { error: createError } = await supabase
-      .from('tenants')
-      .insert({
-        landlord_id: userId,
-        name: originalTenant.name,
-        email: originalTenant.email,
-        phone: originalTenant.phone,
-        property_id: targetUnit.id,
-        rent_amount: targetUnit.monthly_rent || 0,
-        lease_start_date: new Date().toISOString().split('T')[0],
-        is_active: true
-      });
-
-    if (createError) {
-      throw new Error('Error al crear nueva entrada de inquilino: ' + createError.message);
-    }
-
-    // Marcar unidad como ocupada
-    const { error: unitError } = await supabase
-      .from('units')
-      .update({ is_available: false })
-      .eq('id', targetUnit.id);
-
-    if (unitError) {
-      throw new Error('Error al actualizar disponibilidad: ' + unitError.message);
-    }
-
-    toast.success('Nueva entrada de inquilino creada para esta unidad');
-  };
+  // Remove this function as we don't need to duplicate tenants
 
   if (!unit) return null;
 

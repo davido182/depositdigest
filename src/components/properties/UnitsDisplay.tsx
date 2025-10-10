@@ -102,8 +102,8 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
       const updateData = {
         unit_number: updatedUnit.unit_number,
         monthly_rent: updatedUnit.monthly_rent || updatedUnit.rent_amount || 0,
-        is_available: updatedUnit.is_available
-        // No incluir tenant_id aquí ya que la tabla units no lo tiene aún
+        is_available: updatedUnit.is_available,
+        tenant_id: updatedUnit.tenant_id || null
       };
 
       console.log('🔄 Update data being sent:', updateData);
@@ -113,39 +113,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
 
       console.log('✅ Unit updated successfully in database:', result);
 
-      // If assigning a tenant, also update the tenant record
-      if (updatedUnit.tenant_id && updatedUnit.tenant_id !== 'empty-value' && updatedUnit.tenant_id !== '') {
-        try {
-          const { supabase } = await import("@/integrations/supabase/client");
-          
-          // Validate that the tenant_id is a valid UUID
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-          if (!uuidRegex.test(updatedUnit.tenant_id)) {
-            console.log('Invalid tenant ID, skipping tenant assignment');
-            return;
-          }
-
-          // First, clear any existing tenant assignments for this unit
-          await supabase
-            .from('tenants')
-            .update({ property_id: null })
-            .eq('property_id', updatedUnit.id);
-
-          // Then assign the new tenant
-          const { error: tenantError } = await supabase
-            .from('tenants')
-            .update({ property_id: updatedUnit.id })
-            .eq('id', updatedUnit.tenant_id);
-
-          if (tenantError) {
-            console.error('Error updating tenant assignment:', tenantError);
-          } else {
-            console.log('Tenant assigned to unit successfully');
-          }
-        } catch (tenantError) {
-          console.error('Error updating tenant assignment:', tenantError);
-        }
-      }
+      // Tenant assignment is handled by UnitEditForm now
 
       // Force reload to get fresh data from database
       await loadUnits();
