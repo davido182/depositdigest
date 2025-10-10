@@ -16,7 +16,6 @@ interface DashboardSummaryProps {
   totalProperties?: number;
   totalUnits?: number;
   occupiedUnits?: number;
-  monthlyRevenue?: number;
 }
 
 export function DashboardSummary({

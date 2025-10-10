@@ -122,7 +122,7 @@ export function TenantEditForm({
     try {
       const { data: unitData, error } = await supabase
         .from('units')
-        .select('property_id, monthly_rent')
+        .select('property_id, rent_amount')
         .eq('unit_number', unitNumber)
         .single();
 
@@ -136,8 +136,8 @@ export function TenantEditForm({
       setSelectedPropertyId(unitData.property_id);
       
       // Update rent amount if available
-      if (unitData.monthly_rent && unitData.monthly_rent > 0) {
-        setFormData(prev => ({ ...prev, rentAmount: unitData.monthly_rent }));
+      if (unitData.rent_amount && unitData.rent_amount > 0) {
+        setFormData(prev => ({ ...prev, rentAmount: unitData.rent_amount }));
       }
       
       // Load units for this property
@@ -167,7 +167,7 @@ export function TenantEditForm({
       // Load ALL units for specific property (not just available ones)
       const { data: unitsData, error } = await supabase
         .from('units')
-        .select('unit_number, is_available, id, monthly_rent')
+        .select('unit_number, is_available, id, rent_amount')
         .eq('property_id', propertyId);
 
       if (error) {
@@ -565,7 +565,7 @@ export function TenantEditForm({
                           console.log('🔍 Loading rent for unit:', unitValue, 'in property:', selectedPropertyId);
                           const { data: unitData, error } = await supabase
                             .from('units')
-                            .select('monthly_rent, id')
+                            .select('rent_amount, id')
                             .eq('unit_number', unitValue)
                             .eq('property_id', selectedPropertyId)
                             .single();
@@ -573,11 +573,11 @@ export function TenantEditForm({
                           if (error) {
                             console.error('❌ Error loading unit rent:', error);
                           } else if (unitData) {
-                            console.log('💰 Found unit rent:', unitData.monthly_rent);
+                            console.log('💰 Found unit rent:', unitData.rent_amount);
                             setFormData(prev => ({ 
                               ...prev, 
                               unit: unitValue,
-                              rentAmount: unitData.monthly_rent || prev.rentAmount
+                              rentAmount: unitData.rent_amount || prev.rentAmount
                             }));
                           }
                         } catch (error) {
