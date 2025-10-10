@@ -85,9 +85,9 @@ export function SmartNotifications() {
     try {
       const { data: tenants, error } = await supabase
         .from('tenants')
-        .select('id, name, property_id, is_active')
+        .select('id, name, property_id')
         .eq('landlord_id', user?.id)
-        .eq('is_active', true)
+        .eq('status', 'active')
         .is('property_id', null);
 
       if (!error && tenants && tenants.length > 0) {
@@ -128,7 +128,7 @@ export function SmartNotifications() {
           .from('tenants')
           .select('id, name, rent_amount')
           .eq('landlord_id', user?.id)
-          .eq('is_active', true);
+          .eq('status', 'active');
 
         if (!error && tenants) {
           const paidTenantIds = new Set(currentMonthRecords.filter((r: any) => r.paid).map((r: any) => r.tenantId));
@@ -192,7 +192,7 @@ export function SmartNotifications() {
         .from('tenants')
         .select('id, name, leaseEndDate')
         .eq('landlord_id', user?.id)
-        .eq('is_active', true)
+        .eq('status', 'active')
         .not('leaseEndDate', 'is', null)
         .lte('leaseEndDate', thirtyDaysFromNow.toISOString().split('T')[0]);
 

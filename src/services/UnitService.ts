@@ -5,16 +5,10 @@ export interface Unit {
   id: string;
   property_id: string;
   unit_number: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  square_meters?: number;
-  monthly_rent: number;
-  deposit_amount?: number;
-  is_furnished?: boolean;
+  monthly_rent: number; // Para compatibilidad con la interfaz
+  rent_amount?: number; // Campo real de la BD
   is_available: boolean;
   tenant_id?: string | null;
-  description?: string;
-  photos?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -39,7 +33,11 @@ export class UnitService extends BaseService {
       throw error;
     }
 
-    return data || [];
+    // Transform data to match interface
+    return (data || []).map(unit => ({
+      ...unit,
+      monthly_rent: unit.monthly_rent || 0 // Asegurar que monthly_rent existe
+    }));
   }
 
   async createUnit(unit: Omit<Unit, 'id' | 'created_at' | 'updated_at'>): Promise<Unit> {
@@ -57,19 +55,15 @@ export class UnitService extends BaseService {
       throw new Error('Property not found or access denied');
     }
 
+    console.log('📝 Creating new unit:', unit);
+
     const { data, error } = await supabase
       .from('units')
       .insert({
         property_id: unit.property_id,
         unit_number: unit.unit_number,
-        bedrooms: unit.bedrooms || 1,
-        bathrooms: unit.bathrooms || 1,
-        square_meters: unit.square_meters || null,
-        monthly_rent: unit.monthly_rent,
-        deposit_amount: unit.deposit_amount || null,
-        is_furnished: unit.is_furnished || false,
-        is_available: unit.is_available !== false, // Default true
-        description: unit.description || null
+        monthly_rent: unit.monthly_rent || 0,
+        is_available: unit.is_available !== false // Default true
       })
       .select()
       .single();
@@ -80,7 +74,10 @@ export class UnitService extends BaseService {
     }
 
     console.log('✅ Unit created:', data);
-    return data;
+    return {
+      ...data,
+      monthly_rent: data.monthly_rent || 0
+    };
   }
 
   async updateUnit(id: string, updates: Partial<Unit>): Promise<Unit> {
@@ -105,14 +102,8 @@ export class UnitService extends BaseService {
     
     const updatePayload = {
       ...(updates.unit_number && { unit_number: updates.unit_number }),
-      ...(updates.bedrooms && { bedrooms: updates.bedrooms }),
-      ...(updates.bathrooms && { bathrooms: updates.bathrooms }),
-      ...(updates.square_meters && { square_meters: updates.square_meters }),
       ...(updates.monthly_rent !== undefined && { monthly_rent: updates.monthly_rent }),
-      ...(updates.deposit_amount !== undefined && { deposit_amount: updates.deposit_amount }),
-      ...(updates.is_furnished !== undefined && { is_furnished: updates.is_furnished }),
       ...(updates.is_available !== undefined && { is_available: updates.is_available }),
-      ...(updates.description !== undefined && { description: updates.description }),
       ...(updates.tenant_id !== undefined && { tenant_id: updates.tenant_id })
     };
     
@@ -130,7 +121,10 @@ export class UnitService extends BaseService {
       throw error;
     }
 
-    return data;
+    return {
+      ...data,
+      monthly_rent: data.monthly_rent || 0
+    };
   }
 
   async deleteUnit(id: string): Promise<boolean> {

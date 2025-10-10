@@ -10,18 +10,7 @@ export class SupabaseTenantService extends BaseService {
     console.log('🔍 Fetching tenants for landlord:', user.id);
     const { data, error } = await this.supabase
       .from('tenants')
-      .select(`
-        *,
-        units:unit_id (
-          unit_number,
-          monthly_rent,
-          property_id,
-          properties (
-            name,
-            address
-          )
-        )
-      `)
+      .select('*')
       .eq('landlord_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -34,29 +23,23 @@ export class SupabaseTenantService extends BaseService {
 
     // Transform database format to app format
     return (data || []).map(tenant => {
-      const unitNumber = tenant.units?.unit_number || 'Sin unidad';
-      const rentAmount = Number(tenant.rent_amount || tenant.units?.monthly_rent || 0);
-      const propertyName = tenant.units?.properties?.name || 'Sin propiedad';
-      const propertyAddress = tenant.units?.properties?.address || '';
-
-      console.log(`Tenant ${tenant.name}: unit=${unitNumber}, rent=${rentAmount}, property=${propertyName}`);
+      console.log(`Tenant ${tenant.name}: rent=${tenant.rent_amount}`);
 
       return {
         id: tenant.id,
         name: tenant.name || 'Sin nombre',
         email: tenant.email || '',
         phone: tenant.phone || '',
-        unit: unitNumber,
+        unit: 'Sin unidad', // Simplificado por ahora
         moveInDate: tenant.moveInDate || '',
         leaseEndDate: tenant.leaseEndDate || '',
-        rentAmount: rentAmount,
+        rentAmount: Number(tenant.rent_amount || 0),
         depositAmount: Number(tenant.depositAmount || 0),
         status: tenant.status || 'active',
         paymentHistory: [],
         createdAt: tenant.created_at,
-        // Agregar información de la propiedad
-        propertyName: propertyName,
-        propertyAddress: propertyAddress,
+        propertyName: 'Sin propiedad',
+        propertyAddress: '',
         updatedAt: tenant.updated_at,
       };
     });
