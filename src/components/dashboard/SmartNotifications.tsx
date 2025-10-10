@@ -221,8 +221,11 @@ export function SmartNotifications() {
     try {
       const { data: units, error } = await supabase
         .from('units')
-        .select('id, unit_number, updated_at')
-        .eq('user_id', user?.id)
+        .select(`
+          id, unit_number, updated_at,
+          properties!inner(landlord_id)
+        `)
+        .eq('properties.landlord_id', user?.id)
         .eq('is_available', true);
 
       if (!error && units && units.length > 0) {

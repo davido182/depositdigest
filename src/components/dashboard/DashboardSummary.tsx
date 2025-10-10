@@ -22,7 +22,6 @@ export function DashboardSummary({
   totalProperties,
   totalUnits,
   occupiedUnits,
-  monthlyRevenue
 }: DashboardSummaryProps = {}) {
   const isMobile = useIsMobile();
   const { stats, isLoading } = useAppData();
@@ -33,7 +32,6 @@ export function DashboardSummary({
     totalUnits: totalUnits ?? stats.totalUnits,
     occupiedUnits: occupiedUnits ?? stats.occupiedUnits,
     vacantUnits: (totalUnits ?? stats.totalUnits) - (occupiedUnits ?? stats.occupiedUnits),
-    monthlyRevenue: monthlyRevenue ?? stats.monthlyRevenue,
     isLoading: isLoading
   };
 
@@ -74,12 +72,6 @@ export function DashboardSummary({
         value={displayStats.vacantUnits}
         icon={Home}
         description="Listas para alquilar"
-      />
-      <StatsCard
-        title="Ingresos Mensuales"
-        value={`$${displayStats.monthlyRevenue.toLocaleString()}`}
-        icon={DollarSign}
-        description="Ingresos del mes actual"
       />
     </div>
   );
