@@ -23,22 +23,22 @@ export class SupabaseTenantService extends BaseService {
 
     // Transform database format to app format
     return (data || []).map(tenant => {
-      console.log(`Tenant ${tenant.name}: rent=${tenant.rent_amount}`);
+      console.log(`Tenant ${tenant.name}: rent=${tenant.monthly_rent}`);
 
       return {
         id: tenant.id,
         name: tenant.name || 'Sin nombre',
         email: tenant.email || '',
         phone: tenant.phone || '',
-        unit: 'Sin unidad', // Simplificado por ahora
-        moveInDate: tenant.moveInDate || '',
-        leaseEndDate: tenant.leaseEndDate || '',
-        rentAmount: Number(tenant.rent_amount || 0),
-        depositAmount: Number(tenant.depositAmount || 0),
-        status: tenant.status || 'active',
+        unit: tenant.unit_number || 'Sin unidad',
+        moveInDate: tenant.lease_start_date || '',
+        leaseEndDate: tenant.lease_end_date || '',
+        rentAmount: Number(tenant.monthly_rent || 0),
+        depositAmount: Number(tenant.deposit_paid || 0),
+        status: (tenant.is_active ? 'active' : 'inactive') as any,
         paymentHistory: [],
         createdAt: tenant.created_at,
-        propertyName: 'Sin propiedad',
+        propertyName: tenant.property_name || 'Sin propiedad',
         propertyAddress: '',
         updatedAt: tenant.updated_at,
       };
@@ -57,11 +57,11 @@ export class SupabaseTenantService extends BaseService {
         name: tenant.name || 'Sin nombre',
         email: tenant.email || null,
         phone: tenant.phone || null,
-        moveInDate: tenant.moveInDate || null,
-        leaseEndDate: tenant.leaseEndDate || null,
-        rent_amount: tenant.rentAmount || 0,
-        depositAmount: tenant.depositAmount || 0,
-        status: tenant.status || 'active',
+        lease_start_date: tenant.moveInDate || null,
+        lease_end_date: tenant.leaseEndDate || null,
+        monthly_rent: tenant.rentAmount || 0,
+        deposit_paid: tenant.depositAmount || 0,
+        is_active: tenant.status === 'active',
         notes: tenant.notes || null
       })
       .select()
@@ -79,12 +79,12 @@ export class SupabaseTenantService extends BaseService {
       name: data.name || 'Sin nombre',
       email: data.email || '',
       phone: data.phone || '',
-      unit: 'Sin unidad',
-      moveInDate: data.moveInDate || '',
-      leaseEndDate: data.leaseEndDate || '',
-      rentAmount: Number(data.rent_amount || 0),
-      depositAmount: Number(data.depositAmount || 0),
-      status: data.status || 'active',
+      unit: data.unit_number || 'Sin unidad',
+      moveInDate: data.lease_start_date || '',
+      leaseEndDate: data.lease_end_date || '',
+      rentAmount: Number(data.monthly_rent || 0),
+      depositAmount: Number(data.deposit_paid || 0),
+      status: (data.is_active ? 'active' : 'inactive') as any,
       paymentHistory: [],
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -100,11 +100,11 @@ export class SupabaseTenantService extends BaseService {
         ...(updates.name && { name: updates.name }),
         ...(updates.email && { email: updates.email }),
         ...(updates.phone && { phone: updates.phone }),
-        ...(updates.moveInDate && { moveInDate: updates.moveInDate }),
-        ...(updates.leaseEndDate && { leaseEndDate: updates.leaseEndDate }),
-        ...(updates.rentAmount && { rent_amount: updates.rentAmount }),
-        ...(updates.depositAmount && { depositAmount: updates.depositAmount }),
-        ...(updates.status && { status: updates.status }),
+        ...(updates.moveInDate && { lease_start_date: updates.moveInDate }),
+        ...(updates.leaseEndDate && { lease_end_date: updates.leaseEndDate }),
+        ...(updates.rentAmount && { monthly_rent: updates.rentAmount }),
+        ...(updates.depositAmount && { deposit_paid: updates.depositAmount }),
+        ...(updates.status && { is_active: updates.status === 'active' }),
         ...(updates.notes && { notes: updates.notes })
       })
       .eq('id', id)
@@ -121,12 +121,12 @@ export class SupabaseTenantService extends BaseService {
       name: data.name || 'Sin nombre',
       email: data.email || '',
       phone: data.phone || '',
-      unit: 'Sin unidad', // Simplificado por ahora
-      moveInDate: data.moveInDate || '',
-      leaseEndDate: data.leaseEndDate || '',
-      rentAmount: Number(data.rent_amount || 0),
-      depositAmount: Number(data.depositAmount || 0),
-      status: data.status || 'active',
+      unit: data.unit_number || 'Sin unidad',
+      moveInDate: data.lease_start_date || '',
+      leaseEndDate: data.lease_end_date || '',
+      rentAmount: Number(data.monthly_rent || 0),
+      depositAmount: Number(data.deposit_paid || 0),
+      status: (data.is_active ? 'active' : 'inactive') as any,
       paymentHistory: [],
       createdAt: data.created_at,
       updatedAt: data.updated_at,

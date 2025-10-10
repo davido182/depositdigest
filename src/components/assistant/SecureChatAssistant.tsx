@@ -106,7 +106,7 @@ export function SecureChatAssistant() {
 
     // Saludos y consultas generales
     if (lowerQuery.match(/(hola|hi|hey|buenos|buenas)/)) {
-      return `¡Hola! 😊 Veo que tienes ${userData.properties.length} propiedades con ${userData.units.length} unidades y ${userData.tenants.filter(t => t.status === 'active').length} inquilinos activos. ¿En qué puedo ayudarte hoy?`;
+      return `¡Hola! 😊 Veo que tienes ${userData.properties.length} propiedades con ${userData.units.length} unidades y ${userData.tenants.filter(t => t.is_active).length} inquilinos activos. ¿En qué puedo ayudarte hoy?`;
     }
 
     // Consultas sobre propiedades
@@ -161,14 +161,14 @@ export function SecureChatAssistant() {
 
   const handleTenantQueries = (query: string): string => {
     const { tenants } = userData!;
-    const activeTenants = tenants.filter(t => t.status === 'active');
+    const activeTenants = tenants.filter(t => t.is_active);
 
     if (query.includes('activos') || query.includes('cuantos')) {
       if (activeTenants.length === 0) {
         return "👥 Actualmente no tienes inquilinos activos. ¡Pero eso puede cambiar pronto! 🌟 ¿Te ayudo a agregar tu primer inquilino? Ve a la sección 'Inquilinos' y empieza a hacer crecer tu negocio. 💪";
       }
 
-      const tenantList = activeTenants.slice(0, 5).map(t => `• ${t.name || 'Sin nombre'} - €${t.rent_amount || 0}/mes`).join('\n');
+      const tenantList = activeTenants.slice(0, 5).map(t => `• ${t.name || 'Sin nombre'} - €${t.monthly_rent || 0}/mes`).join('\n');
       return `Inquilinos activos (${activeTenants.length}):\n${tenantList}${activeTenants.length > 5 ? '\n... y más' : ''}`;
     }
 
@@ -176,15 +176,15 @@ export function SecureChatAssistant() {
       return "Aún no tienes inquilinos registrados. ¿Te gustaría agregar tu primer inquilino?";
     }
 
-    return `Tienes ${tenants.length} inquilinos registrados, ${tenants.filter(t => t.status === 'active').length} están activos.`;
+    return `Tienes ${tenants.length} inquilinos registrados, ${tenants.filter(t => t.is_active).length} están activos.`;
   };
 
   const handlePaymentQueries = (query: string): string => {
     const { tenants } = userData!;
 
     // Calcular ingresos mensuales reales
-    const activeTenants = tenants.filter(t => t.status === 'active');
-    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.rent_amount || 0), 0);
+    const activeTenants = tenants.filter(t => t.is_active);
+    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.monthly_rent || 0), 0);
 
     if (query.match(/(ingreso|gano|ganancia|dinero|plata)/)) {
       if (monthlyRevenue === 0) {
@@ -282,9 +282,9 @@ export function SecureChatAssistant() {
   const handleGeneralSummary = (): string => {
     const { properties, tenants, units, maintenance } = userData!;
 
-    const activeTenants = tenants.filter(t => t.status === 'active');
+    const activeTenants = tenants.filter(t => t.is_active);
     const occupiedUnits = units.filter(u => !u.is_available).length;
-    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.rent_amount || 0), 0);
+    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.monthly_rent || 0), 0);
     const pendingMaintenance = maintenance.filter(m => m.status === 'pending').length;
     const occupancyRate = units.length > 0 ? ((occupiedUnits / units.length) * 100).toFixed(1) : '0';
 

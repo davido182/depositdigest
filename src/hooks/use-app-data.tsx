@@ -112,7 +112,7 @@ export function useAppData() {
       const totalUnits = units.length;
       const occupiedUnits = units.filter(u => !u.is_available).length;
       const vacantUnits = totalUnits - occupiedUnits;
-      const activeTenants = tenants.filter(t => t.status === 'active').length;
+      const activeTenants = tenants.filter(t => t.is_active).length;
       
       console.log('useAppData: Units analysis:', {
         totalUnits,
@@ -121,10 +121,10 @@ export function useAppData() {
       });
       
       // Calculate monthly revenue from payment tracking table (like Analytics)
-      const activeTenantsList = tenants.filter(t => t.status === 'active');
+      const activeTenantsList = tenants.filter(t => t.is_active);
       const potentialMonthlyRevenue = units
         .filter(u => !u.is_available)
-        .reduce((sum, unit) => sum + (unit.monthly_rent || unit.rent_amount || 0), 0);
+        .reduce((sum, unit) => sum + (unit.monthly_rent || 0), 0);
       
       // Get real revenue from payment tracking table
       const storageKey = `payment_records_${user.id}_${currentYear}`;

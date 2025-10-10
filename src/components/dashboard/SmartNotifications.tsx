@@ -87,7 +87,7 @@ export function SmartNotifications() {
         .from('tenants')
         .select('id, name, property_id')
         .eq('landlord_id', user?.id)
-        .eq('status', 'active')
+        .eq('is_active', true)
         .is('property_id', null);
 
       if (!error && tenants && tenants.length > 0) {
@@ -126,9 +126,9 @@ export function SmartNotifications() {
         // Get all active tenants
         const { data: tenants, error } = await supabase
           .from('tenants')
-          .select('id, name, rent_amount')
+          .select('id, name, monthly_rent')
           .eq('landlord_id', user?.id)
-          .eq('status', 'active');
+          .eq('is_active', true);
 
         if (!error && tenants) {
           const paidTenantIds = new Set(currentMonthRecords.filter((r: any) => r.paid).map((r: any) => r.tenantId));
@@ -142,10 +142,10 @@ export function SmartNotifications() {
                 id: `payment-overdue-${tenant.id}`,
                 type: 'payment_overdue',
                 title: isOverdue ? 'Pago vencido' : 'Pago pendiente',
-                description: `${name} - €${tenant.rent_amount || 0} del mes actual`,
+                description: `${name} - €${tenant.monthly_rent || 0} del mes actual`,
                 priority: isOverdue ? 'high' : 'medium',
                 created_at: new Date().toISOString(),
-                data: { tenantId: tenant.id, tenantName: name, amount: tenant.rent_amount }
+                data: { tenantId: tenant.id, tenantName: name, amount: tenant.monthly_rent }
               });
             }
           });
@@ -190,16 +190,16 @@ export function SmartNotifications() {
       
       const { data: tenants, error } = await supabase
         .from('tenants')
-        .select('id, name, leaseEndDate')
+        .select('id, name, lease_end_date')
         .eq('landlord_id', user?.id)
-        .eq('status', 'active')
-        .not('leaseEndDate', 'is', null)
-        .lte('leaseEndDate', thirtyDaysFromNow.toISOString().split('T')[0]);
+        .eq('is_active', true)
+        .not('lease_end_date', 'is', null)
+        .lte('lease_end_date', thirtyDaysFromNow.toISOString().split('T')[0]);
 
       if (!error && tenants && tenants.length > 0) {
         tenants.forEach(tenant => {
           const name = tenant.name || 'Inquilino';
-          const daysUntilExpiry = Math.ceil((new Date(tenant.leaseEndDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+          const daysUntilExpiry = Math.ceil((new Date(tenant.lease_end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
           
           notifications.push({
             id: `lease-expiring-${tenant.id}`,
