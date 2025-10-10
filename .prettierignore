@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Generated files
+*.min.js
+*.min.css
+
+# Package files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# Environment files
+.env*
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test outputs
+test-results/
+playwright-report/
+
+# Mobile
+android/
+ios/
+
+# Logs
+*.log
+
+# Cache
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+
+# Temporary files
+*.tmp
+*.temp

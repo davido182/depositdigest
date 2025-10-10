@@ -42,6 +42,22 @@ export function TenantEditForm({
   onClose,
   onSave,
 }: TenantEditFormProps) {
+  // Helper function to format date for input (YYYY-MM-DD)
+  const formatDateForInput = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    return date.toISOString().split("T")[0];
+  };
+
+  // Helper function to format date for display (DD/MM/YYYY)
+  const formatDateForDisplay = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    return date.toLocaleDateString('es-ES');
+  };
+
   const emptyTenant: Tenant = {
     id: "",
     name: "",
@@ -554,9 +570,9 @@ export function TenantEditForm({
                 <div className="flex items-center">
                   <Home className="w-4 h-4 mr-2 text-muted-foreground" />
                   <Select
-                    value={formData.unit || "none"}
+                    value={formData.unit || ""}
                     onValueChange={async (value) => {
-                      const unitValue = value === "none" ? "" : value;
+                      const unitValue = value === "" ? "" : value;
                       setFormData(prev => ({ ...prev, unit: unitValue }));
                       
                       // Load rent amount for selected unit
@@ -593,7 +609,7 @@ export function TenantEditForm({
                       } />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Sin asignar</SelectItem>
+                      <SelectItem value="">Sin asignar</SelectItem>
                       {isLoadingUnits ? (
                         <SelectItem value="loading" disabled>
                           Cargando unidades...
@@ -645,13 +661,18 @@ export function TenantEditForm({
                     id="moveInDate"
                     name="moveInDate"
                     type="date"
-                    value={formData.moveInDate}
+                    value={formatDateForInput(formData.moveInDate)}
                     onChange={handleChange}
                     className={errors.moveInDate ? "border-destructive" : ""}
                   />
                 </div>
                 {errors.moveInDate && (
                   <p className="text-xs text-destructive">{errors.moveInDate}</p>
+                )}
+                {formData.moveInDate && (
+                  <p className="text-xs text-muted-foreground">
+                    Formato: {formatDateForDisplay(formData.moveInDate)}
+                  </p>
                 )}
               </div>
 
@@ -663,10 +684,15 @@ export function TenantEditForm({
                     id="leaseEndDate"
                     name="leaseEndDate"
                     type="date"
-                    value={formData.leaseEndDate || ""}
+                    value={formatDateForInput(formData.leaseEndDate || "")}
                     onChange={handleChange}
                   />
                 </div>
+                {formData.leaseEndDate && (
+                  <p className="text-xs text-muted-foreground">
+                    Formato: {formatDateForDisplay(formData.leaseEndDate)}
+                  </p>
+                )}
               </div>
             </div>
 

@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run full test suite before push
+npm run test:coverage
+
+# Run security checks
+npm run security-check || echo "Security check failed, but continuing..."

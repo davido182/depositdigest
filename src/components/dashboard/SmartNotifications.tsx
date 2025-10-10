@@ -190,16 +190,16 @@ export function SmartNotifications() {
       
       const { data: tenants, error } = await supabase
         .from('tenants')
-        .select('id, name, lease_end_date')
+        .select('id, name, leaseEndDate')
         .eq('landlord_id', user?.id)
         .eq('status', 'active')
-        .not('lease_end_date', 'is', null)
-        .lte('lease_end_date', thirtyDaysFromNow.toISOString().split('T')[0]);
+        .not('leaseEndDate', 'is', null)
+        .lte('leaseEndDate', thirtyDaysFromNow.toISOString().split('T')[0]);
 
       if (!error && tenants && tenants.length > 0) {
         tenants.forEach(tenant => {
           const name = tenant.name || 'Inquilino';
-          const daysUntilExpiry = Math.ceil((new Date(tenant.lease_end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+          const daysUntilExpiry = Math.ceil((new Date(tenant.leaseEndDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
           
           notifications.push({
             id: `lease-expiring-${tenant.id}`,
