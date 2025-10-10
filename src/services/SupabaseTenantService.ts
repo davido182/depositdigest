@@ -35,23 +35,23 @@ export class SupabaseTenantService extends BaseService {
     // Transform database format to app format
     return (data || []).map(tenant => {
       const unitNumber = tenant.units?.unit_number || 'Sin unidad';
-      const rentAmount = Number(tenant.monthly_rent || tenant.units?.monthly_rent || 0);
+      const rentAmount = Number(tenant.rent_amount || tenant.units?.monthly_rent || 0);
       const propertyName = tenant.units?.properties?.name || 'Sin propiedad';
       const propertyAddress = tenant.units?.properties?.address || '';
 
-      console.log(`Tenant ${tenant.first_name} ${tenant.last_name}: unit=${unitNumber}, rent=${rentAmount}, property=${propertyName}`);
+      console.log(`Tenant ${tenant.name}: unit=${unitNumber}, rent=${rentAmount}, property=${propertyName}`);
 
       return {
         id: tenant.id,
-        name: `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || 'Sin nombre',
+        name: tenant.name || 'Sin nombre',
         email: tenant.email || '',
         phone: tenant.phone || '',
         unit: unitNumber,
-        moveInDate: tenant.move_in_date || '',
-        leaseEndDate: tenant.move_out_date || '',
+        moveInDate: tenant.moveInDate || '',
+        leaseEndDate: tenant.leaseEndDate || '',
         rentAmount: rentAmount,
-        depositAmount: Number(tenant.deposit_paid || 0),
-        status: tenant.is_active ? 'active' : 'inactive',
+        depositAmount: Number(tenant.depositAmount || 0),
+        status: tenant.status || 'active',
         paymentHistory: [],
         createdAt: tenant.created_at,
         // Agregar información de la propiedad
@@ -67,26 +67,19 @@ export class SupabaseTenantService extends BaseService {
 
     const user = await this.ensureAuthenticated();
 
-    // Split name into first_name and last_name
-    const nameParts = tenant.name.trim().split(' ');
-    const firstName = nameParts[0] || 'Sin nombre';
-    const lastName = nameParts.slice(1).join(' ') || '';
-
     const { data, error } = await this.supabase
       .from('tenants')
       .insert({
         landlord_id: user.id,
-        first_name: firstName,
-        last_name: lastName,
+        name: tenant.name || 'Sin nombre',
         email: tenant.email || null,
         phone: tenant.phone || null,
-        move_in_date: tenant.moveInDate || null,
-        move_out_date: tenant.leaseEndDate || null,
-        monthly_rent: tenant.rentAmount || 0,
-        deposit_paid: tenant.depositAmount || 0,
-        is_active: tenant.status === 'active',
+        moveInDate: tenant.moveInDate || null,
+        leaseEndDate: tenant.leaseEndDate || null,
+        rent_amount: tenant.rentAmount || 0,
+        depositAmount: tenant.depositAmount || 0,
+        status: tenant.status || 'active',
         notes: tenant.notes || null
-        // unit_id: null // Por ahora sin unidad específica
       })
       .select()
       .single();
@@ -100,15 +93,15 @@ export class SupabaseTenantService extends BaseService {
 
     return {
       id: data.id,
-      name: `${data.first_name} ${data.last_name}`.trim(),
+      name: data.name || 'Sin nombre',
       email: data.email || '',
       phone: data.phone || '',
-      unit: 'Sin unidad', // Por ahora
-      moveInDate: data.move_in_date || '',
-      leaseEndDate: data.move_out_date || '',
-      rentAmount: Number(data.monthly_rent || 0),
-      depositAmount: Number(data.deposit_paid || 0),
-      status: data.is_active ? 'active' : 'inactive',
+      unit: 'Sin unidad',
+      moveInDate: data.moveInDate || '',
+      leaseEndDate: data.leaseEndDate || '',
+      rentAmount: Number(data.rent_amount || 0),
+      depositAmount: Number(data.depositAmount || 0),
+      status: data.status || 'active',
       paymentHistory: [],
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -118,49 +111,18 @@ export class SupabaseTenantService extends BaseService {
   async updateTenant(id: string, updates: Partial<Tenant & { propertyId?: string }>): Promise<Tenant> {
     console.log('Updating tenant in Supabase:', id, updates);
 
-    // Split name if provided
-    let firstName, lastName;
-    if (updates.name) {
-      const nameParts = updates.name.trim().split(' ');
-      firstName = nameParts[0];
-      lastName = nameParts.slice(1).join(' ');
-    }
-
-    // Handle unit assignment
-    let unitId = null;
-    if (updates.unit && updates.unit !== 'Sin unidad' && updates.unit !== '') {
-      // Find the unit by unit_number and property_id if provided
-      let unitQuery = this.supabase
-        .from('units')
-        .select('id')
-        .eq('unit_number', updates.unit);
-
-      if (updates.propertyId) {
-        unitQuery = unitQuery.eq('property_id', updates.propertyId);
-      }
-
-      const { data: unitData } = await unitQuery
-        .single();
-
-      if (unitData) {
-        unitId = unitData.id;
-      }
-    }
-
     const { data, error } = await this.supabase
       .from('tenants')
       .update({
-        ...(firstName && { first_name: firstName }),
-        ...(lastName !== undefined && { last_name: lastName }),
+        ...(updates.name && { name: updates.name }),
         ...(updates.email && { email: updates.email }),
         ...(updates.phone && { phone: updates.phone }),
-        ...(updates.moveInDate && { move_in_date: updates.moveInDate }),
-        ...(updates.leaseEndDate && { move_out_date: updates.leaseEndDate }),
-        ...(updates.rentAmount && { monthly_rent: updates.rentAmount }),
-        ...(updates.depositAmount && { deposit_paid: updates.depositAmount }),
-        ...(updates.status && { is_active: updates.status === 'active' }),
-        ...(updates.notes && { notes: updates.notes }),
-        ...(unitId !== null && { unit_id: unitId })
+        ...(updates.moveInDate && { moveInDate: updates.moveInDate }),
+        ...(updates.leaseEndDate && { leaseEndDate: updates.leaseEndDate }),
+        ...(updates.rentAmount && { rent_amount: updates.rentAmount }),
+        ...(updates.depositAmount && { depositAmount: updates.depositAmount }),
+        ...(updates.status && { status: updates.status }),
+        ...(updates.notes && { notes: updates.notes })
       })
       .eq('id', id)
       .select()
@@ -171,35 +133,17 @@ export class SupabaseTenantService extends BaseService {
       throw new Error(`Failed to update tenant: ${error.message}`);
     }
 
-    // Get unit information if unit_id exists
-    let unitNumber = 'Sin unidad';
-    if (data.unit_id) {
-      try {
-        const { data: unitData } = await this.supabase
-          .from('units')
-          .select('unit_number')
-          .eq('id', data.unit_id)
-          .single();
-
-        if (unitData) {
-          unitNumber = unitData.unit_number;
-        }
-      } catch (error) {
-        console.log('Could not fetch unit number for tenant:', error);
-      }
-    }
-
     return {
       id: data.id,
-      name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Sin nombre',
+      name: data.name || 'Sin nombre',
       email: data.email || '',
       phone: data.phone || '',
-      unit: unitNumber,
-      moveInDate: data.move_in_date || '',
-      leaseEndDate: data.move_out_date || '',
-      rentAmount: Number(data.monthly_rent || 0),
-      depositAmount: Number(data.deposit_paid || 0),
-      status: data.is_active ? 'active' : 'inactive',
+      unit: 'Sin unidad', // Simplificado por ahora
+      moveInDate: data.moveInDate || '',
+      leaseEndDate: data.leaseEndDate || '',
+      rentAmount: Number(data.rent_amount || 0),
+      depositAmount: Number(data.depositAmount || 0),
+      status: data.status || 'active',
       paymentHistory: [],
       createdAt: data.created_at,
       updatedAt: data.updated_at,

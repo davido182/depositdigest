@@ -85,14 +85,14 @@ export function SmartNotifications() {
     try {
       const { data: tenants, error } = await supabase
         .from('tenants')
-        .select('id, first_name, last_name, unit_id, is_active')
+        .select('id, name, property_id, is_active')
         .eq('landlord_id', user?.id)
         .eq('is_active', true)
-        .is('unit_id', null);
+        .is('property_id', null);
 
       if (!error && tenants && tenants.length > 0) {
         tenants.forEach(tenant => {
-          const name = `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || 'Inquilino';
+          const name = tenant.name || 'Inquilino';
           notifications.push({
             id: `tenant-no-unit-${tenant.id}`,
             type: 'tenant_no_unit',
@@ -126,7 +126,7 @@ export function SmartNotifications() {
         // Get all active tenants
         const { data: tenants, error } = await supabase
           .from('tenants')
-          .select('id, first_name, last_name, monthly_rent')
+          .select('id, name, rent_amount')
           .eq('landlord_id', user?.id)
           .eq('is_active', true);
 
@@ -135,17 +135,17 @@ export function SmartNotifications() {
           
           tenants.forEach(tenant => {
             if (!paidTenantIds.has(tenant.id)) {
-              const name = `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || 'Inquilino';
+              const name = tenant.name || 'Inquilino';
               const isOverdue = new Date().getDate() > 5; // Consider overdue after 5th of month
               
               notifications.push({
                 id: `payment-overdue-${tenant.id}`,
                 type: 'payment_overdue',
                 title: isOverdue ? 'Pago vencido' : 'Pago pendiente',
-                description: `${name} - €${tenant.monthly_rent || 0} del mes actual`,
+                description: `${name} - €${tenant.rent_amount || 0} del mes actual`,
                 priority: isOverdue ? 'high' : 'medium',
                 created_at: new Date().toISOString(),
-                data: { tenantId: tenant.id, tenantName: name, amount: tenant.monthly_rent }
+                data: { tenantId: tenant.id, tenantName: name, amount: tenant.rent_amount }
               });
             }
           });
@@ -190,16 +190,16 @@ export function SmartNotifications() {
       
       const { data: tenants, error } = await supabase
         .from('tenants')
-        .select('id, first_name, last_name, move_out_date')
+        .select('id, name, leaseEndDate')
         .eq('landlord_id', user?.id)
         .eq('is_active', true)
-        .not('move_out_date', 'is', null)
-        .lte('move_out_date', thirtyDaysFromNow.toISOString().split('T')[0]);
+        .not('leaseEndDate', 'is', null)
+        .lte('leaseEndDate', thirtyDaysFromNow.toISOString().split('T')[0]);
 
       if (!error && tenants && tenants.length > 0) {
         tenants.forEach(tenant => {
-          const name = `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || 'Inquilino';
-          const daysUntilExpiry = Math.ceil((new Date(tenant.move_out_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+          const name = tenant.name || 'Inquilino';
+          const daysUntilExpiry = Math.ceil((new Date(tenant.leaseEndDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
           
           notifications.push({
             id: `lease-expiring-${tenant.id}`,
@@ -221,8 +221,11 @@ export function SmartNotifications() {
     try {
       const { data: units, error } = await supabase
         .from('units')
-        .select('id, unit_number, updated_at, properties(name)')
-        .eq('user_id', user?.id)
+        .select(`
+          id, unit_number, updated_at,
+          properties!inner(name, landlord_id)
+        `)
+        .eq('properties.landlord_id', user?.id)
         .eq('is_available', true);
 
       if (!error && units && units.length > 0) {
