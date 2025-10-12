@@ -21,17 +21,8 @@ export class SupabaseTenantService extends BaseService {
       }
 
       console.log('✅ Database connection test successful. Found tenants:', data?.length || 0);
-
-      // Test table structure
-      const { data: tableInfo, error: tableError } = await this.supabase
-        .from('tenants')
-        .select('*')
-        .limit(0);
-
-      if (tableError) {
-        console.error('❌ Table structure test failed:', tableError);
-      } else {
-        console.log('✅ Table structure accessible');
+      if (data && data.length > 0) {
+        console.log('📋 Sample tenant structure:', Object.keys(data[0]));
       }
 
     } catch (error) {
@@ -134,7 +125,6 @@ export class SupabaseTenantService extends BaseService {
       moveInDate: tenant.moveInDate || tenant.lease_start_date || new Date().toISOString().split('T')[0],
       leaseEndDate: tenant.leaseEndDate || tenant.lease_end_date || null,
       rent_amount: Number(tenant.rentAmount || tenant.rent_amount || 0),
-      depositAmount: Number(tenant.depositAmount || 0),
       status: tenant.status || 'active',
       notes: tenant.notes || '',
       property_id: (tenant as any).propertyId || tenant.property_id || null
@@ -212,7 +202,7 @@ export class SupabaseTenantService extends BaseService {
     if (updates.moveInDate !== undefined) updateData.moveInDate = updates.moveInDate;
     if (updates.leaseEndDate !== undefined) updateData.leaseEndDate = updates.leaseEndDate;
     if (updates.rentAmount !== undefined) updateData.rent_amount = Number(updates.rentAmount);
-    if (updates.depositAmount !== undefined) updateData.depositAmount = Number(updates.depositAmount);
+    // Temporarily disabled: if (updates.depositAmount !== undefined) updateData.depositAmount = Number(updates.depositAmount);
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.propertyId !== undefined) updateData.property_id = updates.propertyId;
     if ((updates as any).property_id !== undefined) updateData.property_id = (updates as any).property_id;
