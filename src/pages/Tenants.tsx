@@ -39,10 +39,7 @@ const Tenants = () => {
     const loadTenants = async () => {
       try {
         setIsLoading(true);
-        console.log('🔍 Testing database connection...');
-        
-        // Test connection first
-        await (tenantService as any).testConnection();
+        console.log('🔍 Loading tenants directly...');
         
         console.log('📋 Loading tenants from Supabase...');
         const loadedTenants = await tenantService.getTenants();
