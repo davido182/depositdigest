@@ -201,9 +201,9 @@ export function UnitManagementModal({
   };
 
   const getTenantName = (tenantId: string) => {
-    // This would need to be implemented to get tenant names
-    // For now, return the tenant ID
-    return `Inquilino ${tenantId.slice(0, 8)}`;
+    // Find the unit with this tenant and return the tenant name
+    const unit = units.find(u => u.tenant_id === tenantId);
+    return unit?.tenant_name || `Inquilino ${tenantId.slice(0, 8)}`;
   };
 
   if (!isOpen) return null;

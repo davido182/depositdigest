@@ -24,7 +24,7 @@ export class UnitService extends BaseService {
       .from('units')
       .select(`
         *,
-        tenants:tenant_id(id, name, email, status)
+        tenants:tenant_id(id, name, first_name, last_name, email, status)
       `)
       .eq('property_id', propertyId)
       .order('unit_number');
@@ -35,12 +35,18 @@ export class UnitService extends BaseService {
     }
 
     // Transform data to include tenant information
-    return (data || []).map(unit => ({
-      ...unit,
-      tenant_name: unit.tenants?.name || null,
-      tenant_email: unit.tenants?.email || null,
-      tenant_status: unit.tenants?.status || null,
-    }));
+    return (data || []).map(unit => {
+      const tenantName = unit.tenants?.name || 
+                        `${unit.tenants?.first_name || ''} ${unit.tenants?.last_name || ''}`.trim() || 
+                        null;
+      
+      return {
+        ...unit,
+        tenant_name: tenantName,
+        tenant_email: unit.tenants?.email || null,
+        tenant_status: unit.tenants?.status || null,
+      };
+    });
   }
 
   async createUnit(unit: Omit<Unit, 'id' | 'created_at' | 'updated_at'>): Promise<Unit> {
