@@ -54,6 +54,17 @@ export interface Unit {
   created_at: string;
   updated_at: string;
   
+  // Tenant information (from joins)
+  tenant_name?: string | null;
+  tenant_email?: string | null;
+  tenant_status?: string | null;
+  tenants?: {
+    id: string;
+    name: string;
+    email: string;
+    status: string;
+  } | null;
+  
   // Legacy aliases for backward compatibility
   rent_amount?: number; // Alias for monthly_rent
 }

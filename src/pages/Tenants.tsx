@@ -82,14 +82,17 @@ const Tenants = () => {
   const handleSaveTenant = async (updatedTenant: Tenant) => {
     try {
       if (currentTenant) {
-        const updated = await tenantService.updateTenant(updatedTenant.id, updatedTenant);
-        setTenants(tenants.map((t) => (t.id === updatedTenant.id ? updated : t)));
+        await tenantService.updateTenant(updatedTenant.id, updatedTenant);
         toast.success("Inquilino actualizado exitosamente");
       } else {
-        const newTenant = await tenantService.createTenant(updatedTenant);
-        setTenants([...tenants, newTenant]);
+        await tenantService.createTenant(updatedTenant);
         toast.success("Inquilino agregado exitosamente");
       }
+      
+      // Refresh the tenant list to show updated data
+      console.log('🔄 Refreshing tenant list after save...');
+      const refreshedTenants = await tenantService.getTenants();
+      setTenants(refreshedTenants);
       
       setIsEditModalOpen(false);
     } catch (error) {

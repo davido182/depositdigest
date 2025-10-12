@@ -22,7 +22,10 @@ export class UnitService extends BaseService {
 
     const { data, error } = await supabase
       .from('units')
-      .select('*')
+      .select(`
+        *,
+        tenants:tenant_id(id, name, email, status)
+      `)
       .eq('property_id', propertyId)
       .order('unit_number');
 
@@ -31,8 +34,13 @@ export class UnitService extends BaseService {
       throw error;
     }
 
-    // Return data as is since it matches the interface now
-    return data || [];
+    // Transform data to include tenant information
+    return (data || []).map(unit => ({
+      ...unit,
+      tenant_name: unit.tenants?.name || null,
+      tenant_email: unit.tenants?.email || null,
+      tenant_status: unit.tenants?.status || null,
+    }));
   }
 
   async createUnit(unit: Omit<Unit, 'id' | 'created_at' | 'updated_at'>): Promise<Unit> {
