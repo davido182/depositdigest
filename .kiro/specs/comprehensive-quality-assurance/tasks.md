@@ -67,7 +67,9 @@ Convert the comprehensive quality assurance design into a series of prompts for 
   - Test tenant assignment and unit availability logic
   - _Requirements: 1.1_
 
-- [ ] 2.3 Create unit tests for PropertyService
+- [x] 2.3 Create unit tests for PropertyService
+
+
 
   - Test property CRUD operations and validation
   - Test unit creation and management within properties
@@ -75,8 +77,10 @@ Convert the comprehensive quality assurance design into a series of prompts for 
   - _Requirements: 1.1_
 
 
+-
 
-- [ ] 2.4 Create unit tests for utility functions and validation
+- [-] 2.4 Create unit tests for utility functions and validation
+
   - Test ValidationService methods for input sanitization
   - Test date formatting, phone validation, email validation
   - Test error handling and edge cases

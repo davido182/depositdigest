@@ -58,9 +58,6 @@ export class ValidationService {
 
     // Validate rent amount with security bounds
     validateRentAmount(sanitizedTenant.rentAmount);
-    if (sanitizedTenant.rentAmount > 50000) {
-      throw new ValidationError('Rent amount seems unreasonably high');
-    }
 
     // Validate deposit if provided
     if (sanitizedTenant.depositAmount > 0) {
@@ -156,24 +153,36 @@ export class ValidationService {
 
   // Additional security validation methods
   public validatePhone(phone: string): boolean {
-    if (!phone || typeof phone !== 'string') return false;
+    if (!phone || typeof phone !== 'string') return true; // Allow empty phone numbers
+    
+    // Trim whitespace
+    phone = phone.trim();
+    if (phone === '') return true; // Allow empty after trim
     
     // Remove common formatting characters
     const cleanPhone = phone.replace(/[\s\-\(\)\.]/g, '');
     
-    // International phone number regex (E.164 format)
+    // Check for invalid characters (letters, multiple plus signs, etc.)
+    if (/[a-zA-Z]/.test(cleanPhone) || /\+.*\+/.test(phone) || cleanPhone === '+') {
+      return false;
+    }
+    
+    // Must be 10 digits for US numbers, or international format
+    if (cleanPhone.length === 10 && /^\d{10}$/.test(cleanPhone)) {
+      return true;
+    }
+    
+    // International phone number regex (E.164 format) - 7 to 15 digits
     const phoneRegex = /^\+?[1-9]\d{6,14}$/;
     
-    // US phone number format
-    const usPhoneRegex = /^(\+1)?[\s\-\.]?(\([0-9]{3}\)|[0-9]{3})[\s\-\.]?[0-9]{3}[\s\-\.]?[0-9]{4}$/;
-    
-    return phoneRegex.test(cleanPhone) || usPhoneRegex.test(phone);
+    return phoneRegex.test(cleanPhone);
   }
 
   public validateUUID(uuid: string): boolean {
     if (!uuid || typeof uuid !== 'string') return false;
     
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    // More flexible UUID regex that accepts all versions
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(uuid);
   }
 

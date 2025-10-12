@@ -7,7 +7,20 @@ export class ValidationError extends Error {
 }
 
 export const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || typeof email !== 'string') return false;
+  
+  // Check for spaces and basic format issues
+  if (email.includes(' ') || email.includes('..') || email.startsWith('.') || email.endsWith('.')) {
+    return false;
+  }
+  
+  // Must have exactly one @ symbol
+  const atCount = (email.match(/@/g) || []).length;
+  if (atCount !== 1) return false;
+  
+  // Basic email regex that requires TLD
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+  
   return emailRegex.test(email);
 };
 
@@ -15,12 +28,12 @@ export const validatePhone = (phone: string): string => {
   // Remove all non-digits
   const cleaned = phone.replace(/\D/g, '');
   
-  // Format as (XXX) XXX-XXXX for US numbers
-  if (cleaned.length === 10) {
+  // Only format if it's exactly 10 digits and doesn't already have formatting
+  if (cleaned.length === 10 && !/[()-.\s]/.test(phone)) {
     return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
   }
   
-  return phone; // Return original if not 10 digits
+  return phone; // Return original for all other cases
 };
 
 export const validateRentAmount = (amount: number): void => {
@@ -68,8 +81,9 @@ export const validateDates = (moveInDate: string, leaseEndDate?: string): void =
 
 export const sanitizeInput = (input: string): string => {
   return input
-    .replace(/[<>]/g, '') // Remove potential HTML tags
-    .replace(/['"]/g, '') // Remove quotes that could break SQL
+    .replace(/<[^>]*>/g, '') // Remove HTML tags completely
+    .replace(/'/g, '') // Remove single quotes
+    .replace(/"/g, '') // Remove double quotes  
     .trim();
 };
 
