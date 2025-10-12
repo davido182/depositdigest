@@ -4,10 +4,13 @@ Convert the comprehensive quality assurance design into a series of prompts for 
 
 ## Phase 0: Critical Database Schema Fixes
 
-- [ ] 0.1 Fix database schema field mapping issues
-  - Fix UnitService to use monthly_rent instead of rent_amount
-  - Update Unit interface to match actual database schema
-  - Fix type mismatches between nullable database fields and TypeScript interfaces
+- [x] 0.1 Fix database schema field mapping issues
+  - [x] Fix UnitService to use monthly_rent instead of rent_amount
+  - [x] Update Unit interface to match actual database schema
+  - [x] Fix type mismatches between nullable database fields and TypeScript interfaces
+  - [x] Fix SupabaseTenantService field mapping (moveInDate, leaseEndDate, etc.)
+  - [x] Add tenant data refresh after save operations
+  - [x] Add date columns to tenant table (Fecha Ingreso, Fin Contrato)
   - Remove user_id references that don't exist in database
   - _Requirements: Critical system functionality_
 

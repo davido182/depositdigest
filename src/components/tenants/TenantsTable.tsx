@@ -226,6 +226,8 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
               <TableHead className="min-w-[80px]">Unidad</TableHead>
               <TableHead className="min-w-[120px]">Inquilino</TableHead>
               <TableHead className="min-w-[180px] hidden sm:table-cell">Email</TableHead>
+              <TableHead className="min-w-[100px] hidden lg:table-cell">Fecha Ingreso</TableHead>
+              <TableHead className="min-w-[100px] hidden lg:table-cell">Fin Contrato</TableHead>
               <TableHead className="min-w-[80px]">Estado</TableHead>
               <TableHead className="min-w-[100px] text-right">Renta</TableHead>
               <TableHead className="min-w-[120px] hidden md:table-cell">Próximo Pago</TableHead>
@@ -235,7 +237,7 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
           <TableBody>
             {filteredAndSortedTenants.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                   No se encontraron inquilinos
                 </TableCell>
               </TableRow>
@@ -261,6 +263,12 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm hidden sm:table-cell">
                       {tenant.email}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
+                      {tenant.moveInDate ? new Date(tenant.moveInDate).toLocaleDateString('es-ES') : 'Sin fecha'}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
+                      {tenant.leaseEndDate ? new Date(tenant.leaseEndDate).toLocaleDateString('es-ES') : 'Sin fecha'}
                     </TableCell>
                     <TableCell>{getStatusBadge(tenant.status)}</TableCell>
                     <TableCell className="text-right font-medium text-sm">

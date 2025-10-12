@@ -12,7 +12,7 @@ export class SupabaseTenantService extends BaseService {
       .from('tenants')
       .select(`
         *,
-        properties(name, address)
+        properties:property_id(name, address)
       `)
       .eq('landlord_id', user.id)
       .order('created_at', { ascending: false });
@@ -24,39 +24,60 @@ export class SupabaseTenantService extends BaseService {
 
     console.log('✅ Fetched tenants:', data?.length || 0);
 
-    // Transform database format to app format using REAL fields from Supabase types
+    // Also fetch units to get tenant assignments
+    const { data: unitsData, error: unitsError } = await this.supabase
+      .from('units')
+      .select('id, unit_number, tenant_id, property_id')
+      .not('tenant_id', 'is', null);
+
+    if (unitsError) {
+      console.error('❌ Error fetching units:', unitsError);
+    }
+
+    console.log('✅ Fetched units with tenants:', unitsData?.length || 0);
+
+    // Transform database format to app format using REAL database fields
     return (data || []).map(tenant => {
       console.log(`📋 Processing tenant ${tenant.name}: rent=${tenant.rent_amount}`);
 
+      // Get property info from the join
+      const propertyInfo = tenant.properties;
+      const propertyName = propertyInfo?.name || 'Sin propiedad';
+      const propertyAddress = propertyInfo?.address || '';
+
+      // Find the unit assigned to this tenant
+      const assignedUnit = unitsData?.find(unit => unit.tenant_id === tenant.id);
+      const unitNumber = assignedUnit?.unit_number || 'Sin unidad';
+
       return {
         id: tenant.id,
-        user_id: tenant.user_id,
+        user_id: tenant.landlord_id, // Use landlord_id as user_id for compatibility
         landlord_id: tenant.landlord_id,
         name: tenant.name || 'Sin nombre',
         email: tenant.email || '',
         phone: tenant.phone || '',
-        lease_start_date: tenant.lease_start_date,
-        lease_end_date: tenant.lease_end_date,
-        rent_amount: Number(tenant.rent_amount || 0),
-        status: tenant.status,
-        unit_number: tenant.unit_number,
+        lease_start_date: tenant.moveInDate || '', // DB field is moveInDate
+        lease_end_date: tenant.leaseEndDate || '', // DB field is leaseEndDate
+        rent_amount: Number(tenant.rent_amount || 0), // DB field is rent_amount
+        status: tenant.status || 'active',
+        unit_number: unitNumber,
         property_id: tenant.property_id,
-        property_name: tenant.property_name,
+        property_name: propertyName,
         created_at: tenant.created_at,
         updated_at: tenant.updated_at,
-        
-        // Legacy aliases for forms
-        unit: tenant.unit_number || 'Sin unidad',
-        moveInDate: tenant.lease_start_date || '',
-        leaseEndDate: tenant.lease_end_date || '',
+
+        // Legacy aliases for forms (using DB field names)
+        unit: unitNumber,
+        moveInDate: tenant.moveInDate || '',
+        leaseEndDate: tenant.leaseEndDate || '',
         rentAmount: Number(tenant.rent_amount || 0),
-        depositAmount: 0, // Not in database
+        depositAmount: Number(tenant.depositAmount || 0), // DB field is depositAmount
         paymentHistory: [],
         createdAt: tenant.created_at,
         updatedAt: tenant.updated_at,
-        propertyName: tenant.property_name || 'Sin propiedad',
-        propertyAddress: '', // Not available in this query
-        notes: '', // Not in database
+        propertyName: propertyName,
+        propertyAddress: propertyAddress,
+        notes: tenant.notes || '',
       };
     });
   }
@@ -66,20 +87,19 @@ export class SupabaseTenantService extends BaseService {
 
     const user = await this.ensureAuthenticated();
 
-    // Prepare the insert data with REAL database fields from Supabase types
+    // Prepare the insert data with REAL database field names from migration
     const insertData = {
-      user_id: user.id, // Required field
       landlord_id: user.id,
       name: tenant.name || 'Sin nombre',
       email: tenant.email || '',
       phone: tenant.phone || null,
-      lease_start_date: tenant.moveInDate || tenant.lease_start_date || new Date().toISOString().split('T')[0],
-      lease_end_date: tenant.leaseEndDate || tenant.lease_end_date || null,
+      moveInDate: tenant.moveInDate || tenant.lease_start_date || new Date().toISOString().split('T')[0],
+      leaseEndDate: tenant.leaseEndDate || tenant.lease_end_date || null,
       rent_amount: Number(tenant.rentAmount || tenant.rent_amount || 0),
+      depositAmount: Number(tenant.depositAmount || 0),
       status: tenant.status || 'active',
-      unit_number: tenant.unit || tenant.unit_number || 'Sin unidad',
-      property_id: (tenant as any).propertyId || tenant.property_id || null,
-      property_name: (tenant as any).propertyName || tenant.property_name || null
+      notes: tenant.notes || '',
+      property_id: (tenant as any).propertyId || tenant.property_id || null
     };
 
     console.log('📤 Insert data:', insertData);
@@ -89,7 +109,7 @@ export class SupabaseTenantService extends BaseService {
       .insert(insertData)
       .select(`
         *,
-        properties(name, address)
+        properties:property_id(name, address)
       `)
       .single();
 
@@ -107,46 +127,57 @@ export class SupabaseTenantService extends BaseService {
 
     return {
       id: data.id,
+      user_id: data.landlord_id,
+      landlord_id: data.landlord_id,
       name: data.name || 'Sin nombre',
       email: data.email || '',
       phone: data.phone || '',
-      unit: 'Sin unidad', // Units are separate now
+      lease_start_date: data.moveInDate || '',
+      lease_end_date: data.leaseEndDate || '',
+      rent_amount: Number(data.rent_amount || 0),
+      status: data.status,
+      unit_number: '',
+      property_id: data.property_id,
+      property_name: '',
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+
+      // Legacy aliases
+      unit: 'Sin unidad',
       moveInDate: data.moveInDate || '',
       leaseEndDate: data.leaseEndDate || '',
       rentAmount: Number(data.rent_amount || 0),
       depositAmount: Number(data.depositAmount || 0),
-      status: data.status as any,
       paymentHistory: [],
       createdAt: data.created_at,
       updatedAt: data.updated_at,
-      propertyName: (data.properties?.name) || 'Sin propiedad',
-      propertyAddress: (data.properties?.address) || '',
-      property_id: data.property_id,
-      landlord_id: data.landlord_id,
-      notes: data.notes,
+      propertyName: 'Sin propiedad',
+      propertyAddress: '',
+      notes: data.notes || '',
     };
   }
 
   async updateTenant(id: string, updates: Partial<Tenant & { propertyId?: string }>): Promise<Tenant> {
-    console.log('🔄 Updating tenant in Supabase:', id, updates);
+    console.log('🔄 Updating tenant in Supabase:', id);
+    console.log('📥 Raw updates received:', updates);
 
     const user = await this.ensureAuthenticated();
 
-    // Prepare update data with REAL database fields from migration
+    // Prepare update data with REAL database field names from migration
     const updateData: any = {};
-    
+
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.email !== undefined) updateData.email = updates.email;
     if (updates.phone !== undefined) updateData.phone = updates.phone;
     if (updates.moveInDate !== undefined) updateData.moveInDate = updates.moveInDate;
     if (updates.leaseEndDate !== undefined) updateData.leaseEndDate = updates.leaseEndDate;
     if (updates.rentAmount !== undefined) updateData.rent_amount = Number(updates.rentAmount);
-    if (updates.depositAmount !== undefined) updateData.deposit_amount = Number(updates.depositAmount);
+    if (updates.depositAmount !== undefined) updateData.depositAmount = Number(updates.depositAmount);
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.propertyId !== undefined) updateData.property_id = updates.propertyId;
     if (updates.notes !== undefined) updateData.notes = updates.notes;
 
-    console.log('📤 Update data:', updateData);
+    console.log('📤 Mapped update data for database:', updateData);
 
     const { data, error } = await this.supabase
       .from('tenants')
@@ -155,7 +186,7 @@ export class SupabaseTenantService extends BaseService {
       .eq('landlord_id', user.id) // Security check
       .select(`
         *,
-        properties(name, address)
+        properties:property_id(name, address)
       `)
       .single();
 
@@ -164,33 +195,51 @@ export class SupabaseTenantService extends BaseService {
       throw new Error(`Failed to update tenant: ${error.message}`);
     }
 
-    console.log('✅ Updated tenant:', data);
+    console.log('✅ Updated tenant in database:', data);
 
     // Update unit assignment if changed
     if (updates.unit !== undefined && updates.propertyId) {
       await this.assignTenantToUnit(id, updates.unit, updates.propertyId);
     }
 
-    return {
+    // Get property info from the join
+    const propertyInfo = data.properties;
+    const propertyName = propertyInfo?.name || 'Sin propiedad';
+    const propertyAddress = propertyInfo?.address || '';
+
+    const result = {
       id: data.id,
+      user_id: data.landlord_id,
+      landlord_id: data.landlord_id,
       name: data.name || 'Sin nombre',
       email: data.email || '',
       phone: data.phone || '',
-      unit: 'Sin unidad', // Units are separate now
+      lease_start_date: data.moveInDate || '',
+      lease_end_date: data.leaseEndDate || '',
+      rent_amount: Number(data.rent_amount || 0),
+      status: data.status,
+      unit_number: '',
+      property_id: data.property_id,
+      property_name: propertyName,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+
+      // Legacy aliases
+      unit: 'Sin unidad',
       moveInDate: data.moveInDate || '',
       leaseEndDate: data.leaseEndDate || '',
       rentAmount: Number(data.rent_amount || 0),
       depositAmount: Number(data.depositAmount || 0),
-      status: data.status as any,
       paymentHistory: [],
       createdAt: data.created_at,
       updatedAt: data.updated_at,
-      propertyName: (data.properties?.name) || 'Sin propiedad',
-      propertyAddress: (data.properties?.address) || '',
-      property_id: data.property_id,
-      landlord_id: data.landlord_id,
-      notes: data.notes,
+      propertyName: propertyName,
+      propertyAddress: propertyAddress,
+      notes: data.notes || '',
     };
+
+    console.log('📋 Returning formatted tenant data:', result);
+    return result;
   }
 
   async deleteTenant(id: string): Promise<boolean> {
