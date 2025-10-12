@@ -367,8 +367,8 @@ export function TenantEditForm({
       setErrors(prev => ({ ...prev, unit: '' }));
     }
 
-    // Handle "none" value as empty string
-    const unitValue = value === "none" ? "" : value;
+    // Handle "unassigned" value as empty string
+    const unitValue = value === "unassigned" ? "" : value;
 
     setFormData({
       ...formData,
@@ -570,9 +570,9 @@ export function TenantEditForm({
                 <div className="flex items-center">
                   <Home className="w-4 h-4 mr-2 text-muted-foreground" />
                   <Select
-                    value={formData.unit || ""}
+                    value={formData.unit || "unassigned"}
                     onValueChange={async (value) => {
-                      const unitValue = value === "" ? "" : value;
+                      const unitValue = value === "unassigned" ? "" : value;
                       setFormData(prev => ({ ...prev, unit: unitValue }));
                       
                       // Load rent amount for selected unit
@@ -609,7 +609,7 @@ export function TenantEditForm({
                       } />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sin asignar</SelectItem>
+                      <SelectItem value="unassigned">Sin asignar</SelectItem>
                       {isLoadingUnits ? (
                         <SelectItem value="loading" disabled>
                           Cargando unidades...

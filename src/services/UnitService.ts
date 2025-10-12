@@ -5,7 +5,7 @@ export interface Unit {
   id: string;
   property_id: string;
   unit_number: string;
-  monthly_rent: number; // Para compatibilidad con la interfaz
+  rent_amount: number; // Usar rent_amount como en la base de datos
   is_available: boolean;
   tenant_id?: string | null;
   created_at: string;
@@ -41,11 +41,8 @@ export class UnitService extends BaseService {
       throw error;
     }
 
-    // Transform data to match interface
-    return (data || []).map(unit => ({
-      ...unit,
-      monthly_rent: unit.monthly_rent || 0 // Use monthly_rent from database
-    }));
+    // Return data as is since it matches the interface now
+    return data || [];
   }
 
   async createUnit(unit: Omit<Unit, 'id' | 'created_at' | 'updated_at'>): Promise<Unit> {
@@ -70,7 +67,7 @@ export class UnitService extends BaseService {
       .insert({
         property_id: unit.property_id,
         unit_number: unit.unit_number,
-        monthly_rent: unit.monthly_rent || 0,
+        rent_amount: unit.rent_amount || 0,
         is_available: unit.is_available !== false
       })
       .select()
@@ -82,10 +79,7 @@ export class UnitService extends BaseService {
     }
 
     console.log('✅ Unit created:', data);
-    return {
-      ...data,
-      monthly_rent: data.monthly_rent || 0
-    };
+    return data;
   }
 
   async updateUnit(id: string, updates: Partial<Unit>): Promise<Unit> {
@@ -110,7 +104,7 @@ export class UnitService extends BaseService {
     
     const updatePayload = {
       ...(updates.unit_number && { unit_number: updates.unit_number }),
-      ...(updates.monthly_rent !== undefined && { monthly_rent: updates.monthly_rent }),
+      ...(updates.rent_amount !== undefined && { rent_amount: updates.rent_amount }),
       ...(updates.is_available !== undefined && { is_available: updates.is_available }),
       ...(updates.tenant_id !== undefined && { tenant_id: updates.tenant_id })
     };
@@ -129,10 +123,7 @@ export class UnitService extends BaseService {
       throw error;
     }
 
-    return {
-      ...data,
-      monthly_rent: data.monthly_rent || 0
-    };
+    return data;
   }
 
   async deleteUnit(id: string): Promise<boolean> {

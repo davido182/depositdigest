@@ -130,7 +130,7 @@ export class SupabaseTenantService extends BaseService {
     if (updates.moveInDate !== undefined) updateData.moveInDate = updates.moveInDate;
     if (updates.leaseEndDate !== undefined) updateData.leaseEndDate = updates.leaseEndDate;
     if (updates.rentAmount !== undefined) updateData.rent_amount = Number(updates.rentAmount);
-    if (updates.depositAmount !== undefined) updateData.depositAmount = Number(updates.depositAmount);
+    if (updates.depositAmount !== undefined) updateData.deposit_amount = Number(updates.depositAmount);
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.propertyId !== undefined) updateData.property_id = updates.propertyId;
     if (updates.notes !== undefined) updateData.notes = updates.notes;

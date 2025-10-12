@@ -11,6 +11,7 @@ export interface Tenant {
   rentAmount: number;
   rent_amount?: number; // Alias para compatibilidad con BD
   depositAmount: number;
+  deposit_amount?: number; // Campo de BD
   status: TenantStatus;
   is_active?: boolean; // Campo de BD
   paymentHistory: Payment[];
