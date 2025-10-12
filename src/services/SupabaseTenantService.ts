@@ -8,7 +8,6 @@ export class SupabaseTenantService extends BaseService {
     const user = await this.ensureAuthenticated();
     console.log('👤 User authenticated:', user.id);
 
-    // Simple query first - just get all data
     const { data, error } = await this.supabase
       .from('tenants')
       .select('*')
@@ -23,15 +22,10 @@ export class SupabaseTenantService extends BaseService {
     console.log('📊 Found tenants:', data?.length || 0);
 
     if (!data || data.length === 0) {
-      console.log('📭 No tenants found');
       return [];
     }
 
-    // Show structure of first tenant
-    console.log('🔍 First tenant structure:', Object.keys(data[0]));
-    console.log('🔍 First tenant data:', data[0]);
-
-    // Simple transformation - just map the basic fields
+    // Transform using the EXACT structure from your logs
     return data.map(tenant => {
       const fullName = tenant.name || `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || 'Sin nombre';
       
@@ -73,13 +67,27 @@ export class SupabaseTenantService extends BaseService {
 
     const user = await this.ensureAuthenticated();
 
-    // Use only the basic required fields first
+    // Use ALL the fields from your structure
     const insertData = {
       landlord_id: user.id,
+      name: tenant.name || 'Sin nombre',
       first_name: tenant.name?.split(' ')[0] || 'Sin nombre',
       last_name: tenant.name?.split(' ').slice(1).join(' ') || '',
       email: tenant.email || '',
       phone: tenant.phone || null,
+      moveindate: tenant.moveInDate || null,
+      move_in_date: tenant.moveInDate || null,
+      leaseenddate: tenant.leaseEndDate || null,
+      move_out_date: tenant.leaseEndDate || null,
+      rent_amount: Number(tenant.rentAmount || 0),
+      monthly_rent: Number(tenant.rentAmount || 0),
+      depositamount: Number(tenant.depositAmount || 0),
+      deposit_paid: Number(tenant.depositAmount || 0),
+      status: tenant.status || 'active',
+      is_active: (tenant.status || 'active') === 'active',
+      notes: tenant.notes || '',
+      property_id: (tenant as any).propertyId || tenant.property_id || null,
+      property_name: (tenant as any).propertyName || tenant.property_name || null,
     };
 
     console.log('📋 Insert data prepared:', insertData);
@@ -97,7 +105,7 @@ export class SupabaseTenantService extends BaseService {
 
     console.log('✅ Created tenant:', data);
 
-    const fullName = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Sin nombre';
+    const fullName = data.name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Sin nombre';
 
     return {
       id: data.id,
@@ -106,28 +114,28 @@ export class SupabaseTenantService extends BaseService {
       name: fullName,
       email: data.email || '',
       phone: data.phone || '',
-      lease_start_date: '',
-      lease_end_date: '',
-      rent_amount: 0,
-      status: 'active',
+      lease_start_date: data.moveindate || data.move_in_date || '',
+      lease_end_date: data.leaseenddate || data.move_out_date || '',
+      rent_amount: Number(data.rent_amount || data.monthly_rent || 0),
+      status: data.status || (data.is_active ? 'active' : 'inactive'),
       unit_number: '',
       property_id: data.property_id,
-      property_name: 'Sin propiedad',
+      property_name: data.property_name || 'Sin propiedad',
       created_at: data.created_at,
       updated_at: data.updated_at,
       
       // Legacy aliases
       unit: 'Sin unidad',
-      moveInDate: '',
-      leaseEndDate: '',
-      rentAmount: 0,
-      depositAmount: 0,
+      moveInDate: data.moveindate || data.move_in_date || '',
+      leaseEndDate: data.leaseenddate || data.move_out_date || '',
+      rentAmount: Number(data.rent_amount || data.monthly_rent || 0),
+      depositAmount: Number(data.depositamount || data.deposit_paid || 0),
       paymentHistory: [],
       createdAt: data.created_at,
       updatedAt: data.updated_at,
-      propertyName: 'Sin propiedad',
+      propertyName: data.property_name || 'Sin propiedad',
       propertyAddress: '',
-      notes: '',
+      notes: data.notes || '',
     };
   }
 
@@ -137,15 +145,41 @@ export class SupabaseTenantService extends BaseService {
 
     const user = await this.ensureAuthenticated();
 
-    // Use only basic fields for now
+    // Map ALL fields based on your actual structure
     const updateData: any = {};
     
     if (updates.name !== undefined) {
+      updateData.name = updates.name;
       updateData.first_name = updates.name?.split(' ')[0] || 'Sin nombre';
       updateData.last_name = updates.name?.split(' ').slice(1).join(' ') || '';
     }
     if (updates.email !== undefined) updateData.email = updates.email;
     if (updates.phone !== undefined) updateData.phone = updates.phone;
+    if (updates.moveInDate !== undefined) {
+      updateData.moveindate = updates.moveInDate;
+      updateData.move_in_date = updates.moveInDate;
+    }
+    if (updates.leaseEndDate !== undefined) {
+      updateData.leaseenddate = updates.leaseEndDate;
+      updateData.move_out_date = updates.leaseEndDate;
+    }
+    if (updates.rentAmount !== undefined) {
+      updateData.rent_amount = Number(updates.rentAmount);
+      updateData.monthly_rent = Number(updates.rentAmount);
+    }
+    if (updates.depositAmount !== undefined) {
+      updateData.depositamount = Number(updates.depositAmount);
+      updateData.deposit_paid = Number(updates.depositAmount);
+    }
+    if (updates.status !== undefined) {
+      updateData.status = updates.status;
+      updateData.is_active = updates.status === 'active';
+    }
+    if (updates.propertyId !== undefined) {
+      updateData.property_id = updates.propertyId;
+      updateData.property_name = updates.propertyName;
+    }
+    if (updates.notes !== undefined) updateData.notes = updates.notes;
 
     console.log('📤 Mapped update data for database:', updateData);
 
@@ -164,7 +198,7 @@ export class SupabaseTenantService extends BaseService {
 
     console.log('✅ Updated tenant in database:', data);
 
-    const fullName = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Sin nombre';
+    const fullName = data.name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Sin nombre';
 
     const result = {
       id: data.id,

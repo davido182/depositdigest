@@ -217,20 +217,20 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
       </div>
 
       {/* Tabla de inquilinos - Responsive */}
-      <div className="rounded-md border overflow-x-auto">
-        <Table className="min-w-[600px]">
+      <div className="rounded-md border">
+        <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-12 text-center">💳</TableHead>
-              <TableHead className="min-w-[100px]">Propiedad</TableHead>
-              <TableHead className="min-w-[80px]">Unidad</TableHead>
-              <TableHead className="min-w-[120px]">Inquilino</TableHead>
-              <TableHead className="min-w-[180px] hidden sm:table-cell">Email</TableHead>
-              <TableHead className="min-w-[100px] hidden lg:table-cell">Fecha Ingreso</TableHead>
-              <TableHead className="min-w-[100px] hidden lg:table-cell">Fin Contrato</TableHead>
-              <TableHead className="min-w-[80px]">Estado</TableHead>
-              <TableHead className="min-w-[100px] text-right">Renta</TableHead>
-              <TableHead className="min-w-[120px] hidden md:table-cell">Próximo Pago</TableHead>
+              <TableHead className="w-[120px]">Propiedad</TableHead>
+              <TableHead className="w-[80px]">Unidad</TableHead>
+              <TableHead className="w-[150px]">Inquilino</TableHead>
+              <TableHead className="w-[200px] hidden sm:table-cell">Email</TableHead>
+              <TableHead className="w-[110px] hidden lg:table-cell">Fecha Ingreso</TableHead>
+              <TableHead className="w-[110px] hidden lg:table-cell">Fin Contrato</TableHead>
+              <TableHead className="w-[90px]">Estado</TableHead>
+              <TableHead className="w-[100px] text-right">Renta</TableHead>
+              <TableHead className="w-[120px] hidden md:table-cell">Próximo Pago</TableHead>
               <TableHead className="w-20 text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
