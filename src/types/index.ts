@@ -1,32 +1,74 @@
 
-// Tenant Types
+// Tenant Types - Matching REAL database schema from Supabase types
 export interface Tenant {
   id: string;
+  user_id: string; // Database field (required)
+  landlord_id: string | null; // Database field
   name: string;
   email: string;
-  phone: string;
-  unit: string;
-  moveInDate: string;
-  leaseEndDate: string;
-  rentAmount: number;
-  rent_amount?: number; // Alias para compatibilidad con BD
-  depositAmount: number;
-  deposit_amount?: number; // Campo de BD
-  status: TenantStatus;
-  is_active?: boolean; // Campo de BD
-  paymentHistory: Payment[];
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-  landlordId?: string;
-  landlord_id?: string; // Campo de BD
-  property_id?: string; // Campo de BD para asignación de unidad
-  // Información de la propiedad
-  propertyName?: string;
-  propertyAddress?: string;
+  phone: string | null;
+  lease_start_date: string; // Database field (required)
+  lease_end_date: string | null; // Database field
+  rent_amount: number; // Database field
+  status: string; // Database field
+  unit_number: string; // Database field (required)
+  property_id: string | null; // Database field
+  property_name: string | null; // Database field
+  created_at: string;
+  updated_at: string;
+  
+  // Frontend-only computed fields
+  paymentHistory?: Payment[];
+  propertyAddress?: string; // Computed from property relationship
+  
+  // Legacy aliases for backward compatibility (for forms)
+  moveInDate?: string; // Alias for lease_start_date
+  leaseEndDate?: string; // Alias for lease_end_date
+  unit?: string; // Alias for unit_number
+  rentAmount?: number; // Alias for rent_amount
+  depositAmount?: number; // Legacy field - not in DB
+  createdAt?: string; // Alias for created_at
+  updatedAt?: string; // Alias for updated_at
+  landlordId?: string; // Alias for landlord_id
+  notes?: string; // Legacy field - not in DB
+  propertyName?: string; // Alias for property_name
 }
 
 export type TenantStatus = 'active' | 'inactive' | 'late' | 'notice';
+
+// Unit Types - Matching REAL database schema from migration
+export interface Unit {
+  id: string;
+  property_id: string; // Database field (required)
+  unit_number: string; // Database field (required)
+  tenant_id: string | null; // Database field (nullable)
+  monthly_rent: number | null; // Database field (nullable) - REAL field name!
+  is_available: boolean; // Database field
+  bedrooms?: number; // Database field
+  bathrooms?: number; // Database field
+  square_meters?: number; // Database field
+  deposit_amount?: number; // Database field
+  is_furnished?: boolean; // Database field
+  description?: string; // Database field
+  photos?: string[]; // Database field
+  created_at: string;
+  updated_at: string;
+  
+  // Legacy aliases for backward compatibility
+  rent_amount?: number; // Alias for monthly_rent
+}
+
+// Property Types - Matching database schema exactly
+export interface Property {
+  id: string;
+  landlord_id: string; // Database field (UUID)
+  name: string; // Database field (TEXT)
+  address: string | null; // Database field (TEXT, nullable)
+  total_units: number | null; // Database field (INTEGER, nullable)
+  description: string | null; // Database field (TEXT, nullable)
+  created_at: string;
+  updated_at: string;
+}
 
 // Payment Types
 export interface Payment {

@@ -116,7 +116,7 @@ export function useAppData() {
       
       console.log('useAppData: Units analysis:', {
         totalUnits,
-        occupiedUnits: units.filter(u => !u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number, rent_amount: u.monthly_rent || u.rent_amount })),
+        occupiedUnits: units.filter(u => !u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number, monthly_rent: u.monthly_rent })),
         vacantUnits: units.filter(u => u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number }))
       });
       

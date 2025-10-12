@@ -78,11 +78,11 @@ const Properties = () => {
           console.log(`Property ${dbProp.name}:`, {
             totalUnits: propertyUnits.length,
             occupiedUnits: occupiedUnits.length,
-            propertyUnits: propertyUnits.map(u => ({ id: u.id, unit_number: u.unit_number, is_available: u.is_available, rent_amount: u.rent_amount }))
+            propertyUnits: propertyUnits.map(u => ({ id: u.id, unit_number: u.unit_number, is_available: u.is_available, monthly_rent: u.monthly_rent }))
           });
 
           // Calculate revenue from occupied units
-          const monthlyRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.monthly_rent || unit.rent_amount || 0), 0);
+          const monthlyRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.monthly_rent || 0), 0);
 
           return {
             id: dbProp.id,
@@ -180,7 +180,7 @@ const Properties = () => {
         const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
 
         // Calculate revenue from occupied units
-        const monthlyRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.monthly_rent || unit.rent_amount || 0), 0);
+        const monthlyRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.monthly_rent || 0), 0);
 
         return {
           id: dbProp.id,

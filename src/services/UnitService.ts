@@ -1,16 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { BaseService } from "./BaseService";
-
-export interface Unit {
-  id: string;
-  property_id: string;
-  unit_number: string;
-  rent_amount: number; // Usar rent_amount como en la base de datos
-  is_available: boolean;
-  tenant_id?: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import { Unit } from "@/types/index";
 
 export class UnitService extends BaseService {
   async getUnitsByProperty(propertyId: string): Promise<Unit[]> {
@@ -67,8 +57,9 @@ export class UnitService extends BaseService {
       .insert({
         property_id: unit.property_id,
         unit_number: unit.unit_number,
-        rent_amount: unit.rent_amount || 0,
-        is_available: unit.is_available !== false
+        monthly_rent: unit.monthly_rent || unit.rent_amount || 0,
+        is_available: unit.is_available !== false,
+        tenant_id: unit.tenant_id || null
       })
       .select()
       .single();
@@ -104,7 +95,8 @@ export class UnitService extends BaseService {
     
     const updatePayload = {
       ...(updates.unit_number && { unit_number: updates.unit_number }),
-      ...(updates.rent_amount !== undefined && { rent_amount: updates.rent_amount }),
+      ...(updates.monthly_rent !== undefined && { monthly_rent: updates.monthly_rent }),
+      ...(updates.rent_amount !== undefined && { monthly_rent: updates.rent_amount }),
       ...(updates.is_available !== undefined && { is_available: updates.is_available }),
       ...(updates.tenant_id !== undefined && { tenant_id: updates.tenant_id })
     };

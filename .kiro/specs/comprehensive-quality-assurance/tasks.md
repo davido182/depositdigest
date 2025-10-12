@@ -2,6 +2,15 @@
 
 Convert the comprehensive quality assurance design into a series of prompts for a code-generation LLM that will implement each step in a systematic manner. Prioritize best practices, incremental progress, and early validation, ensuring no big jumps in complexity at any stage. Make sure that each prompt builds on the previous prompts, and ends with a fully integrated quality assurance system. There should be no hanging or orphaned code that isn't integrated into the overall system. Focus ONLY on tasks that involve writing, modifying, or testing code.
 
+## Phase 0: Critical Database Schema Fixes
+
+- [ ] 0.1 Fix database schema field mapping issues
+  - Fix UnitService to use monthly_rent instead of rent_amount
+  - Update Unit interface to match actual database schema
+  - Fix type mismatches between nullable database fields and TypeScript interfaces
+  - Remove user_id references that don't exist in database
+  - _Requirements: Critical system functionality_
+
 ## Phase 1: Foundation Setup
 
 - [x] 1. Install and configure testing frameworks
@@ -61,7 +70,8 @@ Convert the comprehensive quality assurance design into a series of prompts for 
   - Validate data transformation and field mapping
   - _Requirements: 1.1_
 
-- [ ] 2.2 Create unit tests for UnitService
+- [-] 2.2 Create unit tests for UnitService
+
   - Test getUnitsByProperty, createUnit, updateUnit, deleteUnit methods
   - Mock database responses and test relationship handling
   - Test tenant assignment and unit availability logic

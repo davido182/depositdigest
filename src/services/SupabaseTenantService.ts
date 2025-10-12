@@ -24,29 +24,39 @@ export class SupabaseTenantService extends BaseService {
 
     console.log('✅ Fetched tenants:', data?.length || 0);
 
-    // Transform database format to app format using REAL fields from migration
+    // Transform database format to app format using REAL fields from Supabase types
     return (data || []).map(tenant => {
       console.log(`📋 Processing tenant ${tenant.name}: rent=${tenant.rent_amount}`);
 
       return {
         id: tenant.id,
+        user_id: tenant.user_id,
+        landlord_id: tenant.landlord_id,
         name: tenant.name || 'Sin nombre',
         email: tenant.email || '',
         phone: tenant.phone || '',
-        unit: 'Sin unidad', // Units are separate table now
-        moveInDate: tenant.moveInDate || '',
-        leaseEndDate: tenant.leaseEndDate || '',
+        lease_start_date: tenant.lease_start_date,
+        lease_end_date: tenant.lease_end_date,
+        rent_amount: Number(tenant.rent_amount || 0),
+        status: tenant.status,
+        unit_number: tenant.unit_number,
+        property_id: tenant.property_id,
+        property_name: tenant.property_name,
+        created_at: tenant.created_at,
+        updated_at: tenant.updated_at,
+        
+        // Legacy aliases for forms
+        unit: tenant.unit_number || 'Sin unidad',
+        moveInDate: tenant.lease_start_date || '',
+        leaseEndDate: tenant.lease_end_date || '',
         rentAmount: Number(tenant.rent_amount || 0),
-        depositAmount: Number(tenant.depositAmount || 0),
-        status: tenant.status as any,
+        depositAmount: 0, // Not in database
         paymentHistory: [],
         createdAt: tenant.created_at,
         updatedAt: tenant.updated_at,
-        propertyName: (tenant.properties?.name) || 'Sin propiedad',
-        propertyAddress: (tenant.properties?.address) || '',
-        property_id: tenant.property_id,
-        landlord_id: tenant.landlord_id,
-        notes: tenant.notes,
+        propertyName: tenant.property_name || 'Sin propiedad',
+        propertyAddress: '', // Not available in this query
+        notes: '', // Not in database
       };
     });
   }
@@ -56,19 +66,20 @@ export class SupabaseTenantService extends BaseService {
 
     const user = await this.ensureAuthenticated();
 
-    // Prepare the insert data with REAL database fields from migration
+    // Prepare the insert data with REAL database fields from Supabase types
     const insertData = {
+      user_id: user.id, // Required field
       landlord_id: user.id,
       name: tenant.name || 'Sin nombre',
       email: tenant.email || '',
       phone: tenant.phone || null,
-      moveInDate: tenant.moveInDate || new Date().toISOString().split('T')[0],
-      leaseEndDate: tenant.leaseEndDate || null,
-      rent_amount: Number(tenant.rentAmount || 0),
-      depositAmount: Number(tenant.depositAmount || 0),
+      lease_start_date: tenant.moveInDate || tenant.lease_start_date || new Date().toISOString().split('T')[0],
+      lease_end_date: tenant.leaseEndDate || tenant.lease_end_date || null,
+      rent_amount: Number(tenant.rentAmount || tenant.rent_amount || 0),
       status: tenant.status || 'active',
-      property_id: (tenant as any).propertyId || null,
-      notes: tenant.notes || null
+      unit_number: tenant.unit || tenant.unit_number || 'Sin unidad',
+      property_id: (tenant as any).propertyId || tenant.property_id || null,
+      property_name: (tenant as any).propertyName || tenant.property_name || null
     };
 
     console.log('📤 Insert data:', insertData);

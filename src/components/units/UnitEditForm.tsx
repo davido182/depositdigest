@@ -10,7 +10,6 @@ import { toast } from "sonner";
 interface Unit {
   id: string;
   unit_number: string;
-  rent_amount?: number | null;
   monthly_rent?: number | null;
   is_available: boolean;
   tenant_id?: string | null;
