@@ -2,6 +2,44 @@ import { BaseService } from './BaseService';
 import { Tenant } from '@/types';
 
 export class SupabaseTenantService extends BaseService {
+  // Test method to verify database connection and structure
+  async testConnection(): Promise<void> {
+    try {
+      const user = await this.ensureAuthenticated();
+      console.log('🔍 Testing database connection for user:', user.id);
+
+      // Test basic query
+      const { data, error } = await this.supabase
+        .from('tenants')
+        .select('*')
+        .eq('landlord_id', user.id)
+        .limit(1);
+
+      if (error) {
+        console.error('❌ Database connection test failed:', error);
+        throw error;
+      }
+
+      console.log('✅ Database connection test successful. Found tenants:', data?.length || 0);
+
+      // Test table structure
+      const { data: tableInfo, error: tableError } = await this.supabase
+        .from('tenants')
+        .select('*')
+        .limit(0);
+
+      if (tableError) {
+        console.error('❌ Table structure test failed:', tableError);
+      } else {
+        console.log('✅ Table structure accessible');
+      }
+
+    } catch (error) {
+      console.error('❌ Connection test error:', error);
+      throw error;
+    }
+  }
+
   async getTenants(): Promise<Tenant[]> {
     console.log('🔍 Fetching tenants from Supabase...');
 
@@ -102,6 +140,8 @@ export class SupabaseTenantService extends BaseService {
       property_id: (tenant as any).propertyId || tenant.property_id || null
     };
 
+    console.log('📋 Insert data prepared:', insertData);
+
     console.log('📤 Insert data:', insertData);
 
     const { data, error } = await this.supabase
@@ -175,6 +215,7 @@ export class SupabaseTenantService extends BaseService {
     if (updates.depositAmount !== undefined) updateData.depositAmount = Number(updates.depositAmount);
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.propertyId !== undefined) updateData.property_id = updates.propertyId;
+    if ((updates as any).property_id !== undefined) updateData.property_id = (updates as any).property_id;
     if (updates.notes !== undefined) updateData.notes = updates.notes;
 
     console.log('📤 Mapped update data for database:', updateData);
