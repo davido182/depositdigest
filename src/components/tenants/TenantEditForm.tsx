@@ -100,7 +100,7 @@ export function TenantEditForm({
         // Set form data immediately
         setFormData({ ...tenant });
         setHasDeposit(tenant.depositAmount > 0);
-        setSelectedPropertyId(''); // Will be determined by unit
+        setSelectedPropertyId(tenant.property_id || ''); // Keep existing property
         setErrors({});
         setContractFile(null);
         setExistingContract(null);
