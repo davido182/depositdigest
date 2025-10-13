@@ -203,7 +203,18 @@ export function UnitManagementModal({
   const getTenantName = (tenantId: string) => {
     // Find the unit with this tenant and return the tenant name
     const unit = units.find(u => u.tenant_id === tenantId);
-    return unit?.tenant_name || `Inquilino ${tenantId.slice(0, 8)}`;
+    
+    if (unit?.tenant_name) {
+      return unit.tenant_name;
+    }
+    
+    // If no tenant_name, try to get it from tenants list
+    const tenant = tenants.find(t => t.id === tenantId);
+    if (tenant) {
+      return tenant.name || `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || 'Sin nombre';
+    }
+    
+    return `Inquilino ${tenantId.slice(0, 8)}`;
   };
 
   if (!isOpen) return null;
