@@ -10,21 +10,21 @@ import { toast } from "sonner";
 import { Copy, Send, UserPlus } from "lucide-react";
 
 export default function InviteTenant() {
-  const [unitNumber, setUnitNumber] = useState("");
+  const [unit_number, setunit_number] = useState("");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [invitationData, setInvitationData] = useState<any>(null);
   const { createTenantInvitation } = useAuth();
 
   const handleCreateInvitation = async () => {
-    if (!unitNumber.trim()) {
+    if (!unit_number.trim()) {
       toast.error("El número de unidad es obligatorio");
       return;
     }
 
     setIsLoading(true);
     try {
-      const data = await createTenantInvitation(unitNumber, email || undefined);
+      const data = await createTenantInvitation(unit_number, email || undefined);
       setInvitationData(data);
       toast.success("Invitación creada exitosamente");
     } catch (error: any) {
@@ -42,9 +42,9 @@ export default function InviteTenant() {
 
   const sendEmailInvitation = () => {
     if (invitationData && email) {
-      const subject = encodeURIComponent(`Invitación para unirse a RentaFlux - Unidad ${unitNumber}`);
+      const subject = encodeURIComponent(`Invitación para unirse a RentaFlux - Unidad ${unit_number}`);
       const body = encodeURIComponent(
-        `Hola,\n\nHas sido invitado/a a unirte a RentaFlux como inquilino de la unidad ${unitNumber}.\n\n` +
+        `Hola,\n\nHas sido invitado/a a unirte a RentaFlux como inquilino de la unidad ${unit_number}.\n\n` +
         `Usa este enlace para registrarte:\n${invitationData.invitation_link}\n\n` +
         `O ingresa el código de invitación: ${invitationData.invitation_code}\n\n` +
         `Esta invitación expira el: ${new Date(invitationData.expires_at).toLocaleDateString()}\n\n` +
@@ -76,12 +76,12 @@ export default function InviteTenant() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="unitNumber">Número de Unidad *</Label>
+              <Label htmlFor="unit_number">Número de Unidad *</Label>
               <Input
-                id="unitNumber"
+                id="unit_number"
                 placeholder="Ej: 101, A-1, Casa 5"
-                value={unitNumber}
-                onChange={(e) => setUnitNumber(e.target.value)}
+                value={unit_number}
+                onChange={(e) => setunit_number(e.target.value)}
               />
             </div>
 
@@ -184,7 +184,7 @@ export default function InviteTenant() {
               <Button 
                 onClick={() => {
                   setInvitationData(null);
-                  setUnitNumber("");
+                  setunit_number("");
                   setEmail("");
                 }}
                 variant="outline"
