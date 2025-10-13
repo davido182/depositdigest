@@ -194,11 +194,12 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         }
 
         // Check if tenant is already assigned to another unit
-        const { data: currentUnit, error: unitCheckError } = await supabase
+        const { data: currentUnits, error: unitCheckError } = await supabase
           .from('units')
           .select('id, unit_number')
-          .eq('tenant_id', selectedTenantId)
-          .single();
+          .eq('tenant_id', selectedTenantId);
+
+        const currentUnit = currentUnits?.[0];
 
         if (!unitCheckError && currentUnit && currentUnit.id !== unit.id) {
           const confirmed = confirm(
@@ -315,7 +316,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
                   <SelectValue placeholder="Sin inquilino asignado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sin inquilino</SelectItem>
+                  <SelectItem value="no-tenant">Sin inquilino</SelectItem>
                   {availableTenants.map((tenant) => (
                     <SelectItem key={tenant.id} value={tenant.id}>
                       <div className="flex flex-col">
