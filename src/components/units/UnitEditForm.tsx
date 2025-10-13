@@ -241,6 +241,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         const updatedUnit: Unit = {
           ...unit,
           is_available: !selectedTenantId,
+          tenant_id: selectedTenantId || null,
         };
         onSave(updatedUnit);
       }
@@ -253,25 +254,32 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
   };
 
   const assignTenantToUnit = async (tenantId: string, unitId: string, userId: string) => {
+    console.log('🏠 Assigning tenant to unit:', { tenantId, unitId });
+
     // Marcar unidad como ocupada y asignar inquilino
-    const { error: unitError } = await supabase
+    const { data, error: unitError } = await supabase
       .from('units')
-      .update({ 
+      .update({
         is_available: false,
         tenant_id: tenantId
       })
-      .eq('id', unitId);
+      .eq('id', unitId)
+      .select('*')
+      .single();
 
     if (unitError) {
+      console.error('❌ Error assigning tenant to unit:', unitError);
       throw new Error('Error al asignar inquilino a unidad: ' + unitError.message);
     }
+
+    console.log('✅ Tenant assigned to unit successfully:', data);
   };
 
   const unassignTenantFromUnit = async (unitId: string, userId: string) => {
     // Marcar unidad como disponible y desasignar inquilino
     const { error: unitError } = await supabase
       .from('units')
-      .update({ 
+      .update({
         is_available: true,
         tenant_id: null
       })

@@ -182,15 +182,50 @@ export function SecureChatAssistant() {
   const handlePaymentQueries = (query: string): string => {
     const { tenants } = userData!;
 
-    // Calcular ingresos mensuales reales
+    // Calcular ingresos REALES del mes actual desde localStorage (tabla de seguimiento)
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    const storageKey = `payment_records_${user?.id}_${currentYear}`;
+    
+    let actualMonthlyIncome = 0;
+    let paidTenantsCount = 0;
+    
+    try {
+      const storedRecords = localStorage.getItem(storageKey);
+      if (storedRecords) {
+        const records = JSON.parse(storedRecords);
+        const currentMonthPayments = records.filter((r: any) => 
+          r.year === currentYear && 
+          r.month === currentMonth && 
+          r.paid === true
+        );
+        
+        actualMonthlyIncome = currentMonthPayments.reduce((sum: number, payment: any) => 
+          sum + (payment.amount || 0), 0
+        );
+        paidTenantsCount = currentMonthPayments.length;
+      }
+    } catch (error) {
+      console.error('Error reading payment records:', error);
+    }
+
+    // Calcular ingresos potenciales (de inquilinos activos)
     const activeTenants = tenants.filter(t => t.is_active);
-    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.monthly_rent || 0), 0);
+    const potentialMonthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.monthly_rent || 0), 0);
 
     if (query.match(/(ingreso|gano|ganancia|dinero|plata)/)) {
-      if (monthlyRevenue === 0) {
+      if (actualMonthlyIncome === 0 && potentialMonthlyRevenue === 0) {
         return "🤔 Veo que aún no tienes ingresos configurados. ¡No te preocupes! 💪 Puedes agregar inquilinos con sus rentas en la sección de Inquilinos para empezar a generar ingresos. ¿Te ayudo con eso? 😊";
       }
-      return `¡Excelente! 💰 Tus ingresos mensuales potenciales son de €${monthlyRevenue.toLocaleString()} provenientes de ${activeTenants.length} inquilinos activos. ¡Tu negocio está generando buenos resultados! 🎉`;
+      
+      const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      
+      return `💰 **Ingresos de ${monthNames[currentMonth]} ${currentYear}:**\n\n` +
+             `✅ **Cobrado:** €${actualMonthlyIncome.toLocaleString()} (${paidTenantsCount} inquilinos)\n` +
+             `📊 **Potencial:** €${potentialMonthlyRevenue.toLocaleString()} (${activeTenants.length} inquilinos activos)\n` +
+             `📈 **Tasa de cobro:** ${potentialMonthlyRevenue > 0 ? ((actualMonthlyIncome / potentialMonthlyRevenue) * 100).toFixed(1) : 0}%\n\n` +
+             `${actualMonthlyIncome < potentialMonthlyRevenue ? '⚠️ Tienes pagos pendientes por cobrar.' : '🎉 ¡Excelente! Has cobrado todo este mes.'}`;
     }
 
     if (query.match(/(pendiente|debe|pagar|cobrar)/)) {

@@ -432,6 +432,7 @@ export function TenantEditForm({
         updatedAt: new Date().toISOString(),
         id: formData.id || `tenant-${Date.now()}`,
         propertyId: selectedPropertyId, // Include selected property
+        unit: formData.unit, // Include selected unit
       };
 
       console.log("📤 Final tenant data to save:", updatedTenant);
