@@ -264,11 +264,20 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
                     </TableCell>
                     <TableCell className="font-medium text-sm">
                       <div className="truncate max-w-[120px]" title={tenant.propertyName || 'Sin asignar'}>
-                        {tenant.propertyName && tenant.propertyName.trim() !== '' ? tenant.propertyName : "Sin asignar"}
+                        {tenant.propertyName && 
+                         tenant.propertyName !== 'Sin propiedad' && 
+                         tenant.propertyName !== 'Edificio Principal' && 
+                         tenant.propertyName.trim() !== '' 
+                         ? tenant.propertyName 
+                         : "Sin asignar"}
                       </div>
                     </TableCell>
                     <TableCell className="font-medium text-sm">
-                      {tenant.unit && tenant.unit.trim() !== '' && tenant.unit !== 'Sin unidad' ? tenant.unit : "Sin asignar"}
+                      {tenant.unit && 
+                       tenant.unit !== 'Sin unidad' && 
+                       tenant.unit.trim() !== '' 
+                       ? tenant.unit 
+                       : "Sin asignar"}
                     </TableCell>
                     <TableCell className="text-sm">
                       <div className="font-medium">{tenant.name}</div>

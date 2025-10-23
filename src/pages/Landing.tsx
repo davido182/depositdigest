@@ -139,11 +139,6 @@ Enviado desde www.rentaflux.com
       <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <img 
-              src="/logo-rentaflux.ico" 
-              alt="RentaFlux Logo" 
-              className="h-8 w-8"
-            />
             <h1 className="text-2xl font-bold text-gray-900">RentaFlux</h1>
           </div>
           <div className="space-x-4">
@@ -526,11 +521,6 @@ Enviado desde www.rentaflux.com
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <img 
-                  src="/logo-rentaflux.ico" 
-                  alt="RentaFlux Logo" 
-                  className="h-6 w-6"
-                />
                 <h3 className="text-xl font-bold">RentaFlux</h3>
               </div>
               <p className="text-gray-400">

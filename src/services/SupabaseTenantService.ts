@@ -8,9 +8,6 @@ export class SupabaseTenantService extends BaseService {
     const user = await this.ensureAuthenticated();
     console.log('👤 User authenticated:', user.id);
 
-    // Auto-cleanup corrupted data for current user
-    await this.autoCleanupCorruptedData(user.id);
-
     // Simple query first - just get all data
     const { data, error } = await this.supabase
       .from('tenants')
@@ -76,13 +73,8 @@ export class SupabaseTenantService extends BaseService {
         const propertyFromUnit = assignedUnit?.properties;
 
         // Use property info from unit if available, otherwise from tenant record
-        // NEVER use hardcoded default values - only real data or null
-        const propertyName = assignedUnit?.properties?.name || 
-                            (tenant.property_name && 
-                             tenant.property_name !== 'Sin propiedad' && 
-                             tenant.property_name !== 'Edificio Principal' &&
-                             tenant.property_name !== 'Sin asignar' &&
-                             tenant.property_name.trim() !== '' ? tenant.property_name : null);
+        // Filter out obvious hardcoded values but preserve real data
+        const propertyName = assignedUnit?.properties?.name || tenant.property_name;
         const propertyAddress = assignedUnit?.properties?.address || '';
         const propertyId = assignedUnit?.property_id || tenant.property_id;
 
@@ -107,14 +99,14 @@ export class SupabaseTenantService extends BaseService {
           lease_end_date: tenant.lease_end_date || '',
           rent_amount: Number(tenant.rent_amount || 0),
           status: tenant.status || 'active',
-          unit_number: unitNumber || '',
+          unit_number: unitNumber,
           property_id: propertyId,
-          property_name: propertyName || '',
+          property_name: propertyName,
           created_at: tenant.created_at,
           updated_at: tenant.updated_at,
 
           // Legacy aliases for forms
-          unit: unitNumber || '',
+          unit: unitNumber,
           moveInDate: tenant.lease_start_date || '',
           leaseEndDate: tenant.lease_end_date || '',
           rentAmount: Number(tenant.rent_amount || 0),
@@ -122,7 +114,7 @@ export class SupabaseTenantService extends BaseService {
           paymentHistory: [],
           createdAt: tenant.created_at,
           updatedAt: tenant.updated_at,
-          propertyName: propertyName || '',
+          propertyName: propertyName,
           propertyAddress: propertyAddress,
           notes: (tenant as any).notes || '',
         };
@@ -238,26 +230,28 @@ export class SupabaseTenantService extends BaseService {
       updateData.status = updates.status;
     }
     if (updates.propertyId !== undefined) {
-      // Validate UUID - only set if it's a valid UUID or null
       const propertyId = updates.propertyId && updates.propertyId.trim() !== '' ? updates.propertyId : null;
       updateData.property_id = propertyId;
       
-      // Get the real property name from the database if propertyId is provided
       if (propertyId) {
+        // Get the real property name from database
         try {
           const { data: propertyData } = await this.supabase
             .from('properties')
             .select('name')
             .eq('id', propertyId)
+            .eq('user_id', user.id)
             .single();
           
-          updateData.property_name = propertyData?.name || null;
-          console.log('🏠 [UPDATE] Setting property_name from DB:', propertyData?.name);
+          if (propertyData?.name) {
+            updateData.property_name = propertyData.name;
+            console.log('🏠 [UPDATE] Setting property_name from DB:', propertyData.name);
+          }
         } catch (error) {
           console.error('❌ Error fetching property name:', error);
-          updateData.property_name = null;
         }
       } else {
+        // If no property selected, clear the property name
         updateData.property_name = null;
       }
     }
@@ -299,20 +293,14 @@ export class SupabaseTenantService extends BaseService {
 
     console.log('✅ Updated tenant in database:', data);
 
-    // If unit assignment changed, update the units table
-    if (updates.unit !== undefined || updates.propertyId !== undefined) {
-      console.log('🔄 [UPDATE] Calling syncTenantUnitAssignment with:', {
-        tenantId: id,
-        unit: updates.unit,
-        propertyId: updates.propertyId,
-        unitUndefined: updates.unit === undefined,
-        propertyIdUndefined: updates.propertyId === undefined,
-        finalPropertyName: updateData.property_name
-      });
-      await this.syncTenantUnitAssignment(id, updates.unit, updates.propertyId);
-    } else {
-      console.log('⏭️ [UPDATE] No unit/property changes detected, skipping sync');
-    }
+    // Always sync unit assignment when updating tenant
+    console.log('🔄 [UPDATE] Syncing tenant-unit assignment:', {
+      tenantId: id,
+      unit: updates.unit,
+      propertyId: updates.propertyId,
+      finalPropertyName: updateData.property_name
+    });
+    await this.syncTenantUnitAssignment(id, updates.unit, updates.propertyId);
 
     const result = {
       id: data.id,
@@ -349,30 +337,6 @@ export class SupabaseTenantService extends BaseService {
     return result;
   }
 
-  // Auto-cleanup method for corrupted data
-  private async autoCleanupCorruptedData(userId: string): Promise<void> {
-    try {
-      console.log('🧹 [CLEANUP] Auto-cleaning corrupted data for user:', userId);
-      
-      // Clean up hardcoded property names for current user only
-      const { error: cleanupError } = await this.supabase
-        .from('tenants')
-        .update({ 
-          property_name: null 
-        })
-        .eq('landlord_id', userId)
-        .in('property_name', ['Sin propiedad', 'Edificio Principal', 'Sin asignar']);
-
-      if (cleanupError) {
-        console.error('❌ Error in auto-cleanup:', cleanupError);
-      } else {
-        console.log('✅ [CLEANUP] Auto-cleanup completed for user:', userId);
-      }
-    } catch (error) {
-      console.error('❌ Exception in auto-cleanup:', error);
-    }
-  }
-
   // Method to sync tenant-unit assignment
   private async syncTenantUnitAssignment(tenantId: string, unitNumber?: string, propertyId?: string): Promise<void> {
     try {
@@ -394,8 +358,8 @@ export class SupabaseTenantService extends BaseService {
       }
 
       // If a unit is specified, assign tenant to that unit
-      if (unitNumber && unitNumber !== 'Sin unidad' && unitNumber !== '' && propertyId) {
-        console.log('🏠 Assigning tenant to unit:', { unitNumber, propertyId });
+      if (unitNumber && unitNumber.trim() !== '' && unitNumber !== 'Sin unidad' && propertyId) {
+        console.log('🏠 [SYNC] Assigning tenant to unit:', { unitNumber, propertyId });
 
         const { error: assignError } = await this.supabase
           .from('units')
@@ -408,12 +372,11 @@ export class SupabaseTenantService extends BaseService {
 
         if (assignError) {
           console.error('❌ Error assigning tenant to unit:', assignError);
-          throw new Error(`Failed to assign tenant to unit: ${assignError.message}`);
         } else {
-          console.log('✅ Tenant assigned to unit successfully');
+          console.log('✅ [SYNC] Tenant assigned to unit successfully');
         }
       } else {
-        console.log('📝 No unit assignment needed (unit is empty or invalid)');
+        console.log('📝 [SYNC] No valid unit assignment provided');
       }
 
       // Verify the assignment
