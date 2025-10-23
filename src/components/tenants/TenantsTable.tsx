@@ -72,9 +72,9 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
         tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tenant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tenant.unit.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesStatus = statusFilter === "all" || tenant.status === statusFilter;
-      
+
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
@@ -119,24 +119,24 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth();
       const currentDay = new Date().getDate();
-      
+
       // Get payment records for current user
       const storageKey = `payment_records_${user?.id}_${currentYear}`;
       const storedRecords = localStorage.getItem(storageKey);
-      
+
       if (storedRecords) {
         const records = JSON.parse(storedRecords);
-        const tenantPayment = records.find((r: any) => 
-          r.tenantId === tenant.id && 
-          r.year === currentYear && 
+        const tenantPayment = records.find((r: any) =>
+          r.tenantId === tenant.id &&
+          r.year === currentYear &&
           r.month === currentMonth
         );
-        
+
         if (tenantPayment && tenantPayment.paid) {
           return "paid";
         }
       }
-      
+
       // If not paid, determine if overdue or pending
       if (currentDay > 5) {
         return "overdue"; // Consider overdue after 5th of month
@@ -152,9 +152,9 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
   const getNextPaymentDate = (tenant: Tenant) => {
     const today = new Date();
     const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-    return nextMonth.toLocaleDateString('es-ES', { 
-      day: 'numeric', 
-      month: 'short' 
+    return nextMonth.toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'short'
     });
   };
 
@@ -186,46 +186,46 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
     <div className="space-y-4">
       {/* Controles de filtrado y búsqueda */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center flex-1">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar inquilinos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-40">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="active">Activo</SelectItem>
-                  <SelectItem value="late">Atrasado</SelectItem>
-                  <SelectItem value="notice">Aviso</SelectItem>
-                  <SelectItem value="inactive">Inactivo</SelectItem>
-                </SelectContent>
-              </Select>
+        <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center flex-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Buscar inquilinos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
 
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="Ordenar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unit">Unidad</SelectItem>
-                  <SelectItem value="name">Nombre</SelectItem>
-                  <SelectItem value="date">Fecha ingreso</SelectItem>
-                  <SelectItem value="rent">Renta</SelectItem>
-                  <SelectItem value="property">Propiedad</SelectItem>
-                  <SelectItem value="age">Antigüedad</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">Activo</SelectItem>
+                <SelectItem value="late">Atrasado</SelectItem>
+                <SelectItem value="notice">Aviso</SelectItem>
+                <SelectItem value="inactive">Inactivo</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unit">Unidad</SelectItem>
+                <SelectItem value="name">Nombre</SelectItem>
+                <SelectItem value="date">Fecha ingreso</SelectItem>
+                <SelectItem value="rent">Renta</SelectItem>
+                <SelectItem value="property">Propiedad</SelectItem>
+                <SelectItem value="age">Antigüedad</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -264,10 +264,12 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
                     </TableCell>
                     <TableCell className="font-medium text-sm">
                       <div className="truncate max-w-[120px]" title={tenant.propertyName || 'Sin asignar'}>
-                        {tenant.propertyName || "Sin asignar"}
+                        {tenant.propertyName && tenant.propertyName.trim() !== '' ? tenant.propertyName : "Sin asignar"}
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium text-sm">{tenant.unit || "Sin asignar"}</TableCell>
+                    <TableCell className="font-medium text-sm">
+                      {tenant.unit && tenant.unit.trim() !== '' && tenant.unit !== 'Sin unidad' ? tenant.unit : "Sin asignar"}
+                    </TableCell>
                     <TableCell className="text-sm">
                       <div className="font-medium">{tenant.name}</div>
                       <div className="text-xs text-muted-foreground sm:hidden">

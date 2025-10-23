@@ -329,13 +329,13 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
                    <TableRow key={tenant.id}>
                      <TableCell className="font-medium">
                        <div className="text-xs text-muted-foreground">
-                         {tenant.propertyName || 'Sin asignar'}
+                         {tenant.propertyName && tenant.propertyName.trim() !== '' ? tenant.propertyName : 'Sin asignar'}
                        </div>
                      </TableCell>
                      <TableCell className="font-medium">
                        {tenant.name}
                        <div className="text-xs text-muted-foreground">
-                         {tenant.unit ? `Unidad ${tenant.unit}` : 'Sin unidad asignada'}
+                         {tenant.unit && tenant.unit.trim() !== '' && tenant.unit !== 'Sin unidad' ? `Unidad ${tenant.unit}` : 'Sin unidad asignada'}
                        </div>
                      </TableCell>
                      <TableCell>€{tenant.rentAmount.toLocaleString()}</TableCell>
