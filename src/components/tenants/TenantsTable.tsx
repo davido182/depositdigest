@@ -52,6 +52,19 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
   const [sortBy, setSortBy] = useState("unit");
   const [deleteConfirmTenant, setDeleteConfirmTenant] = useState<Tenant | null>(null);
 
+  // Debug logging for tenants data
+  console.log('🔍 [TABLE] TenantsTable received tenants:', tenants.length);
+  if (tenants.length > 0) {
+    console.log('🔍 [TABLE] First tenant data:', {
+      id: tenants[0].id,
+      name: tenants[0].name,
+      unit: tenants[0].unit,
+      propertyName: tenants[0].propertyName,
+      property_name: tenants[0].property_name,
+      unit_number: tenants[0].unit_number
+    });
+  }
+
   // Filtrar y ordenar inquilinos
   const filteredAndSortedTenants = tenants
     .filter((tenant) => {

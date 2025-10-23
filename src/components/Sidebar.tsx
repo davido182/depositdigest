@@ -150,7 +150,7 @@ const Sidebar = () => {
       <SidebarHeader>
         <div className="flex items-center space-x-2">
           <img 
-            src="/logo-rentaflux.ico" 
+            src="/rentaflux-logo.svg" 
             alt="RentaFlux Logo" 
             className="h-8 w-8"
           />

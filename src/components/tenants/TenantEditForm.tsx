@@ -160,7 +160,7 @@ export function TenantEditForm({
         .from('units')
         .select(`
           property_id, 
-          rent_amount,
+          monthly_rent,
           properties!inner(
             id,
             name,
@@ -180,9 +180,9 @@ export function TenantEditForm({
       setSelectedPropertyId(unitData.property_id);
       
       // Update rent amount if available
-      if (unitData.rent_amount && unitData.rent_amount > 0) {
-        console.log('💰 Updating rent amount from unit:', unitData.rent_amount);
-        setFormData(prev => ({ ...prev, rentAmount: unitData.rent_amount }));
+      if (unitData.monthly_rent && unitData.monthly_rent > 0) {
+        console.log('💰 Updating rent amount from unit:', unitData.monthly_rent);
+        setFormData(prev => ({ ...prev, rentAmount: unitData.monthly_rent }));
       }
       
       // Load units for this property
@@ -212,7 +212,7 @@ export function TenantEditForm({
       // Load ALL units for specific property (not just available ones)
       const { data: unitsData, error } = await supabase
         .from('units')
-        .select('unit_number, is_available, id, rent_amount, tenant_id')
+        .select('unit_number, is_available, id, monthly_rent, tenant_id')
         .eq('property_id', propertyId);
 
       if (error) {
@@ -654,14 +654,17 @@ export function TenantEditForm({
                           Cargando unidades...
                         </SelectItem>
                       ) : availableUnits.length > 0 ? (
-                        availableUnits.map(unit => (
-                          <SelectItem key={unit} value={unit}>
-                            Unidad {unit}
-                          </SelectItem>
-                        ))
+                        availableUnits.map(unit => {
+                          console.log('🏠 [FORM] Rendering unit option:', unit);
+                          return (
+                            <SelectItem key={unit} value={unit}>
+                              Unidad {unit}
+                            </SelectItem>
+                          );
+                        })
                       ) : (
                         <SelectItem value="no-units" disabled>
-                          No hay unidades disponibles
+                          {selectedPropertyId ? "No hay unidades para esta propiedad" : "Selecciona una propiedad primero"}
                         </SelectItem>
                       )}
                     </SelectContent>

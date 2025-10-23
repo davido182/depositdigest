@@ -1,0 +1,18 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Monitor/Screen -->
+  <rect x="20" y="30" width="160" height="100" rx="8" ry="8" fill="none" stroke="#4A7C7E" stroke-width="4"/>
+  <rect x="30" y="40" width="140" height="80" rx="4" ry="4" fill="white"/>
+  
+  <!-- House icon inside screen -->
+  <path d="M70 60 L90 45 L110 60 L110 95 L70 95 Z" fill="none" stroke="#5A9B9D" stroke-width="3"/>
+  <circle cx="85" cy="85" r="2" fill="#5A9B9D"/>
+  
+  <!-- Arrow -->
+  <path d="M120 65 L135 65 M130 60 L135 65 L130 70" fill="none" stroke="#5A9B9D" stroke-width="3"/>
+  
+  <!-- Text RENTA -->
+  <text x="100" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#4A4A4A">RENTA</text>
+  
+  <!-- Text FLUX -->
+  <text x="100" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#5A9B9D">FLUX</text>
+</svg>

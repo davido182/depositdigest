@@ -48,6 +48,19 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
   const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
   const [paymentReceipts, setPaymentReceipts] = useState<PaymentReceipt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Debug logging for tenants data
+  console.log('🔍 [PAYMENTS] TenantPaymentTracker received tenants:', tenants.length);
+  if (tenants.length > 0) {
+    console.log('🔍 [PAYMENTS] First tenant data:', {
+      id: tenants[0].id,
+      name: tenants[0].name,
+      unit: tenants[0].unit,
+      propertyName: tenants[0].propertyName,
+      property_name: tenants[0].property_name,
+      unit_number: tenants[0].unit_number
+    });
+  }
   
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
