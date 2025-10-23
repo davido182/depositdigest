@@ -244,9 +244,7 @@ const Dashboard = () => {
         <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between items-center'}`}>
           <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>Dashboard</h1>
           <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
-
             {/* Botón de importar datos - solo para usuarios premium */}
-            {console.log('Dashboard: userRole =', userRole)}
             {userRole === 'landlord_premium' && (
               <Button
                 onClick={() => setIsImportModalOpen(true)}
