@@ -263,11 +263,11 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
                       {getPaymentStatusIcon(paymentStatus)}
                     </TableCell>
                     <TableCell className="font-medium text-sm">
-                      <div className="truncate max-w-[120px]" title={tenant.propertyName}>
-                        {tenant.propertyName || "Sin propiedad"}
+                      <div className="truncate max-w-[120px]" title={tenant.propertyName || 'Sin asignar'}>
+                        {tenant.propertyName || "Sin asignar"}
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium text-sm">{tenant.unit}</TableCell>
+                    <TableCell className="font-medium text-sm">{tenant.unit || "Sin asignar"}</TableCell>
                     <TableCell className="text-sm">
                       <div className="font-medium">{tenant.name}</div>
                       <div className="text-xs text-muted-foreground sm:hidden">
