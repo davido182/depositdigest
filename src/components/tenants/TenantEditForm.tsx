@@ -97,18 +97,36 @@ export function TenantEditForm({
       loadProperties();
       
       if (tenant) {
+        console.log('🔄 TenantEditForm: Loading existing tenant data:', {
+          id: tenant.id,
+          name: tenant.name,
+          unit: tenant.unit,
+          property_id: tenant.property_id,
+          propertyName: tenant.propertyName
+        });
+        
         // Set form data immediately
         setFormData({ ...tenant });
         setHasDeposit(tenant.depositAmount > 0);
-        setSelectedPropertyId(tenant.property_id || ''); // Keep existing property
         setErrors({});
         setContractFile(null);
         setExistingContract(null);
         
-        // If tenant has a unit, try to find the property
-        if (tenant.unit && tenant.unit !== 'Sin unidad') {
+        // Set property ID from tenant data
+        const tenantPropertyId = tenant.property_id || '';
+        console.log('🏠 Setting property ID:', tenantPropertyId);
+        setSelectedPropertyId(tenantPropertyId);
+        
+        // Load units for the tenant's property if it exists
+        if (tenantPropertyId) {
+          console.log('📋 Loading units for tenant property:', tenantPropertyId);
+          loadUnitsForProperty(tenantPropertyId);
+        } else if (tenant.unit && tenant.unit !== 'Sin unidad') {
+          // Fallback: try to find property by unit number
+          console.log('🔍 Trying to find property by unit:', tenant.unit);
           findPropertyByUnit(tenant.unit);
         } else {
+          console.log('📋 No property assigned, loading all available units');
           loadAvailableUnits();
         }
       } else {
@@ -136,24 +154,35 @@ export function TenantEditForm({
 
   const findPropertyByUnit = async (unitNumber: string) => {
     try {
+      console.log('🔍 Finding property for unit:', unitNumber);
+      
       const { data: unitData, error } = await supabase
         .from('units')
-        .select('property_id, monthly_rent')
+        .select(`
+          property_id, 
+          rent_amount,
+          properties!inner(
+            id,
+            name,
+            user_id
+          )
+        `)
         .eq('unit_number', unitNumber)
         .single();
 
       if (error || !unitData) {
-        console.log('Unit not found, loading all units');
+        console.log('❌ Unit not found:', error);
         loadAvailableUnits();
         return;
       }
 
-      console.log('Found unit data:', unitData);
+      console.log('✅ Found unit data:', unitData);
       setSelectedPropertyId(unitData.property_id);
       
       // Update rent amount if available
-      if (unitData.monthly_rent && unitData.monthly_rent > 0) {
-        setFormData(prev => ({ ...prev, rentAmount: unitData.monthly_rent }));
+      if (unitData.rent_amount && unitData.rent_amount > 0) {
+        console.log('💰 Updating rent amount from unit:', unitData.rent_amount);
+        setFormData(prev => ({ ...prev, rentAmount: unitData.rent_amount }));
       }
       
       // Load units for this property
@@ -178,12 +207,12 @@ export function TenantEditForm({
   const loadUnitsForProperty = async (propertyId: string) => {
     try {
       setIsLoadingUnits(true);
-      console.log('🔍 Loading units for property:', propertyId);
+      console.log('🔍 [UNITS] Loading units for property:', propertyId);
       
       // Load ALL units for specific property (not just available ones)
       const { data: unitsData, error } = await supabase
         .from('units')
-        .select('unit_number, is_available, id, monthly_rent')
+        .select('unit_number, is_available, id, rent_amount, tenant_id')
         .eq('property_id', propertyId);
 
       if (error) {
@@ -192,23 +221,32 @@ export function TenantEditForm({
         return;
       }
 
-      console.log('📊 Units data for property:', unitsData);
+      console.log('📊 [UNITS] Units data for property:', unitsData);
 
-      // Extract unit numbers from database
-      const availableUnitNumbers = (unitsData || []).map(unit => unit.unit_number);
+      // Extract unit numbers from database - include ALL units for editing
+      const allUnitNumbers = (unitsData || []).map(unit => unit.unit_number);
       
-      // If editing, always include current tenant's unit
-      if (tenant && tenant.unit && tenant.unit !== 'Sin unidad' && !availableUnitNumbers.includes(tenant.unit)) {
-        availableUnitNumbers.push(tenant.unit);
+      // If editing, always include current tenant's unit even if it's not in the list
+      if (tenant && tenant.unit && tenant.unit !== 'Sin unidad' && !allUnitNumbers.includes(tenant.unit)) {
+        console.log('➕ [UNITS] Adding current tenant unit to list:', tenant.unit);
+        allUnitNumbers.push(tenant.unit);
       }
       
-      setAvailableUnits(availableUnitNumbers.sort((a, b) => {
+      const sortedUnits = allUnitNumbers.sort((a, b) => {
         const aNum = parseInt(a) || 0;
         const bNum = parseInt(b) || 0;
         return aNum - bNum;
-      }));
+      });
       
-      console.log(`✅ Loaded ${availableUnitNumbers.length} units for property ${propertyId}:`, availableUnitNumbers);
+      setAvailableUnits(sortedUnits);
+      
+      console.log(`✅ [UNITS] Loaded ${sortedUnits.length} units for property ${propertyId}:`, sortedUnits);
+      
+      // Log unit availability status
+      unitsData?.forEach(unit => {
+        console.log(`📋 [UNITS] Unit ${unit.unit_number}: available=${unit.is_available}, tenant_id=${unit.tenant_id}`);
+      });
+      
     } catch (error) {
       console.error("❌ Error loading units for property:", error);
       setAvailableUnits([]);
