@@ -79,13 +79,18 @@ export class SupabaseTenantService extends BaseService {
         const propertyId = assignedUnit?.property_id || tenant.property_id;
 
         console.log(`📋 [MAPPING] Tenant ${fullName}:`, {
+          tenantId: tenant.id,
           unit: unitNumber,
           property: propertyName,
           propertyId: propertyId,
           hasAssignedUnit: !!assignedUnit,
           unitFromDB: assignedUnit?.unit_number,
           propertyFromUnit: assignedUnit?.properties?.name,
-          propertyFromTenant: tenant.property_name
+          propertyFromTenant: tenant.property_name,
+          rawTenantData: {
+            property_id: tenant.property_id,
+            property_name: tenant.property_name
+          }
         });
 
         return {
@@ -223,9 +228,10 @@ export class SupabaseTenantService extends BaseService {
     if (updates.rentAmount !== undefined) {
       updateData.rent_amount = Number(updates.rentAmount || 0);
     }
-    if (updates.depositAmount !== undefined) {
-      updateData.deposit_amount = Number(updates.depositAmount || 0);
-    }
+    // Skip deposit_amount - field doesn't exist in database
+    // if (updates.depositAmount !== undefined) {
+    //   updateData.deposit_amount = Number(updates.depositAmount || 0);
+    // }
     if (updates.status !== undefined) {
       updateData.status = updates.status;
     }
@@ -236,12 +242,15 @@ export class SupabaseTenantService extends BaseService {
       if (propertyId) {
         // Get the real property name from database
         try {
-          const { data: propertyData } = await this.supabase
+          const { data: propertyData, error: propError } = await this.supabase
             .from('properties')
             .select('name')
             .eq('id', propertyId)
-            .eq('user_id', user.id)
             .single();
+          
+          if (propError) {
+            console.error('❌ Error fetching property:', propError);
+          }
           
           if (propertyData?.name) {
             updateData.property_name = propertyData.name;

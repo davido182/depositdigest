@@ -39,7 +39,7 @@ export function DashboardSummary({
 
   if (displayStats.isLoading) {
     return (
-      <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6'}`}>
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
         ))}
@@ -48,7 +48,7 @@ export function DashboardSummary({
   }
 
   return (
-    <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6'}`}>
+    <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
       <StatsCard
         title="Total Propiedades"
         value={displayStats.totalProperties}
@@ -73,18 +73,6 @@ export function DashboardSummary({
         icon={Home}
         description="Listas para alquilar"
       />
-      <StatsCard
-        title="Ingresos Mensuales"
-        value={`€${displayStats.monthlyRevenue.toLocaleString()}`}
-        icon={DollarSign}
-        description="Ingresos del mes actual"
-      />
-      <StatsCard
-        title="Tasa de Cobranza"
-        value={`${displayStats.collectionRate.toFixed(1)}%`}
-        icon={TrendingUp}
-        description="Pagos completados"
-      />
-    </div>
+      </div>
   );
 }
