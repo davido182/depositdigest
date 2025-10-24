@@ -2,22 +2,18 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Building2, 
-  Users, 
-  CreditCard, 
-  FileText, 
-  BarChart3, 
-  Calculator, 
-  MessageCircle, 
-  Smartphone, 
-  Crown, 
-  Check,
-  ArrowRight,
-  UserPlus
+import {
+  Building2,
+  CreditCard,
+  FileText,
+  BarChart3,
+  Calculator,
+  MessageCircle,
+  Smartphone,
+  Crown,
+  Check
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -109,7 +105,7 @@ const Landing = () => {
       }
     } catch (err: any) {
       console.error('Error enviando contacto:', err);
-      
+
       // Fallback a mailto
       const subject = encodeURIComponent(`${subjectRaw} - ${name}`);
       const body = encodeURIComponent(`
@@ -125,7 +121,7 @@ Enviado desde www.rentaflux.com
 
       const mailtoLink = `mailto:rentaflux@gmail.com?subject=${subject}&body=${body}`;
       window.open(mailtoLink, '_blank');
-      
+
       toast({
         title: "Abriendo cliente de correo",
         description: "Se abrirá tu cliente de correo para enviar el mensaje.",
@@ -147,12 +143,6 @@ Enviado desde www.rentaflux.com
               navigate("/login");
             }}>
               Iniciar Sesión
-            </Button>
-            <Button onClick={() => {
-              localStorage.setItem('rentaflux_has_visited', 'true');
-              navigate("/login");
-            }}>
-              Comenzar Gratis
             </Button>
           </div>
         </div>
@@ -179,22 +169,16 @@ Enviado desde www.rentaflux.com
             <span className="text-blue-600"> forma inteligente</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            RentaFlux es la plataforma completa para propietarios e inquilinos. 
+            RentaFlux es la plataforma completa para propietarios e inquilinos.
             Gestiona pagos, mantenimiento, contabilidad y más desde tu móvil o web.
           </p>
           <div className="flex flex-col lg:flex-row gap-8 justify-center items-center">
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" onClick={() => {
-                localStorage.setItem('rentaflux_has_visited', 'true');
-                navigate("/login");
-              }} className="#3c6e71">
-                Comenzar Gratis <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
               <Button size="lg" variant="outline" onClick={handleDemoClick}>
                 Ver Demo
               </Button>
             </div>
-            
+
             {/* Dashboard Preview Box */}
             <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-6 w-80 shadow-lg">
               <div className="text-sm font-semibold text-gray-600 mb-4">Vista previa del Dashboard</div>
@@ -245,7 +229,7 @@ Enviado desde www.rentaflux.com
           <p className="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
             Desde gestión básica hasta análisis avanzados con IA
           </p>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <Card className="text-center">
               <CardHeader>
@@ -363,7 +347,7 @@ Enviado desde www.rentaflux.com
                 </CardTitle>
                 <CardDescription>
                   <span className="text-3xl font-bold">Con invitación - contáctanos</span>
-                  
+
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -375,8 +359,8 @@ Enviado desde www.rentaflux.com
                     </li>
                   ))}
                 </ul>
-                <Button 
-                  className="w-full mt-6 bg-blue-600 hover:bg-blue-700" 
+                <Button
+                  className="w-full mt-6 bg-blue-600 hover:bg-blue-700"
                   onClick={() => {
                     window.location.hash = 'contacto-premium';
                     document.getElementById('contacto')?.scrollIntoView({ behavior: 'smooth' });
@@ -430,7 +414,7 @@ Enviado desde www.rentaflux.com
             Gestiona tus propiedades desde cualquier lugar con nuestras apps nativas
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Card 
+            <Card
               className="p-6 min-w-[200px] cursor-pointer hover:shadow-lg transition-shadow"
               onClick={() => handleMobileDownload('ios')}
             >
@@ -444,7 +428,7 @@ Enviado desde www.rentaflux.com
                 </div>
               </div>
             </Card>
-            <Card 
+            <Card
               className="p-6 min-w-[200px] cursor-pointer hover:shadow-lg transition-shadow"
               onClick={() => handleMobileDownload('android')}
             >
@@ -489,14 +473,14 @@ Enviado desde www.rentaflux.com
                 </div>
                 <div>
                   <Label htmlFor="message">Mensaje</Label>
-                  <Textarea 
-                    id="message" 
-                    name="message" 
-                    placeholder="Cuéntanos cómo podemos ayudarte" 
-                    rows={5} 
-                    required 
-                    defaultValue={window.location.hash === '#contacto-premium' ? 
-                      'Hola, me interesa obtener acceso a RentaFlux Premium. Por favor, contáctenme para más información sobre los planes y precios.' : 
+                  <Textarea
+                    id="message"
+                    name="message"
+                    placeholder="Cuéntanos cómo podemos ayudarte"
+                    rows={5}
+                    required
+                    defaultValue={window.location.hash === '#contacto-premium' ?
+                      'Hola, me interesa obtener acceso a RentaFlux Premium. Por favor, contáctenme para más información sobre los planes y precios.' :
                       ''
                     }
                   />

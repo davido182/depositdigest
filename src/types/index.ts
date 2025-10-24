@@ -16,11 +16,11 @@ export interface Tenant {
   property_name: string | null; // Database field
   created_at: string;
   updated_at: string;
-  
+
   // Frontend-only computed fields
   paymentHistory?: Payment[];
   propertyAddress?: string; // Computed from property relationship
-  
+
   // Legacy aliases for backward compatibility (for forms)
   moveInDate?: string; // Alias for lease_start_date
   leaseEndDate?: string; // Alias for lease_end_date
@@ -53,7 +53,7 @@ export interface Unit {
   photos?: string[]; // Database field
   created_at: string;
   updated_at: string;
-  
+
   // Tenant information (from joins)
   tenant_name?: string | null;
   tenant_email?: string | null;
@@ -64,7 +64,7 @@ export interface Unit {
     email: string;
     status: string;
   } | null;
-  
+
   // Legacy aliases for backward compatibility
   rent_amount?: number; // Alias for monthly_rent
 }
@@ -149,11 +149,11 @@ export interface Account {
   updatedAt: string;
 }
 
-export type AccountType = 
-  | 'asset' 
-  | 'liability' 
-  | 'equity' 
-  | 'income' 
+export type AccountType =
+  | 'asset'
+  | 'liability'
+  | 'equity'
+  | 'income'
   | 'expense';
 
 export interface TaxEntry {
@@ -173,12 +173,12 @@ export interface TaxEntry {
   updatedAt: string;
 }
 
-export type TaxType = 
-  | 'municipal_tax' 
-  | 'fire_department_fee' 
-  | 'vat' 
-  | 'income_tax' 
-  | 'withholding_tax' 
+export type TaxType =
+  | 'municipal_tax'
+  | 'fire_department_fee'
+  | 'vat'
+  | 'income_tax'
+  | 'withholding_tax'
   | 'other';
 
 export type TaxStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
