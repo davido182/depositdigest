@@ -54,7 +54,7 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
 
   // Debug logging for tenants data
   console.log('🔍 [TABLE] TenantsTable received tenants:', tenants.length);
-  if (tenants.length > 0) {
+  if (tenants.length > 0 && tenants[0]) {
     console.log('🔍 [TABLE] First tenant data:', {
       id: tenants[0].id,
       name: tenants[0].name,
@@ -84,7 +84,7 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
         case "name":
           return a.name.localeCompare(b.name);
         case "date":
-          return new Date(a.moveInDate).getTime() - new Date(b.moveInDate).getTime();
+          return new Date(a.moveInDate || '').getTime() - new Date(b.moveInDate || '').getTime();
         case "rent":
           return (a.rentAmount || 0) - (b.rentAmount || 0);
         case "property":
@@ -92,7 +92,7 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
           const propertyB = b.unit?.substring(0, 1) || "";
           return propertyA.localeCompare(propertyB);
         case "age":
-          return new Date(a.moveInDate).getTime() - new Date(b.moveInDate).getTime();
+          return new Date(a.moveInDate || '').getTime() - new Date(b.moveInDate || '').getTime();
         default:
           return 0;
       }
@@ -149,7 +149,7 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
     }
   };
 
-  const getNextPaymentDate = (tenant: Tenant) => {
+  const getNextPaymentDate = (_tenant: Tenant) => {
     const today = new Date();
     const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
     return nextMonth.toLocaleDateString('es-ES', {

@@ -76,7 +76,7 @@ export function TenantEditForm({
 
   const [formData, setFormData] = useState<Tenant>(tenant || emptyTenant);
   const [hasDeposit, setHasDeposit] = useState(
-    tenant ? tenant.depositAmount > 0 : false
+    tenant ? (tenant.depositAmount || 0) > 0 : false
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [availableUnits, setAvailableUnits] = useState<string[]>([]);
@@ -92,10 +92,10 @@ export function TenantEditForm({
   useEffect(() => {
     if (isOpen) {
       console.log('TenantEditForm: Modal opened with tenant:', tenant);
-      
+
       // Always load properties first
       loadProperties();
-      
+
       if (tenant) {
         console.log('🔄 TenantEditForm: Loading existing tenant data:', {
           id: tenant.id,
@@ -104,19 +104,19 @@ export function TenantEditForm({
           property_id: tenant.property_id,
           propertyName: tenant.propertyName
         });
-        
+
         // Set form data immediately
         setFormData({ ...tenant });
-        setHasDeposit(tenant.depositAmount > 0);
+        setHasDeposit((tenant.depositAmount || 0) > 0);
         setErrors({});
         setContractFile(null);
         setExistingContract(null);
-        
+
         // Set property ID from tenant data
         const tenantPropertyId = tenant.property_id || '';
         console.log('🏠 Setting property ID:', tenantPropertyId);
         setSelectedPropertyId(tenantPropertyId);
-        
+
         // Load units for the tenant's property if it exists
         if (tenantPropertyId) {
           console.log('📋 Loading units for tenant property:', tenantPropertyId);
@@ -155,7 +155,7 @@ export function TenantEditForm({
   const findPropertyByUnit = async (unitNumber: string) => {
     try {
       console.log('🔍 Finding property for unit:', unitNumber);
-      
+
       const { data: unitData, error } = await supabase
         .from('units')
         .select(`
@@ -178,13 +178,13 @@ export function TenantEditForm({
 
       console.log('✅ Found unit data:', unitData);
       setSelectedPropertyId(unitData.property_id);
-      
+
       // Update rent amount if available
       if (unitData.monthly_rent && unitData.monthly_rent > 0) {
         console.log('💰 Updating rent amount from unit:', unitData.monthly_rent);
         setFormData(prev => ({ ...prev, rentAmount: unitData.monthly_rent }));
       }
-      
+
       // Load units for this property
       loadUnitsForProperty(unitData.property_id);
     } catch (error) {
@@ -208,7 +208,7 @@ export function TenantEditForm({
     try {
       setIsLoadingUnits(true);
       console.log('🔍 [UNITS] Loading units for property:', propertyId);
-      
+
       // Load ALL units for specific property (not just available ones)
       const { data: unitsData, error } = await supabase
         .from('units')
@@ -225,28 +225,28 @@ export function TenantEditForm({
 
       // Extract unit numbers from database - include ALL units for editing
       const allUnitNumbers = (unitsData || []).map(unit => unit.unit_number);
-      
+
       // If editing, always include current tenant's unit even if it's not in the list
       if (tenant && tenant.unit && tenant.unit !== 'Sin unidad' && !allUnitNumbers.includes(tenant.unit)) {
         console.log('➕ [UNITS] Adding current tenant unit to list:', tenant.unit);
         allUnitNumbers.push(tenant.unit);
       }
-      
+
       const sortedUnits = allUnitNumbers.sort((a, b) => {
         const aNum = parseInt(a) || 0;
         const bNum = parseInt(b) || 0;
         return aNum - bNum;
       });
-      
+
       setAvailableUnits(sortedUnits);
-      
+
       console.log(`✅ [UNITS] Loaded ${sortedUnits.length} units for property ${propertyId}:`, sortedUnits);
-      
+
       // Log unit availability status
       unitsData?.forEach(unit => {
         console.log(`📋 [UNITS] Unit ${unit.unit_number}: available=${unit.is_available}, tenant_id=${unit.tenant_id}`);
       });
-      
+
     } catch (error) {
       console.error("❌ Error loading units for property:", error);
       setAvailableUnits([]);
@@ -263,7 +263,7 @@ export function TenantEditForm({
       // Load all available units if no property selected
       try {
         setIsLoadingUnits(true);
-        
+
         const { data: unitsData, error } = await supabase
           .from('units')
           .select('unit_number, is_available, property_id, properties(name)')
@@ -276,17 +276,17 @@ export function TenantEditForm({
         }
 
         const availableUnitNumbers = (unitsData || []).map(unit => unit.unit_number);
-        
+
         if (tenant && tenant.unit && !availableUnitNumbers.includes(tenant.unit)) {
           availableUnitNumbers.push(tenant.unit);
         }
-        
+
         setAvailableUnits(availableUnitNumbers.sort((a, b) => {
           const aNum = parseInt(a) || 0;
           const bNum = parseInt(b) || 0;
           return aNum - bNum;
         }));
-        
+
         console.log(`Loaded ${availableUnitNumbers.length} available units from all properties`);
       } catch (error) {
         console.error("Error loading available units:", error);
@@ -464,26 +464,26 @@ export function TenantEditForm({
 
     try {
       console.log("🔄 Submitting tenant data:", formData);
-      
+
       const updatedTenant = {
         ...formData,
         updatedAt: new Date().toISOString(),
         id: formData.id || `tenant-${Date.now()}`,
         propertyId: selectedPropertyId, // Include selected property
-        unit: formData.unit, // Include selected unit
+        unit: formData.unit || '', // Include selected unit with fallback
       };
 
       console.log("📤 Final tenant data to save:", updatedTenant);
-      
+
       // Call onSave and wait for it to complete
       await onSave(updatedTenant);
-      
+
       console.log("✅ Tenant saved successfully");
 
       if (contractFile && updatedTenant.id) {
         await handleContractUpload(contractFile);
       }
-      
+
       // Close the form after successful save
       onClose();
       toast.success(tenant ? "Inquilino actualizado correctamente" : "Inquilino creado correctamente");
@@ -613,7 +613,7 @@ export function TenantEditForm({
                     onValueChange={async (value) => {
                       const unitValue = value === "unassigned" ? "" : value;
                       setFormData(prev => ({ ...prev, unit: unitValue }));
-                      
+
                       // Load rent amount for selected unit
                       if (unitValue && selectedPropertyId) {
                         try {
@@ -624,13 +624,13 @@ export function TenantEditForm({
                             .eq('unit_number', unitValue)
                             .eq('property_id', selectedPropertyId)
                             .single();
-                          
+
                           if (error) {
                             console.error('❌ Error loading unit rent:', error);
                           } else if (unitData) {
                             console.log('💰 Found unit rent:', unitData.monthly_rent);
-                            setFormData(prev => ({ 
-                              ...prev, 
+                            setFormData(prev => ({
+                              ...prev,
                               unit: unitValue,
                               rentAmount: unitData.monthly_rent || prev.rentAmount
                             }));
@@ -658,7 +658,7 @@ export function TenantEditForm({
                           console.log('🏠 [FORM] Rendering unit option:', unit);
                           return (
                             <SelectItem key={unit} value={unit}>
-                              Unidad {unit}
+                              {unit}
                             </SelectItem>
                           );
                         })
@@ -750,7 +750,7 @@ export function TenantEditForm({
                   type="number"
                   min="0"
                   step="0.01"
-                  value={formData.rentAmount === 0 ? "" : formData.rentAmount.toString()}
+                  value={(formData.rentAmount || 0) === 0 ? "" : (formData.rentAmount || 0).toString()}
                   onChange={handleChange}
                   placeholder="Ingrese el monto de renta"
                   className={errors.rentAmount ? "border-destructive" : ""}
