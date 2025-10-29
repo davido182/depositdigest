@@ -126,7 +126,7 @@ export function SmartNotifications() {
         // Get all active tenants
         const { data: tenants, error } = await supabase
           .from('tenants')
-          .select('id, name, rent_amount')
+          .select('id, first_name, rent_amount')
           .eq('landlord_id', user?.id)
           .eq('status', 'active');
 
@@ -135,7 +135,7 @@ export function SmartNotifications() {
           
           tenants.forEach(tenant => {
             if (!paidTenantIds.has(tenant.id)) {
-              const name = tenant.name || 'Inquilino';
+              const name = tenant.first_name || 'Inquilino';
               const isOverdue = new Date().getDate() > 5; // Consider overdue after 5th of month
               
               notifications.push({
@@ -161,7 +161,7 @@ export function SmartNotifications() {
       const { data: maintenance, error } = await supabase
         .from('maintenance_requests')
         .select('id, title, priority, unit_number, created_at')
-        .eq('user_id', user?.id)
+        .eq('landlord_id', user?.id)
         .in('status', ['pending'])
         .in('priority', ['emergency', 'high']);
 

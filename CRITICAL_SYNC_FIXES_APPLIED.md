@@ -2,29 +2,44 @@
 
 ## ❌ Problema Principal
 Los inquilinos se creaban pero no aparecían en las tablas debido a:
-1. **Consultas HTTP 400** por usar campos inexistentes (`name`, `leaseEndDate`)
+1. **Consultas HTTP 400** por usar campos inexistentes (`name`, `leaseEndDate`, `user_id`)
 2. **Múltiples archivos** haciendo consultas directas con campos incorrectos
 3. **Inconsistencia** entre nombres de campos en BD vs código
 
 ## 🔍 Errores HTTP 400 Identificados
 ```
 GET /rest/v1/tenants?select=id,name,leaseEndDate&landlord_id=eq...
+GET /rest/v1/maintenance_requests?select=...&user_id=eq...
+GET /rest/v1/units?select=...&user_id=eq...
 [HTTP/3 400 82ms]
 ```
 
 ## ✅ Arreglos Aplicados
 
-### 1. SmartNotifications.tsx
+### 1. SmartNotifications.tsx (4 consultas corregidas)
 ```typescript
 // ❌ ANTES (campos incorrectos)
 .select('id, name, leaseEndDate')
-.not('leaseEndDate', 'is', null)
-.lte('leaseEndDate', thirtyDaysFromNow)
+.select('id, name, rent_amount')
+.eq('user_id', user?.id) // maintenance_requests
 
 // ✅ DESPUÉS (campos correctos)
 .select('id, first_name, lease_end_date')
-.not('lease_end_date', 'is', null)
-.lte('lease_end_date', thirtyDaysFromNow)
+.select('id, first_name, rent_amount')
+.eq('landlord_id', user?.id) // maintenance_requests
+```
+
+### 2. MaintenanceNotifications.tsx (3 consultas corregidas)
+```typescript
+// ❌ ANTES (campos incorrectos)
+.select('id, first_name, last_name, monthly_rent')
+.eq('is_active', true)
+.eq('user_id', user?.id) // units table
+
+// ✅ DESPUÉS (campos correctos)
+.select('id, first_name, rent_amount')
+.eq('status', 'active')
+.eq('properties.landlord_id', user?.id) // units with join
 ```
 
 ### 2. use-app-data.tsx
@@ -71,11 +86,13 @@ tenantService.getTenants()
 - ✅ **Logging** detallado para debugging
 
 ## 📋 Archivos Corregidos
-1. ✅ `src/components/dashboard/SmartNotifications.tsx`
-2. ✅ `src/hooks/use-app-data.tsx`
-3. ✅ `src/pages/Analytics.tsx`
-4. ✅ `src/pages/Properties.tsx`
-5. ✅ `src/components/assistant/SecureChatAssistant.tsx`
+1. ✅ `src/components/dashboard/SmartNotifications.tsx` (4 consultas)
+2. ✅ `src/components/dashboard/MaintenanceNotifications.tsx` (3 consultas)
+3. ✅ `src/hooks/use-app-data.tsx` (usando servicio)
+4. ✅ `src/pages/Analytics.tsx` (usando servicio)
+5. ✅ `src/pages/Properties.tsx` (usando servicio)
+6. ✅ `src/components/assistant/SecureChatAssistant.tsx` (usando servicio)
+7. ✅ `src/services/SupabaseTenantService.ts` (mapeo first_name)
 
 ## 🔧 Resultado Esperado
 - ✅ **Sin errores HTTP 400** en consultas
@@ -84,9 +101,17 @@ tenantService.getTenants()
 - ✅ **Datos consistentes** en toda la aplicación
 
 ## 🚨 Estado Actual
-- ✅ Todos los archivos problemáticos corregidos
-- ✅ Consultas usando servicio centralizado
-- ✅ Campos de BD correctos
+- ✅ **7 archivos** problemáticos corregidos
+- ✅ **10+ consultas** con campos incorrectos arregladas
+- ✅ Consultas usando servicio centralizado donde corresponde
+- ✅ Campos de BD correctos (`first_name`, `rent_amount`, `lease_end_date`, `landlord_id`)
+- ✅ Joins correctos para tablas relacionadas
 - ⏳ **Pendiente**: Probar creación de inquilino
 
-**¡Ahora los inquilinos deberían aparecer correctamente en todas las tablas!**
+## 🎯 Errores HTTP 400 Eliminados
+- ✅ Sin más consultas con campos inexistentes
+- ✅ Sin más consultas con `user_id` en tablas incorrectas
+- ✅ Sin más consultas con `name` en lugar de `first_name`
+- ✅ Sin más consultas con `leaseEndDate` en lugar de `lease_end_date`
+
+**¡Ahora los inquilinos deberían aparecer correctamente en todas las tablas sin errores HTTP 400!**

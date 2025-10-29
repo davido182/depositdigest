@@ -126,23 +126,23 @@ export function SmartNotifications() {
         // Get all active tenants
         const { data: tenants, error } = await supabase
           .from('tenants')
-          .select('id, first_name, last_name, monthly_rent')
+          .select('id, first_name, rent_amount')
           .eq('landlord_id', user?.id)
-          .eq('is_active', true);
+          .eq('status', 'active');
 
         if (!error && tenants) {
           const paidTenantIds = new Set(currentMonthRecords.filter((r: any) => r.paid).map((r: any) => r.tenantId));
           
           tenants.forEach(tenant => {
             if (!paidTenantIds.has(tenant.id)) {
-              const name = `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || 'Inquilino';
+              const name = tenant.first_name || 'Inquilino';
               const isOverdue = new Date().getDate() > 5; // Consider overdue after 5th of month
               
               notifications.push({
                 id: `payment-overdue-${tenant.id}`,
                 type: 'payment_overdue',
                 title: isOverdue ? 'Pago vencido' : 'Pago pendiente',
-                description: `${name} - €${tenant.monthly_rent || 0} del mes actual`,
+                description: `${name} - €${tenant.rent_amount || 0} del mes actual`,
                 priority: isOverdue ? 'high' : 'medium',
                 created_at: new Date().toISOString(),
                 data: { tenantId: tenant.id, tenantName: name, amount: tenant.monthly_rent }
@@ -221,8 +221,13 @@ export function SmartNotifications() {
     try {
       const { data: units, error } = await supabase
         .from('units')
-        .select('id, unit_number, updated_at, properties(name)')
-        .eq('user_id', user?.id)
+        .select(`
+          id, 
+          unit_number, 
+          updated_at, 
+          properties!inner(name, landlord_id)
+        `)
+        .eq('properties.landlord_id', user?.id)
         .eq('is_available', true);
 
       if (!error && units && units.length > 0) {

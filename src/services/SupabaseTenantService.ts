@@ -144,6 +144,7 @@ export class SupabaseTenantService extends BaseService {
     const insertData = {
       landlord_id: user.id,
       first_name: tenantName, // BD usa first_name, no name
+      last_name: '', // Campo requerido, usar string vacío por defecto
       name: tenantName, // Mantener ambos por compatibilidad
       email: tenant.email?.trim() || '',
       phone: tenant.phone?.trim() || null,
