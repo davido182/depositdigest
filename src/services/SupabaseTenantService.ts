@@ -54,9 +54,17 @@ export class SupabaseTenantService extends BaseService {
 
     // Transform tenant data using available fields
     return tenantsData
-      .filter(tenant => tenant?.name && tenant.name.trim() !== '')
+      .filter(tenant => {
+        // Check both name and first_name fields
+        const hasName = (tenant?.name && tenant.name.trim() !== '') || 
+                       (tenant?.first_name && tenant.first_name.trim() !== '');
+        console.log(`🔍 [FILTER] Tenant ${tenant?.id}: name="${tenant?.name}", first_name="${tenant?.first_name}", hasName=${hasName}`);
+        return hasName;
+      })
       .map(tenant => {
-        const fullName = tenant.name || 'Sin nombre';
+        // Use first_name as primary, fallback to name
+        const fullName = tenant.first_name || tenant.name || 'Sin nombre';
+        console.log(`📝 [MAPPING] Tenant ${tenant.id}: Using name="${fullName}" (from first_name="${tenant.first_name}", name="${tenant.name}")`);
         
         // Get property name from properties data
         const property = propertiesData.find(p => p.id === tenant.property_id);
@@ -112,6 +120,13 @@ export class SupabaseTenantService extends BaseService {
 
   async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt' | 'paymentHistory'>): Promise<Tenant> {
     console.log('📝 [SYNC-FIX] Creating tenant in Supabase:', tenant);
+    console.log('📝 [DEBUG] Tenant name field:', {
+      name: tenant.name,
+      nameType: typeof tenant.name,
+      nameLength: tenant.name?.length,
+      nameTrimmed: tenant.name?.trim(),
+      nameTrimmedLength: tenant.name?.trim()?.length
+    });
 
     const user = await this.ensureAuthenticated();
 
@@ -120,9 +135,16 @@ export class SupabaseTenantService extends BaseService {
     const propertyId = (tenant as any).propertyId?.trim() || null;
     const propertyName = (tenant as any).propertyName?.trim() || null;
 
+    // Validar que el nombre no esté vacío
+    const tenantName = tenant.name?.trim();
+    if (!tenantName || tenantName === '') {
+      throw new Error('El nombre del inquilino es requerido');
+    }
+
     const insertData = {
       landlord_id: user.id,
-      name: tenant.name?.trim() || 'Sin nombre',
+      first_name: tenantName, // BD usa first_name, no name
+      name: tenantName, // Mantener ambos por compatibilidad
       email: tenant.email?.trim() || '',
       phone: tenant.phone?.trim() || null,
       lease_start_date: tenant.moveInDate || new Date().toISOString().split('T')[0],
@@ -131,7 +153,7 @@ export class SupabaseTenantService extends BaseService {
       status: tenant.status || 'active',
       property_id: propertyId,
       property_name: propertyName,
-      unit_number: unitNumber, // Now works with unit_number column
+      unit_number: unitNumber,
     };
 
     console.log('📋 [SYNC-FIX] Insert data prepared:', insertData);
@@ -167,7 +189,11 @@ export class SupabaseTenantService extends BaseService {
     const updateData: any = {};
 
     // Basic fields with null safety
-    if (updates.name !== undefined) updateData.name = updates.name?.trim() || 'Sin nombre';
+    if (updates.name !== undefined) {
+      const updatedName = updates.name?.trim() || 'Sin nombre';
+      updateData.name = updatedName;
+      updateData.first_name = updatedName; // Sincronizar ambos campos
+    }
     if (updates.email !== undefined) updateData.email = updates.email?.trim() || null;
     if (updates.phone !== undefined) updateData.phone = updates.phone?.trim() || null;
     if (updates.status !== undefined) updateData.status = updates.status;
@@ -272,11 +298,15 @@ export class SupabaseTenantService extends BaseService {
     const finalUnitNumber = unitNumber || data.unit_number || '';
     const finalPropertyName = data.property_name || '';
     
+    // Use first_name as primary, fallback to name
+    const fullName = data.first_name || data.name || 'Sin nombre';
+    console.log(`📝 [FORMAT] Formatting tenant response: first_name="${data.first_name}", name="${data.name}", final="${fullName}"`);
+    
     return {
       id: data.id,
       user_id: data.landlord_id || '',
       landlord_id: data.landlord_id,
-      name: data.name || 'Sin nombre',
+      name: fullName,
       email: data.email || '',
       phone: data.phone || '',
       lease_start_date: data.lease_start_date || '',
@@ -334,11 +364,19 @@ export class SupabaseTenantService extends BaseService {
       if (unitNumber && unitNumber.trim() !== '' && propertyId && propertyId.trim() !== '') {
         console.log('🏠 [BIDIRECTIONAL] Assigning tenant to new unit:', { unitNumber, propertyId });
 
+        // También obtener la renta del inquilino para sincronizar
+        const { data: tenantData } = await this.supabase
+          .from('tenants')
+          .select('rent_amount')
+          .eq('id', tenantId)
+          .single();
+
         const { error: assignError } = await this.supabase
           .from('units')
           .update({
             tenant_id: tenantId,
-            is_available: false
+            is_available: false,
+            rent_amount: tenantData?.rent_amount || null // Sincronizar renta
           })
           .eq('unit_number', unitNumber)
           .eq('property_id', propertyId);

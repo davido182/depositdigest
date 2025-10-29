@@ -57,7 +57,7 @@ export function TenantCards({ tenants, onEditTenant, onDeleteTenant }: TenantCar
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Home className="h-4 w-4 text-muted-foreground" />
-                  <span>Unidad {tenant.unit || "Sin asignar"}</span>
+                  <span>{tenant.unit || "Sin unidad asignada"}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />

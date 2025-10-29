@@ -466,12 +466,26 @@ export function TenantEditForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validación adicional del nombre antes de proceder
+    if (!formData.name || formData.name.trim() === '') {
+      setErrors({ name: 'El nombre del inquilino es requerido' });
+      toast.error('Por favor ingresa el nombre del inquilino');
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
 
     try {
       console.log("🔄 Submitting tenant data:", formData);
+      console.log("🔍 [DEBUG] Form name field:", {
+        name: formData.name,
+        nameType: typeof formData.name,
+        nameLength: formData.name?.length,
+        nameTrimmed: formData.name?.trim(),
+        isEmpty: !formData.name || formData.name.trim() === ''
+      });
 
       const updatedTenant = {
         ...formData,
@@ -482,6 +496,11 @@ export function TenantEditForm({
       };
 
       console.log("📤 Final tenant data to save:", updatedTenant);
+      console.log("🔍 [DEBUG] Final name field:", {
+        name: updatedTenant.name,
+        nameType: typeof updatedTenant.name,
+        nameLength: updatedTenant.name?.length
+      });
 
       // Call onSave and wait for it to complete
       await onSave(updatedTenant);
@@ -526,7 +545,9 @@ export function TenantEditForm({
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                placeholder="Ingresa el nombre completo del inquilino"
                 className={errors.name ? "border-destructive" : ""}
+                required
               />
               {errors.name && (
                 <p className="text-xs text-destructive">{errors.name}</p>
@@ -794,7 +815,7 @@ export function TenantEditForm({
                     type="number"
                     min="0"
                     step="0.01"
-                    value={formData.depositAmount}
+                    value={formData.depositAmount === 0 ? "" : formData.depositAmount.toString()}
                     onChange={handleChange}
                     className={errors.depositAmount ? "border-destructive" : ""}
                   />
