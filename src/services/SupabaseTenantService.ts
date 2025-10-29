@@ -147,7 +147,12 @@ export class SupabaseTenantService extends BaseService {
       throw new Error(`Failed to create tenant: ${error?.message || 'Unknown error'}`);
     }
 
-    console.log('✅ [SYNC-FIX] Created tenant:', data);
+    console.log('✅ [DEFINITIVE] Created tenant:', data);
+
+    // SINCRONIZACIÓN BIDIRECCIONAL: Actualizar tabla units también
+    if (unitNumber && unitNumber.trim() !== '' && propertyId && propertyId.trim() !== '') {
+      await this.syncUnitsTableFromTenant(data.id, unitNumber, propertyId, user.id);
+    }
 
     return this.formatTenantResponse(data, unitNumber || '');
   }
@@ -250,7 +255,12 @@ export class SupabaseTenantService extends BaseService {
       throw new Error(`Failed to update tenant: ${error?.message || 'Unknown error'}`);
     }
 
-    console.log('✅ [SIMPLE] Updated tenant in database:', data);
+    console.log('✅ [DEFINITIVE] Updated tenant in database:', data);
+
+    // SINCRONIZACIÓN BIDIRECCIONAL: Actualizar tabla units también
+    if (updates.unit !== undefined || updates.propertyId !== undefined) {
+      await this.syncUnitsTableFromTenant(id, updates.unit, updates.propertyId, user.id);
+    }
 
     return this.formatTenantResponse(data, updates.unit || data.unit_number || '');
   }
@@ -294,10 +304,65 @@ export class SupabaseTenantService extends BaseService {
 
 
 
+  // Método para sincronizar tabla units cuando se edita un inquilino
+  private async syncUnitsTableFromTenant(tenantId: string, unitNumber?: string, propertyId?: string, userId?: string): Promise<void> {
+    try {
+      console.log('🔄 [BIDIRECTIONAL] Syncing units table from tenant update:', {
+        tenantId,
+        unitNumber,
+        propertyId
+      });
+
+      // Paso 1: Desasignar inquilino de cualquier unidad actual
+      const { error: unassignError } = await this.supabase
+        .from('units')
+        .update({
+          tenant_id: null,
+          is_available: true
+        })
+        .eq('tenant_id', tenantId);
+
+      if (unassignError) {
+        console.error('❌ Error unassigning tenant from units:', unassignError);
+      } else {
+        console.log('✅ [BIDIRECTIONAL] Tenant unassigned from all units');
+      }
+
+      // Paso 2: Si hay nueva unidad y propiedad, asignar
+      if (unitNumber && unitNumber.trim() !== '' && propertyId && propertyId.trim() !== '') {
+        console.log('🏠 [BIDIRECTIONAL] Assigning tenant to new unit:', { unitNumber, propertyId });
+
+        const { error: assignError } = await this.supabase
+          .from('units')
+          .update({
+            tenant_id: tenantId,
+            is_available: false
+          })
+          .eq('unit_number', unitNumber)
+          .eq('property_id', propertyId);
+
+        if (assignError) {
+          console.error('❌ Error assigning tenant to unit:', assignError);
+        } else {
+          console.log('✅ [BIDIRECTIONAL] Tenant assigned to unit successfully');
+        }
+      }
+
+      console.log('✅ [BIDIRECTIONAL] Units table sync completed');
+
+    } catch (error) {
+      console.error('❌ Error syncing units table:', error);
+      // No lanzar error - la actualización del inquilino ya fue exitosa
+    }
+  }
+
   async deleteTenant(id: string): Promise<boolean> {
     console.log('🗑️ Deleting tenant from Supabase:', id);
 
     const user = await this.ensureAuthenticated();
+
+    // Primero desasignar de units
+    await this.syncUnitsTableFromTenant(id, '', '', user.id);
 
     const { error } = await this.supabase
       .from('tenants')
