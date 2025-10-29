@@ -213,7 +213,9 @@ export class SupabaseTenantService extends BaseService {
     }
     
     // Notes with validation
-    if (updates.notes !== undefined) updateData.notes = updates.notes?.trim() || null;
+    if (updates.notes !== undefined) {
+      updateData.notes = updates.notes?.trim() || null;
+    }
 
     // Unit assignment - Now works with unit_number column
     if (updates.unit !== undefined) {
