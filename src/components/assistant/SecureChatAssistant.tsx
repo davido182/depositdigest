@@ -61,9 +61,12 @@ export function SecureChatAssistant() {
     try {
       console.log('SecureChatAssistant: Loading user data for:', user.id);
 
-      const [propertiesRes, tenantsRes, unitsRes, paymentsRes, maintenanceRes] = await Promise.all([
+      // Import tenant service
+      const { tenantService } = await import('@/services/TenantService');
+      
+      const [propertiesRes, tenantsData, unitsRes, paymentsRes, maintenanceRes] = await Promise.all([
         supabase.from('properties').select('*').eq('landlord_id', user?.id).limit(50),
-        supabase.from('tenants').select('*').eq('landlord_id', user?.id).limit(100),
+        tenantService.getTenants(),
         supabase.from('units').select(`
           *,
           properties!inner(landlord_id)
@@ -77,7 +80,7 @@ export function SecureChatAssistant() {
 
       const data: UserData = {
         properties: propertiesRes.data || [],
-        tenants: tenantsRes.data || [],
+        tenants: tenantsData || [],
         units: unitsRes.data || [],
         payments: paymentsRes.data || [],
         maintenance: maintenanceRes.data || []

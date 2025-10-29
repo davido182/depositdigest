@@ -76,8 +76,11 @@ export function useAppData() {
       // Fetch all data in parallel
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth() + 1; // 1-indexed for DB
-      const [tenantsResult, paymentsResult, propertiesResult, unitsResult] = await Promise.all([
-        supabase.from('tenants').select('*').eq('landlord_id', user.id),
+      // Import tenant service at the top of the file
+      const { tenantService } = await import('@/services/TenantService');
+      
+      const [tenantsData, paymentsResult, propertiesResult, unitsResult] = await Promise.all([
+        tenantService.getTenants(),
         supabase.from('payments').select(`
           *,
           tenants!inner(landlord_id)
@@ -89,13 +92,12 @@ export function useAppData() {
         `).eq('properties.landlord_id', user.id)
       ]);
 
-      // Check for errors
-      if (tenantsResult.error) throw tenantsResult.error;
+      // Check for errors (tenantsData is already processed by service)
       if (paymentsResult.error) throw paymentsResult.error;
       if (propertiesResult.error) throw propertiesResult.error;
       if (unitsResult.error) throw unitsResult.error;
 
-      const tenants = tenantsResult.data || [];
+      const tenants = tenantsData || [];
       const payments = paymentsResult.data || [];
       const properties = propertiesResult.data || [];
       const units = unitsResult.data || [];

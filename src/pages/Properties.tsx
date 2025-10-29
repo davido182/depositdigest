@@ -45,17 +45,14 @@ const Properties = () => {
         const dbProperties = await propertyService.getProperties();
         console.log('DB Properties loaded:', dbProperties.length);
 
+        // Import tenant service
+        const { tenantService } = await import('@/services/TenantService');
+        
         // Get tenants and units to calculate occupancy
-        const [tenantsResult, unitsResult] = await Promise.all([
-          supabase.from('tenants').select('*'),
+        const [tenantsData, unitsResult] = await Promise.all([
+          tenantService.getTenants(),
           supabase.from('units').select('*')
         ]);
-
-        if (tenantsResult.error) {
-          console.error("Error loading tenants:", tenantsResult.error);
-          toast.error("Error al cargar inquilinos");
-          return;
-        }
 
         if (unitsResult.error) {
           console.error("Error loading units:", unitsResult.error);
@@ -153,16 +150,10 @@ const Properties = () => {
       console.log('Reloading properties after save...');
 
       // Get tenants and units to calculate occupancy
-      const [tenantsResult, unitsResult] = await Promise.all([
-        supabase.from('tenants').select('*'),
+      const [tenantsData, unitsResult] = await Promise.all([
+        tenantService.getTenants(),
         supabase.from('units').select('*')
       ]);
-
-      if (tenantsResult.error) {
-        console.error("Error loading tenants:", tenantsResult.error);
-        toast.error("Error al cargar inquilinos");
-        return;
-      }
 
       if (unitsResult.error) {
         console.error("Error loading units:", unitsResult.error);
@@ -170,7 +161,7 @@ const Properties = () => {
         return;
       }
 
-      const tenants = tenantsResult.data || [];
+      const tenants = tenantsData || [];
       const units = unitsResult.data || [];
 
       // Map database properties to component format and calculate occupancy

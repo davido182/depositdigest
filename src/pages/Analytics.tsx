@@ -34,20 +34,22 @@ const Analytics = () => {
       try {
         setIsLoading(true);
         
+        // Import tenant service
+        const { tenantService } = await import('@/services/TenantService');
+        
         // Fetch all data from Supabase directly
-        const [tenantsResult, paymentsResult, propertiesResult, unitsResult] = await Promise.all([
-          supabase.from('tenants').select('*'),
+        const [tenantsData, paymentsResult, propertiesResult, unitsResult] = await Promise.all([
+          tenantService.getTenants(),
           supabase.from('payments').select('*'),
           supabase.from('properties').select('*'),
           supabase.from('units').select('*')
         ]);
 
-        if (tenantsResult.error) throw tenantsResult.error;
         if (paymentsResult.error) throw paymentsResult.error;
         if (propertiesResult.error) throw propertiesResult.error;
         if (unitsResult.error) throw unitsResult.error;
 
-        const tenants = tenantsResult.data || [];
+        const tenants = tenantsData || [];
         const payments = paymentsResult.data || [];
         const properties = propertiesResult.data || [];
         const units = unitsResult.data || [];
