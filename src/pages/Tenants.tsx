@@ -2,6 +2,7 @@
 
 import { Layout } from "@/components/Layout";
 import { TenantsTable } from "@/components/tenants/TenantsTable";
+import { TenantCards } from "@/components/tenants/TenantCards";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 // import { UnitManagementModal } from "@/components/units/UnitManagementModal";
 import { Tenant } from "@/types";
@@ -27,7 +28,7 @@ const Tenants = () => {
       try {
         setIsLoading(true);
         console.log('🔍 [DEFINITIVE] Loading tenants directly...');
-        
+
         console.log('📋 Loading tenants from Supabase...');
         const loadedTenants = await tenantService.getTenants();
         console.log(`✅ Loaded ${loadedTenants.length} tenants:`, loadedTenants);
@@ -57,7 +58,7 @@ const Tenants = () => {
     setCurrentTenant(tenant);
     setIsEditModalOpen(true);
   };
-  
+
   const handleDeleteTenant = async (tenant: Tenant) => {
     try {
       await tenantService.deleteTenant(tenant.id);
@@ -72,7 +73,7 @@ const Tenants = () => {
   const handleSaveTenant = async (updatedTenant: Tenant) => {
     try {
       console.log('💾 Starting save operation for tenant:', updatedTenant);
-      
+
       if (currentTenant) {
         console.log('🔄 Updating existing tenant:', currentTenant.id);
         const result = await tenantService.updateTenant(updatedTenant.id, updatedTenant);
@@ -84,13 +85,13 @@ const Tenants = () => {
         console.log('✅ Create result:', result);
         toast.success("Inquilino agregado exitosamente");
       }
-      
+
       // Refresh the tenant list to show updated data
       console.log('🔄 Refreshing tenant list after save...');
       const refreshedTenants = await tenantService.getTenants();
       console.log('📋 Refreshed tenants:', refreshedTenants);
       setTenants(refreshedTenants);
-      
+
       setIsEditModalOpen(false);
     } catch (error) {
       console.error("❌ Error saving tenant:", error);
@@ -99,7 +100,7 @@ const Tenants = () => {
       toast.error(`Error al guardar el inquilino: ${errorMessage}`);
     }
   };
-  
+
 
   return (
     <Layout>
@@ -110,8 +111,8 @@ const Tenants = () => {
             <p className="text-muted-foreground">Gestiona tus inquilinos y sus pagos</p>
           </div>
           <div className={`flex gap-2 ${isMobile ? 'flex-col' : 'flex-row'}`}>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 // Create a file input element
                 const input = document.createElement('input');
@@ -125,7 +126,7 @@ const Tenants = () => {
                 };
                 input.click();
               }}
-              className="gap-2" 
+              className="gap-2"
               size={isMobile ? "sm" : "default"}
             >
               <Building className="h-4 w-4" />
@@ -143,20 +144,29 @@ const Tenants = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
         ) : (
-          <TenantsTable
-            tenants={tenants}
-            onEditTenant={handleEditTenant}
-            onDeleteTenant={handleDeleteTenant}
-          />
+          <>
+            <TenantsTable
+              tenants={tenants}
+              onEditTenant={handleEditTenant}
+              onDeleteTenant={handleDeleteTenant}
+            />
+            
+            {/* Tarjetas de inquilinos debajo de la tabla */}
+            <TenantCards
+              tenants={tenants}
+              onEditTenant={handleEditTenant}
+              onDeleteTenant={handleDeleteTenant}
+            />
+          </>
         )}
-        
+
         <TenantEditForm
           tenant={currentTenant}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onSave={handleSaveTenant}
         />
-        
+
         {/* TODO: Implement UnitManagementModal */}
       </div>
     </Layout>

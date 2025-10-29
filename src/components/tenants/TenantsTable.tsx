@@ -49,29 +49,19 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("unit");
+  const [sortBy, setSortBy] = useState("name");
   const [deleteConfirmTenant, setDeleteConfirmTenant] = useState<Tenant | null>(null);
 
-  // Debug logging for tenants data
-  console.log('🔍 [TABLE] TenantsTable received tenants:', tenants.length);
-  if (tenants.length > 0 && tenants[0]) {
-    console.log('🔍 [TABLE] First tenant data:', {
-      id: tenants[0].id,
-      name: tenants[0].name,
-      unit: tenants[0].unit,
-      propertyName: tenants[0].propertyName,
-      property_name: tenants[0].property_name,
-      unit_number: tenants[0].unit_number
-    });
-  }
+  console.log('🔍 [NEW-TABLE] TenantsTable received tenants:', tenants.length);
+  console.log('🔍 [NEW-TABLE] Sample tenant data:', tenants[0]);
 
   // Filtrar y ordenar inquilinos
   const filteredAndSortedTenants = tenants
     .filter((tenant) => {
       const matchesSearch =
         tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tenant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tenant.unit.toLowerCase().includes(searchTerm.toLowerCase());
+        (tenant.propertyName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (tenant.unit || '').toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus = statusFilter === "all" || tenant.status === statusFilter;
 
@@ -79,20 +69,14 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case "unit":
-          return parseInt(a.unit || "0") - parseInt(b.unit || "0");
         case "name":
           return a.name.localeCompare(b.name);
-        case "date":
-          return new Date(a.moveInDate || '').getTime() - new Date(b.moveInDate || '').getTime();
+        case "property":
+          return (a.propertyName || '').localeCompare(b.propertyName || '');
+        case "unit":
+          return (a.unit || '').localeCompare(b.unit || '');
         case "rent":
           return (a.rentAmount || 0) - (b.rentAmount || 0);
-        case "property":
-          const propertyA = a.unit?.substring(0, 1) || "";
-          const propertyB = b.unit?.substring(0, 1) || "";
-          return propertyA.localeCompare(propertyB);
-        case "age":
-          return new Date(a.moveInDate || '').getTime() - new Date(b.moveInDate || '').getTime();
         default:
           return 0;
       }
@@ -115,12 +99,10 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
 
   const getCurrentMonthPaymentStatus = (tenant: Tenant) => {
     try {
-      // Get payment tracking from localStorage (same as TenantPaymentTracker)
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth();
       const currentDay = new Date().getDate();
 
-      // Get payment records for current user
       const storageKey = `payment_records_${user?.id}_${currentYear}`;
       const storedRecords = localStorage.getItem(storageKey);
 
@@ -137,19 +119,14 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
         }
       }
 
-      // If not paid, determine if overdue or pending
-      if (currentDay > 5) {
-        return "overdue"; // Consider overdue after 5th of month
-      } else {
-        return "pending"; // Still within grace period
-      }
+      return currentDay > 5 ? "overdue" : "pending";
     } catch (error) {
       console.error('Error checking payment status:', error);
       return "pending";
     }
   };
 
-  const getNextPaymentDate = (_tenant: Tenant) => {
+  const getNextPaymentDate = () => {
     const today = new Date();
     const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
     return nextMonth.toLocaleDateString('es-ES', {
@@ -161,13 +138,13 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
   const getPaymentStatusIcon = (status: string) => {
     switch (status) {
       case "paid":
-        return <CheckCircle className="h-5 w-5 text-emerald-600" />;
+        return <CheckCircle className="h-4 w-4 text-emerald-600" />;
       case "pending":
-        return <Circle className="h-5 w-5 text-amber-600" />;
+        return <Circle className="h-4 w-4 text-amber-600" />;
       case "overdue":
-        return <Circle className="h-5 w-5 text-red-600" />;
+        return <Circle className="h-4 w-4 text-red-600" />;
       default:
-        return <Circle className="h-5 w-5 text-gray-400" />;
+        return <Circle className="h-4 w-4 text-gray-400" />;
     }
   };
 
@@ -217,40 +194,34 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unit">Unidad</SelectItem>
                 <SelectItem value="name">Nombre</SelectItem>
-                <SelectItem value="date">Fecha ingreso</SelectItem>
-                <SelectItem value="rent">Renta</SelectItem>
                 <SelectItem value="property">Propiedad</SelectItem>
-                <SelectItem value="age">Antigüedad</SelectItem>
+                <SelectItem value="unit">Unidad</SelectItem>
+                <SelectItem value="rent">Renta</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
       </div>
 
-      {/* Tabla de inquilinos - Responsive */}
+      {/* Nueva tabla simplificada */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12 text-center">💳</TableHead>
-              <TableHead className="w-[120px]">Propiedad</TableHead>
-              <TableHead className="w-[80px]">Unidad</TableHead>
-              <TableHead className="w-[150px]">Inquilino</TableHead>
-              <TableHead className="w-[200px] hidden sm:table-cell">Email</TableHead>
-              <TableHead className="w-[110px] hidden lg:table-cell">Fecha Ingreso</TableHead>
-              <TableHead className="w-[110px] hidden lg:table-cell">Fin Contrato</TableHead>
-              <TableHead className="w-[90px]">Estado</TableHead>
-              <TableHead className="w-[100px] text-right">Renta</TableHead>
+              <TableHead className="w-[200px]">Inquilino</TableHead>
+              <TableHead className="w-[150px]">Propiedad</TableHead>
+              <TableHead className="w-[100px]">Unidad</TableHead>
+              <TableHead className="w-[120px] text-right">Renta</TableHead>
               <TableHead className="w-[120px] hidden md:table-cell">Próximo Pago</TableHead>
+              <TableHead className="w-[100px]">Estado</TableHead>
               <TableHead className="w-20 text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredAndSortedTenants.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   No se encontraron inquilinos
                 </TableCell>
               </TableRow>
@@ -259,42 +230,31 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
                 const paymentStatus = getCurrentMonthPaymentStatus(tenant);
                 return (
                   <TableRow key={tenant.id} className="hover:bg-muted/50">
-                    <TableCell className="text-center">
-                      {getPaymentStatusIcon(paymentStatus)}
-                    </TableCell>
-                    <TableCell className="font-medium text-sm">
-                      <div className="truncate max-w-[120px]" title={tenant.propertyName || 'Sin asignar'}>
-                        {(tenant.propertyName && tenant.propertyName.trim()) || "Sin asignar"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium text-sm">
-                      {(tenant.unit && tenant.unit.trim()) || "Sin asignar"}
-                    </TableCell>
                     <TableCell className="text-sm">
-                      <div className="font-medium">{tenant.name}</div>
-                      <div className="text-xs text-muted-foreground sm:hidden">
-                        {tenant.email}
+                      <div className="flex items-center gap-2">
+                        {getPaymentStatusIcon(paymentStatus)}
+                        <div>
+                          <div className="font-medium">{tenant.name}</div>
+                          <div className="text-xs text-muted-foreground">{tenant.email}</div>
+                        </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-sm hidden sm:table-cell">
-                      {tenant.email}
+                    <TableCell className="font-medium text-sm">
+                      {tenant.propertyName || "Sin asignar"}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
-                      {tenant.moveInDate ? new Date(tenant.moveInDate).toLocaleDateString('es-ES') : 'Sin fecha'}
+                    <TableCell className="font-medium text-sm">
+                      {tenant.unit || "Sin asignar"}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
-                      {tenant.leaseEndDate ? new Date(tenant.leaseEndDate).toLocaleDateString('es-ES') : 'Sin fecha'}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(tenant.status)}</TableCell>
                     <TableCell className="text-right font-medium text-sm">
-                      €{tenant.rentAmount?.toLocaleString()}
+                      €{(tenant.rentAmount || 0).toLocaleString()}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground hidden md:table-cell">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {getNextPaymentDate(tenant)}
+                        {getNextPaymentDate()}
                       </div>
                     </TableCell>
+                    <TableCell>{getStatusBadge(tenant.status)}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-1">
                         <Button
@@ -345,7 +305,7 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar inquilino?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará permanentemente a {deleteConfirmTenant?.name} de la unidad {deleteConfirmTenant?.unit}.
+              Esta acción eliminará permanentemente a {deleteConfirmTenant?.name}.
               Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>

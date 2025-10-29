@@ -281,29 +281,7 @@ const Dashboard = () => {
 
         <IntelligentDashboard stats={stats} />
 
-        {/* Tarjetas de Inquilinos */}
-        {tenants.length > 0 && (
-          <div className="space-y-4">
-            <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold`}>Mis Inquilinos</h2>
-            <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
-              {tenants.slice(0, 6).map((tenant) => (
-                <TenantCard
-                  key={tenant.id}
-                  tenant={tenant}
-                  onEdit={handleEditTenant}
-                  onDelete={handleDeleteTenant}
-                />
-              ))}
-            </div>
-            {tenants.length > 6 && (
-              <div className="text-center">
-                <Button variant="outline" onClick={() => window.location.href = '/tenants'}>
-                  Ver todos los inquilinos ({tenants.length})
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Las tarjetas de inquilinos se movieron a la sección de Inquilinos */}
 
         {isLoading && (
           <div className="flex justify-center p-8">
