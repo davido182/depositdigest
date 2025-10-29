@@ -117,7 +117,10 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
   };
 
   const handleTenantChange = (value: string) => {
-    setSelectedTenantId(value);
+    console.log('🔄 [UNIT-FORM] Tenant selection changed:', value);
+    // Handle "no-tenant" as empty string
+    const tenantId = value === "no-tenant" ? "" : value;
+    setSelectedTenantId(tenantId);
   };
 
   const checkRentDifference = async (tenantId: string, unitRent: number) => {
@@ -180,8 +183,8 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         throw new Error('Usuario no autenticado');
       }
 
-      // Si se está asignando un inquilino
-      if (selectedTenantId) {
+      // Si se está asignando un inquilino (no "no-tenant")
+      if (selectedTenantId && selectedTenantId !== "no-tenant") {
         // Verificar si el inquilino ya tiene otra unidad asignada
         const { data: existingAssignment, error: checkError } = await supabase
           .from('tenants')

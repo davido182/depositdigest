@@ -24,6 +24,9 @@ export class SupabaseTenantService extends BaseService {
     // Log first tenant to see what fields we actually have
     if (tenantsData && tenantsData.length > 0) {
       console.log('🔍 [SIMPLE] First tenant raw data:', tenantsData[0]);
+      console.log('🔍 [SIMPLE] First tenant unit_number:', tenantsData[0].unit_number);
+      console.log('🔍 [SIMPLE] First tenant property_name:', tenantsData[0].property_name);
+      console.log('🔍 [SIMPLE] First tenant property_id:', tenantsData[0].property_id);
     }
 
     if (!tenantsData || tenantsData.length === 0) {
@@ -48,7 +51,9 @@ export class SupabaseTenantService extends BaseService {
           property_id: tenant.property_id,
           property_name: tenant.property_name,
           finalUnit: unitNumber,
-          finalProperty: propertyName
+          finalProperty: propertyName,
+          rawUnitType: typeof tenant.unit_number,
+          rawPropertyType: typeof tenant.property_name
         });
 
         return {
