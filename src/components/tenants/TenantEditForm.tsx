@@ -233,9 +233,17 @@ export function TenantEditForm({
       }
 
       const sortedUnits = allUnitNumbers.sort((a, b) => {
+        // Mejor ordenamiento que maneja números y letras
         const aNum = parseInt(a) || 0;
         const bNum = parseInt(b) || 0;
-        return aNum - bNum;
+        
+        // Si ambos son números, ordenar numéricamente
+        if (aNum && bNum) {
+          return aNum - bNum;
+        }
+        
+        // Si no, ordenar alfabéticamente
+        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
       });
 
       setAvailableUnits(sortedUnits);

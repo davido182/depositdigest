@@ -34,26 +34,47 @@ export class SupabaseTenantService extends BaseService {
       return [];
     }
 
-    // Transform tenant data using ONLY what's in the tenant record
+    // Get property names for tenants that have property_id
+    const propertyIds = tenantsData
+      .filter(tenant => tenant.property_id)
+      .map(tenant => tenant.property_id);
+
+    let propertiesData: any[] = [];
+    if (propertyIds.length > 0) {
+      const { data: properties, error: propertiesError } = await this.supabase
+        .from('properties')
+        .select('id, name')
+        .in('id', propertyIds);
+
+      if (!propertiesError && properties) {
+        propertiesData = properties;
+        console.log('✅ [SIMPLE] Loaded property names:', propertiesData.length);
+      }
+    }
+
+    // Transform tenant data using available fields
     return tenantsData
       .filter(tenant => tenant?.name && tenant.name.trim() !== '')
       .map(tenant => {
         const fullName = tenant.name || 'Sin nombre';
         
-        // Use data directly from tenant record
-        const unitNumber = tenant.unit_number || '';
+        // Get property name from properties data
+        const property = propertiesData.find(p => p.id === tenant.property_id);
+        const propertyName = property?.name || tenant.property_name || '';
         const propertyId = tenant.property_id || '';
-        const propertyName = tenant.property_name || '';
+        
+        // Use unit_number from DB (will work after SQL execution)
+        const unitNumber = tenant.unit_number || '';
 
-        console.log(`📋 [SIMPLE] Mapping tenant ${fullName}:`, {
+        console.log(`📋 [DEFINITIVE] Mapping tenant ${fullName}:`, {
           tenantId: tenant.id,
-          unit_number: tenant.unit_number,
           property_id: tenant.property_id,
-          property_name: tenant.property_name,
-          finalUnit: unitNumber,
+          unit_number: tenant.unit_number,
+          propertyFromDB: property?.name,
           finalProperty: propertyName,
-          rawUnitType: typeof tenant.unit_number,
-          rawPropertyType: typeof tenant.property_name
+          finalUnit: unitNumber,
+          hasPropertyId: !!tenant.property_id,
+          hasUnitNumber: !!tenant.unit_number
         });
 
         return {
@@ -73,7 +94,7 @@ export class SupabaseTenantService extends BaseService {
           created_at: tenant.created_at,
           updated_at: tenant.updated_at,
 
-          // Legacy aliases for forms - USING DIRECT DATA
+          // Legacy aliases for forms
           unit: unitNumber,
           moveInDate: tenant.lease_start_date || '',
           leaseEndDate: tenant.lease_end_date || '',
@@ -110,7 +131,7 @@ export class SupabaseTenantService extends BaseService {
       status: tenant.status || 'active',
       property_id: propertyId,
       property_name: propertyName,
-      unit_number: unitNumber,
+      unit_number: unitNumber, // Now works with unit_number column
     };
 
     console.log('📋 [SYNC-FIX] Insert data prepared:', insertData);
@@ -189,10 +210,10 @@ export class SupabaseTenantService extends BaseService {
     // Notes with validation
     if (updates.notes !== undefined) updateData.notes = updates.notes?.trim() || null;
 
-    // Unit assignment (moved here to be included in main update)
+    // Unit assignment - Now works with unit_number column
     if (updates.unit !== undefined) {
       updateData.unit_number = updates.unit?.trim() || null;
-      console.log('🏠 [SIMPLE] Including unit_number in main update:', updateData.unit_number);
+      console.log('🏠 [DEFINITIVE] Including unit_number in update:', updateData.unit_number);
     }
 
     console.log('📤 [SIMPLE] Mapped update data for database:', updateData);
