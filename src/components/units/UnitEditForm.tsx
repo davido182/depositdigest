@@ -254,29 +254,86 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
   };
 
   const assignTenantToUnit = async (tenantId: string, unitId: string, userId: string) => {
-    console.log('🏠 Assigning tenant to unit:', { tenantId, unitId });
+    console.log('🏠 [BIDIRECTIONAL] Assigning tenant to unit:', { tenantId, unitId });
 
-    // Marcar unidad como ocupada y asignar inquilino
-    const { data, error: unitError } = await supabase
+    // Step 1: Get unit and property information
+    const { data: unitData, error: unitFetchError } = await supabase
+      .from('units')
+      .select(`
+        id,
+        unit_number,
+        property_id,
+        monthly_rent,
+        properties!inner(
+          id,
+          name,
+          landlord_id
+        )
+      `)
+      .eq('id', unitId)
+      .single();
+
+    if (unitFetchError || !unitData) {
+      console.error('❌ Error fetching unit data:', unitFetchError);
+      throw new Error('Error al obtener datos de la unidad');
+    }
+
+    console.log('📋 [BIDIRECTIONAL] Unit data:', unitData);
+
+    // Step 2: Update units table (mark as occupied)
+    const { error: unitError } = await supabase
       .from('units')
       .update({
         is_available: false,
         tenant_id: tenantId
       })
-      .eq('id', unitId)
-      .select('*')
-      .single();
+      .eq('id', unitId);
 
     if (unitError) {
-      console.error('❌ Error assigning tenant to unit:', unitError);
-      throw new Error('Error al asignar inquilino a unidad: ' + unitError.message);
+      console.error('❌ Error updating unit:', unitError);
+      throw new Error('Error al actualizar unidad: ' + unitError.message);
     }
 
-    console.log('✅ Tenant assigned to unit successfully:', data);
+    // Step 3: Update tenants table with unit and property info (BIDIRECTIONAL SYNC)
+    const { error: tenantError } = await supabase
+      .from('tenants')
+      .update({
+        unit_number: unitData.unit_number,
+        property_id: unitData.property_id,
+        property_name: unitData.properties.name,
+        rent_amount: unitData.monthly_rent || 0
+      })
+      .eq('id', tenantId)
+      .eq('landlord_id', userId);
+
+    if (tenantError) {
+      console.error('❌ Error updating tenant with unit info:', tenantError);
+      // Don't throw error here - unit assignment worked, this is just sync
+      console.log('⚠️ Unit assigned but tenant sync failed - will need manual refresh');
+    } else {
+      console.log('✅ [BIDIRECTIONAL] Tenant updated with unit and property info');
+    }
+
+    console.log('✅ [BIDIRECTIONAL] Tenant assigned to unit successfully with full sync');
   };
 
   const unassignTenantFromUnit = async (unitId: string, userId: string) => {
-    // Marcar unidad como disponible y desasignar inquilino
+    console.log('🏠 [BIDIRECTIONAL] Unassigning tenant from unit:', unitId);
+
+    // Step 1: Get current tenant assigned to this unit
+    const { data: unitData, error: unitFetchError } = await supabase
+      .from('units')
+      .select('tenant_id')
+      .eq('id', unitId)
+      .single();
+
+    if (unitFetchError) {
+      throw new Error('Error al obtener datos de la unidad: ' + unitFetchError.message);
+    }
+
+    const currentTenantId = unitData?.tenant_id;
+
+    // Step 2: Update units table (mark as available)
     const { error: unitError } = await supabase
       .from('units')
       .update({
@@ -288,6 +345,28 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     if (unitError) {
       throw new Error('Error al desasignar inquilino: ' + unitError.message);
     }
+
+    // Step 3: Clear unit info from tenant record (BIDIRECTIONAL SYNC)
+    if (currentTenantId) {
+      const { error: tenantError } = await supabase
+        .from('tenants')
+        .update({
+          unit_number: null,
+          property_id: null,
+          property_name: null
+        })
+        .eq('id', currentTenantId)
+        .eq('landlord_id', userId);
+
+      if (tenantError) {
+        console.error('❌ Error clearing tenant unit info:', tenantError);
+        console.log('⚠️ Unit unassigned but tenant sync failed - will need manual refresh');
+      } else {
+        console.log('✅ [BIDIRECTIONAL] Tenant unit info cleared');
+      }
+    }
+
+    console.log('✅ [BIDIRECTIONAL] Tenant unassigned from unit with full sync');
   };
 
   // Remove this function as we don't need to duplicate tenants

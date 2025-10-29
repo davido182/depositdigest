@@ -3,7 +3,7 @@ import { Tenant } from '@/types';
 
 export class SupabaseTenantService extends BaseService {
   async getTenants(): Promise<Tenant[]> {
-    console.log('🔍 [SYNC-FIX] Fetching tenants from Supabase...');
+    console.log('🔍 [SIMPLE] Fetching tenants from Supabase...');
 
     const user = await this.ensureAuthenticated();
     console.log('👤 User authenticated:', user.id);
@@ -19,85 +19,36 @@ export class SupabaseTenantService extends BaseService {
       throw new Error(`Failed to fetch tenants: ${tenantsError.message}`);
     }
 
-    console.log('✅ Raw tenant data:', tenantsData?.length || 0, 'tenants');
+    console.log('✅ [SIMPLE] Raw tenant data:', tenantsData?.length || 0, 'tenants');
+    
+    // Log first tenant to see what fields we actually have
+    if (tenantsData && tenantsData.length > 0) {
+      console.log('🔍 [SIMPLE] First tenant raw data:', tenantsData[0]);
+    }
 
     if (!tenantsData || tenantsData.length === 0) {
       console.log('📭 No tenants found');
       return [];
     }
 
-    // Get units data with safe column selection (using correct column names)
-    const { data: unitsData, error: unitsError } = await this.supabase
-      .from('units')
-      .select(`
-        id, 
-        unit_number, 
-        is_available,
-        property_id,
-        rent_amount,
-        properties!inner(
-          id,
-          name, 
-          address,
-          landlord_id
-        )
-      `)
-      .eq('properties.landlord_id', user.id);
-
-    if (unitsError) {
-      console.error('❌ Error fetching units:', unitsError);
-    }
-
-    console.log('✅ [SYNC-FIX] Fetched units:', unitsData?.length || 0);
-
-    // Create tenant-unit mapping based on current assignments in tenant records
-    const tenantUnitMap = new Map();
-    
-    // First, check if tenants have direct unit assignments in their records
-    tenantsData.forEach(tenant => {
-      if (tenant.unit_number && tenant.property_id) {
-        tenantUnitMap.set(tenant.id, {
-          unit_number: tenant.unit_number,
-          property_id: tenant.property_id
-        });
-      }
-    });
-
-    console.log('📋 [SYNC-FIX] Tenant-unit mappings:', tenantUnitMap.size);
-
-    // Transform tenant data with proper unit and property mapping
+    // Transform tenant data using ONLY what's in the tenant record
     return tenantsData
       .filter(tenant => tenant?.name && tenant.name.trim() !== '')
       .map(tenant => {
         const fullName = tenant.name || 'Sin nombre';
+        
+        // Use data directly from tenant record
+        const unitNumber = tenant.unit_number || '';
+        const propertyId = tenant.property_id || '';
+        const propertyName = tenant.property_name || '';
 
-        // Get unit assignment from mapping or tenant record
-        const tenantMapping = tenantUnitMap.get(tenant.id);
-        const unitNumber = tenantMapping?.unit_number || tenant.unit_number || '';
-        const propertyId = tenantMapping?.property_id || tenant.property_id;
-
-        // Find the actual unit data for rent amount
-        const assignedUnit = unitsData?.find(unit => 
-          unit.unit_number === unitNumber && unit.property_id === propertyId
-        );
-
-        // Get property information
-        const propertyName = assignedUnit?.properties?.name || tenant.property_name || '';
-        const propertyAddress = assignedUnit?.properties?.address || '';
-        const rentAmount = Number(tenant.rent_amount || assignedUnit?.rent_amount || 0);
-
-        console.log(`📋 [SYNC-FIX] Mapping tenant ${fullName}:`, {
+        console.log(`📋 [SIMPLE] Mapping tenant ${fullName}:`, {
           tenantId: tenant.id,
-          unit: unitNumber,
-          property: propertyName,
-          propertyId: propertyId,
-          rentAmount: rentAmount,
-          hasUnit: !!assignedUnit,
-          tenantRecord: {
-            unit_number: tenant.unit_number,
-            property_id: tenant.property_id,
-            property_name: tenant.property_name
-          }
+          unit_number: tenant.unit_number,
+          property_id: tenant.property_id,
+          property_name: tenant.property_name,
+          finalUnit: unitNumber,
+          finalProperty: propertyName
         });
 
         return {
@@ -109,7 +60,7 @@ export class SupabaseTenantService extends BaseService {
           phone: tenant.phone || '',
           lease_start_date: tenant.lease_start_date || '',
           lease_end_date: tenant.lease_end_date || '',
-          rent_amount: rentAmount,
+          rent_amount: Number(tenant.rent_amount || 0),
           status: tenant.status || 'active',
           unit_number: unitNumber,
           property_id: propertyId,
@@ -117,18 +68,18 @@ export class SupabaseTenantService extends BaseService {
           created_at: tenant.created_at,
           updated_at: tenant.updated_at,
 
-          // Legacy aliases for forms (with null safety)
+          // Legacy aliases for forms - USING DIRECT DATA
           unit: unitNumber,
           moveInDate: tenant.lease_start_date || '',
           leaseEndDate: tenant.lease_end_date || '',
-          rentAmount: rentAmount,
-          depositAmount: Number(tenant.deposit_amount || 0),
+          rentAmount: Number(tenant.rent_amount || 0),
+          depositAmount: 0,
           paymentHistory: [],
           createdAt: tenant.created_at,
           updatedAt: tenant.updated_at,
           propertyName: propertyName,
-          propertyAddress: propertyAddress,
-          notes: tenant.notes || '',
+          propertyAddress: '',
+          notes: (tenant as any).notes || '',
         };
       });
   }
@@ -202,9 +153,7 @@ export class SupabaseTenantService extends BaseService {
     if (updates.rentAmount !== undefined) {
       updateData.rent_amount = Number(updates.rentAmount || 0);
     }
-    if (updates.depositAmount !== undefined) {
-      updateData.deposit_amount = Number(updates.depositAmount || 0);
-    }
+    // Note: deposit_amount column doesn't exist in database, skipping
     
     // Property assignment with validation
     if (updates.propertyId !== undefined) {
@@ -235,7 +184,13 @@ export class SupabaseTenantService extends BaseService {
     // Notes with validation
     if (updates.notes !== undefined) updateData.notes = updates.notes?.trim() || null;
 
-    console.log('📤 [SYNC-FIX] Mapped update data for database:', updateData);
+    // Unit assignment (moved here to be included in main update)
+    if (updates.unit !== undefined) {
+      updateData.unit_number = updates.unit?.trim() || null;
+      console.log('🏠 [SIMPLE] Including unit_number in main update:', updateData.unit_number);
+    }
+
+    console.log('📤 [SIMPLE] Mapped update data for database:', updateData);
 
     // Update tenant record with conflict handling
     let { data, error } = await this.supabase
@@ -269,47 +224,9 @@ export class SupabaseTenantService extends BaseService {
       throw new Error(`Failed to update tenant: ${error?.message || 'Unknown error'}`);
     }
 
-    console.log('✅ [SYNC-FIX] Updated tenant in database:', data);
+    console.log('✅ [SIMPLE] Updated tenant in database:', data);
 
-    // Handle unit assignment changes - update tenant record directly
-    const unitNumber = updates.unit;
-    const propertyId = updates.propertyId;
-    
-    if (unitNumber !== undefined || propertyId !== undefined) {
-      console.log('🔄 [SYNC-FIX] Updating unit assignment in tenant record:', {
-        tenantId: id,
-        unit: unitNumber,
-        propertyId: propertyId
-      });
-
-      // Update the tenant record with unit assignment
-      const unitUpdateData: any = {};
-      if (unitNumber !== undefined) {
-        unitUpdateData.unit_number = unitNumber?.trim() || null;
-      }
-      if (propertyId !== undefined) {
-        unitUpdateData.property_id = propertyId?.trim() || null;
-      }
-
-      if (Object.keys(unitUpdateData).length > 0) {
-        const { error: unitUpdateError } = await this.supabase
-          .from('tenants')
-          .update(unitUpdateData)
-          .eq('id', id)
-          .eq('landlord_id', user.id);
-
-        if (unitUpdateError) {
-          console.error('❌ Error updating unit assignment:', unitUpdateError);
-        } else {
-          console.log('✅ [SYNC-FIX] Unit assignment updated in tenant record');
-          // Update the data object to reflect the changes
-          data.unit_number = unitUpdateData.unit_number;
-          data.property_id = unitUpdateData.property_id;
-        }
-      }
-    }
-
-    return this.formatTenantResponse(data, unitNumber || data.unit_number || '');
+    return this.formatTenantResponse(data, updates.unit || data.unit_number || '');
   }
 
   // Helper method to format tenant response consistently
@@ -339,7 +256,7 @@ export class SupabaseTenantService extends BaseService {
       moveInDate: data.lease_start_date || '',
       leaseEndDate: data.lease_end_date || '',
       rentAmount: Number(data.rent_amount || 0),
-      depositAmount: Number(data.deposit_amount || 0),
+      depositAmount: 0, // Column doesn't exist in database
       paymentHistory: [],
       createdAt: data.created_at,
       updatedAt: data.updated_at,
