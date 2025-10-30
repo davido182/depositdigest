@@ -142,9 +142,17 @@ export function useAppData() {
             r.year === currentYear && r.month === (currentMonth - 1) && r.paid // month is 0-indexed in localStorage
           );
           
-          // Calculate real revenue based on actual payments
-          const avgRentPerTenant = potentialMonthlyRevenue / Math.max(activeTenantsList.length, 1);
-          realMonthlyRevenue = currentMonthRecords.length * avgRentPerTenant;
+          // Calculate real revenue based on actual payments with real amounts
+          realMonthlyRevenue = currentMonthRecords.reduce((total: number, record: any) => {
+            // Use the stored amount if available, otherwise get tenant's rent
+            if (record.amount) {
+              return total + record.amount;
+            } else {
+              // Fallback: find tenant and use their rent amount
+              const tenant = activeTenantsList.find(t => t.id === record.tenantId);
+              return total + (tenant?.rent_amount || 0);
+            }
+          }, 0);
           
           // Calculate collection rate
           collectionRate = (currentMonthRecords.length / activeTenantsList.length) * 100;

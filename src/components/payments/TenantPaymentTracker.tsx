@@ -89,6 +89,34 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
     loadPaymentRecords();
   }, [selectedYear, user]);
 
+  // Migrate existing records to include amount field
+  useEffect(() => {
+    if (paymentRecords.length > 0 && tenants.length > 0 && user?.id) {
+      const needsMigration = paymentRecords.some(record => !record.amount);
+      
+      if (needsMigration) {
+        console.log('🔄 Migrating payment records to include amounts...');
+        
+        const migratedRecords = paymentRecords.map(record => {
+          if (!record.amount) {
+            const tenant = tenants.find(t => t.id === record.tenantId);
+            return {
+              ...record,
+              amount: tenant?.rentAmount || 0
+            };
+          }
+          return record;
+        });
+
+        setPaymentRecords(migratedRecords);
+        const storageKey = `payment_records_${user.id}_${selectedYear}`;
+        localStorage.setItem(storageKey, JSON.stringify(migratedRecords));
+        
+        console.log('✅ Payment records migrated successfully');
+      }
+    }
+  }, [paymentRecords, tenants, selectedYear, user?.id]);
+
   const loadPaymentRecords = async () => {
     if (!user) return;
 

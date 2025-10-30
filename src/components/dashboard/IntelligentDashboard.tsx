@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { DashboardStats } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { RevenueDebugger } from "./RevenueDebugger";
 
 interface IntelligentDashboardProps {
   stats: DashboardStats;
@@ -176,14 +177,11 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             r.year === year && r.month === month && r.paid
           );
 
-          // Calculate actual revenue from paid records using real tenant rents
-          if (monthRecords.length > 0 && user?.id) {
-            // Get tenant data to calculate real revenue
+          // Calculate actual revenue from paid records using real amounts
+          if (monthRecords.length > 0) {
             monthlyRevenue = monthRecords.reduce((total: number, record: any) => {
-              // Find the tenant's actual rent amount
-              // This should match the tenant's rentAmount from the database
-              const tenantRent = record.amount || (stats.monthlyRevenue / Math.max(stats.totalTenants, 1));
-              return total + tenantRent;
+              // Use the stored amount from the payment record
+              return total + (record.amount || 0);
             }, 0);
           }
         } catch (error) {
@@ -207,6 +205,9 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
 
   return (
     <div className="space-y-6">
+      {/* Debug Info - Remove in production */}
+      <RevenueDebugger />
+      
       {/* Métricas Principales */}
       <div className="grid gap-6 md:grid-cols-3">
         <motion.div

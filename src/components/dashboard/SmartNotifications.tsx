@@ -20,7 +20,7 @@ import { toast } from "sonner";
 
 interface SmartNotification {
   id: string;
-  type: 'tenant_no_unit' | 'payment_overdue' | 'maintenance_urgent' | 'lease_expiring' | 'unit_vacant';
+  type: 'tenant_no_unit' | 'payment_overdue' | 'maintenance_urgent' | 'lease_expiring' | 'unit_vacant' | 'data_inconsistency';
   title: string;
   description: string;
   priority: 'high' | 'medium' | 'low';
@@ -60,6 +60,9 @@ export function SmartNotifications() {
       
       // 5. Check for long-vacant units
       await checkVacantUnits(allNotifications);
+      
+      // 6. Check for data inconsistencies
+      await checkDataInconsistencies(allNotifications);
       
       // Sort by priority and date
       allNotifications.sort((a, b) => {
@@ -254,6 +257,101 @@ export function SmartNotifications() {
     }
   };
 
+  const checkDataInconsistencies = async (notifications: SmartNotification[]) => {
+    try {
+      // Get tenants data
+      const { tenantService } = await import('@/services/TenantService');
+      const tenants = await tenantService.getTenants();
+
+      // Get units data with property info
+      const { data: units, error: unitsError } = await supabase
+        .from('units')
+        .select(`
+          id,
+          unit_number,
+          monthly_rent,
+          tenant_id,
+          property_id,
+          properties!inner(name, landlord_id)
+        `)
+        .eq('properties.landlord_id', user?.id);
+
+      if (unitsError || !units) {
+        console.error('Error fetching units for consistency check:', unitsError);
+        return;
+      }
+
+      // Check for rent mismatches
+      tenants.forEach(tenant => {
+        if (tenant.unit && tenant.unit !== 'Sin unidad') {
+          const unit = units.find(u => u.unit_number === tenant.unit);
+          
+          if (unit) {
+            const tenantRent = tenant.rentAmount || 0;
+            const unitRent = unit.monthly_rent || 0;
+            const difference = Math.abs(tenantRent - unitRent);
+            
+            // Only notify for significant differences (more than €10)
+            if (difference > 10) {
+              notifications.push({
+                id: `rent-mismatch-${tenant.id}`,
+                type: 'data_inconsistency',
+                title: 'Diferencia de Renta Detectada',
+                description: `${tenant.name}: Inquilino €${tenantRent} vs Unidad €${unitRent}`,
+                priority: difference > 100 ? 'high' : 'medium',
+                created_at: new Date().toISOString(),
+                data: { 
+                  tenantId: tenant.id, 
+                  tenantName: tenant.name,
+                  tenantRent, 
+                  unitRent, 
+                  unit: tenant.unit,
+                  difference 
+                }
+              });
+            }
+          } else {
+            // Tenant assigned to non-existent unit
+            notifications.push({
+              id: `missing-unit-${tenant.id}`,
+              type: 'data_inconsistency',
+              title: 'Unidad No Encontrada',
+              description: `${tenant.name} asignado a unidad inexistente: ${tenant.unit}`,
+              priority: 'medium',
+              created_at: new Date().toISOString(),
+              data: { 
+                tenantId: tenant.id, 
+                tenantName: tenant.name,
+                unit: tenant.unit 
+              }
+            });
+          }
+        }
+      });
+
+      // Check for tenants without rent amount
+      tenants.forEach(tenant => {
+        if (!tenant.rentAmount || tenant.rentAmount === 0) {
+          notifications.push({
+            id: `missing-rent-${tenant.id}`,
+            type: 'data_inconsistency',
+            title: 'Renta No Definida',
+            description: `${tenant.name} no tiene monto de renta definido`,
+            priority: 'medium',
+            created_at: new Date().toISOString(),
+            data: { 
+              tenantId: tenant.id, 
+              tenantName: tenant.name 
+            }
+          });
+        }
+      });
+
+    } catch (error) {
+      console.error('Error checking data inconsistencies:', error);
+    }
+  };
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'tenant_no_unit':
@@ -266,6 +364,8 @@ export function SmartNotifications() {
         return <Calendar className="h-4 w-4" />;
       case 'unit_vacant':
         return <Home className="h-4 w-4" />;
+      case 'data_inconsistency':
+        return <AlertTriangle className="h-4 w-4" />;
       default:
         return <AlertTriangle className="h-4 w-4" />;
     }
@@ -294,6 +394,15 @@ export function SmartNotifications() {
         return () => window.location.href = '/tenants';
       case 'unit_vacant':
         return () => window.location.href = '/properties';
+      case 'data_inconsistency':
+        return () => {
+          // Show detailed info about the inconsistency
+          const data = notification.data;
+          if (data.tenantRent !== undefined && data.unitRent !== undefined) {
+            toast.info(`💡 Inconsistencia: ${data.tenantName} tiene renta de €${data.tenantRent} pero su unidad ${data.unit} tiene €${data.unitRent}. Ve a Inquilinos o Propiedades para corregir.`);
+          }
+          window.location.href = '/tenants';
+        };
       default:
         return () => {};
     }

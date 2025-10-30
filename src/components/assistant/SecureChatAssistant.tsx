@@ -89,6 +89,9 @@ export function SecureChatAssistant() {
       console.log('SecureChatAssistant: Loaded data:', {
         properties: data.properties.length,
         tenants: data.tenants.length,
+        activeTenants: data.tenants.filter(t => t.status === 'active').length,
+        tenantsWithStatus: data.tenants.map(t => ({ name: t.name, status: t.status, rent_amount: t.rent_amount })),
+        tenants: data.tenants.length,
         units: data.units.length,
         payments: data.payments.length,
         maintenance: data.maintenance.length
