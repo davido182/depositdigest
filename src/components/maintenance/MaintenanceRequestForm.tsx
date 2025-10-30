@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { MaintenanceCategory, MaintenancePriority } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters").max(100),
@@ -42,6 +44,43 @@ interface MaintenanceRequestFormProps {
 
 export function MaintenanceRequestForm({ onSubmit, onCancel }: MaintenanceRequestFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableUnits, setAvailableUnits] = useState<Array<{id: string, unit_number: string, property_name: string}>>([]);
+  const { user } = useAuth();
+
+  // Load available units on component mount
+  useEffect(() => {
+    const loadUnits = async () => {
+      if (!user?.id) return;
+
+      try {
+        const { data: units, error } = await supabase
+          .from('units')
+          .select(`
+            id,
+            unit_number,
+            properties!inner(name, landlord_id)
+          `)
+          .eq('properties.landlord_id', user.id);
+
+        if (error) {
+          console.error('Error loading units:', error);
+          return;
+        }
+
+        const formattedUnits = (units || []).map(unit => ({
+          id: unit.id,
+          unit_number: unit.unit_number,
+          property_name: unit.properties?.name || 'Sin nombre'
+        }));
+
+        setAvailableUnits(formattedUnits);
+      } catch (error) {
+        console.error('Error loading units:', error);
+      }
+    };
+
+    loadUnits();
+  }, [user?.id]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -136,12 +175,29 @@ export function MaintenanceRequestForm({ onSubmit, onCancel }: MaintenanceReques
             name="unit"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Número de Unidad</FormLabel>
-                <FormControl>
-                  <Input placeholder="ej., 101" {...field} />
-                </FormControl>
+                <FormLabel>Unidad</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar unidad" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {availableUnits.length > 0 ? (
+                      availableUnits.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.unit_number}>
+                          {unit.property_name} - Unidad {unit.unit_number}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-units" disabled>
+                        No hay unidades disponibles
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
                 <FormDescription>
-                  La unidad donde se encuentra el problema
+                  Selecciona la unidad donde se encuentra el problema
                 </FormDescription>
                 <FormMessage />
               </FormItem>

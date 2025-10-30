@@ -2,7 +2,7 @@ import { Tenant } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, MapPin, Home, DollarSign } from "lucide-react";
+import { Edit, Trash2, MapPin, Home, DollarSign, Calendar } from "lucide-react";
 
 interface TenantCardsProps {
   tenants: Tenant[];
@@ -62,6 +62,28 @@ export function TenantCards({ tenants, onEditTenant, onDeleteTenant }: TenantCar
                 <div className="flex items-center gap-2 text-sm">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">€{(tenant.rentAmount || 0).toLocaleString()}/mes</span>
+                </div>
+                
+                {/* Fechas de entrada y salida */}
+                <div className="space-y-1 pt-1 border-t border-gray-100">
+                  {tenant.moveInDate && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>Entrada: {new Date(tenant.moveInDate).toLocaleDateString('es-ES')}</span>
+                    </div>
+                  )}
+                  {tenant.leaseEndDate && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>Salida: {new Date(tenant.leaseEndDate).toLocaleDateString('es-ES')}</span>
+                    </div>
+                  )}
+                  {!tenant.moveInDate && !tenant.leaseEndDate && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>Sin fechas registradas</span>
+                    </div>
+                  )}
                 </div>
               </div>
               

@@ -141,15 +141,20 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
       const tenantName = tenantData.name;
 
       if (Math.abs(tenantRent - unitRent) > 0.01) { // Diferencia mayor a 1 centavo
-        const confirmed = confirm(
+        // Crear un diálogo más sofisticado con múltiples opciones
+        const choice = prompt(
           `⚠️ DIFERENCIA DE RENTA DETECTADA\n\n` +
           `Inquilino: ${tenantName}\n` +
           `Renta en perfil del inquilino: €${tenantRent}\n` +
           `Renta de la unidad: €${unitRent}\n\n` +
-          `¿Deseas actualizar la renta del inquilino a €${unitRent}?`
+          `Opciones:\n` +
+          `1 - Actualizar inquilino a €${unitRent} (renta de la unidad)\n` +
+          `2 - Actualizar unidad a €${tenantRent} (renta del inquilino)\n` +
+          `3 - Mantener ambos valores sin cambios\n\n` +
+          `Ingresa 1, 2 o 3:`
         );
 
-        if (confirmed) {
+        if (choice === '1') {
           // Actualizar la renta del inquilino
           await supabase
             .from('tenants')
@@ -157,6 +162,18 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
             .eq('id', tenantId);
 
           toast.success(`Renta del inquilino actualizada a €${unitRent}`);
+        } else if (choice === '2') {
+          // Actualizar la renta de la unidad
+          await supabase
+            .from('units')
+            .update({ monthly_rent: tenantRent })
+            .eq('id', unit.id);
+
+          // Actualizar el estado local
+          setFormData(prev => ({ ...prev, monthly_rent: tenantRent }));
+          toast.success(`Renta de la unidad actualizada a €${tenantRent}`);
+        } else if (choice === '3') {
+          toast.info('Valores de renta mantenidos sin cambios');
         }
       }
     } catch (error) {

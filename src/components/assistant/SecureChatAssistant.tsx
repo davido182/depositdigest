@@ -336,15 +336,82 @@ export function SecureChatAssistant() {
   };
 
   const generateConversationalResponse = (query: string): string => {
-    // Respuestas más conversacionales basadas en el contexto
-    const responses = [
-      "🤔 Hmm, no estoy seguro de entender exactamente lo que necesitas. ¿Podrías ser más específico? Por ejemplo, ¿te refieres a propiedades, inquilinos, o pagos?",
-      "😊 ¡Interesante pregunta! Para ayudarte mejor, ¿podrías decirme si buscas información sobre tus datos actuales o necesitas ayuda para usar alguna función?",
-      "🎯 Quiero asegurarme de darte la información correcta. ¿Tu consulta es sobre el estado actual de tu negocio o necesitas ayuda con algún proceso específico?",
-      "💡 ¡Perfecto! Estoy aquí para ayudarte. ¿Te gustaría que te muestre un resumen de tu negocio o prefieres que te explique cómo usar alguna función específica?"
+    // Función para detectar palabras similares (tolerancia a errores de escritura)
+    const fuzzyMatch = (word: string, targets: string[]): boolean => {
+      return targets.some(target => {
+        // Coincidencia exacta
+        if (word.includes(target) || target.includes(word)) return true;
+        
+        // Tolerancia a errores comunes
+        const distance = levenshteinDistance(word, target);
+        return distance <= Math.max(1, Math.floor(target.length * 0.3));
+      });
+    };
+
+    // Función para calcular distancia de Levenshtein (errores de escritura)
+    const levenshteinDistance = (str1: string, str2: string): number => {
+      const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
+      
+      for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
+      for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+      
+      for (let j = 1; j <= str2.length; j++) {
+        for (let i = 1; i <= str1.length; i++) {
+          const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+          matrix[j][i] = Math.min(
+            matrix[j][i - 1] + 1,
+            matrix[j - 1][i] + 1,
+            matrix[j - 1][i - 1] + indicator
+          );
+        }
+      }
+      
+      return matrix[str2.length][str1.length];
+    };
+
+    // Detectar intenciones con tolerancia a errores
+    const words = query.toLowerCase().split(/\s+/);
+    
+    // Propiedades (con errores comunes)
+    if (fuzzyMatch(query, ['propiedad', 'propiedades', 'casa', 'casas', 'edificio', 'inmueble'])) {
+      return handlePropertyQueries(query);
+    }
+    
+    // Inquilinos (con errores comunes)
+    if (fuzzyMatch(query, ['inquilino', 'inquilinos', 'tenant', 'tenants', 'arrendatario', 'cliente'])) {
+      return handleTenantQueries(query);
+    }
+    
+    // Pagos (con errores comunes)
+    if (fuzzyMatch(query, ['pago', 'pagos', 'dinero', 'cobro', 'ingreso', 'renta', 'alquiler'])) {
+      return handlePaymentQueries(query);
+    }
+    
+    // Unidades (con errores comunes)
+    if (fuzzyMatch(query, ['unidad', 'unidades', 'apartamento', 'depto', 'ocupacion', 'vacia', 'libre'])) {
+      return handleUnitQueries(query);
+    }
+    
+    // Mantenimiento (con errores comunes)
+    if (fuzzyMatch(query, ['mantenimiento', 'reparacion', 'arreglo', 'problema', 'averia'])) {
+      return handleMaintenanceQueries(query);
+    }
+
+    // Ayuda y funciones
+    if (fuzzyMatch(query, ['ayuda', 'help', 'como', 'usar', 'funciona', 'tutorial'])) {
+      return `🆘 **¡Estoy aquí para ayudarte!** Puedo ayudarte con:\n\n📊 **Información de tu negocio:**\n• Estado de propiedades e inquilinos\n• Resumen de pagos e ingresos\n• Ocupación de unidades\n\n🔧 **Funciones de la app:**\n• Cómo agregar inquilinos\n• Gestión de pagos\n• Seguimiento de mantenimiento\n\n¡Solo pregúntame lo que necesites! 😊`;
+    }
+
+    // Respuestas más inteligentes y contextuales
+    const contextualResponses = [
+      `🤔 Entiendo que quieres información, pero no estoy seguro sobre qué específicamente. \n\n💡 **Puedo ayudarte con:**\n• Tus ${userData?.properties.length || 0} propiedades\n• Tus ${userData?.tenants.filter(t => t.is_active).length || 0} inquilinos activos\n• Estado de pagos e ingresos\n• Ocupación de unidades\n\n¿Sobre cuál te gustaría saber más?`,
+      
+      `😊 ¡Perfecto! Veo que tienes consultas. Para darte la mejor respuesta:\n\n🎯 **Soy experto en:**\n• Análisis de tu cartera inmobiliaria\n• Seguimiento de inquilinos y pagos\n• Estadísticas de ocupación\n• Gestión de mantenimiento\n\n¿Qué área te interesa más?`,
+      
+      `🚀 ¡Excelente! Estoy aquí para maximizar tu éxito inmobiliario.\n\n📈 **Actualmente tienes:**\n• ${userData?.properties.length || 0} propiedades gestionadas\n• ${userData?.units.length || 0} unidades totales\n• ${((userData?.units.filter(u => !u.is_available).length || 0) / Math.max(userData?.units.length || 1, 1) * 100).toFixed(1)}% de ocupación\n\n¿Quieres profundizar en algún aspecto?`
     ];
 
-    return responses[Math.floor(Math.random() * responses.length)];
+    return contextualResponses[Math.floor(Math.random() * contextualResponses.length)];
   };
 
   const handleSendMessage = async () => {

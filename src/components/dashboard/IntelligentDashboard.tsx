@@ -21,6 +21,52 @@ interface IntelligentDashboardProps {
   stats: DashboardStats;
 }
 
+// Function to calculate real revenue change percentage
+const calculateRevenueChange = (currentRevenue: number, userId: string): number => {
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth(); // 0-indexed
+  const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+  const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+  try {
+    // Get current month data
+    const currentStorageKey = `payment_records_${userId}_${currentYear}`;
+    const currentStoredRecords = localStorage.getItem(currentStorageKey);
+
+    // Get previous month data
+    const previousStorageKey = `payment_records_${userId}_${previousYear}`;
+    const previousStoredRecords = localStorage.getItem(previousStorageKey);
+
+    if (!currentStoredRecords || !previousStoredRecords) {
+      return 0; // No data available
+    }
+
+    const currentRecords = JSON.parse(currentStoredRecords);
+    const previousRecords = JSON.parse(previousStoredRecords);
+
+    // Count paid records for current month
+    const currentPaidCount = currentRecords.filter((r: any) =>
+      r.year === currentYear && r.month === currentMonth && r.paid
+    ).length;
+
+    // Count paid records for previous month
+    const previousPaidCount = previousRecords.filter((r: any) =>
+      r.year === previousYear && r.month === previousMonth && r.paid
+    ).length;
+
+    if (previousPaidCount === 0) {
+      return currentPaidCount > 0 ? 100 : 0;
+    }
+
+    const changePercentage = ((currentPaidCount - previousPaidCount) / previousPaidCount) * 100;
+    return Math.round(changePercentage * 10) / 10; // Round to 1 decimal
+  } catch (error) {
+    console.error('Error calculating revenue change:', error);
+    return 0;
+  }
+};
+
 // Animated Counter Component
 const AnimatedCounter = ({
   value,
@@ -104,6 +150,9 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
   const { userRole, user } = useAuth();
   const isPremium = userRole === 'landlord_premium';
 
+  // Calculate real revenue change percentage
+  const revenueChangePercent = user?.id ? calculateRevenueChange(stats.monthlyRevenue, user.id) : 0;
+
   // Calculate real revenue trend from payment tracking (tabla de seguimiento de pagos)
   const getRevenueData = () => {
     const currentDate = new Date();
@@ -177,7 +226,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                 €<AnimatedCounter value={stats.monthlyRevenue} />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                +12.8% respecto al mes anterior
+                {revenueChangePercent > 0 ? '+' : ''}{revenueChangePercent}% respecto al mes anterior
               </p>
               <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-bl-full" />
             </CardContent>

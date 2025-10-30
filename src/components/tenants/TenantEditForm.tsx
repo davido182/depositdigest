@@ -105,8 +105,40 @@ export function TenantEditForm({
           propertyName: tenant.propertyName
         });
 
-        // Set form data immediately
-        setFormData({ ...tenant });
+        // Set form data immediately with detailed logging
+        console.log('📝 Setting form data with tenant:', {
+          name: tenant.name,
+          email: tenant.email,
+          phone: tenant.phone,
+          unit: tenant.unit,
+          moveInDate: tenant.moveInDate,
+          leaseEndDate: tenant.leaseEndDate,
+          rentAmount: tenant.rentAmount,
+          depositAmount: tenant.depositAmount,
+          status: tenant.status,
+          property_id: tenant.property_id,
+          propertyName: tenant.propertyName,
+          // También mostrar campos de BD directos
+          lease_start_date: tenant.lease_start_date,
+          lease_end_date: tenant.lease_end_date,
+          rent_amount: tenant.rent_amount,
+          unit_number: tenant.unit_number,
+          property_name: tenant.property_name
+        });
+
+        // Asegurar que las fechas se formateen correctamente
+        const formattedTenant = {
+          ...tenant,
+          moveInDate: tenant.moveInDate || tenant.lease_start_date || '',
+          leaseEndDate: tenant.leaseEndDate || tenant.lease_end_date || '',
+          rentAmount: tenant.rentAmount || tenant.rent_amount || 0,
+          unit: tenant.unit || tenant.unit_number || '',
+          propertyName: tenant.propertyName || tenant.property_name || ''
+        };
+
+        console.log('📝 Formatted tenant data for form:', formattedTenant);
+
+        setFormData({ ...formattedTenant });
         setHasDeposit((tenant.depositAmount || 0) > 0);
         setErrors({});
         setContractFile(null);
