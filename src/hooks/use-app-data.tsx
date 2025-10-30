@@ -123,7 +123,7 @@ export function useAppData() {
       });
       
       // Calculate monthly revenue from payment tracking table (like Analytics)
-      const activeTenantsList = tenants.filter(t => t.is_active);
+      const activeTenantsList = tenants.filter(t => t.status === 'active');
       const potentialMonthlyRevenue = units
         .filter(u => !u.is_available)
         .reduce((sum, unit) => sum + (unit.monthly_rent || 0), 0);

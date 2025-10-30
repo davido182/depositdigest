@@ -164,7 +164,7 @@ export function SecureChatAssistant() {
 
   const handleTenantQueries = (query: string): string => {
     const { tenants } = userData!;
-    const activeTenants = tenants.filter(t => t.is_active);
+    const activeTenants = tenants.filter(t => t.status === 'active');
 
     if (query.includes('activos') || query.includes('cuantos')) {
       if (activeTenants.length === 0) {
@@ -213,8 +213,8 @@ export function SecureChatAssistant() {
     }
 
     // Calcular ingresos potenciales (de inquilinos activos)
-    const activeTenants = tenants.filter(t => t.is_active);
-    const potentialMonthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.monthly_rent || 0), 0);
+    const activeTenants = tenants.filter(t => t.status === 'active');
+    const potentialMonthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.rent_amount || 0), 0);
 
     if (query.match(/(ingreso|gano|ganancia|dinero|plata)/)) {
       if (actualMonthlyIncome === 0 && potentialMonthlyRevenue === 0) {
@@ -320,19 +320,33 @@ export function SecureChatAssistant() {
   const handleGeneralSummary = (): string => {
     const { properties, tenants, units, maintenance } = userData!;
 
-    const activeTenants = tenants.filter(t => t.is_active);
+    const activeTenants = tenants.filter(t => t.status === 'active');
     const occupiedUnits = units.filter(u => !u.is_available).length;
-    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.monthly_rent || 0), 0);
+    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.rent_amount || 0), 0);
     const pendingMaintenance = maintenance.filter(m => m.status === 'pending').length;
     const occupancyRate = units.length > 0 ? ((occupiedUnits / units.length) * 100).toFixed(1) : '0';
+
+    // Generar consejos proactivos basados en los datos
+    let businessAdvice = '';
+    const occupancyNum = parseFloat(occupancyRate);
+    
+    if (occupancyNum < 70) {
+      businessAdvice = `\n💡 **Consejo:** Tu ocupación está en ${occupancyRate}%. Considera:\n• Revisar precios de mercado\n• Mejorar marketing de unidades vacías\n• Ofrecer incentivos a nuevos inquilinos`;
+    } else if (occupancyNum > 95) {
+      businessAdvice = `\n🚀 **Oportunidad:** ¡Excelente ocupación del ${occupancyRate}%! Es momento de:\n• Considerar aumentos de renta graduales\n• Expandir tu portafolio\n• Implementar mejoras que justifiquen precios premium`;
+    } else if (pendingMaintenance > 3) {
+      businessAdvice = `\n⚠️ **Atención:** Tienes ${pendingMaintenance} solicitudes de mantenimiento pendientes. Prioriza las urgentes para mantener la satisfacción de inquilinos.`;
+    } else {
+      businessAdvice = `\n✨ **Excelente gestión!** Tu negocio está bien balanceado. Considera diversificar o mejorar servicios para aumentar valor.`;
+    }
 
     return `📊 **Resumen de tu negocio:**
 • ${properties.length} propiedades con ${units.length} unidades
 • ${activeTenants.length} inquilinos activos (${occupancyRate}% ocupación)
 • €${monthlyRevenue.toLocaleString()} ingresos mensuales potenciales
-• ${pendingMaintenance} solicitudes de mantenimiento pendientes
+• ${pendingMaintenance} solicitudes de mantenimiento pendientes${businessAdvice}
 
-¿Te gustaría información más específica sobre algún área?`;
+¿Te gustaría profundizar en alguna estrategia específica? 🎯`;
   };
 
   const generateConversationalResponse = (query: string): string => {
@@ -399,7 +413,30 @@ export function SecureChatAssistant() {
 
     // Ayuda y funciones
     if (fuzzyMatch(query, ['ayuda', 'help', 'como', 'usar', 'funciona', 'tutorial'])) {
-      return `🆘 **¡Estoy aquí para ayudarte!** Puedo ayudarte con:\n\n📊 **Información de tu negocio:**\n• Estado de propiedades e inquilinos\n• Resumen de pagos e ingresos\n• Ocupación de unidades\n\n🔧 **Funciones de la app:**\n• Cómo agregar inquilinos\n• Gestión de pagos\n• Seguimiento de mantenimiento\n\n¡Solo pregúntame lo que necesites! 😊`;
+      return `🆘 **¡Estoy aquí para ayudarte!** Puedo ayudarte con:\n\n📊 **Análisis de tu negocio:**\n• Estado de propiedades e inquilinos\n• Análisis de rentabilidad\n• Estrategias de ocupación\n\n💡 **Consejos empresariales:**\n• Optimización de ingresos\n• Gestión de inquilinos\n• Mantenimiento preventivo\n\n🔧 **Uso de la app:**\n• Seguimiento de pagos\n• Gestión de propiedades\n• Reportes y análisis\n\n¡Pregúntame cualquier cosa sobre tu negocio inmobiliario! 🏠✨`;
+    }
+
+    // Consejos de negocio específicos
+    if (fuzzyMatch(query, ['consejo', 'sugerencia', 'mejorar', 'optimizar', 'estrategia', 'crecer'])) {
+      const { tenants, units } = userData!;
+      const activeTenants = tenants.filter(t => t.status === 'active');
+      const occupancyRate = units.length > 0 ? (activeTenants.length / units.length) * 100 : 0;
+      
+      let advice = '💡 **Consejos personalizados para tu negocio:**\n\n';
+      
+      if (occupancyRate < 80) {
+        advice += '🎯 **Mejorar ocupación:**\n• Revisa precios vs. mercado local\n• Mejora fotos y descripción de unidades\n• Considera incentivos (1er mes gratis)\n• Implementa tours virtuales\n\n';
+      }
+      
+      if (activeTenants.length > 0) {
+        advice += '💰 **Optimizar ingresos:**\n• Revisa rentas anualmente\n• Ofrece servicios adicionales (parking, storage)\n• Implementa pagos automáticos\n• Considera contratos más largos con descuentos\n\n';
+      }
+      
+      advice += '🔧 **Mantenimiento inteligente:**\n• Inspecciones preventivas trimestrales\n• Mantén reserva del 5-10% para reparaciones\n• Crea relaciones con proveedores confiables\n\n';
+      
+      advice += '📈 **Crecimiento del negocio:**\n• Reinvierte 20-30% de ganancias\n• Considera propiedades en zonas emergentes\n• Diversifica tipos de propiedad\n• Mantén buenas relaciones con inquilinos';
+      
+      return advice;
     }
 
     // Respuestas más inteligentes y contextuales
@@ -473,38 +510,43 @@ export function SecureChatAssistant() {
   };
 
   return (
-    <Card className="h-[600px] flex flex-col">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <MessageCircle className="h-5 w-5" />
-          Asistente RentaFlux
-          <Badge variant="secondary" className="ml-auto">
-            {userData ? 'Conectado' : 'Cargando...'}
+    <Card className="h-[600px] flex flex-col shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
+      <CardHeader className="pb-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
+        <CardTitle className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+            <MessageCircle className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <div className="font-semibold">Asistente RentaFlux</div>
+            <div className="text-xs text-white/80">Tu consultor inmobiliario inteligente</div>
+          </div>
+          <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+            {userData ? '🟢 Conectado' : '🔄 Cargando...'}
           </Badge>
         </CardTitle>
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
-          <div className="space-y-4 pb-4">
+        <ScrollArea className="flex-1 px-6 py-4" ref={scrollAreaRef}>
+          <div className="space-y-6 pb-4">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`flex gap-2 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
+                <div className={`flex gap-3 max-w-[85%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-md ${message.type === 'user'
+                    ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                    : 'bg-gradient-to-br from-purple-500 to-purple-600 text-white'
                     }`}>
-                    {message.type === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                    {message.type === 'user' ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
                   </div>
-                  <div className={`rounded-lg px-3 py-2 ${message.type === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-foreground'
+                  <div className={`rounded-2xl px-4 py-3 shadow-sm ${message.type === 'user'
+                    ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                    : 'bg-white border border-gray-200 text-gray-800'
                     }`}>
-                    <div className="text-sm whitespace-pre-wrap">{message.content}</div>
-                    <div className="text-xs opacity-70 mt-1">
+                    <div className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</div>
+                    <div className={`text-xs mt-2 ${message.type === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
                       {message.timestamp.toLocaleTimeString('es-ES', {
                         hour: '2-digit',
                         minute: '2-digit'
@@ -517,14 +559,18 @@ export function SecureChatAssistant() {
 
             {isLoading && (
               <div className="flex gap-3 justify-start">
-                <div className="flex gap-2">
-                  <div className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center">
-                    <Bot className="h-4 w-4" />
+                <div className="flex gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-md">
+                    <Bot className="h-5 w-5" />
                   </div>
-                  <div className="bg-muted rounded-lg px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm">Pensando...</span>
+                  <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      </div>
+                      <span className="text-sm text-gray-600">Analizando tus datos...</span>
                     </div>
                   </div>
                 </div>
@@ -533,25 +579,28 @@ export function SecureChatAssistant() {
           </div>
         </ScrollArea>
 
-        <div className="border-t p-4">
-          <div className="flex gap-2">
+        <div className="border-t border-gray-200 p-4 bg-gray-50">
+          <div className="flex gap-3">
             <Input
               ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Pregúntame sobre tus propiedades, inquilinos, pagos..."
+              placeholder="💬 Pregúntame sobre tu negocio, consejos, estrategias..."
               disabled={isLoading}
-              className="flex-1"
+              className="flex-1 border-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-xl bg-white shadow-sm"
               autoFocus
             />
             <Button
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || isLoading}
-              size="icon"
+              className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl px-4 shadow-md"
             >
               <Send className="h-4 w-4" />
             </Button>
+          </div>
+          <div className="mt-2 text-xs text-gray-500 text-center">
+            💡 Prueba: "¿cómo mejorar mi ocupación?" o "consejos para mi negocio"
           </div>
         </div>
       </CardContent>

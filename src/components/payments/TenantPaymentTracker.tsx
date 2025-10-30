@@ -29,6 +29,7 @@ interface PaymentRecord {
   year: number;
   month: number;
   paid: boolean;
+  amount?: number; // Add amount field for real revenue calculation
 }
 
 interface PaymentReceipt {
@@ -200,8 +201,17 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
       const storageKey = `payment_records_${user.id}_${selectedYear}`;
 
       if (checked === true) {
-        // Update local state and localStorage
-        const newRecord = { tenantId, year: selectedYear, month: monthIndex, paid: true };
+        // Update local state and localStorage with tenant's rent amount
+        const tenant = tenants.find(t => t.id === tenantId);
+        const rentAmount = tenant?.rentAmount || 0;
+        
+        const newRecord = { 
+          tenantId, 
+          year: selectedYear, 
+          month: monthIndex, 
+          paid: true,
+          amount: rentAmount // Include the actual rent amount
+        };
         const updatedRecords = [
           ...paymentRecords.filter(r => !(r.tenantId === tenantId && r.year === selectedYear && r.month === monthIndex)),
           newRecord

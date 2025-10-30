@@ -192,17 +192,6 @@ const Analytics = () => {
             {/* KPI Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="p-6">
-                <h3 className="text-sm font-medium text-muted-foreground">Tasa de Ocupación</h3>
-                <p className="text-2xl font-semibold mt-2">{kpis.occupancyRate.toFixed(1)}%</p>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {kpis.occupiedUnits} de {kpis.totalUnits} unidades ocupadas
-                </div>
-                <Badge className="mt-3 bg-green-100 text-green-800 hover:bg-green-200">
-                  Estado: {kpis.occupancyRate > 80 ? 'Excelente' : kpis.occupancyRate > 60 ? 'Bueno' : 'Necesita Atención'}
-                </Badge>
-              </Card>
-              
-              <Card className="p-6">
                 <h3 className="text-sm font-medium text-muted-foreground">Ingresos Mensuales</h3>
                 <p className="text-2xl font-semibold mt-2">€{kpis.monthlyRevenue.toLocaleString()}</p>
                 <div className="text-xs text-muted-foreground mt-1">
@@ -210,6 +199,17 @@ const Analytics = () => {
                 </div>
                 <Badge className="mt-3 bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
                   {kpis.activeTenants} fuentes de ingresos activas
+                </Badge>
+              </Card>
+              
+              <Card className="p-6">
+                <h3 className="text-sm font-medium text-muted-foreground">Tasa de Ocupación</h3>
+                <p className="text-2xl font-semibold mt-2">{kpis.occupancyRate.toFixed(1)}%</p>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {kpis.occupiedUnits} de {kpis.totalUnits} unidades ocupadas
+                </div>
+                <Badge className="mt-3 bg-green-100 text-green-800 hover:bg-green-200">
+                  Estado: {kpis.occupancyRate > 80 ? 'Excelente' : kpis.occupancyRate > 60 ? 'Bueno' : 'Necesita Atención'}
                 </Badge>
               </Card>
               
@@ -225,10 +225,10 @@ const Analytics = () => {
               </Card>
             </div>
             
-            <Tabs defaultValue="occupancy" className="w-full">
+            <Tabs defaultValue="revenue" className="w-full">
               <TabsList className="mb-6">
+                <TabsTrigger value="revenue">Ingresos Reales</TabsTrigger>
                 <TabsTrigger value="occupancy">Ocupación</TabsTrigger>
-                <TabsTrigger value="revenue">Ingresos</TabsTrigger>
                 <TabsTrigger value="tenants">Análisis de Inquilinos</TabsTrigger>
                 <TabsTrigger value="payments">Análisis de Pagos</TabsTrigger>
               </TabsList>

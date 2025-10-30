@@ -176,11 +176,15 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             r.year === year && r.month === month && r.paid
           );
 
-          // Calculate actual revenue from paid records
-          if (monthRecords.length > 0) {
-            // Estimate based on average rent per tenant
-            const avgRentPerTenant = stats.monthlyRevenue / Math.max(stats.totalTenants, 1);
-            monthlyRevenue = monthRecords.length * avgRentPerTenant;
+          // Calculate actual revenue from paid records using real tenant rents
+          if (monthRecords.length > 0 && user?.id) {
+            // Get tenant data to calculate real revenue
+            monthlyRevenue = monthRecords.reduce((total: number, record: any) => {
+              // Find the tenant's actual rent amount
+              // This should match the tenant's rentAmount from the database
+              const tenantRent = record.amount || (stats.monthlyRevenue / Math.max(stats.totalTenants, 1));
+              return total + tenantRent;
+            }, 0);
           }
         } catch (error) {
           console.error('Error parsing payment records:', error);
@@ -349,13 +353,13 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
           variants={cardVariants}
           transition={{ delay: 0.4, duration: 0.6 }}
         >
-          <Card className="relative overflow-hidden border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 h-full">
+          <Card className="relative overflow-hidden border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-5 h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-blue-800">
                 <Zap className="h-5 w-5" />
                 Insights
               </CardTitle>
-              <CardDescription className="text-blue-700">
+              <CardDescription className="text-blu e-700">
                 Recomendaciones personalizadas basadas en tus datos
               </CardDescription>
             </CardHeader>
