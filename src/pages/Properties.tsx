@@ -60,7 +60,7 @@ const Properties = () => {
           return;
         }
 
-        const tenants = tenantsResult.data || [];
+        const tenants = tenantsData || [];
         const units = unitsResult.data || [];
 
         console.log('Tenants loaded:', tenants.length);
