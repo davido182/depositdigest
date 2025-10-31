@@ -34,6 +34,7 @@ import { logger } from "@/utils/logger";
 import { config } from "@/utils/config";
 import { liveUpdatesService } from "@/services/LiveUpdatesService";
 import { Layout } from "@/components/Layout";
+import { DebugCleaner } from "@/components/security/DebugCleaner";
 
 // Create a new query client instance with simplified configuration
 const queryClient = new QueryClient({
@@ -141,6 +142,7 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <AuthDebugger />
+            <DebugCleaner />
           </BrowserRouter>
           <Toaster />
           <Sonner position="top-right" />

@@ -1,10 +1,12 @@
 
 import { Layout } from "@/components/Layout";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { AreaChart, BarChart, PieChart } from "@/components/ui/chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Building2, DollarSign, TrendingUp, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -69,7 +71,7 @@ const Analytics = () => {
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
         
-        const activeTenants = tenants.filter(t => t.is_active);
+        const activeTenants = tenants.filter(t => t.status === 'active');
         
         // Get payment tracking data from localStorage (tabla de seguimiento de pagos)
         const storageKey = `payment_records_${user?.id}_${currentYear}`;
@@ -180,50 +182,134 @@ const Analytics = () => {
   
   return (
     <Layout>
-      <section className="space-y-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Analíticas</h1>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4 py-8 space-y-8">
+          {/* Header Section */}
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Panel de Analíticas
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Obtén insights profundos sobre tu negocio inmobiliario con métricas en tiempo real y análisis inteligente
+            </p>
+          </div>
         
         {isLoading ? (
-          <div className="flex justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto" />
+              <p className="text-gray-600">Cargando análisis de tu negocio...</p>
+            </div>
           </div>
         ) : (
           <div className="space-y-8">
-            {/* KPI Summary Cards */}
+            {/* KPI Hero Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="p-6">
-                <h3 className="text-sm font-medium text-muted-foreground">Ingresos Mensuales</h3>
-                <p className="text-2xl font-semibold mt-2">€{kpis.monthlyRevenue.toLocaleString()}</p>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Prom. €{kpis.activeTenants > 0 ? (kpis.monthlyRevenue / kpis.activeTenants).toFixed(2) : '0'} por inquilino
-                </div>
-                <Badge className="mt-3 bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
-                  {kpis.activeTenants} fuentes de ingresos activas
-                </Badge>
+              {/* Revenue Card */}
+              <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 text-white border-0 shadow-xl">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <p className="text-emerald-100 text-sm font-medium">Ingresos Mensuales</p>
+                      <p className="text-3xl font-bold">€{kpis.monthlyRevenue.toLocaleString()}</p>
+                      <p className="text-emerald-100 text-xs">
+                        €{kpis.activeTenants > 0 ? (kpis.monthlyRevenue / kpis.activeTenants).toFixed(0) : '0'} promedio por inquilino
+                      </p>
+                    </div>
+                    <div className="bg-white/20 p-3 rounded-full">
+                      <DollarSign className="h-8 w-8" />
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-2">
+                    <Badge className="bg-white/20 text-white border-white/30">
+                      {kpis.activeTenants} fuentes activas
+                    </Badge>
+                    <TrendingUp className="h-4 w-4" />
+                  </div>
+                </CardContent>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
               </Card>
               
-              <Card className="p-6">
-                <h3 className="text-sm font-medium text-muted-foreground">Tasa de Ocupación</h3>
-                <p className="text-2xl font-semibold mt-2">{kpis.occupancyRate.toFixed(1)}%</p>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {kpis.occupiedUnits} de {kpis.totalUnits} unidades ocupadas
-                </div>
-                <Badge className="mt-3 bg-green-100 text-green-800 hover:bg-green-200">
-                  Estado: {kpis.occupancyRate > 80 ? 'Excelente' : kpis.occupancyRate > 60 ? 'Bueno' : 'Necesita Atención'}
-                </Badge>
+              {/* Occupancy Card */}
+              <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-0 shadow-xl">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <p className="text-blue-100 text-sm font-medium">Tasa de Ocupación</p>
+                      <p className="text-3xl font-bold">{kpis.occupancyRate.toFixed(1)}%</p>
+                      <p className="text-blue-100 text-xs">
+                        {kpis.occupiedUnits} de {kpis.totalUnits} unidades ocupadas
+                      </p>
+                    </div>
+                    <div className="bg-white/20 p-3 rounded-full">
+                      <Building2 className="h-8 w-8" />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Badge className={`${kpis.occupancyRate > 80 ? 'bg-green-500/20 text-green-100' : 
+                                      kpis.occupancyRate > 60 ? 'bg-yellow-500/20 text-yellow-100' : 
+                                      'bg-red-500/20 text-red-100'} border-0`}>
+                      {kpis.occupancyRate > 80 ? '🎯 Excelente' : 
+                       kpis.occupancyRate > 60 ? '📈 Bueno' : 
+                       '⚠️ Mejorar'}
+                    </Badge>
+                  </div>
+                </CardContent>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
               </Card>
               
-              <Card className="p-6">
-                <h3 className="text-sm font-medium text-muted-foreground">Tasa de Cobranza</h3>
-                <p className="text-2xl font-semibold mt-2">{kpis.collectionRate.toFixed(1)}%</p>
-                 <div className="text-xs text-muted-foreground mt-1">
-                   Basado en pagos completados este mes
-                 </div>
-                <Badge className="mt-3 bg-blue-100 text-blue-800 hover:bg-blue-200">
-                  Estado: {kpis.collectionRate > 95 ? 'Excelente' : kpis.collectionRate > 80 ? 'Bueno' : 'Necesita Atención'}
-                </Badge>
+              {/* Collection Rate Card */}
+              <Card className="relative overflow-hidden bg-gradient-to-br from-purple-500 to-pink-600 text-white border-0 shadow-xl">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <p className="text-purple-100 text-sm font-medium">Tasa de Cobranza</p>
+                      <p className="text-3xl font-bold">{kpis.collectionRate.toFixed(1)}%</p>
+                      <p className="text-purple-100 text-xs">
+                        Pagos completados este mes
+                      </p>
+                    </div>
+                    <div className="bg-white/20 p-3 rounded-full">
+                      <BarChart3 className="h-8 w-8" />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Badge className={`${kpis.collectionRate > 95 ? 'bg-green-500/20 text-green-100' : 
+                                      kpis.collectionRate > 80 ? 'bg-yellow-500/20 text-yellow-100' : 
+                                      'bg-red-500/20 text-red-100'} border-0`}>
+                      {kpis.collectionRate > 95 ? '💎 Excelente' : 
+                       kpis.collectionRate > 80 ? '👍 Bueno' : 
+                       '🔔 Atención'}
+                    </Badge>
+                  </div>
+                </CardContent>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
               </Card>
             </div>
+
+            {/* Call to Action Section */}
+            <Card className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 shadow-xl">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold">🚀 Optimiza tu Negocio</h3>
+                    <p className="text-orange-100">
+                      {kpis.occupancyRate < 80 ? 
+                        `Tienes ${kpis.totalUnits - kpis.occupiedUnits} unidades disponibles. ¡Aumenta tus ingresos!` :
+                        kpis.collectionRate < 90 ?
+                        'Mejora tu tasa de cobranza para maximizar ingresos.' :
+                        '¡Excelente gestión! Considera expandir tu portafolio.'
+                      }
+                    </p>
+                  </div>
+                  <Button className="bg-white text-orange-600 hover:bg-orange-50 font-semibold">
+                    {kpis.occupancyRate < 80 ? 'Ver Unidades' : 
+                     kpis.collectionRate < 90 ? 'Gestionar Pagos' : 
+                     'Agregar Propiedad'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
             
             <Tabs defaultValue="revenue" className="w-full">
               <TabsList className="mb-6">

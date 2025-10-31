@@ -11,7 +11,9 @@ import {
   MessageCircle,
   Smartphone,
   Crown,
-  Check
+  Check,
+  Users,
+  Wrench
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -243,11 +245,31 @@ Enviado desde www.rentaflux.com
 
             <Card className="text-center">
               <CardHeader>
+                <Users className="h-12 w-12 text-emerald-600 mx-auto mb-4" />
+                <CardTitle>Gestión de Inquilinos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">Administra inquilinos, contratos y seguimiento de pagos</p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
                 <CreditCard className="h-12 w-12 text-green-600 mx-auto mb-4" />
                 <CardTitle>Pagos Automáticos</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">Recibe pagos directamente a tu cuenta desde la app con Stripe</p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <Wrench className="h-12 w-12 text-amber-600 mx-auto mb-4" />
+                <CardTitle>Solicitudes de Mantenimiento</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">Gestiona y da seguimiento a todas las solicitudes de mantenimiento</p>
               </CardContent>
             </Card>
 

@@ -71,7 +71,7 @@ export function useAppData() {
 
     try {
       setData(prev => ({ ...prev, isLoading: true, error: null }));
-      console.log('useAppData: Fetching all data for user:', user.id);
+      // Fetching all data for authenticated user
 
       // Fetch all data in parallel
       const currentYear = new Date().getFullYear();
@@ -139,7 +139,7 @@ export function useAppData() {
         try {
           const records = JSON.parse(storedRecords);
           const currentMonthRecords = records.filter((r: any) => 
-            r.year === currentYear && r.month === (currentMonth - 1) && r.paid // month is 0-indexed in localStorage
+            r.year === currentYear && r.month === currentMonth && r.paid // month is 0-indexed in localStorage
           );
           
           // Calculate real revenue based on actual payments with real amounts
@@ -157,8 +157,8 @@ export function useAppData() {
           // Calculate collection rate
           collectionRate = (currentMonthRecords.length / activeTenantsList.length) * 100;
           
-          // Calculate overdue payments
-          overduePayments = activeTenantsList.length - currentMonthRecords.length;
+          // Calculate overdue payments (only count active tenants who haven't paid)
+          overduePayments = Math.max(0, activeTenantsList.length - currentMonthRecords.length);
         } catch (error) {
           console.error('Error parsing payment records:', error);
           realMonthlyRevenue = potentialMonthlyRevenue;
@@ -173,7 +173,8 @@ export function useAppData() {
       }
       
       const occupancyRate = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
-      const pendingDeposits = overduePayments;
+      // Ensure pendingDeposits is never negative
+      const pendingDeposits = Math.max(0, overduePayments);
 
       setData({
         tenants,

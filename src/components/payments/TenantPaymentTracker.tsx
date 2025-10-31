@@ -95,7 +95,7 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
       const needsMigration = paymentRecords.some(record => !record.amount);
       
       if (needsMigration) {
-        console.log('🔄 Migrating payment records to include amounts...');
+        // Migrating payment records to include amounts
         
         const migratedRecords = paymentRecords.map(record => {
           if (!record.amount) {
@@ -112,7 +112,7 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
         const storageKey = `payment_records_${user.id}_${selectedYear}`;
         localStorage.setItem(storageKey, JSON.stringify(migratedRecords));
         
-        console.log('✅ Payment records migrated successfully');
+        // Payment records migrated successfully
       }
     }
   }, [paymentRecords, tenants, selectedYear, user?.id]);

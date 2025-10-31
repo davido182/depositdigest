@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      console.log("🚀 Upgrading user to premium:", targetUserId);
+      // Upgrading user to premium
       
       const { error } = await supabase
         .from('user_roles')

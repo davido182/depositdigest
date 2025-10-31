@@ -26,7 +26,7 @@ export class PropertyService extends BaseService {
   async getProperties(): Promise<Property[]> {
     const user = await this.ensureAuthenticated();
     
-    console.log('🔍 Fetching properties for landlord:', user.id);
+    // Fetching properties for authenticated landlord
     const { data, error } = await supabase
       .from('properties')
       .select('*')

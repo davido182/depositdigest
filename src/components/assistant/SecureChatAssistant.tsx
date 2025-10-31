@@ -59,7 +59,7 @@ export function SecureChatAssistant() {
     if (!user) return;
 
     try {
-      console.log('SecureChatAssistant: Loading user data for:', user.id);
+      // Loading user data for chat assistant
 
       // Import tenant service
       const { tenantService } = await import('@/services/TenantService');
@@ -86,12 +86,11 @@ export function SecureChatAssistant() {
         maintenance: maintenanceRes.data || []
       };
 
-      console.log('SecureChatAssistant: Loaded data:', {
+      // Security: Only log counts, never sensitive data
+      console.log('SecureChatAssistant: Data loaded successfully:', {
         properties: data.properties.length,
         tenants: data.tenants.length,
         activeTenants: data.tenants.filter(t => t.status === 'active').length,
-        tenantsWithStatus: data.tenants.map(t => ({ name: t.name, status: t.status, rent_amount: t.rent_amount })),
-        tenants: data.tenants.length,
         units: data.units.length,
         payments: data.payments.length,
         maintenance: data.maintenance.length
@@ -174,7 +173,7 @@ export function SecureChatAssistant() {
         return "👥 Actualmente no tienes inquilinos activos. ¡Pero eso puede cambiar pronto! 🌟 ¿Te ayudo a agregar tu primer inquilino? Ve a la sección 'Inquilinos' y empieza a hacer crecer tu negocio. 💪";
       }
 
-      const tenantList = activeTenants.slice(0, 5).map(t => `• ${t.name || 'Sin nombre'} - €${t.monthly_rent || 0}/mes`).join('\n');
+      const tenantList = activeTenants.slice(0, 5).map(t => `• ${t.name || 'Sin nombre'} - €${t.rent_amount || 0}/mes`).join('\n');
       return `Inquilinos activos (${activeTenants.length}):\n${tenantList}${activeTenants.length > 5 ? '\n... y más' : ''}`;
     }
 
@@ -182,7 +181,7 @@ export function SecureChatAssistant() {
       return "Aún no tienes inquilinos registrados. ¿Te gustaría agregar tu primer inquilino?";
     }
 
-    return `Tienes ${tenants.length} inquilinos registrados, ${tenants.filter(t => t.is_active).length} están activos.`;
+    return `Tienes ${tenants.length} inquilinos registrados, ${tenants.filter(t => t.status === 'active').length} están activos.`;
   };
 
   const handlePaymentQueries = (query: string): string => {

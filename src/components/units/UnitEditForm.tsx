@@ -84,7 +84,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         return;
       }
 
-      console.log('👤 Current user:', user.id);
+      // Current user authenticated
 
       // Get all tenants for this user
       const { data, error } = await supabase

@@ -6,7 +6,7 @@ export class SupabaseTenantService extends BaseService {
     console.log('🔍 [SIMPLE] Fetching tenants from Supabase...');
 
     const user = await this.ensureAuthenticated();
-    console.log('👤 User authenticated:', user.id);
+    // User authenticated successfully
 
     // Get tenants with proper error handling
     const { data: tenantsData, error: tenantsError } = await this.supabase

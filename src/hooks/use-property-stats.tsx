@@ -57,7 +57,7 @@ export function usePropertyStats() {
     setStats(prev => ({ ...prev, isLoading: true }));
 
     try {
-      console.log('Fetching property stats for user:', user.id);
+      // Fetching property stats for authenticated user
 
       // Obtener todos los tenants del usuario con optimización
       const { data: tenants, error: tenantsError } = await supabase

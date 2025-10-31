@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { DashboardStats } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { RevenueDebugger } from "./RevenueDebugger";
 
 interface IntelligentDashboardProps {
   stats: DashboardStats;
@@ -205,9 +204,6 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* Debug Info - Remove in production */}
-      <RevenueDebugger />
-      
       {/* Métricas Principales */}
       <div className="grid gap-6 md:grid-cols-3">
         <motion.div
@@ -328,21 +324,122 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
               <CardDescription>Últimos 6 meses</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {getRevenueData().map((item, index) => (
-                  <div key={item.month} className="flex items-center space-x-3">
-                    <span className="text-sm font-medium w-8">{item.month}</span>
-                    <div className="flex-1">
-                      <Progress
-                        value={stats.monthlyRevenue > 0 ? Math.min((item.amount / stats.monthlyRevenue) * 100, 100) : 0}
-                        className="h-2"
-                      />
+              <div className="h-48 w-full">
+                {(() => {
+                  const data = getRevenueData();
+                  const maxAmount = Math.max(...data.map(d => d.amount), 1);
+                  const width = 300;
+                  const height = 150;
+                  const padding = 40;
+                  
+                  // Calculate points for the line
+                  const points = data.map((item, index) => {
+                    const x = padding + (index * (width - 2 * padding)) / (data.length - 1);
+                    const y = height - padding - ((item.amount / maxAmount) * (height - 2 * padding));
+                    return { x, y, amount: item.amount, month: item.month };
+                  });
+                  
+                  const pathData = points.map((point, index) => 
+                    `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
+                  ).join(' ');
+
+                  return (
+                    <div className="relative">
+                      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
+                        {/* Grid lines */}
+                        {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
+                          <line
+                            key={ratio}
+                            x1={padding}
+                            y1={height - padding - ratio * (height - 2 * padding)}
+                            x2={width - padding}
+                            y2={height - padding - ratio * (height - 2 * padding)}
+                            stroke="#e5e7eb"
+                            strokeWidth="1"
+                            strokeDasharray="2,2"
+                          />
+                        ))}
+                        
+                        {/* Y-axis labels */}
+                        {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
+                          <text
+                            key={ratio}
+                            x={padding - 10}
+                            y={height - padding - ratio * (height - 2 * padding) + 4}
+                            textAnchor="end"
+                            className="text-xs fill-gray-500"
+                          >
+                            €{Math.round(maxAmount * ratio).toLocaleString()}
+                          </text>
+                        ))}
+                        
+                        {/* Line */}
+                        <path
+                          d={pathData}
+                          fill="none"
+                          stroke="#3b82f6"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        
+                        {/* Area under the line */}
+                        <path
+                          d={`${pathData} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`}
+                          fill="url(#gradient)"
+                          opacity="0.2"
+                        />
+                        
+                        {/* Data points */}
+                        {points.map((point, index) => (
+                          <g key={index}>
+                            <circle
+                              cx={point.x}
+                              cy={point.y}
+                              r="4"
+                              fill="#3b82f6"
+                              stroke="white"
+                              strokeWidth="2"
+                            />
+                            {/* Tooltip on hover */}
+                            <circle
+                              cx={point.x}
+                              cy={point.y}
+                              r="8"
+                              fill="transparent"
+                              className="hover:fill-blue-100 cursor-pointer"
+                            >
+                              <title>
+                                {point.month}: €{Math.round(point.amount).toLocaleString()}
+                              </title>
+                            </circle>
+                          </g>
+                        ))}
+                        
+                        {/* X-axis labels */}
+                        {points.map((point, index) => (
+                          <text
+                            key={index}
+                            x={point.x}
+                            y={height - padding + 20}
+                            textAnchor="middle"
+                            className="text-xs fill-gray-500"
+                          >
+                            {point.month}
+                          </text>
+                        ))}
+                        
+                        {/* Gradient definition */}
+                        <defs>
+                          <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
+                            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
                     </div>
-                    <span className="text-sm text-muted-foreground w-16 text-right">
-                      €{Math.round(item.amount).toLocaleString()}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>
@@ -365,14 +462,32 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="p-3 bg-blue-100 rounded-lg text-sm text-blue-800">
-                📈 Tu tasa de ocupación del {stats.occupancyRate.toFixed(2)}% está por encima del promedio del mercado (85%)
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg text-sm text-green-800">
-                💰 Puedes aumentar los ingresos un 8% ajustando el precio de las unidades vacías
-              </div>
+              {stats.occupancyRate >= 85 ? (
+                <div className="p-3 bg-blue-100 rounded-lg text-sm text-blue-800">
+                  📈 Excelente: Tu tasa de ocupación del {stats.occupancyRate.toFixed(1)}% está por encima del promedio del mercado (85%)
+                </div>
+              ) : stats.occupancyRate >= 70 ? (
+                <div className="p-3 bg-yellow-100 rounded-lg text-sm text-yellow-800">
+                  📊 Tu tasa de ocupación del {stats.occupancyRate.toFixed(1)}% está cerca del promedio del mercado (85%)
+                </div>
+              ) : (
+                <div className="p-3 bg-orange-100 rounded-lg text-sm text-orange-800">
+                  📉 Tu tasa de ocupación del {stats.occupancyRate.toFixed(1)}% está por debajo del promedio del mercado (85%)
+                </div>
+              )}
+              
+              {stats.totalUnits - stats.occupiedUnits > 0 ? (
+                <div className="p-3 bg-green-100 rounded-lg text-sm text-green-800">
+                  💰 Tienes {stats.totalUnits - stats.occupiedUnits} unidad{stats.totalUnits - stats.occupiedUnits > 1 ? 'es' : ''} disponible{stats.totalUnits - stats.occupiedUnits > 1 ? 's' : ''} - Oportunidad de aumentar ingresos
+                </div>
+              ) : (
+                <div className="p-3 bg-emerald-100 rounded-lg text-sm text-emerald-800">
+                  🎯 ¡Perfecto! Todas tus unidades están ocupadas - Considera aumentar precios gradualmente
+                </div>
+              )}
+              
               <div className="p-3 bg-amber-100 rounded-lg text-sm text-amber-800">
-                ⏰ Tasa de desocupación: {(100 - stats.occupancyRate).toFixed(2)}% - Revisa contratos que vencen en los próximos 60 días
+                ⏰ Unidades disponibles: {(100 - stats.occupancyRate).toFixed(1)}% - {stats.totalUnits > 0 ? 'Revisa estrategias de marketing' : 'Agrega propiedades para comenzar'}
               </div>
             </CardContent>
           </Card>

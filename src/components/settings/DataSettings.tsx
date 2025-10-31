@@ -152,7 +152,7 @@ export function DataSettings() {
 
       keysToRemove.forEach(key => {
         localStorage.removeItem(key);
-        console.log(`DataSettings: Removed ${key} from localStorage`);
+        // Removed localStorage key (no logging for security)
       });
       
       console.log('DataSettings: Todos los datos de la aplicación han sido eliminados');

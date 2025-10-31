@@ -1,6 +1,7 @@
 import { Layout } from "@/components/Layout";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { IntelligentDashboard } from "@/components/dashboard/IntelligentDashboard";
+import { DebugCleaner } from "@/components/security/DebugCleaner";
 
 import { TenantCard } from "@/components/tenants/TenantCard";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
@@ -240,6 +241,7 @@ const Dashboard = () => {
 
   return (
     <Layout>
+      <DebugCleaner />
       <div className={`space-y-6 ${isMobile ? 'px-2' : ''}`}>
         <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between items-center'}`}>
           <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>Dashboard</h1>
