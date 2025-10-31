@@ -1,183 +1,170 @@
 import { useEffect } from 'react';
 
 /**
- * Componente de seguridad ULTRA AGRESIVO que elimina cualquier información de debug
+ * COMPONENTE DE SEGURIDAD NUCLEAR - ELIMINA TODO
  */
 export function DebugCleaner() {
   useEffect(() => {
     let isActive = true;
 
-    const cleanDebugElements = () => {
+    // FUNCIÓN NUCLEAR DE LIMPIEZA
+    const nuclearClean = () => {
       if (!isActive) return;
 
       try {
-        // Patrones más específicos basados en el texto exacto que aparece
-        const exactPatterns = [
-          'Debug: Revenue Calculation',
-          'Storage Key: payment_records_',
-          'Has Records: ✅',
-          'Total Records:',
-          'Current Month Paid:',
-          'Current Month Revenue:',
-          'Sample Records:',
+        // ELIMINAR TODO EL CONTENIDO QUE CONTENGA INFORMACIÓN SENSIBLE
+        const sensitivePatterns = [
+          'Debug',
+          'Storage Key',
+          'payment_records_',
+          'Has Records',
+          'Total Records',
+          'Current Month',
+          'Sample Records',
           'tenantId',
-          'payment_records_18eaaefa',
-          '18eaaefa-169b-4d7d-978f-7dcde085def3'
+          '18eaaefa',
+          'Revenue Calculation'
         ];
 
-        // Buscar en TODOS los elementos del DOM
-        const allElements = document.querySelectorAll('*');
-        const elementsToRemove: Element[] = [];
-
-        allElements.forEach(element => {
-          const textContent = element.textContent || '';
-          const innerHTML = element.innerHTML || '';
+        // BUSCAR Y DESTRUIR TODOS LOS ELEMENTOS
+        document.querySelectorAll('*').forEach(element => {
+          const text = element.textContent || '';
+          const html = element.innerHTML || '';
           
-          // Verificar si contiene información sensible
-          const hasSensitiveContent = exactPatterns.some(pattern => 
-            textContent.includes(pattern) || innerHTML.includes(pattern)
-          );
-
-          if (hasSensitiveContent) {
-            // Si es un elemento pequeño que solo contiene debug info, eliminarlo
-            if (textContent.length < 2000 && (
-              textContent.includes('Debug: Revenue') ||
-              textContent.includes('Storage Key:') ||
-              textContent.includes('payment_records_')
+          // Si contiene CUALQUIER patrón sensible, ELIMINARLO
+          if (sensitivePatterns.some(pattern => 
+            text.toLowerCase().includes(pattern.toLowerCase()) || 
+            html.toLowerCase().includes(pattern.toLowerCase())
+          )) {
+            // Si es pequeño y contiene debug, ELIMINAR COMPLETAMENTE
+            if (text.length < 5000 && (
+              text.includes('Debug') || 
+              text.includes('Storage Key') || 
+              text.includes('payment_records_')
             )) {
-              elementsToRemove.push(element);
-            } else {
-              // Si es un elemento grande, limpiar solo el contenido sensible
-              exactPatterns.forEach(pattern => {
-                if (element.innerHTML.includes(pattern)) {
-                  element.innerHTML = element.innerHTML.replace(new RegExp(pattern, 'g'), '[REMOVED FOR SECURITY]');
-                }
-              });
+              try {
+                element.remove();
+                console.warn('🔥 NUCLEAR: Eliminated debug element');
+              } catch (e) {
+                // Si no se puede eliminar, limpiar contenido
+                element.innerHTML = '';
+                element.textContent = '';
+              }
             }
           }
         });
 
-        // Eliminar elementos que contienen solo información de debug
-        elementsToRemove.forEach(element => {
-          try {
-            console.warn('🔒 SECURITY: Removing debug element:', element.textContent?.substring(0, 100));
-            element.remove();
-          } catch (error) {
-            console.error('Error removing element:', error);
-          }
-        });
-
-        // Buscar y limpiar nodos de texto específicos
+        // LIMPIAR TODOS LOS NODOS DE TEXTO
         const walker = document.createTreeWalker(
           document.body,
-          NodeFilter.SHOW_TEXT,
-          {
-            acceptNode: (node) => {
-              const text = node.textContent || '';
-              return exactPatterns.some(pattern => text.includes(pattern)) 
-                ? NodeFilter.FILTER_ACCEPT 
-                : NodeFilter.FILTER_REJECT;
-            }
-          },
-          false
+          NodeFilter.SHOW_TEXT
         );
 
-        const textNodesToClean: Node[] = [];
+        const nodesToDestroy: Node[] = [];
         let node;
         while (node = walker.nextNode()) {
-          textNodesToClean.push(node);
+          const text = node.textContent || '';
+          if (sensitivePatterns.some(pattern => 
+            text.toLowerCase().includes(pattern.toLowerCase())
+          )) {
+            nodesToDestroy.push(node);
+          }
         }
 
-        textNodesToClean.forEach(textNode => {
+        nodesToDestroy.forEach(node => {
           try {
-            if (textNode.parentElement) {
-              console.warn('🔒 SECURITY: Cleaning text node:', textNode.textContent?.substring(0, 50));
-              textNode.parentElement.remove();
+            if (node.parentElement) {
+              node.parentElement.remove();
+            } else {
+              node.remove();
             }
-          } catch (error) {
-            console.error('Error cleaning text node:', error);
+          } catch (e) {
+            // Ignorar errores
           }
         });
 
-        // Limpiar localStorage si contiene información sensible visible
-        try {
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.includes('payment_records_')) {
-              // No eliminar los datos, pero asegurar que no se muestren en el DOM
-              console.warn('🔒 SECURITY: Found sensitive localStorage key, ensuring it\'s not displayed');
-            }
+        // INTERCEPTAR Y BLOQUEAR CONSOLE.LOG
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+
+        console.log = (...args) => {
+          const message = args.join(' ');
+          if (sensitivePatterns.some(pattern => 
+            message.toLowerCase().includes(pattern.toLowerCase())
+          )) {
+            return; // BLOQUEAR COMPLETAMENTE
           }
-        } catch (error) {
-          console.error('Error checking localStorage:', error);
-        }
+          originalLog.apply(console, args);
+        };
+
+        console.warn = (...args) => {
+          const message = args.join(' ');
+          if (sensitivePatterns.some(pattern => 
+            message.toLowerCase().includes(pattern.toLowerCase())
+          )) {
+            return; // BLOQUEAR COMPLETAMENTE
+          }
+          originalWarn.apply(console, args);
+        };
+
+        console.error = (...args) => {
+          const message = args.join(' ');
+          if (sensitivePatterns.some(pattern => 
+            message.toLowerCase().includes(pattern.toLowerCase())
+          )) {
+            return; // BLOQUEAR COMPLETAMENTE
+          }
+          originalError.apply(console, args);
+        };
 
       } catch (error) {
-        console.error('Error in cleanDebugElements:', error);
+        // Ignorar errores de limpieza
       }
     };
 
-    // Limpiar inmediatamente
-    cleanDebugElements();
+    // EJECUTAR LIMPIEZA NUCLEAR INMEDIATAMENTE
+    nuclearClean();
 
-    // Limpiar cada 100ms para ser ultra agresivo
-    const rapidInterval = setInterval(cleanDebugElements, 100);
+    // EJECUTAR CADA 50ms (ULTRA AGRESIVO)
+    const nuclearInterval = setInterval(nuclearClean, 50);
 
-    // Observer para cambios en el DOM
-    const observer = new MutationObserver((mutations) => {
-      let shouldClean = false;
-      
-      mutations.forEach(mutation => {
-        if (mutation.type === 'childList') {
-          mutation.addedNodes.forEach(node => {
-            if (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE) {
-              const text = node.textContent || '';
-              if (text.includes('Debug:') || text.includes('Storage Key:') || text.includes('payment_records_')) {
-                shouldClean = true;
-              }
-            }
-          });
-        }
-      });
-
-      if (shouldClean) {
-        setTimeout(cleanDebugElements, 10);
-      }
+    // OBSERVER ULTRA AGRESIVO
+    const nuclearObserver = new MutationObserver(() => {
+      setTimeout(nuclearClean, 1);
     });
 
-    observer.observe(document.body, {
+    nuclearObserver.observe(document.body, {
       childList: true,
       subtree: true,
       characterData: true,
-      attributes: true
+      attributes: true,
+      attributeOldValue: true,
+      characterDataOldValue: true
     });
 
-    // Interceptar console.log para evitar que se muestre información sensible
-    const originalConsoleLog = console.log;
-    console.log = (...args) => {
-      const message = args.join(' ');
-      if (message.includes('payment_records_') || message.includes('Debug: Revenue')) {
-        console.warn('🔒 SECURITY: Blocked sensitive console.log');
-        return;
-      }
-      originalConsoleLog.apply(console, args);
-    };
-
-    // Limpiar cuando el componente se desmonte
+    // LIMPIAR AL DESMONTAR
     return () => {
       isActive = false;
-      clearInterval(rapidInterval);
-      observer.disconnect();
-      console.log = originalConsoleLog;
+      clearInterval(nuclearInterval);
+      nuclearObserver.disconnect();
     };
   }, []);
 
-  // Renderizar un elemento invisible que ayude a identificar si hay debug info
+  // RENDERIZAR ELEMENTO DE CONTROL
   return (
     <div 
-      style={{ display: 'none' }} 
-      data-security-cleaner="active"
-      suppressHydrationWarning
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+        zIndex: 999999,
+        display: 'none'
+      }}
+      data-nuclear-cleaner="active"
     />
   );
 }

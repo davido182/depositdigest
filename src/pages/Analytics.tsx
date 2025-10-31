@@ -543,7 +543,8 @@ const Analytics = () => {
             </Card>
           </div>
         )}
-      </section>
+        </div>
+      </div>
     </Layout>
   );
 };

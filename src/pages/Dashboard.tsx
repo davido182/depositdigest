@@ -2,6 +2,7 @@ import { Layout } from "@/components/Layout";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { IntelligentDashboard } from "@/components/dashboard/IntelligentDashboard";
 import { DebugCleaner } from "@/components/security/DebugCleaner";
+import { EmergencySecurityOverlay } from "@/components/security/EmergencySecurityOverlay";
 
 import { TenantCard } from "@/components/tenants/TenantCard";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
@@ -241,6 +242,7 @@ const Dashboard = () => {
 
   return (
     <Layout>
+      <EmergencySecurityOverlay />
       <DebugCleaner />
       <div className={`space-y-6 ${isMobile ? 'px-2' : ''}`}>
         <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between items-center'}`}>
