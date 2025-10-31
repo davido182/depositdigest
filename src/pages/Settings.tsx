@@ -21,7 +21,7 @@ const Settings = () => {
 
   const handleUpgradeToPremium = async () => {
     try {
-      console.log('Creating checkout session...');
+      // Removed console.log for security
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
           priceId: 'price_1QdFz0DKXqPjJWpJqwgNLYkr'
@@ -34,7 +34,7 @@ const Settings = () => {
       }
 
       if (data?.url) {
-        console.log('Opening checkout URL:', data.url);
+        // Removed console.log for security
         window.open(data.url, '_blank');
       } else {
         throw new Error('No se recibió URL de checkout');

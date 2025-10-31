@@ -8,7 +8,7 @@ import { validateConfig, config, buildInfo } from '@/utils/config'
 // Validar configuración antes de inicializar
 try {
   validateConfig();
-  console.log(`🚀 RentaFlux ${buildInfo.version} (${buildInfo.mode}) starting...`);
+  // Removed console.log for security starting...`);
   
   // Inicializar monitoreo de errores
   initErrorMonitoring();

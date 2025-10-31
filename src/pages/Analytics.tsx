@@ -95,7 +95,7 @@ const Analytics = () => {
               r.year === currentYear && r.month === currentMonth && r.paid
             );
             
-            console.log('Current month paid records:', currentMonthPaidRecords.length);
+            // Removed console.log for security
             
             collectionRate = activeTenants.length > 0 ? (currentMonthPaidRecords.length / activeTenants.length) * 100 : 0;
           } catch (error) {

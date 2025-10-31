@@ -13,11 +13,11 @@ export const checkTenantsTable = async () => {
       return null;
     }
 
-    console.log('Tenants table structure:', data);
+    // Removed console.log for security
     
     // Si hay datos, mostrar las columnas
     if (data && data.length > 0) {
-      console.log('Available columns:', Object.keys(data[0]));
+      // Removed console.log for security);
       return Object.keys(data[0]);
     }
 
@@ -34,7 +34,7 @@ export const checkTenantsTable = async () => {
       .select();
 
     if (insertError) {
-      console.log('Insert error (this helps us understand the schema):', insertError);
+      // Removed console.log for security:', insertError);
     }
 
     return null;
@@ -60,17 +60,17 @@ export const testTenantInsert = async (userId: string) => {
         .select();
 
       if (!error) {
-        console.log('✅ Successful insert with structure:', testCase);
+        // Removed console.log for security
         // Limpiar el registro de prueba
         if (data && data[0]) {
           await supabase.from('tenants').delete().eq('id', data[0].id);
         }
         return Object.keys(testCase);
       } else {
-        console.log('❌ Failed insert:', testCase, error.message);
+        // Removed console.log for security
       }
     } catch (err) {
-      console.log('💥 Exception:', testCase, err);
+      // Removed console.log for security
     }
   }
 

@@ -39,10 +39,10 @@ pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed`;
   };
 
   const parseCSVSimple = (text: string): any[] => {
-    console.log('📄 Texto completo:', text);
+    // Removed console.log for security
     
     const lines = text.trim().split('\n');
-    console.log('📝 Líneas:', lines);
+    // Removed console.log for security
     
     if (lines.length < 2) {
       console.error('❌ Necesitas al menos 2 líneas');
@@ -50,13 +50,13 @@ pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed`;
     }
 
     const headers = lines[0].split(',').map(h => h.trim());
-    console.log('📋 Headers:', headers);
+    // Removed console.log for security
     
     const data = [];
     
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',').map(v => v.trim());
-      console.log(`📊 Línea ${i}:`, values);
+      // Removed console.log for security
       
       if (values.length >= headers.length) {
         const row: any = {};
@@ -67,12 +67,12 @@ pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed`;
       }
     }
 
-    console.log('✅ Datos finales:', data);
+    // Removed console.log for security
     return data;
   };
 
   const importData = async (data: any[]) => {
-    console.log('📊 Importando datos:', data);
+    // Removed console.log for security
     
     let tenantsCount = 0;
     let propertiesCount = 0;
@@ -128,7 +128,7 @@ pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed`;
     
     // Importar inquilinos
     if (tenants.length > 0) {
-      console.log('👥 Importando inquilinos:', tenants);
+      // Removed console.log for security
       const { data: tenantsResult, error: tenantsError } = await supabase
         .from('tenants')
         .insert(tenants)
@@ -143,7 +143,7 @@ pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed`;
     
     // Importar propiedades
     if (properties.length > 0) {
-      console.log('🏠 Importando propiedades:', properties);
+      // Removed console.log for security
       const { data: propertiesResult, error: propertiesError } = await supabase
         .from('properties')
         .insert(properties)
@@ -158,7 +158,7 @@ pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed`;
     
     // Importar pagos
     if (payments.length > 0) {
-      console.log('💰 Importando pagos:', payments);
+      // Removed console.log for security
       const { data: paymentsResult, error: paymentsError } = await supabase
         .from('payments')
         .insert(payments)
@@ -179,10 +179,10 @@ pago,,juan@email.com,,,1200,,,,"2024-01-01",transferencia,completed`;
 
     setIsUploading(true);
     try {
-      console.log('📁 Archivo:', selectedFile.name, selectedFile.size, 'bytes');
+      // Removed console.log for security
       
       const text = await selectedFile.text();
-      console.log('📄 Contenido:', text);
+      // Removed console.log for security
       
       const data = parseCSVSimple(text);
       

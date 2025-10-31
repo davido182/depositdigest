@@ -38,7 +38,7 @@ const Sidebar = () => {
   const { userRole, hasActivePremium, user, signOut, isLoading } = useAuth();
   const { trialDaysLeft, isTrialUser } = useTrialCountdown();
 
-  console.log("Sidebar render - userRole:", userRole, "isLoading:", isLoading);
+  // Removed console.log for security
 
   // Get user display name
   const getUserDisplayName = () => {
@@ -56,7 +56,7 @@ const Sidebar = () => {
 
   // Define navigation items based on user role
   const getNavigationItems = () => {
-    console.log("Getting navigation items for role:", userRole);
+    // Removed console.log for security
     
     const baseItems = [
       { name: "Dashboard", href: "/dashboard", icon: Building2 },
@@ -96,11 +96,11 @@ const Sidebar = () => {
       // Add settings at the end
       landlordItems.push({ name: "Configuración", href: "/settings", icon: Settings });
       
-      console.log("Landlord items:", landlordItems);
+      // Removed console.log for security
       return landlordItems;
     }
 
-    console.log("Returning base items:", baseItems);
+    // Removed console.log for security
     return baseItems;
   };
 

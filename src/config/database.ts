@@ -13,7 +13,7 @@ export const dbConfig = {
 // Mock connection status helper
 export const testConnection = async () => {
   try {
-    console.log("Client configuration loaded successfully");
+    // Removed console.log for security
     return true;
   } catch (error) {
     console.error("Client configuration error:", error);

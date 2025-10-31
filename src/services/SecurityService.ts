@@ -82,7 +82,7 @@ export class SecurityService {
 
       // Log to console in development
       if (process.env.NODE_ENV === 'development') {
-        console.log('📋 Audit Log:', auditData);
+        // Removed console.log for security
       }
 
       // Store audit log
@@ -346,7 +346,7 @@ export class SecurityService {
 
   private async sendToMonitoringService(event: SecurityEvent): Promise<void> {
     // In production, send to external monitoring service like Sentry
-    console.log('Would send to monitoring service:', event);
+    // Removed console.log for security
   }
 
   private storeSecurityEventLocally(event: SecurityEvent): void {

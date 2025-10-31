@@ -155,7 +155,7 @@ export function DataSettings() {
         // Removed localStorage key (no logging for security)
       });
       
-      console.log('DataSettings: Todos los datos de la aplicación han sido eliminados');
+      // Removed console.log for security
       toast.success("Todos los datos han sido eliminados exitosamente. Tienes 24 horas para restaurarlos. La página se recargará.", {
         duration: 5000
       });

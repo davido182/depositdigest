@@ -36,7 +36,7 @@ export const createTestUser = async (type: 'landlord' | 'tenant') => {
   }
   
   const userData = testData[type];
-  console.log(`Creating test ${type}:`, userData.email);
+  // Removed console.log for security
   
   // Aquí implementarías la lógica para crear usuarios de prueba
   return userData;
@@ -48,14 +48,14 @@ export const seedTestData = async () => {
     return;
   }
   
-  console.log('🌱 Seeding test data...');
+  // Removed console.log for security
   
   try {
     // Crear usuarios de prueba
     await createTestUser('landlord');
     await createTestUser('tenant');
     
-    console.log('✅ Test data seeded successfully');
+    // Removed console.log for security
   } catch (error) {
     console.error('❌ Error seeding test data:', error);
   }
@@ -66,6 +66,6 @@ export const clearTestData = async () => {
     throw new Error('Test data cannot be cleared in production');
   }
   
-  console.log('🧹 Clearing test data...');
+  // Removed console.log for security
   // Implementar lógica de limpieza
 };

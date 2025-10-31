@@ -9,7 +9,7 @@ class AccountingService {
 
   private constructor() {
     this.clearAllData(); // Limpiar datos al inicializar
-    console.log('AccountingService: Servicio inicializado sin datos');
+    // Removed console.log for security
   }
 
   public static getInstance(): AccountingService {
@@ -30,7 +30,7 @@ class AccountingService {
     if (this.taxEntries.length > 0) {
       localStorage.setItem('tax_entries', JSON.stringify(this.taxEntries));
     }
-    console.log(`AccountingService: Datos guardados`);
+    // Removed console.log for security
   }
 
   // Métodos para cuentas
@@ -157,7 +157,7 @@ class AccountingService {
   }
 
   public clearAllData(): void {
-    console.log('AccountingService: Limpiando todos los datos');
+    // Removed console.log for security
     this.accounts = [];
     this.accountingEntries = [];
     this.taxEntries = [];

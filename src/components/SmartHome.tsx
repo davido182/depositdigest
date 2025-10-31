@@ -9,11 +9,11 @@ export function SmartHome() {
 
   // Debug database structure on load
   useEffect(() => {
-    console.log('🏠 SmartHome: Component mounted - ALWAYS showing landing');
+    // Removed console.log for security
     debugDatabaseStructure();
   }, []);
 
-  console.log('🏠 SmartHome render:', { isAuthenticated, isLoading });
+  // Removed console.log for security
 
   // Mostrar loading mientras se verifica la autenticación
   if (isLoading) {
@@ -26,6 +26,6 @@ export function SmartHome() {
 
   // SIEMPRE mostrar landing en la ruta raíz (/), sin importar si está autenticado
   // Los usuarios autenticados deben ir a /dashboard manualmente
-  console.log('🏠 SmartHome: Showing landing (/ always shows landing)');
+  // Removed console.log for security');
   return <Landing />;
 }

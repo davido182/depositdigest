@@ -69,12 +69,12 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
 
   const loadExistingUnits = async (propertyId: string, expectedUnits: number) => {
     try {
-      console.log('🔍 Loading existing units for property:', propertyId, 'expected units:', expectedUnits);
+      // Removed console.log for security
       
       const { unitService } = await import("@/services/UnitService");
       const existingUnits = await unitService.getUnitsByProperty(propertyId);
       
-      console.log('📊 Existing units from database:', existingUnits);
+      // Removed console.log for security
       
       // Ordenar unidades por unit_number para mantener consistencia
       const sortedUnits = existingUnits.sort((a, b) => {
@@ -92,16 +92,16 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
         if (index < expectedUnits) {
           rents[index] = Number(unit.monthly_rent) || 0;
           names[index] = unit.unit_number || `Unidad ${index + 1}`;
-          console.log(`📝 Unit ${index}: name="${names[index]}", rent=${rents[index]}`);
+          // Removed console.log for security
         }
       });
       
       setUnitRents(rents);
       setUnitNames(names);
       
-      console.log('✅ Successfully loaded unit data:');
-      console.log('💰 Unit rents:', rents);
-      console.log('🏠 Unit names:', names);
+      // Removed console.log for security
+      // Removed console.log for security
+      // Removed console.log for security
     } catch (error) {
       console.error('❌ Error loading existing units:', error);
       // Fallback to default values
@@ -109,7 +109,7 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
       const initialNames = Array.from({ length: expectedUnits }, (_, i) => `Unidad ${i + 1}`);
       setUnitRents(initialRents);
       setUnitNames(initialNames);
-      console.log('🔄 Using fallback values due to error');
+      // Removed console.log for security
     }
   };
 
@@ -212,18 +212,18 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
           const currentUnits = await unitService.getUnitsByProperty(property.id);
           
           // Update existing units with new rent amounts and names
-          console.log('🔄 Updating existing units with rents:', unitRents, 'and names:', unitNames);
+          // Removed console.log for security
           for (let i = 0; i < Math.min(formData.units, currentUnits.length); i++) {
             const rentAmount = Number(unitRents[i]) || 0;
             const unitName = unitNames[i] || `Unidad ${i + 1}`;
-            console.log(`📝 Updating unit ${currentUnits[i].id}: name="${unitName}", rent=${rentAmount}`);
+            // Removed console.log for security
             
             try {
               await unitService.updateUnit(currentUnits[i].id, {
                 monthly_rent: rentAmount,
                 unit_number: unitName
               });
-              console.log(`✅ Successfully updated unit ${currentUnits[i].id}`);
+              // Removed console.log for security
             } catch (error) {
               console.error(`❌ Error updating unit ${currentUnits[i].id}:`, error);
               throw error;
@@ -233,11 +233,11 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
           // Handle unit count changes
           if (formData.units > currentUnits.length) {
             // Create new units
-            console.log(`🆕 Creating ${formData.units - currentUnits.length} new units`);
+            // Removed console.log for security
             for (let i = currentUnits.length; i < formData.units; i++) {
               const rentAmount = Number(unitRents[i]) || 0;
               const unitName = unitNames[i] || `Unidad ${i + 1}`;
-              console.log(`📝 Creating new unit: name="${unitName}", rent=${rentAmount}`);
+              // Removed console.log for security
               
               try {
                 await unitService.createUnit({
@@ -248,7 +248,7 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
                   monthly_rent: rentAmount,
                   is_available: true
                 });
-                console.log(`✅ Successfully created unit ${unitName}`);
+                // Removed console.log for security
               } catch (error) {
                 console.error(`❌ Error creating unit ${unitName}:`, error);
                 throw error;
@@ -256,11 +256,11 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
             }
           } else if (formData.units < currentUnits.length) {
             // Delete excess units
-            console.log(`🗑️ Deleting ${currentUnits.length - formData.units} excess units`);
+            // Removed console.log for security
             for (let i = formData.units; i < currentUnits.length; i++) {
               try {
                 await unitService.deleteUnit(currentUnits[i].id);
-                console.log(`✅ Successfully deleted unit ${currentUnits[i].id}`);
+                // Removed console.log for security
               } catch (error) {
                 console.error(`❌ Error deleting unit ${currentUnits[i].id}:`, error);
                 // Continue with other deletions even if one fails

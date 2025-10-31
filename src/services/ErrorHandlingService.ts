@@ -450,7 +450,7 @@ export class ErrorHandlingService {
   }
 
   private async logRecovery(context: Partial<ErrorContext>, attempts: number): Promise<void> {
-    console.log(`✅ Operation recovered after ${attempts} attempts`);
+    // Removed console.log for security
     
     if (context.userId) {
       await this.securityService.logSecurityEvent({
@@ -465,32 +465,32 @@ export class ErrorHandlingService {
 
   private async processNetworkError(errorReport: ErrorReport): Promise<void> {
     // Implement network-specific error handling
-    console.log('Processing network error:', errorReport.error.message);
+    // Removed console.log for security
   }
 
   private async processDatabaseError(errorReport: ErrorReport): Promise<void> {
     // Implement database-specific error handling
-    console.log('Processing database error:', errorReport.error.message);
+    // Removed console.log for security
   }
 
   private async processAuthError(errorReport: ErrorReport): Promise<void> {
     // Implement auth-specific error handling
-    console.log('Processing auth error:', errorReport.error.message);
+    // Removed console.log for security
   }
 
   private async processValidationError(errorReport: ErrorReport): Promise<void> {
     // Implement validation-specific error handling
-    console.log('Processing validation error:', errorReport.error.message);
+    // Removed console.log for security
   }
 
   private async processGenericError(errorReport: ErrorReport): Promise<void> {
     // Implement generic error handling
-    console.log('Processing generic error:', errorReport.error.message);
+    // Removed console.log for security
   }
 
   private async attemptDatabaseReconnection(): Promise<void> {
     // Implement database reconnection logic
-    console.log('Attempting database reconnection...');
+    // Removed console.log for security
   }
 
   private async clearInvalidSession(): Promise<void> {
@@ -501,6 +501,6 @@ export class ErrorHandlingService {
 
   private async sendToMonitoringService(errorReport: ErrorReport): Promise<void> {
     // In production, send to external monitoring service
-    console.log('Would send to monitoring service:', errorReport);
+    // Removed console.log for security
   }
 }

@@ -21,12 +21,12 @@ export class LiveUpdatesService {
    */
   public async initialize(): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
-      console.log('Live Updates: No disponible en web');
+      // Removed console.log for security
       return;
     }
 
     try {
-      console.log('Live Updates: Inicializando servicio...');
+      // Removed console.log for security
       
       // Configurar Live Updates
       await this.configureService();
@@ -39,7 +39,7 @@ export class LiveUpdatesService {
       // Configurar verificación periódica
       this.startPeriodicCheck();
       
-      console.log('Live Updates: Servicio inicializado correctamente');
+      // Removed console.log for security
     } catch (error) {
       console.error('Live Updates: Error al inicializar:', error);
     }
@@ -59,7 +59,7 @@ export class LiveUpdatesService {
       };
 
       await setConfig(config);
-      console.log('Live Updates: Configuración establecida');
+      // Removed console.log for security
     } catch (error) {
       console.error('Live Updates: Error al configurar servicio:', error);
     }
@@ -70,15 +70,15 @@ export class LiveUpdatesService {
    */
   public async checkForUpdates(): Promise<boolean> {
     try {
-      console.log('Live Updates: Verificando actualizaciones...');
+      // Removed console.log for security
       
       const result: SyncResult = await sync();
 
       if (result.activeApplicationPathChanged) {
-        console.log('Live Updates: Nueva actualización aplicada');
+        // Removed console.log for security
         return true;
       } else {
-        console.log('Live Updates: No hay actualizaciones disponibles');
+        // Removed console.log for security
         return false;
       }
     } catch (error) {
@@ -92,12 +92,12 @@ export class LiveUpdatesService {
    */
   public async forceUpdate(): Promise<boolean> {
     try {
-      console.log('Live Updates: Forzando actualización...');
+      // Removed console.log for security
       
       const result: SyncResult = await sync();
 
       if (result.activeApplicationPathChanged) {
-        console.log('Live Updates: Actualización forzada aplicada');
+        // Removed console.log for security
         // Recargar la aplicación
         await reload();
         return true;
@@ -135,7 +135,7 @@ export class LiveUpdatesService {
       await this.checkForUpdates();
     }, this.CHECK_INTERVAL);
 
-    console.log(`Live Updates: Verificación periódica configurada cada ${this.CHECK_INTERVAL / 60000} minutos`);
+    // Removed console.log for security
   }
 
   /**
@@ -145,7 +145,7 @@ export class LiveUpdatesService {
     if (this.updateCheckInterval) {
       clearInterval(this.updateCheckInterval);
       this.updateCheckInterval = null;
-      console.log('Live Updates: Verificación periódica detenida');
+      // Removed console.log for security
     }
   }
 

@@ -39,11 +39,11 @@ const Properties = () => {
 
       try {
         setIsLoading(true);
-        console.log('Loading properties and calculating stats...');
+        // Removed console.log for security
 
         // Load properties from database
         const dbProperties = await propertyService.getProperties();
-        console.log('DB Properties loaded:', dbProperties.length);
+        // Removed console.log for security
 
         // Import tenant service
         const { tenantService } = await import('@/services/TenantService');
@@ -63,8 +63,8 @@ const Properties = () => {
         const tenants = tenantsData || [];
         const units = unitsResult.data || [];
 
-        console.log('Tenants loaded:', tenants.length);
-        console.log('Units loaded:', units.length);
+        // Removed console.log for security
+        // Removed console.log for security
 
         // Map database properties to component format and calculate occupancy
         const mappedProperties = dbProperties.map(dbProp => {
@@ -92,7 +92,7 @@ const Properties = () => {
           };
         });
 
-        console.log('Final mapped properties:', mappedProperties);
+        // Removed console.log for security
         setProperties(mappedProperties);
       } catch (error) {
         console.error("Error loading properties:", error);
@@ -147,7 +147,7 @@ const Properties = () => {
 
       // Load properties from database
       const dbProperties = await propertyService.getProperties();
-      console.log('Reloading properties after save...');
+      // Removed console.log for security
 
       // Get tenants and units to calculate occupancy
       const [tenantsData, unitsResult] = await Promise.all([

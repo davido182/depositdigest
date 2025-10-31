@@ -27,7 +27,7 @@ beforeAll(async () => {
       throw error;
     }
     
-    console.log('Test user setup complete');
+    // Removed console.log for security
   } catch (error) {
     console.warn('Test user setup failed:', error);
   }
@@ -62,7 +62,7 @@ export async function cleanupTestData() {
     await testSupabase.from('units').delete().ilike('unit_number', '%test%');
     await testSupabase.from('properties').delete().ilike('name', '%test%');
     
-    console.log('Test data cleanup complete');
+    // Removed console.log for security
   } catch (error) {
     console.warn('Test data cleanup failed:', error);
   }

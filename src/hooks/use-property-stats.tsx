@@ -36,7 +36,7 @@ export function usePropertyStats() {
 
   const fetchStats = async () => {
     if (!user || !isAuthenticated) {
-      console.log('No user or not authenticated, clearing stats');
+      // Removed console.log for security
       setStats({
         totalUnits: 0,
         totalProperties: 0,
@@ -69,7 +69,7 @@ export function usePropertyStats() {
         throw tenantsError;
       }
 
-      console.log('Fetched tenants count:', tenants?.length || 0);
+      // Removed console.log for security
 
       // Obtener pagos del último mes
       const currentDate = new Date();
@@ -85,7 +85,7 @@ export function usePropertyStats() {
         // Continue with 0 payments
       }
 
-      console.log('Fetched payments count:', payments?.length || 0);
+      // Removed console.log for security
 
       // Para propiedades: contar edificios únicos
       const uniqueBuildings = new Set();
@@ -119,7 +119,7 @@ export function usePropertyStats() {
         isLoading: false,
       };
 
-      console.log('Calculated stats:', newStats);
+      // Removed console.log for security
       setStats(newStats);
     } catch (error) {
       console.error('Error fetching property stats:', error);

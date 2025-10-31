@@ -103,7 +103,7 @@ export class ErrorBoundary extends Component<Props, State> {
         timestamp: new Date().toISOString()
       };
       
-      console.log('Bug report data:', bugReport);
+      // Removed console.log for security
       
       // For now, copy to clipboard
       navigator.clipboard.writeText(JSON.stringify(bugReport, null, 2))

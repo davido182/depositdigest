@@ -80,7 +80,7 @@ export function TenantList({
         }
       });
       
-      console.log("Invitation created:", result);
+      // Removed console.log for security
     } catch (error) {
       console.error("Error creating invitation:", error);
       toast.error("Error al crear invitación", {

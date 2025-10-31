@@ -54,7 +54,7 @@ export function PaymentsList({
   const [viewingPayment, setViewingPayment] = useState<Payment | null>(null);
 
   const handleAddPayment = async (payment: Payment) => {
-    console.log('PaymentsList: Agregando nuevo pago:', payment);
+    // Removed console.log for security
     try {
       // Call onUpdatePayment for both add and update operations
       await onUpdatePayment(payment);
@@ -67,7 +67,7 @@ export function PaymentsList({
   };
 
   const handleUpdatePayment = (payment: Payment) => {
-    console.log('PaymentsList: Actualizando pago:', payment);
+    // Removed console.log for security
     onUpdatePayment(payment);
     setEditingPayment(null);
     toast.success("Pago actualizado exitosamente");

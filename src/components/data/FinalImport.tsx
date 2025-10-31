@@ -97,7 +97,7 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
       };
     });
 
-    console.log('📤 Insertando inquilinos:', tenants);
+    // Removed console.log for security
 
     const { data, error } = await supabase
       .from('tenants')
@@ -109,7 +109,7 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
       throw new Error(`Error en inquilinos: ${error.message}`);
     }
 
-    console.log('✅ Inquilinos insertados:', data?.length);
+    // Removed console.log for security
     return data?.length || 0;
   };
 
@@ -132,8 +132,8 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
       is_active: true
     }));
 
-    console.log('📤 Insertando propiedades:', properties);
-    console.log('📤 Estructura exacta a insertar:', JSON.stringify(properties, null, 2));
+    // Removed console.log for security
+    // Removed console.log for security);
 
     const { data, error } = await supabase
       .from('properties')
@@ -145,7 +145,7 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
       throw new Error(`Error en propiedades: ${error.message}`);
     }
 
-    console.log('✅ Propiedades insertadas:', data?.length);
+    // Removed console.log for security
     return data?.length || 0;
   };
 
@@ -153,7 +153,7 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
 
     let successCount = 0;
 
-    console.log('💰 Procesando pagos:', paymentRows.length);
+    // Removed console.log for security
 
     for (const row of paymentRows) {
       try {
@@ -190,7 +190,7 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
       }
     }
 
-    console.log('✅ Pagos procesados:', successCount);
+    // Removed console.log for security
     return successCount;
   };
 
@@ -207,11 +207,11 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
         return;
       }
 
-      console.log('📊 Datos parseados:', data);
+      // Removed console.log for security
 
       // Detectar automáticamente el tipo de archivo por sus columnas
       const headers = Object.keys(data[0] || {});
-      console.log('📋 Headers detectados:', headers);
+      // Removed console.log for security
 
       let tenantRows = [];
       let propertyRows = [];
@@ -220,19 +220,19 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
       // Detectar si es archivo de inquilinos
       if (headers.includes('name') && headers.includes('email') && !headers.includes('tenant_email')) {
         tenantRows = data.filter(row => row.name && row.email);
-        console.log('👥 Detectado archivo de inquilinos');
+        // Removed console.log for security
       }
 
       // Detectar si es archivo de propiedades
       if (headers.includes('name') && headers.includes('address') && !headers.includes('email')) {
         propertyRows = data.filter(row => row.name);
-        console.log('🏠 Detectado archivo de propiedades');
+        // Removed console.log for security
       }
 
       // Detectar si es archivo de pagos
       if (headers.includes('tenant_email') && headers.includes('amount')) {
         paymentRows = data.filter(row => row.tenant_email && row.amount);
-        console.log('💰 Detectado archivo de pagos');
+        // Removed console.log for security
       }
 
       console.log('📋 Filas separadas:', {
@@ -240,9 +240,9 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
         propiedades: propertyRows.length,
         pagos: paymentRows.length
       });
-      console.log('👥 Datos de inquilinos:', tenantRows);
-      console.log('🏠 Datos de propiedades:', propertyRows);
-      console.log('💰 Datos de pagos:', paymentRows);
+      // Removed console.log for security
+      // Removed console.log for security
+      // Removed console.log for security
 
       let results = [];
 
@@ -251,7 +251,7 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
         try {
           const count = await importTenants(tenantRows);
           results.push(`${count} inquilinos`);
-          console.log(`✅ Importados ${count} inquilinos exitosamente`);
+          // Removed console.log for security
         } catch (error: any) {
           console.error('❌ Error importando inquilinos:', error);
           const errorMsg = error.message || 'Error desconocido';
@@ -265,7 +265,7 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
         try {
           const count = await importProperties(propertyRows);
           results.push(`${count} propiedades`);
-          console.log(`✅ Importadas ${count} propiedades exitosamente`);
+          // Removed console.log for security
         } catch (error: any) {
           console.error('❌ Error importando propiedades:', error);
           const errorMsg = error.message || 'Error desconocido';
@@ -278,7 +278,7 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
         try {
           const count = await importPayments(paymentRows);
           results.push(`${count} pagos`);
-          console.log(`✅ Importados ${count} pagos exitosamente`);
+          // Removed console.log for security
         } catch (error: any) {
           console.error('❌ Error importando pagos:', error);
           const errorMsg = error.message || 'Error desconocido';

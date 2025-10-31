@@ -1,11 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export async function debugDatabaseStructure() {
-  console.log('🔍 Verificando estructura real de la base de datos...');
+  // Removed console.log for security
   
   try {
     // Intentar obtener un registro de cada tabla para ver su estructura
-    console.log('\n📋 TENANTS:');
+    // Removed console.log for security
     const { data: tenants, error: tenantsError } = await supabase
       .from('tenants')
       .select('*')
@@ -14,11 +14,11 @@ export async function debugDatabaseStructure() {
     if (tenantsError) {
       console.error('Error tenants:', tenantsError);
     } else {
-      console.log('Estructura tenants:', tenants?.[0] ? Object.keys(tenants[0]) : 'Tabla vacía');
-      console.log('Datos tenants:', tenants);
+      // Removed console.log for security : 'Tabla vacía');
+      // Removed console.log for security
     }
 
-    console.log('\n🏠 PROPERTIES:');
+    // Removed console.log for security
     const { data: properties, error: propertiesError } = await supabase
       .from('properties')
       .select('*')
@@ -27,11 +27,11 @@ export async function debugDatabaseStructure() {
     if (propertiesError) {
       console.error('Error properties:', propertiesError);
     } else {
-      console.log('Estructura properties:', properties?.[0] ? Object.keys(properties[0]) : 'Tabla vacía');
-      console.log('Datos properties:', properties);
+      // Removed console.log for security : 'Tabla vacía');
+      // Removed console.log for security
     }
 
-    console.log('\n💰 PAYMENTS:');
+    // Removed console.log for security
     const { data: payments, error: paymentsError } = await supabase
       .from('payments')
       .select('*')
@@ -40,8 +40,8 @@ export async function debugDatabaseStructure() {
     if (paymentsError) {
       console.error('Error payments:', paymentsError);
     } else {
-      console.log('Estructura payments:', payments?.[0] ? Object.keys(payments[0]) : 'Tabla vacía');
-      console.log('Datos payments:', payments);
+      // Removed console.log for security : 'Tabla vacía');
+      // Removed console.log for security
     }
 
   } catch (error) {

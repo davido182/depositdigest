@@ -52,8 +52,7 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
   const [sortBy, setSortBy] = useState("name");
   const [deleteConfirmTenant, setDeleteConfirmTenant] = useState<Tenant | null>(null);
 
-  console.log('🔍 [NEW-TABLE] TenantsTable received tenants:', tenants.length);
-  console.log('🔍 [NEW-TABLE] Sample tenant data:', tenants[0]);
+  // TenantsTable received tenants data
 
   // Filtrar y ordenar inquilinos
   const filteredAndSortedTenants = tenants
@@ -320,3 +319,4 @@ export function TenantsTable({ tenants, onEditTenant, onDeleteTenant }: TenantsT
     </div>
   );
 }
+

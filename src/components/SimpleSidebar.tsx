@@ -25,7 +25,7 @@ const SimpleSidebar = () => {
   const { userRole, hasActivePremium, user, signOut, isLoading } = useAuth();
   const { trialDaysLeft, isTrialUser } = useTrialCountdown();
 
-  console.log("SimpleSidebar render - userRole:", userRole, "isLoading:", isLoading);
+  // Removed console.log for security
 
   // Get user display name
   const getUserDisplayName = () => {
@@ -39,7 +39,7 @@ const SimpleSidebar = () => {
   };
 
   const getNavigationItems = () => {
-    console.log("Getting navigation items for role:", userRole);
+    // Removed console.log for security
     
     const baseItems = [
       { name: "Dashboard", href: "/dashboard", icon: Building2 },
@@ -79,7 +79,7 @@ const SimpleSidebar = () => {
       // Add settings at the end
       landlordItems.push({ name: "Configuración", href: "/settings", icon: Settings });
       
-      console.log("Landlord items:", landlordItems);
+      // Removed console.log for security
       return landlordItems;
     }
 

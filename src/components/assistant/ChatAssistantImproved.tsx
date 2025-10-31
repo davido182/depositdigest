@@ -73,7 +73,7 @@ export function ChatAssistantImproved() {
         }
 
         try {
-            console.log('Fetching data for assistant...');
+            // Removed console.log for security
 
             // Fetch tenants
             const { data: tenantsData, error: tenantsError } = await supabase

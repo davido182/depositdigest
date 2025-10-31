@@ -26,7 +26,7 @@ const TenantName = ({ tenantId }: { tenantId?: string | null }) => {
           setTenantName(tenant.name || 'Inquilino');
         }
       } catch (error) {
-        console.log('Could not load tenant name for tenant:', tenantId);
+        // Removed console.log for security
       }
     };
 
@@ -96,7 +96,7 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
 
   const handleSaveUnit = async (updatedUnit: Unit) => {
     try {
-      console.log('🔄 Saving unit in UnitsDisplay:', updatedUnit);
+      // Removed console.log for security
 
       // Prepare the update data
       const updateData = {
@@ -106,12 +106,12 @@ export function UnitsDisplay({ propertyId }: UnitsDisplayProps) {
         tenant_id: updatedUnit.tenant_id || null
       };
 
-      console.log('🔄 Update data being sent:', updateData);
+      // Removed console.log for security
 
       // Update in database
       const result = await unitService.updateUnit(updatedUnit.id, updateData);
 
-      console.log('✅ Unit updated successfully in database:', result);
+      // Removed console.log for security
 
       // Tenant assignment is handled by UnitEditForm now
 

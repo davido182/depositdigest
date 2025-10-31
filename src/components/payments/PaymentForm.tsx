@@ -167,7 +167,7 @@ export function PaymentForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('PaymentForm: Starting submit with formData:', formData);
+    // Removed console.log for security
     
     if (validateForm()) {
       try {
@@ -175,7 +175,7 @@ export function PaymentForm({
         
         // Upload receipt if provided
         if (receiptFile) {
-          console.log('PaymentForm: Uploading receipt file:', receiptFile.name, receiptFile.type, receiptFile.size);
+          // Removed console.log for security
           
           // Validate file type
           const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
@@ -205,7 +205,7 @@ export function PaymentForm({
           }
           
           receiptPath = filePath;
-          console.log('Receipt uploaded successfully:', receiptPath, uploadData);
+          // Removed console.log for security
         }
         
         // Get current user for user_id
@@ -229,11 +229,11 @@ export function PaymentForm({
           ...(payment && { id: payment.id })
         };
         
-        console.log('PaymentForm: Mapped payment data for save:', paymentToSave);
+        // Removed console.log for security
         
         // Simplified tracking without payment_receipts table
         // Payment tracking functionality temporarily disabled
-        console.log('PaymentForm: Payment tracking skipped (table not available)');
+        // Removed console.log for security');
         
         // Convert back to frontend format for onSave callback
         const frontendPayment: Payment = {
@@ -251,7 +251,7 @@ export function PaymentForm({
           ...(receiptPath && { receipt_file_path: receiptPath })
         };
         
-        console.log('PaymentForm: Calling onSave with:', frontendPayment);
+        // Removed console.log for security
         onSave(frontendPayment);
         onClose();
         toast.success('Pago guardado exitosamente');

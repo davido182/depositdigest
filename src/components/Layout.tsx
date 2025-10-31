@@ -23,25 +23,25 @@ export function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     setMounted(true);
-    console.log("Layout component mounted");
+    // Removed console.log for security
     
     if (isNative) {
-      console.log(`Running on native ${platform} platform`);
+      // Removed console.log for security
       // Inicializar Live Updates solo en plataformas nativas
       liveUpdatesService.initialize().catch(error => {
         console.error("Error initializing Live Updates:", error);
       });
     } else {
-      console.log("Running in browser");
+      // Removed console.log for security
     }
   }, [isNative, platform]);
 
   useEffect(() => {
-    console.log("Layout auth state:", { isAuthenticated, isLoading, user: user?.email });
+    // Removed console.log for security
   }, [isAuthenticated, isLoading, user]);
 
   if (!mounted) {
-    console.log("Layout not mounted yet");
+    // Removed console.log for security
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -51,7 +51,7 @@ export function Layout({ children }: LayoutProps) {
 
   // Show loading while auth is being determined
   if (isLoading) {
-    console.log("Layout showing loading state");
+    // Removed console.log for security
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -61,7 +61,7 @@ export function Layout({ children }: LayoutProps) {
 
   // Only show sidebar if user is authenticated
   if (!isAuthenticated) {
-    console.log("Layout: User not authenticated, showing children only");
+    // Removed console.log for security
     return (
       <MobileOrientationWrapper className={cn(
         "min-h-screen bg-background",
@@ -75,7 +75,7 @@ export function Layout({ children }: LayoutProps) {
     );
   }
 
-  console.log("Layout: User authenticated, showing sidebar + children");
+  // Removed console.log for security
   return (
     <MobileOrientationWrapper>
       <SidebarProvider>
@@ -116,3 +116,4 @@ export function Layout({ children }: LayoutProps) {
     </MobileOrientationWrapper>
   );
 }
+

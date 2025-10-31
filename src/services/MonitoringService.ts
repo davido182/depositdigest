@@ -148,7 +148,7 @@ export class MonitoringService {
         resolution
       };
 
-      console.log('✅ Alert resolved:', alert);
+      // Removed console.log for security
     }
   }
 
@@ -199,7 +199,7 @@ export class MonitoringService {
       this.cleanupOldData();
     }, 60 * 60 * 1000);
 
-    console.log('🔍 Monitoring service started');
+    // Removed console.log for security
   }
 
   /**
@@ -207,7 +207,7 @@ export class MonitoringService {
    */
   stopMonitoring(): void {
     // Clear intervals would be stored in instance variables in production
-    console.log('🔍 Monitoring service stopped');
+    // Removed console.log for security
   }
 
   // Private health check methods
@@ -481,7 +481,7 @@ export class MonitoringService {
     // Set up resource monitoring
     this.setupResourceMonitoring();
     
-    console.log('🔍 Comprehensive monitoring initialized');
+    // Removed console.log for security
   }
 
   private setupErrorMonitoring(): void {
@@ -653,7 +653,7 @@ export class MonitoringService {
       );
       localStorage.setItem('health_history', JSON.stringify(recentHealth));
 
-      console.log('🧹 Old monitoring data cleaned up');
+      // Removed console.log for security
     } catch (error) {
       console.error('Failed to cleanup old data:', error);
     }
@@ -661,6 +661,6 @@ export class MonitoringService {
 
   private async sendAlertToMonitoringService(alert: Alert): Promise<void> {
     // In production, send to external monitoring service like PagerDuty, Slack, etc.
-    console.log('Would send alert to monitoring service:', alert);
+    // Removed console.log for security
   }
 }

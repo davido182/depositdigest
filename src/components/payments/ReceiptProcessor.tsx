@@ -39,7 +39,7 @@ export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessor
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      console.log('Archivo seleccionado:', file.name, 'Tipo:', file.type, 'Tamaño:', file.size);
+      // Removed console.log for security
       setSelectedFile(file);
       processReceipt(file);
     }
@@ -47,7 +47,7 @@ export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessor
 
   const processReceipt = async (file: File) => {
     setIsProcessing(true);
-    console.log('Procesando comprobante:', file.name);
+    // Removed console.log for security
     
     try {
       // Simular tiempo de procesamiento
@@ -61,7 +61,7 @@ export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessor
         // No inventar monto - dejar que el usuario lo ingrese
       };
       
-      console.log('Archivo cargado:', mockExtractedData);
+      // Removed console.log for security
       
       setExtractedData(mockExtractedData);
       setVerificationData(prev => ({
@@ -92,7 +92,7 @@ export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessor
       return;
     }
 
-    console.log('Creando pago para inquilino:', selectedTenant.name);
+    // Removed console.log for security
 
     const paymentId = `payment-${Date.now()}`;
     const newPayment: Payment = {
@@ -168,8 +168,8 @@ Procesado: ${new Date().toLocaleString()}`;
   // Filtrar inquilinos activos para mostrar en el selector
   const activeTenantsForSelector = tenants.filter(tenant => tenant.status === 'active');
   
-  console.log('Inquilinos disponibles para selector:', activeTenantsForSelector.length);
-  console.log('Lista de inquilinos:', activeTenantsForSelector.map(t => ({ id: t.id, name: t.name, unit: t.unit })));
+  // Removed console.log for security
+  // Removed console.log for security));
 
   return (
     <div className="space-y-6">

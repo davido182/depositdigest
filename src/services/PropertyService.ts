@@ -72,7 +72,7 @@ export class PropertyService extends BaseService {
     }
 
     // Las unidades se crearán manualmente desde "Gestionar Unidades"
-    console.log(`✅ Property created: ${data.name} (${property.total_units} units planned)`);
+    // Removed console.log for security`);
 
     return data;
   }

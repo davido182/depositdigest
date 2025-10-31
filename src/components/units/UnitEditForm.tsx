@@ -35,7 +35,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
   useEffect(() => {
     if (isOpen && unit) {
-      console.log('🔄 UnitEditForm opened with unit:', unit);
+      // Removed console.log for security
 
       // Load tenants first, then set the selected tenant
       loadAvailableTenants().then(() => {
@@ -47,7 +47,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
 
   const findAssignedTenant = async (unitId: string) => {
     try {
-      console.log('🔍 Finding tenant assigned to unit:', unitId);
+      // Removed console.log for security
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -60,26 +60,26 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         .single();
 
       if (!unitError && unitData?.tenant_id) {
-        console.log('✅ Found assigned tenant ID:', unitData.tenant_id);
+        // Removed console.log for security
         setSelectedTenantId(unitData.tenant_id);
       } else {
-        console.log('📭 No tenant assigned to this unit');
+        // Removed console.log for security
         setSelectedTenantId("");
       }
     } catch (error) {
-      console.error('Error finding assigned tenant:', error);
+      // Removed console for security
       setSelectedTenantId("");
     }
   };
 
   const loadAvailableTenants = async () => {
     try {
-      console.log('🔍 Loading tenants for unit assignment...');
+      // Removed console.log for security
 
       // Get current user to filter tenants
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.error('❌ No authenticated user');
+        // Removed console for security
         setAvailableTenants([]);
         return;
       }
@@ -93,12 +93,12 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         .eq('landlord_id', user.id);
 
       if (error) {
-        console.error('❌ Supabase error loading tenants:', error);
+        // Removed console for security
         setAvailableTenants([]);
         return;
       }
 
-      console.log('📊 Raw tenants data from supabase:', data);
+      // Removed console.log for security
 
       // Map the data to our interface using correct field names
       const mappedTenants = (data || []).map(tenant => ({
@@ -107,17 +107,17 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         email: tenant.email || 'Sin email'
       }));
 
-      console.log('✅ Mapped tenants for selection:', mappedTenants);
+      // Removed console.log for security
       setAvailableTenants(mappedTenants);
-      console.log(`🎯 Successfully loaded ${mappedTenants.length} tenants for unit assignment`);
+      // Removed console.log for security
     } catch (error) {
-      console.error('💥 Error loading tenants:', error);
+      // Removed console for security
       setAvailableTenants([]);
     }
   };
 
   const handleTenantChange = (value: string) => {
-    console.log('🔄 [UNIT-FORM] Tenant selection changed:', value);
+    // Removed console.log for security
     // Handle "no-tenant" as empty string
     const tenantId = value === "no-tenant" ? "" : value;
     setSelectedTenantId(tenantId);
@@ -133,7 +133,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         .single();
 
       if (error || !tenantData) {
-        console.log('No se pudo obtener datos del inquilino');
+        // Removed console.log for security
         return;
       }
 
@@ -187,13 +187,13 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     e.preventDefault();
 
     if (!unit) {
-      console.log('No unit provided');
+      // Removed console.log for security
       return;
     }
 
     try {
       setIsLoading(true);
-      console.log('🔄 Processing tenant assignment:', selectedTenantId);
+      // Removed console.log for security
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -250,7 +250,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         await unassignTenantFromUnit(unit.id, user.id);
       }
 
-      console.log('✅ Unit assignment processed successfully');
+      // Removed console.log for security
 
       // Close the form and show success message
       onClose();
@@ -274,7 +274,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
   };
 
   const assignTenantToUnit = async (tenantId: string, unitId: string, userId: string) => {
-    console.log('🏠 [BIDIRECTIONAL] Assigning tenant to unit:', { tenantId, unitId });
+    // Removed console.log for security
 
     // Step 1: Get unit and property information
     const { data: unitData, error: unitFetchError } = await supabase
@@ -298,7 +298,7 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
       throw new Error('Error al obtener datos de la unidad');
     }
 
-    console.log('📋 [BIDIRECTIONAL] Unit data:', unitData);
+    // Removed console.log for security
 
     // Step 2: Update units table (mark as occupied)
     const { error: unitError } = await supabase
@@ -327,18 +327,18 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
       .eq('landlord_id', userId);
 
     if (tenantError) {
-      console.error('❌ Error updating tenant with unit info:', tenantError);
+      // Removed console for security
       // Don't throw error here - unit assignment worked, this is just sync
-      console.log('⚠️ Unit assigned but tenant sync failed - will need manual refresh');
+      // Removed console.log for security
     } else {
-      console.log('✅ [BIDIRECTIONAL] Tenant updated with unit and property info');
+      // Removed console.log for security
     }
 
-    console.log('✅ [BIDIRECTIONAL] Tenant assigned to unit successfully with full sync');
+    // Removed console.log for security
   };
 
   const unassignTenantFromUnit = async (unitId: string, userId: string) => {
-    console.log('🏠 [BIDIRECTIONAL] Unassigning tenant from unit:', unitId);
+    // Removed console.log for security
 
     // Step 1: Get current tenant assigned to this unit
     const { data: unitData, error: unitFetchError } = await supabase
@@ -379,14 +379,14 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
         .eq('landlord_id', userId);
 
       if (tenantError) {
-        console.error('❌ Error clearing tenant unit info:', tenantError);
-        console.log('⚠️ Unit unassigned but tenant sync failed - will need manual refresh');
+        // Removed console for security
+        // Removed console.log for security
       } else {
-        console.log('✅ [BIDIRECTIONAL] Tenant unit info cleared');
+        // Removed console.log for security
       }
     }
 
-    console.log('✅ [BIDIRECTIONAL] Tenant unassigned from unit with full sync');
+    // Removed console.log for security
   };
 
   // Remove this function as we don't need to duplicate tenants
@@ -455,3 +455,4 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
     </Dialog>
   );
 }
+

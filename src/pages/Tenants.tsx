@@ -27,14 +27,14 @@ const Tenants = () => {
     const loadTenants = async () => {
       try {
         setIsLoading(true);
-        console.log('🔍 [DEFINITIVE] Loading tenants directly...');
+        // Removed console.log for security
 
-        console.log('📋 Loading tenants from Supabase...');
+        // Removed console.log for security
         const loadedTenants = await tenantService.getTenants();
-        console.log(`✅ Loaded ${loadedTenants.length} tenants:`, loadedTenants);
+        // Removed console.log for security
         setTenants(loadedTenants);
       } catch (error) {
-        console.error("❌ Error loading tenants:", error);
+        // Removed console for security
         const errorMessage = error instanceof Error ? error.message : String(error);
         toast.error(`Error al cargar los datos de inquilinos: ${errorMessage}`);
       } finally {
@@ -65,36 +65,36 @@ const Tenants = () => {
       setTenants(tenants.filter(t => t.id !== tenant.id));
       toast.success(`Inquilino ${tenant.name} eliminado exitosamente`);
     } catch (error) {
-      console.error("Error removing tenant:", error);
+      // Removed console for security
       toast.error("Error al eliminar el inquilino");
     }
   };
 
   const handleSaveTenant = async (updatedTenant: Tenant) => {
     try {
-      console.log('💾 Starting save operation for tenant:', updatedTenant);
+      // Removed console.log for security
 
       if (currentTenant) {
-        console.log('🔄 Updating existing tenant:', currentTenant.id);
+        // Removed console.log for security
         const result = await tenantService.updateTenant(updatedTenant.id, updatedTenant);
-        console.log('✅ Update result:', result);
+        // Removed console.log for security
         toast.success("Inquilino actualizado exitosamente");
       } else {
-        console.log('➕ Creating new tenant');
+        // Removed console.log for security
         const result = await tenantService.createTenant(updatedTenant);
-        console.log('✅ Create result:', result);
+        // Removed console.log for security
         toast.success("Inquilino agregado exitosamente");
       }
 
       // Refresh the tenant list to show updated data
-      console.log('🔄 Refreshing tenant list after save...');
+      // Removed console.log for security
       const refreshedTenants = await tenantService.getTenants();
-      console.log('📋 Refreshed tenants:', refreshedTenants);
+      // Removed console.log for security
       setTenants(refreshedTenants);
 
       setIsEditModalOpen(false);
     } catch (error) {
-      console.error("❌ Error saving tenant:", error);
+      // Removed console for security
       console.error("❌ Error details:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error(`Error al guardar el inquilino: ${errorMessage}`);
@@ -174,4 +174,5 @@ const Tenants = () => {
 };
 
 export default Tenants;
+
 

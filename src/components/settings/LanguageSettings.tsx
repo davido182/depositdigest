@@ -14,7 +14,7 @@ export function LanguageSettings() {
     const savedLanguage = 'es';
     localStorage.setItem('app-language', savedLanguage);
     setSelectedLanguage(savedLanguage);
-    console.log('Idioma configurado a español por defecto');
+    // Removed console.log for security
   }, []);
 
   const handleLanguageChange = (language: string) => {

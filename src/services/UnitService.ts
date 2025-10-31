@@ -6,7 +6,7 @@ export class UnitService extends BaseService {
   async getUnitsByProperty(propertyId: string): Promise<Unit[]> {
     const user = await this.ensureAuthenticated();
     
-    console.log('🔍 Fetching units for property:', propertyId);
+    // Removed console.log for security
     
     // First verify the property belongs to the user
     const { data: property, error: propertyError } = await supabase
@@ -64,7 +64,7 @@ export class UnitService extends BaseService {
       throw new Error('Property not found or access denied');
     }
 
-    console.log('📝 Creating new unit:', unit);
+    // Removed console.log for security
 
     const { data, error } = await supabase
       .from('units')
@@ -83,7 +83,7 @@ export class UnitService extends BaseService {
       throw error;
     }
 
-    console.log('✅ Unit created:', data);
+    // Removed console.log for security
     return data;
   }
 
@@ -105,7 +105,7 @@ export class UnitService extends BaseService {
       throw new Error('Unit not found or access denied');
     }
 
-    console.log('🔄 Updating unit with data:', updates);
+    // Removed console.log for security
     
     const updatePayload = {
       ...(updates.unit_number && { unit_number: updates.unit_number }),
@@ -115,7 +115,7 @@ export class UnitService extends BaseService {
       ...(updates.tenant_id !== undefined && { tenant_id: updates.tenant_id })
     };
     
-    console.log('🔄 Update payload:', updatePayload);
+    // Removed console.log for security
 
     const { data, error } = await supabase
       .from('units')

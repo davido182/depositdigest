@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
 
-      console.log("✅ Successfully upgraded to premium");
+      // Removed console.log for security
       // Refresh the role
       await refreshUserRole();
       
@@ -101,13 +101,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     if (!userToCheck) {
-      console.log("❌ No user to check, setting role to null");
+      // Removed console.log for security
       setUserRole(null);
       return;
     }
 
     try {
-      console.log("📡 Fetching user role from database for user:", userToCheck.id);
+      // Removed console.log for security
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role, trial_end_date')
@@ -116,17 +116,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .limit(1)
         .maybeSingle();
         
-      console.log("📡 Query result:", { roleData, roleError });
+      // Removed console.log for security
 
       if (roleError) {
         console.error("❌ Error fetching user role:", roleError);
-        console.log("🔧 Setting default role: landlord_free");
+        // Removed console.log for security
         setUserRole('landlord_free');
         return;
       }
 
       if (!roleData) {
-        console.log("📝 No role found, creating 7-day premium trial for user:", userToCheck.id);
+        // Removed console.log for security
         const trialEndDate = new Date();
         trialEndDate.setDate(trialEndDate.getDate() + 7); // 7 días de prueba premium
         
@@ -146,43 +146,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .select('role, trial_end_date')
           .single();
           
-        console.log("📝 Insert result:", { newRoleData, createError });
+        // Removed console.log for security
         
         if (createError) {
           console.error("❌ Error creating user role:", createError);
-          console.log("🔧 Fallback: setting role to landlord_free");
+          // Removed console.log for security
           setUserRole('landlord_free');
         } else {
-          console.log("✅ Created new premium trial role:", newRoleData?.role);
+          // Removed console.log for security
           setUserRole(newRoleData?.role || 'landlord_free');
           
           // Verificar inmediatamente en la base de datos
-          console.log("🔍 Verifying role was actually inserted...");
+          // Removed console.log for security
           const { data: verifyData, error: verifyError } = await supabase
             .from('user_roles')
             .select('*')
             .eq('user_id', userToCheck.id);
           
-          console.log("🔍 Verification query result:", { verifyData, verifyError });
+          // Removed console.log for security
           
           // También verificar en toda la tabla
           const { data: allRoles, error: allError } = await supabase
             .from('user_roles')
             .select('*');
           
-          console.log("🔍 ALL user_roles in database:", { allRoles, allError });
+          // Removed console.log for security
         }
           
         if (createError) {
           console.error("❌ Error creating user role:", createError);
-          console.log("🔧 Fallback: setting role to landlord_free");
+          // Removed console.log for security
           setUserRole('landlord_free');
         } else {
-          console.log("✅ Created new premium trial role:", newRoleData.role);
+          // Removed console.log for security
           setUserRole(newRoleData.role);
         }
       } else {
-        console.log("✅ Found existing role:", roleData.role);
+        // Removed console.log for security
         
         // Check if trial has expired for premium users
         if (roleData.role === 'landlord_premium' && roleData.trial_end_date) {
@@ -190,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const now = new Date();
           
           if (now > trialEndDate) {
-            console.log("⏰ Premium trial expired, downgrading to free...");
+            // Removed console.log for security
             
             // Update role to free in database
             const { error: updateError } = await supabase
@@ -201,12 +201,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (updateError) {
               console.error("❌ Error downgrading expired trial:", updateError);
             } else {
-              console.log("✅ Successfully downgraded expired trial to free");
+              // Removed console.log for security
             }
             
             setUserRole('landlord_free');
           } else {
-            console.log("✅ Premium trial still active");
+            // Removed console.log for security
             setUserRole(roleData.role);
           }
         } else {
@@ -215,7 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("💥 Exception in refreshUserRole:", error);
-      console.log("🔧 Fallback: setting role to landlord_free");
+      // Removed console.log for security
       setUserRole('landlord_free');
     }
   };
@@ -225,7 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!currentUser) return;
     
     try {
-      console.log("💳 Checking subscription for:", currentUser.email);
+      // Removed console.log for security
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
@@ -234,7 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (data) {
-        console.log("✅ Subscription data:", data);
+        // Removed console.log for security
         setSubscriptionPlan(data.plan);
         
         if (data.plan === 'premium' && userRole === 'landlord_free') {
@@ -257,20 +257,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let isMounted = true;
     let initializationTimeout: NodeJS.Timeout;
 
-    console.log("🚀 Starting auth initialization...");
+    // Removed console.log for security
 
     const initializeAuth = async () => {
       try {
         // Set timeout as fallback
         initializationTimeout = setTimeout(() => {
           if (isMounted && !isInitialized) {
-            console.log("⏰ Auth initialization timeout - setting loading to false");
+            // Removed console.log for security
             setIsLoading(false);
             setIsInitialized(true);
           }
         }, 10000); // 10 second timeout
 
-        console.log("📡 Getting initial session...");
+        // Removed console.log for security
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -282,10 +282,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         
-        console.log("📋 Initial session:", { hasSession: !!session, hasUser: !!session?.user });
+        // Removed console.log for security
         
         if (session?.user && isMounted) {
-          console.log("👤 Setting initial user and session");
+          // Removed console.log for security
           setUser(session.user);
           setSession(session);
           
@@ -316,15 +316,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
 
     // Listen for auth changes
-    console.log("👂 Setting up auth state listener...");
+    // Removed console.log for security
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!isMounted) return;
         
-        console.log("🔔 Auth event:", event, { hasSession: !!session, hasUser: !!session?.user });
+        // Removed console.log for security
         
         if (event === 'PASSWORD_RECOVERY') {
-          console.log("🔑 Password recovery event");
+          // Removed console.log for security
           setIsPasswordRecovery(true);
           setUser(session?.user ?? null);
           setSession(session);
@@ -333,13 +333,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         
         if (event === 'SIGNED_UP' && session?.user) {
-          console.log("📝 User signed up, creating role...");
+          // Removed console.log for security
           setUser(session.user);
           setSession(session);
           setIsLoading(false);
           
           // Force create role for new user immediately
-          console.log("🚀 FORCING role creation for new signup");
+          // Removed console.log for security
           const trialEndDate = new Date();
           trialEndDate.setDate(trialEndDate.getDate() + 7);
           
@@ -353,7 +353,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               onConflict: 'user_id'
             })
             .then(({ data, error }) => {
-              console.log("🚀 New user role creation result:", { data, error });
+              // Removed console.log for security
               if (!error) {
                 setUserRole('landlord_premium');
               }
@@ -363,7 +363,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         
         if (event === 'SIGNED_OUT') {
-          console.log("👋 User signed out");
+          // Removed console.log for security
           setIsPasswordRecovery(false);
           setUserRole(null);
           setSubscriptionPlan(null);
@@ -374,20 +374,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         
         if (event === 'SIGNED_IN' && session?.user) {
-          console.log("🎉 User signed in successfully");
+          // Removed console.log for security
           setIsPasswordRecovery(false);
           setUser(session.user);
           setSession(session);
           setIsLoading(false);
           
           // Force role creation/refresh immediately
-          console.log("🔄 Forcing role refresh for signed in user");
+          // Removed console.log for security
           refreshUserRole(session.user);
           return;
         }
         
         if (event === 'TOKEN_REFRESHED' && session?.user) {
-          console.log("🔄 Token refreshed");
+          // Removed console.log for security
           setUser(session.user);
           setSession(session);
           return;
@@ -399,7 +399,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => {
-      console.log("🧹 Cleaning up auth context");
+      // Removed console.log for security
       isMounted = false;
       subscription.unsubscribe();
       if (initializationTimeout) {
@@ -409,7 +409,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []); // Empty dependency array - only run once
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    console.log("📝 SignUp attempt:", email);
+    // Removed console.log for security
     setIsLoading(true);
     
     try {
@@ -430,13 +430,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
 
-      console.log("✅ SignUp successful:", data.user?.email);
+      // Removed console.log for security
       
       // If user is created and confirmed, create role immediately
       if (data.user && !data.user.email_confirmed_at) {
-        console.log("📝 User created but needs email confirmation");
+        // Removed console.log for security
       } else if (data.user) {
-        console.log("📝 User created and confirmed, creating role...");
+        // Removed console.log for security
         // Create role immediately for confirmed users
         setTimeout(() => {
           refreshUserRole(data.user);
@@ -448,7 +448,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    console.log("🔐 SignIn attempt:", email);
+    // Removed console.log for security
     setIsLoading(true);
     
     try {
@@ -462,11 +462,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
       
-      console.log("✅ SignIn successful:", data.user?.email);
+      // Removed console.log for security
       
       // Force role refresh after successful login
       if (data.user) {
-        console.log("🔄 Manually triggering role refresh after login");
+        // Removed console.log for security
         setTimeout(() => {
           refreshUserRole(data.user);
         }, 1000);
@@ -479,7 +479,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    console.log("👋 SignOut initiated");
+    // Removed console.log for security
     setIsLoading(true);
     
     try {
@@ -493,14 +493,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear the visited flag so user sees landing page on next visit
       localStorage.removeItem('rentaflux_has_visited');
       
-      console.log("✅ SignOut successful");
+      // Removed console.log for security
     } finally {
       setIsLoading(false);
     }
   };
 
   const resetPassword = async (email: string) => {
-    console.log("🔑 Password reset attempt for:", email);
+    // Removed console.log for security
     
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/login?reset=true`
@@ -511,11 +511,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
 
-    console.log("✅ Password reset email sent successfully");
+    // Removed console.log for security
   };
 
   const updatePassword = async (newPassword: string) => {
-    console.log("🔑 Password update attempt");
+    // Removed console.log for security
     
     const { error } = await supabase.auth.updateUser({
       password: newPassword
@@ -526,7 +526,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
 
-    console.log("✅ Password updated successfully");
+    // Removed console.log for security
     setIsPasswordRecovery(false);
   };
 

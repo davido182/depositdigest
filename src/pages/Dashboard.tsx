@@ -81,11 +81,11 @@ const Dashboard = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        console.log('Loading tenants and properties from Supabase...');
+        // Removed console.log for security
 
         // Load tenants
         const loadedTenants = await tenantService.getTenants();
-        console.log(`Dashboard: Loaded ${loadedTenants.length} tenants`);
+        // Removed console.log for security
         setTenants(loadedTenants);
 
         // Load properties from database
@@ -106,7 +106,7 @@ const Dashboard = () => {
                 const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
                 const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.monthly_rent || 0), 0);
 
-                console.log(`Property ${dbProp.name}: ${propertyUnits.length} units, ${occupiedUnits.length} occupied, €${totalRevenue} revenue`);
+                // Removed console.log for security
 
                 return {
                   id: dbProp.id,

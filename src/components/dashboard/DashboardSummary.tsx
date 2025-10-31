@@ -35,7 +35,7 @@ export function DashboardSummary({
     isLoading: isLoading
   };
 
-  console.log('DashboardSummary: Using stats:', displayStats);
+  // Removed console.log for security
 
   if (displayStats.isLoading) {
     return (

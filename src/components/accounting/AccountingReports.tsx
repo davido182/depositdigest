@@ -25,7 +25,7 @@ function AccountingStatsCards() {
     try {
       const currentYear = new Date().getFullYear();
 
-      console.log('AccountingReports: Loading data for year:', currentYear);
+      // Removed console.log for security
 
       // Load data from existing tables
       const [tenantsRes, unitsRes, paymentsRes] = await Promise.all([

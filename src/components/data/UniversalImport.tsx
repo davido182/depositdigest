@@ -37,7 +37,7 @@ María García,maria@email.com,555-0124`;
   };
 
   const parseCSV = (text: string): any[] => {
-    console.log('📄 Parseando CSV...');
+    // Removed console.log for security
     const lines = text.trim().split('\n');
     
     if (lines.length < 2) return [];
@@ -72,7 +72,7 @@ María García,maria@email.com,555-0124`;
         return;
       }
 
-      console.log('📊 Datos a importar:', data);
+      // Removed console.log for security
 
       // Intentar importar como inquilinos con diferentes nombres de columna
       const tenants = data.map(row => {
@@ -101,7 +101,7 @@ María García,maria@email.com,555-0124`;
         return tenant;
       });
 
-      console.log('📤 Enviando a Supabase:', tenants);
+      // Removed console.log for security
 
       // Intentar insertar
       const { data: result, error } = await supabase

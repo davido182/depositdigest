@@ -21,7 +21,7 @@ export function AutomatedAccountingIntegration() {
           filter: `user_id=eq.${user.id}`
         },
         async (payload) => {
-          console.log('New payment detected, creating accounting entries:', payload.new);
+          // Removed console.log for security
           await createAccountingEntriesForPayment(payload.new);
         }
       )
@@ -104,7 +104,7 @@ export function AutomatedAccountingIntegration() {
         if (error) {
           console.error('Error creating accounting entries:', error);
         } else {
-          console.log('Accounting entries created successfully for payment:', payment.id);
+          // Removed console.log for security
         }
       }
     } catch (error) {

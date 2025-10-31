@@ -7,26 +7,19 @@ const ProtectedRoute = () => {
   const { isAuthenticated, isLoading, userRole, user } = useAuth();
   const [showTimeoutError, setShowTimeoutError] = useState(false);
 
-  console.log("🛡️ ProtectedRoute render:", {
-    isAuthenticated,
-    isLoading,
-    userRole,
-    hasUser: !!user,
-    showTimeoutError,
-    timestamp: new Date().toISOString()
-  });
+  // Removed console.log for security
 
   // Timeout fallback to prevent infinite loading
   useEffect(() => {
     if (isLoading) {
-      console.log("⏰ Starting ProtectedRoute timeout timer...");
+      // Removed console.log for security
       const timeout = setTimeout(() => {
-        console.log("⚠️ ProtectedRoute timeout reached - forcing redirect");
+        // Removed console.log for security
         setShowTimeoutError(true);
       }, 15000); // 15 seconds timeout
 
       return () => {
-        console.log("🧹 Clearing ProtectedRoute timeout");
+        // Removed console.log for security
         clearTimeout(timeout);
       };
     }
@@ -34,7 +27,7 @@ const ProtectedRoute = () => {
 
   // Show timeout error
   if (showTimeoutError) {
-    console.log("💥 ProtectedRoute: showing timeout error");
+    // Removed console.log for security
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4 max-w-md mx-auto p-6">
@@ -56,7 +49,7 @@ const ProtectedRoute = () => {
 
   // Show loading spinner
   if (isLoading) {
-    console.log("🔄 ProtectedRoute: showing loading spinner");
+    // Removed console.log for security
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
@@ -72,12 +65,13 @@ const ProtectedRoute = () => {
 
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
-    console.log("🚫 ProtectedRoute: user not authenticated, redirecting to login");
+    // Removed console.log for security
     return <Navigate to="/login" replace />;
   }
 
-  console.log("✅ ProtectedRoute: user authenticated, rendering outlet");
+  // Removed console.log for security
   return <Outlet />;
 };
 
 export default ProtectedRoute;
+

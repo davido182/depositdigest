@@ -54,15 +54,15 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
   };
 
   const parseCSV = (text: string): any[] => {
-    console.log('🔍 Iniciando parseo CSV...');
+    // Removed console.log for security
 
     // Limpiar el texto y dividir en líneas
     const cleanText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     const lines = cleanText.split('\n').filter(line => line.trim());
 
-    console.log('📝 Líneas encontradas:', lines.length);
-    console.log('📝 Primera línea (headers):', lines[0]);
-    console.log('📝 Segunda línea (datos):', lines[1]);
+    // Removed console.log for security
+    // Removed console.log for security:', lines[0]);
+    // Removed console.log for security:', lines[1]);
 
     if (lines.length < 1) {
       console.error('❌ No hay líneas en el archivo');
@@ -99,7 +99,7 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
     };
 
     const headers = parseCSVLine(lines[0]).map(h => h.trim());
-    console.log('📋 Headers parseados:', headers);
+    // Removed console.log for security
 
     if (headers.length === 0) {
       console.error('❌ No se encontraron headers');
@@ -119,7 +119,7 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
       if (!line) continue; // Saltar líneas vacías
 
       const values = parseCSVLine(line);
-      console.log(`📊 Línea ${i}:`, values);
+      // Removed console.log for security
 
       if (values.length > 0) {
         const row: any = {};
@@ -130,12 +130,12 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
       }
     }
 
-    console.log('✅ Parseo completado:', data.length, 'filas');
+    // Removed console.log for security
     return data;
   };
 
   const importTenants = async (data: any[]) => {
-    console.log('👥 Importando inquilinos:', data);
+    // Removed console.log for security
 
     // Validar datos requeridos
     const validTenants = data.filter(row => {
@@ -168,7 +168,7 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
       is_active: true
     }));
 
-    console.log('📤 Enviando a Supabase:', tenants);
+    // Removed console.log for security
 
     const { data: result, error } = await supabase
       .from('tenants')
@@ -180,7 +180,7 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
       throw error;
     }
 
-    console.log('✅ Inquilinos creados:', result);
+    // Removed console.log for security
     return result;
   };
 
@@ -258,7 +258,7 @@ export function DataImportModal({ isOpen, onClose, onImportComplete }: DataImpor
         text = await selectedFile.text();
       }
 
-      console.log('📄 Contenido del archivo (primeras 500 chars):', text.substring(0, 500));
+      // Removed console.log for security:', text.substring(0, 500));
 
       const data = parseCSV(text);
 

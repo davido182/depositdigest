@@ -3,7 +3,7 @@ import { Tenant } from '@/types';
 
 export class SupabaseTenantService extends BaseService {
   async getTenants(): Promise<Tenant[]> {
-    console.log('🔍 [SIMPLE] Fetching tenants from Supabase...');
+    // Fetching tenants from Supabase
 
     const user = await this.ensureAuthenticated();
     // User authenticated successfully
@@ -15,22 +15,14 @@ export class SupabaseTenantService extends BaseService {
       .eq('landlord_id', user.id);
 
     if (tenantsError) {
-      console.error('❌ Error fetching tenants:', tenantsError);
+      // Removed console for security
       throw new Error(`Failed to fetch tenants: ${tenantsError.message}`);
     }
 
-    console.log('✅ [SIMPLE] Raw tenant data:', tenantsData?.length || 0, 'tenants');
-    
-    // Log first tenant to see what fields we actually have
-    if (tenantsData && tenantsData.length > 0) {
-      console.log('🔍 [SIMPLE] First tenant raw data:', tenantsData[0]);
-      console.log('🔍 [SIMPLE] First tenant unit_number:', tenantsData[0].unit_number);
-      console.log('🔍 [SIMPLE] First tenant property_name:', tenantsData[0].property_name);
-      console.log('🔍 [SIMPLE] First tenant property_id:', tenantsData[0].property_id);
-    }
+    // Tenant data loaded successfully
 
     if (!tenantsData || tenantsData.length === 0) {
-      console.log('📭 No tenants found');
+      // No tenants found
       return [];
     }
 
@@ -48,7 +40,7 @@ export class SupabaseTenantService extends BaseService {
 
       if (!propertiesError && properties) {
         propertiesData = properties;
-        console.log('✅ [SIMPLE] Loaded property names:', propertiesData.length);
+        // Removed console.log for security
       }
     }
 
@@ -58,13 +50,13 @@ export class SupabaseTenantService extends BaseService {
         // Check both name and first_name fields
         const hasName = (tenant?.name && tenant.name.trim() !== '') || 
                        (tenant?.first_name && tenant.first_name.trim() !== '');
-        console.log(`🔍 [FILTER] Tenant ${tenant?.id}: name="${tenant?.name}", first_name="${tenant?.first_name}", hasName=${hasName}`);
+        // Removed console.log for security
         return hasName;
       })
       .map(tenant => {
         // Use first_name as primary, fallback to name
         const fullName = tenant.first_name || tenant.name || 'Sin nombre';
-        console.log(`📝 [MAPPING] Tenant ${tenant.id}: Using name="${fullName}" (from first_name="${tenant.first_name}", name="${tenant.name}")`);
+        // Removed console.log for security`);
         
         // Get property name from properties data
         const property = propertiesData.find(p => p.id === tenant.property_id);
@@ -74,16 +66,7 @@ export class SupabaseTenantService extends BaseService {
         // Use unit_number from DB (will work after SQL execution)
         const unitNumber = tenant.unit_number || '';
 
-        console.log(`📋 [DEFINITIVE] Mapping tenant ${fullName}:`, {
-          tenantId: tenant.id,
-          property_id: tenant.property_id,
-          unit_number: tenant.unit_number,
-          propertyFromDB: property?.name,
-          finalProperty: propertyName,
-          finalUnit: unitNumber,
-          hasPropertyId: !!tenant.property_id,
-          hasUnitNumber: !!tenant.unit_number
-        });
+        // Removed console.log for security
 
         return {
           id: tenant.id,
@@ -119,14 +102,8 @@ export class SupabaseTenantService extends BaseService {
   }
 
   async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt' | 'paymentHistory'>): Promise<Tenant> {
-    console.log('📝 [SYNC-FIX] Creating tenant in Supabase:', tenant);
-    console.log('📝 [DEBUG] Tenant name field:', {
-      name: tenant.name,
-      nameType: typeof tenant.name,
-      nameLength: tenant.name?.length,
-      nameTrimmed: tenant.name?.trim(),
-      nameTrimmedLength: tenant.name?.trim()?.length
-    });
+    // Removed console.log for security
+    // Removed console.log for security
 
     const user = await this.ensureAuthenticated();
 
@@ -157,7 +134,7 @@ export class SupabaseTenantService extends BaseService {
       unit_number: unitNumber,
     };
 
-    console.log('📋 [SYNC-FIX] Insert data prepared:', insertData);
+    // Removed console.log for security
 
     const { data, error } = await this.supabase
       .from('tenants')
@@ -166,11 +143,11 @@ export class SupabaseTenantService extends BaseService {
       .single();
 
     if (error || !data) {
-      console.error('❌ Error creating tenant:', error);
+      // Removed console for security
       throw new Error(`Failed to create tenant: ${error?.message || 'Unknown error'}`);
     }
 
-    console.log('✅ [DEFINITIVE] Created tenant:', data);
+    // Tenant created successfully
 
     // SINCRONIZACIÓN BIDIRECCIONAL: Actualizar tabla units también
     if (unitNumber && unitNumber.trim() !== '' && propertyId && propertyId.trim() !== '') {
@@ -181,8 +158,8 @@ export class SupabaseTenantService extends BaseService {
   }
 
   async updateTenant(id: string, updates: Partial<Tenant & { propertyId?: string }>): Promise<Tenant> {
-    console.log('🔄 [SYNC-FIX] Updating tenant in Supabase:', id);
-    console.log('📥 [SYNC-FIX] Raw updates received:', updates);
+    // Removed console.log for security
+    // Removed console.log for security
 
     const user = await this.ensureAuthenticated();
 
@@ -229,7 +206,7 @@ export class SupabaseTenantService extends BaseService {
           
           if (propertyData?.name) {
             updateData.property_name = propertyData.name;
-            console.log('🏠 [SYNC-FIX] Got property name:', propertyData.name);
+            // Removed console.log for security
           }
         } catch (error) {
           console.error('❌ Error getting property name:', error);
@@ -247,10 +224,10 @@ export class SupabaseTenantService extends BaseService {
     // Unit assignment - Now works with unit_number column
     if (updates.unit !== undefined) {
       updateData.unit_number = updates.unit?.trim() || null;
-      console.log('🏠 [DEFINITIVE] Including unit_number in update:', updateData.unit_number);
+      // Removed console.log for security
     }
 
-    console.log('📤 [SIMPLE] Mapped update data for database:', updateData);
+    // Removed console.log for security
 
     // Update tenant record with conflict handling
     let { data, error } = await this.supabase
@@ -263,7 +240,7 @@ export class SupabaseTenantService extends BaseService {
 
     // Handle email conflicts gracefully
     if (error && error.message.includes('tenants_email_key')) {
-      console.log('⚠️ [SYNC-FIX] Email conflict detected, updating without email...');
+      // Removed console.log for security
       const updateDataWithoutEmail = { ...updateData };
       delete updateDataWithoutEmail.email;
 
@@ -280,11 +257,11 @@ export class SupabaseTenantService extends BaseService {
     }
 
     if (error || !data) {
-      console.error('❌ Error updating tenant:', error);
+      // Removed console for security
       throw new Error(`Failed to update tenant: ${error?.message || 'Unknown error'}`);
     }
 
-    console.log('✅ [DEFINITIVE] Updated tenant in database:', data);
+    // Tenant updated successfully
 
     // SINCRONIZACIÓN BIDIRECCIONAL: Actualizar tabla units también
     if (updates.unit !== undefined || updates.propertyId !== undefined) {
@@ -301,7 +278,7 @@ export class SupabaseTenantService extends BaseService {
     
     // Use first_name as primary, fallback to name
     const fullName = data.first_name || data.name || 'Sin nombre';
-    console.log(`📝 [FORMAT] Formatting tenant response: first_name="${data.first_name}", name="${data.name}", final="${fullName}"`);
+    // Formatting tenant response
     
     return {
       id: data.id,
@@ -340,11 +317,7 @@ export class SupabaseTenantService extends BaseService {
   // Método para sincronizar tabla units cuando se edita un inquilino
   private async syncUnitsTableFromTenant(tenantId: string, unitNumber?: string, propertyId?: string, userId?: string): Promise<void> {
     try {
-      console.log('🔄 [BIDIRECTIONAL] Syncing units table from tenant update:', {
-        tenantId,
-        unitNumber,
-        propertyId
-      });
+      // Removed console.log for security
 
       // Paso 1: Desasignar inquilino de cualquier unidad actual
       const { error: unassignError } = await this.supabase
@@ -356,14 +329,14 @@ export class SupabaseTenantService extends BaseService {
         .eq('tenant_id', tenantId);
 
       if (unassignError) {
-        console.error('❌ Error unassigning tenant from units:', unassignError);
+        // Removed console for security
       } else {
-        console.log('✅ [BIDIRECTIONAL] Tenant unassigned from all units');
+        // Removed console.log for security
       }
 
       // Paso 2: Si hay nueva unidad y propiedad, asignar
       if (unitNumber && unitNumber.trim() !== '' && propertyId && propertyId.trim() !== '') {
-        console.log('🏠 [BIDIRECTIONAL] Assigning tenant to new unit:', { unitNumber, propertyId });
+        // Removed console.log for security
 
         // También obtener la renta del inquilino para sincronizar
         const { data: tenantData } = await this.supabase
@@ -383,13 +356,13 @@ export class SupabaseTenantService extends BaseService {
           .eq('property_id', propertyId);
 
         if (assignError) {
-          console.error('❌ Error assigning tenant to unit:', assignError);
+          // Removed console for security
         } else {
-          console.log('✅ [BIDIRECTIONAL] Tenant assigned to unit successfully');
+          // Removed console.log for security
         }
       }
 
-      console.log('✅ [BIDIRECTIONAL] Units table sync completed');
+      // Removed console.log for security
 
     } catch (error) {
       console.error('❌ Error syncing units table:', error);
@@ -398,7 +371,7 @@ export class SupabaseTenantService extends BaseService {
   }
 
   async deleteTenant(id: string): Promise<boolean> {
-    console.log('🗑️ Deleting tenant from Supabase:', id);
+    // Removed console.log for security
 
     const user = await this.ensureAuthenticated();
 
@@ -412,11 +385,12 @@ export class SupabaseTenantService extends BaseService {
       .eq('landlord_id', user.id);
 
     if (error) {
-      console.error('❌ Error deleting tenant:', error);
+      // Removed console for security
       throw new Error(`Failed to delete tenant: ${error.message}`);
     }
 
-    console.log('✅ Tenant deleted successfully');
+    // Removed console.log for security
     return true;
   }
 }
+

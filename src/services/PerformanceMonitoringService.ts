@@ -88,7 +88,7 @@ export class PerformanceMonitoringService {
 
     // Log in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('📊 Performance Metric:', fullMetric);
+      // Removed console.log for security
     }
   }
 

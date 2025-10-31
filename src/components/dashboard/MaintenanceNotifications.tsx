@@ -42,7 +42,7 @@ export function SmartNotifications() {
 
   const loadSmartNotifications = async () => {
     try {
-      console.log('🔔 Loading smart notifications for user:', user?.id);
+      // Removed console.log for security
       
       const allNotifications: SmartNotification[] = [];
       
@@ -69,7 +69,7 @@ export function SmartNotifications() {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
       
-      console.log('✅ All smart notifications:', allNotifications);
+      // Removed console.log for security
       
       setNotifications(allNotifications);
       setUnreadCount(allNotifications.filter(n => n.priority === 'high').length);

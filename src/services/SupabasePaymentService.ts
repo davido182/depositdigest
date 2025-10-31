@@ -5,11 +5,11 @@ import { Payment, PaymentMethod } from "@/types";
 
 export class SupabasePaymentService extends SupabaseService {
   async getPayments(): Promise<Payment[]> {
-    console.log('Fetching payments from Supabase...');
+    // Removed console.log for security
     
     const user = await this.ensureAuthenticated();
     
-    console.log('🔍 Fetching ALL payments from database...');
+    // Removed console.log for security
     const { data, error } = await supabase
       .from('payments')
       .select('*')
@@ -24,7 +24,7 @@ export class SupabasePaymentService extends SupabaseService {
   }
 
   async createPayment(paymentData: any): Promise<string> {
-    console.log('SupabasePaymentService: Creating payment with data:', paymentData);
+    // Removed console.log for security
     
     // Ensure authenticated user
     const user = await this.ensureAuthenticated();
@@ -41,12 +41,12 @@ export class SupabasePaymentService extends SupabaseService {
       throw new Error(`Error al crear el pago: ${error.message}`);
     }
 
-    console.log('SupabasePaymentService: Payment created successfully:', data);
+    // Removed console.log for security
     return data!.id;
   }
 
   async updatePayment(id: string, paymentData: any): Promise<boolean> {
-    console.log('SupabasePaymentService: Updating payment with data:', paymentData);
+    // Removed console.log for security
     
     const user = await this.ensureAuthenticated();
     
@@ -63,7 +63,7 @@ export class SupabasePaymentService extends SupabaseService {
       throw new Error(`Error al actualizar el pago: ${error.message}`);
     }
 
-    console.log('SupabasePaymentService: Payment updated successfully');
+    // Removed console.log for security
     return true;
   }
 

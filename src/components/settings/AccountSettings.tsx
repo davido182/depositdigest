@@ -51,7 +51,7 @@ export function AccountSettings() {
   const handleSignOut = async () => {
     setIsSigningOut(true);
     try {
-      console.log('Iniciando cierre de sesión...');
+      // Removed console.log for security
       await signOut();
       toast.success("Sesión cerrada exitosamente");
     } catch (error) {

@@ -91,40 +91,16 @@ export function TenantEditForm({
 
   useEffect(() => {
     if (isOpen) {
-      console.log('TenantEditForm: Modal opened with tenant:', tenant);
+      // Removed console.log for security
 
       // Always load properties first
       loadProperties();
 
       if (tenant) {
-        console.log('🔄 TenantEditForm: Loading existing tenant data:', {
-          id: tenant.id,
-          name: tenant.name,
-          unit: tenant.unit,
-          property_id: tenant.property_id,
-          propertyName: tenant.propertyName
-        });
+        // Loading existing tenant data
 
         // Set form data immediately with detailed logging
-        console.log('📝 Setting form data with tenant:', {
-          name: tenant.name,
-          email: tenant.email,
-          phone: tenant.phone,
-          unit: tenant.unit,
-          moveInDate: tenant.moveInDate,
-          leaseEndDate: tenant.leaseEndDate,
-          rentAmount: tenant.rentAmount,
-          depositAmount: tenant.depositAmount,
-          status: tenant.status,
-          property_id: tenant.property_id,
-          propertyName: tenant.propertyName,
-          // También mostrar campos de BD directos
-          lease_start_date: tenant.lease_start_date,
-          lease_end_date: tenant.lease_end_date,
-          rent_amount: tenant.rent_amount,
-          unit_number: tenant.unit_number,
-          property_name: tenant.property_name
-        });
+        // Removed console.log for security
 
         // Asegurar que las fechas se formateen correctamente
         const formattedTenant = {
@@ -136,7 +112,7 @@ export function TenantEditForm({
           propertyName: tenant.propertyName || tenant.property_name || ''
         };
 
-        console.log('📝 Formatted tenant data for form:', formattedTenant);
+        // Removed console.log for security
 
         setFormData({ ...formattedTenant });
         setHasDeposit((tenant.depositAmount || 0) > 0);
@@ -146,23 +122,23 @@ export function TenantEditForm({
 
         // Set property ID from tenant data
         const tenantPropertyId = tenant.property_id || '';
-        console.log('🏠 Setting property ID:', tenantPropertyId);
+        // Removed console.log for security
         setSelectedPropertyId(tenantPropertyId);
 
         // Load units for the tenant's property if it exists
         if (tenantPropertyId) {
-          console.log('📋 Loading units for tenant property:', tenantPropertyId);
+          // Removed console.log for security
           loadUnitsForProperty(tenantPropertyId);
         } else if (tenant.unit && tenant.unit !== 'Sin unidad') {
           // Fallback: try to find property by unit number
-          console.log('🔍 Trying to find property by unit:', tenant.unit);
+          // Removed console.log for security
           findPropertyByUnit(tenant.unit);
         } else {
-          console.log('📋 No property assigned, loading all available units');
+          // Removed console.log for security
           loadAvailableUnits();
         }
       } else {
-        console.log('TenantEditForm: New tenant form');
+        // Removed console.log for security
         setFormData({ ...emptyTenant });
         setHasDeposit(false);
         setSelectedPropertyId('');
@@ -186,7 +162,7 @@ export function TenantEditForm({
 
   const findPropertyByUnit = async (unitNumber: string) => {
     try {
-      console.log('🔍 Finding property for unit:', unitNumber);
+      // Removed console.log for security
 
       const { data: unitData, error } = await supabase
         .from('units')
@@ -203,17 +179,17 @@ export function TenantEditForm({
         .single();
 
       if (error || !unitData) {
-        console.log('❌ Unit not found:', error);
+        // Removed console.log for security
         loadAvailableUnits();
         return;
       }
 
-      console.log('✅ Found unit data:', unitData);
+      // Removed console.log for security
       setSelectedPropertyId(unitData.property_id);
 
       // Update rent amount if available
       if (unitData.monthly_rent && unitData.monthly_rent > 0) {
-        console.log('💰 Updating rent amount from unit:', unitData.monthly_rent);
+        // Removed console.log for security
         setFormData(prev => ({ ...prev, rentAmount: unitData.monthly_rent }));
       }
 
@@ -239,7 +215,7 @@ export function TenantEditForm({
   const loadUnitsForProperty = async (propertyId: string) => {
     try {
       setIsLoadingUnits(true);
-      console.log('🔍 [UNITS] Loading units for property:', propertyId);
+      // Removed console.log for security
 
       // Load ALL units for specific property (not just available ones)
       const { data: unitsData, error } = await supabase
@@ -253,14 +229,14 @@ export function TenantEditForm({
         return;
       }
 
-      console.log('📊 [UNITS] Units data for property:', unitsData);
+      // Removed console.log for security
 
       // Extract unit numbers from database - include ALL units for editing
       const allUnitNumbers = (unitsData || []).map(unit => unit.unit_number);
 
       // If editing, always include current tenant's unit even if it's not in the list
       if (tenant && tenant.unit && tenant.unit !== 'Sin unidad' && !allUnitNumbers.includes(tenant.unit)) {
-        console.log('➕ [UNITS] Adding current tenant unit to list:', tenant.unit);
+        // Removed console.log for security
         allUnitNumbers.push(tenant.unit);
       }
 
@@ -280,11 +256,11 @@ export function TenantEditForm({
 
       setAvailableUnits(sortedUnits);
 
-      console.log(`✅ [UNITS] Loaded ${sortedUnits.length} units for property ${propertyId}:`, sortedUnits);
+      // Removed console.log for security
 
       // Log unit availability status
       unitsData?.forEach(unit => {
-        console.log(`📋 [UNITS] Unit ${unit.unit_number}: available=${unit.is_available}, tenant_id=${unit.tenant_id}`);
+        // Removed console.log for security
       });
 
     } catch (error) {
@@ -327,7 +303,7 @@ export function TenantEditForm({
           return aNum - bNum;
         }));
 
-        console.log(`Loaded ${availableUnitNumbers.length} available units from all properties`);
+        // Removed console.log for security
       } catch (error) {
         console.error("Error loading available units:", error);
         setAvailableUnits([]);
@@ -510,14 +486,8 @@ export function TenantEditForm({
     }
 
     try {
-      console.log("🔄 Submitting tenant data:", formData);
-      console.log("🔍 [DEBUG] Form name field:", {
-        name: formData.name,
-        nameType: typeof formData.name,
-        nameLength: formData.name?.length,
-        nameTrimmed: formData.name?.trim(),
-        isEmpty: !formData.name || formData.name.trim() === ''
-      });
+      // Removed console.log for security
+      // Removed console.log for security
 
       const updatedTenant = {
         ...formData,
@@ -527,17 +497,13 @@ export function TenantEditForm({
         unit: formData.unit || '', // Include selected unit with fallback
       };
 
-      console.log("📤 Final tenant data to save:", updatedTenant);
-      console.log("🔍 [DEBUG] Final name field:", {
-        name: updatedTenant.name,
-        nameType: typeof updatedTenant.name,
-        nameLength: updatedTenant.name?.length
-      });
+      // Removed console.log for security
+      // Removed console.log for security
 
       // Call onSave and wait for it to complete
       await onSave(updatedTenant);
 
-      console.log("✅ Tenant saved successfully");
+      // Removed console.log for security
 
       if (contractFile && updatedTenant.id) {
         await handleContractUpload(contractFile);
@@ -547,7 +513,7 @@ export function TenantEditForm({
       onClose();
       toast.success(tenant ? "Inquilino actualizado correctamente" : "Inquilino creado correctamente");
     } catch (error) {
-      console.error("❌ Error submitting tenant:", error);
+      // Removed console for security
       toast.error("Error al guardar inquilino. Inténtalo de nuevo.");
     }
   };
@@ -678,7 +644,7 @@ export function TenantEditForm({
                       // Load rent amount for selected unit
                       if (unitValue && selectedPropertyId) {
                         try {
-                          console.log('🔍 Loading rent for unit:', unitValue, 'in property:', selectedPropertyId);
+                          // Removed console.log for security
                           const { data: unitData, error } = await supabase
                             .from('units')
                             .select('monthly_rent, id')
@@ -689,7 +655,7 @@ export function TenantEditForm({
                           if (error) {
                             console.error('❌ Error loading unit rent:', error);
                           } else if (unitData) {
-                            console.log('💰 Found unit rent:', unitData.monthly_rent);
+                            // Removed console.log for security
                             setFormData(prev => ({
                               ...prev,
                               unit: unitValue,
@@ -716,7 +682,7 @@ export function TenantEditForm({
                         </SelectItem>
                       ) : availableUnits.length > 0 ? (
                         availableUnits.map(unit => {
-                          console.log('🏠 [FORM] Rendering unit option:', unit);
+                          // Removed console.log for security
                           return (
                             <SelectItem key={unit} value={unit}>
                               {unit}
@@ -926,3 +892,4 @@ export function TenantEditForm({
     </Dialog>
   );
 }
+

@@ -15,18 +15,18 @@ export class DatabaseService {
   }
 
   async testConnections() {
-    console.log('Testing database connections...');
+    // Removed console.log for security
     
     try {
       // Test tenant service
       await tenantService.getTenants();
-      console.log('✓ Tenant service connected');
+      // Removed console.log for security
       
       // Test payment service
       await paymentService.getPayments();
-      console.log('✓ Payment service connected');
+      // Removed console.log for security
       
-      console.log('✓ All database connections working');
+      // Removed console.log for security
       return true;
     } catch (error) {
       console.error('Database connection test failed:', error);
