@@ -223,14 +223,14 @@ const Analytics = () => {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* KPI Hero Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* 🎯 KPI Hero Cards - 4 Tarjetas Modernizadas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Revenue Card */}
               <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 text-white border-0 shadow-xl">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-2">
-                      <p className="text-emerald-100 text-sm font-medium">Ingresos Mensuales</p>
+                      <p className="text-emerald-100 text-sm font-medium">💰 Ingresos Mensuales</p>
                       <p className="text-3xl font-bold">€{kpis.monthlyRevenue.toLocaleString()}</p>
                       <p className="text-emerald-100 text-xs">
                         €{kpis.activeTenants > 0 ? (kpis.monthlyRevenue / kpis.activeTenants).toFixed(0) : '0'} promedio por inquilino
@@ -255,7 +255,7 @@ const Analytics = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-2">
-                      <p className="text-blue-100 text-sm font-medium">Tasa de Ocupación</p>
+                      <p className="text-blue-100 text-sm font-medium">🏢 Tasa de Ocupación</p>
                       <p className="text-3xl font-bold">{kpis.occupancyRate.toFixed(1)}%</p>
                       <p className="text-blue-100 text-xs">
                         {kpis.occupiedUnits} de {kpis.totalUnits} unidades ocupadas
@@ -283,7 +283,7 @@ const Analytics = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-2">
-                      <p className="text-purple-100 text-sm font-medium">Tasa de Cobranza</p>
+                      <p className="text-purple-100 text-sm font-medium">📊 Tasa de Cobranza</p>
                       <p className="text-3xl font-bold">{kpis.collectionRate.toFixed(1)}%</p>
                       <p className="text-purple-100 text-xs">
                         Pagos completados este mes
@@ -301,6 +301,70 @@ const Analytics = () => {
                        kpis.collectionRate > 80 ? '👍 Bueno' : 
                        '🔔 Atención'}
                     </Badge>
+                  </div>
+                </CardContent>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
+              </Card>
+
+              {/* Rentabilidad Card */}
+              <Card className="relative overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-0 shadow-xl">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <p className="text-indigo-100 text-sm font-medium">💎 Rentabilidad (ROI)</p>
+                      <p className="text-3xl font-bold">
+                        {(() => {
+                          const estimatedExpenses = kpis.monthlyRevenue * 0.30; // 30% de gastos estimados
+                          const netIncome = kpis.monthlyRevenue - estimatedExpenses;
+                          const roi = kpis.monthlyRevenue > 0 ? (netIncome / kpis.monthlyRevenue) * 100 : 0;
+                          return `${roi.toFixed(1)}%`;
+                        })()}
+                      </p>
+                      <p className="text-indigo-200 text-xs">
+                        {(() => {
+                          const estimatedExpenses = kpis.monthlyRevenue * 0.30;
+                          const netIncome = kpis.monthlyRevenue - estimatedExpenses;
+                          return `€${Math.round(netIncome).toLocaleString()} ingreso neto mensual`;
+                        })()}
+                      </p>
+                    </div>
+                    <div className="bg-white/20 p-3 rounded-full">
+                      <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <div className="bg-white/20 text-white border-white/30 px-3 py-1 rounded-full text-xs inline-flex items-center gap-2">
+                      {(() => {
+                        const estimatedExpenses = kpis.monthlyRevenue * 0.30;
+                        const netIncome = kpis.monthlyRevenue - estimatedExpenses;
+                        const roi = kpis.monthlyRevenue > 0 ? (netIncome / kpis.monthlyRevenue) * 100 : 0;
+                        
+                        if (roi >= 60) {
+                          return (
+                            <>
+                              <span className="w-2 h-2 bg-green-300 rounded-full"></span>
+                              <span>🚀 Excelente ROI</span>
+                            </>
+                          );
+                        } else if (roi >= 40) {
+                          return (
+                            <>
+                              <span className="w-2 h-2 bg-yellow-300 rounded-full"></span>
+                              <span>📈 Buen ROI</span>
+                            </>
+                          );
+                        } else {
+                          return (
+                            <>
+                              <span className="w-2 h-2 bg-red-300 rounded-full"></span>
+                              <span>⚠️ Mejorar ROI</span>
+                            </>
+                          );
+                        }
+                      })()}
+                    </div>
                   </div>
                 </CardContent>
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
@@ -341,8 +405,8 @@ const Analytics = () => {
               
               {/* Occupancy Tab */}
             <TabsContent value="occupancy" className="space-y-6">
-                <Card className="p-6">
-                  <h3 className="text-lg font-medium mb-4">Tendencia de Ocupación</h3>
+                <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-0 shadow-xl p-6">
+                  <h3 className="text-lg font-medium mb-4 text-blue-100">📈 Tendencia de Ocupación</h3>
                   <div className="h-64">
                     <AreaChart
                       data={occupancyTrend}
@@ -352,11 +416,12 @@ const Analytics = () => {
                       valueFormatter={(value) => `${value}%`}
                     />
                   </div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
                 </Card>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Estado de Unidades</h3>
+                  <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 text-white border-0 shadow-xl p-6">
+                    <h3 className="text-lg font-medium mb-4 text-emerald-100">🏢 Estado de Unidades</h3>
                     <div className="h-64">
                       <PieChart
                         data={[
@@ -371,20 +436,20 @@ const Analytics = () => {
                     </div>
                   </Card>
                   
-                  <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Métricas Clave</h3>
+                  <Card className="relative overflow-hidden bg-gradient-to-br from-purple-500 to-pink-600 text-white border-0 shadow-xl p-6">
+                    <h3 className="text-lg font-medium mb-4 text-purple-100">📊 Métricas Clave</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Duración Promedio del Inquilino</p>
-                        <p className="text-xl font-medium">14 meses</p>
+                        <p className="text-sm text-purple-200">Duración Promedio del Inquilino</p>
+                        <p className="text-xl font-medium text-white">14 meses</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Tasa de Rotación (Anual)</p>
-                        <p className="text-xl font-medium">22%</p>
+                        <p className="text-sm text-purple-200">Tasa de Rotación (Anual)</p>
+                        <p className="text-xl font-medium text-white">22%</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Días Promedio para Llenar Vacante</p>
-                        <p className="text-xl font-medium">18 días</p>
+                        <p className="text-sm text-purple-200">Días Promedio para Llenar Vacante</p>
+                        <p className="text-xl font-medium text-white">18 días</p>
                       </div>
                     </div>
                   </Card>
@@ -393,9 +458,9 @@ const Analytics = () => {
               
               {/* Revenue Tab */}
               <TabsContent value="revenue" className="space-y-6">
-                <Card className="p-6">
-                  <h3 className="text-lg font-medium mb-4">Ingresos Reales del Año {new Date().getFullYear()}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 text-white border-0 shadow-xl p-6">
+                  <h3 className="text-lg font-medium mb-4 text-emerald-100">💰 Ingresos Reales del Año {new Date().getFullYear()}</h3>
+                  <p className="text-sm text-emerald-200 mb-4">
                     Basado en la tabla de seguimiento de pagos
                   </p>
                   <div className="h-64">
@@ -410,8 +475,8 @@ const Analytics = () => {
                 </Card>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Desglose de Ingresos</h3>
+                  <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-0 shadow-xl p-6">
+                    <h3 className="text-lg font-medium mb-4 text-blue-100">📊 Desglose de Ingresos</h3>
                     <div className="h-64">
                       <PieChart
                         data={[
@@ -427,20 +492,20 @@ const Analytics = () => {
                     </div>
                   </Card>
                   
-                  <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Salud Financiera</h3>
+                  <Card className="relative overflow-hidden bg-gradient-to-br from-purple-500 to-pink-600 text-white border-0 shadow-xl p-6">
+                    <h3 className="text-lg font-medium mb-4 text-purple-100">💎 Salud Financiera</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Ingreso Operativo Neto</p>
-                        <p className="text-xl font-medium">€{(kpis.monthlyRevenue * 0.7).toLocaleString()}</p>
+                        <p className="text-sm text-purple-200">Ingreso Operativo Neto</p>
+                        <p className="text-xl font-medium text-white">€{(kpis.monthlyRevenue * 0.7).toLocaleString()}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Flujo de Efectivo</p>
-                        <p className="text-xl font-medium">€{(kpis.monthlyRevenue * 0.4).toLocaleString()}</p>
+                        <p className="text-sm text-purple-200">Flujo de Efectivo</p>
+                        <p className="text-xl font-medium text-white">€{(kpis.monthlyRevenue * 0.4).toLocaleString()}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Tasa de Capitalización</p>
-                        <p className="text-xl font-medium">5.8%</p>
+                        <p className="text-sm text-purple-200">Tasa de Capitalización</p>
+                        <p className="text-xl font-medium text-white">5.8%</p>
                       </div>
                     </div>
                   </Card>
@@ -450,8 +515,8 @@ const Analytics = () => {
               {/* Tenant Analysis Tab */}
               <TabsContent value="tenants" className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Tenant Status</h3>
+                  <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 text-white border-0 shadow-xl p-6">
+                    <h3 className="text-lg font-medium mb-4 text-emerald-100">👥 Estado de Inquilinos</h3>
                     <div className="h-64">
                       <BarChart
                         data={[
@@ -468,20 +533,20 @@ const Analytics = () => {
                     </div>
                   </Card>
                   
-                  <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Información de Inquilinos</h3>
+                  <Card className="relative overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-0 shadow-xl p-6">
+                    <h3 className="text-lg font-medium mb-4 text-indigo-100">📋 Información de Inquilinos</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Puntuación de Satisfacción</p>
-                        <p className="text-xl font-medium">4.2/5.0</p>
+                        <p className="text-sm text-indigo-200">Puntuación de Satisfacción</p>
+                        <p className="text-xl font-medium text-white">4.2/5.0</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Tasa de Renovación</p>
-                        <p className="text-xl font-medium">76%</p>
+                        <p className="text-sm text-indigo-200">Tasa de Renovación</p>
+                        <p className="text-xl font-medium text-white">76%</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Duración Promedio del Contrato</p>
-                        <p className="text-xl font-medium">14 meses</p>
+                        <p className="text-sm text-indigo-200">Duración Promedio del Contrato</p>
+                        <p className="text-xl font-medium text-white">14 meses</p>
                       </div>
                     </div>
                   </Card>
@@ -491,8 +556,8 @@ const Analytics = () => {
               {/* Payment Analysis Tab */}
               <TabsContent value="payments" className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Métodos de Pago</h3>
+                  <Card className="relative overflow-hidden bg-gradient-to-br from-orange-500 to-red-500 text-white border-0 shadow-xl p-6">
+                    <h3 className="text-lg font-medium mb-4 text-orange-100">💳 Métodos de Pago</h3>
                     <div className="h-64">
                       <PieChart
                         data={Object.entries(paymentMethods).map(([method, count]) => ({
@@ -507,20 +572,20 @@ const Analytics = () => {
                     </div>
                   </Card>
                   
-                  <Card className="p-6">
-                    <h3 className="text-lg font-medium mb-4">Información de Pagos</h3>
+                  <Card className="relative overflow-hidden bg-gradient-to-br from-teal-500 to-cyan-600 text-white border-0 shadow-xl p-6">
+                    <h3 className="text-lg font-medium mb-4 text-teal-100">💰 Información de Pagos</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Tasa de Pago a Tiempo</p>
-                        <p className="text-xl font-medium">88%</p>
+                        <p className="text-sm text-teal-200">Tasa de Pago a Tiempo</p>
+                        <p className="text-xl font-medium text-white">88%</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Días Promedio de Retraso</p>
-                        <p className="text-xl font-medium">4.2 días</p>
+                        <p className="text-sm text-teal-200">Días Promedio de Retraso</p>
+                        <p className="text-xl font-medium text-white">4.2 días</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Tiempo de Procesamiento</p>
-                        <p className="text-xl font-medium">1.5 días</p>
+                        <p className="text-sm text-teal-200">Tiempo de Procesamiento</p>
+                        <p className="text-xl font-medium text-white">1.5 días</p>
                       </div>
                     </div>
                   </Card>

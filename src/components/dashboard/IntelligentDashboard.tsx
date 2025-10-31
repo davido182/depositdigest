@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   TrendingUp,
   Building2,
   AlertCircle,
   BarChart3,
   Crown,
-  Zap
+  Zap,
+  DollarSign
 } from "lucide-react";
 import { DashboardStats } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -205,7 +207,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* Gráfico de Ingresos y Pagos Pendientes */}
+      {/* 🎯 Gráfico de Ingresos (12 meses) + Pagos Pendientes (derecha) */}
       <div className="grid gap-6 md:grid-cols-3">
         {/* Gráfico de Evolución - 2 columnas */}
         <motion.div
@@ -219,9 +221,9 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5" />
-                Evolución de Ingresos
+                📈 Evolución de Ingresos (12 Meses)
               </CardTitle>
-              <CardDescription>Ingresos reales vs esperados - Año completo {new Date().getFullYear()}</CardDescription>
+              <CardDescription>📊 Ingresos reales vs esperados - Año completo {new Date().getFullYear()} (ENE-DIC)</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-80 w-full">
@@ -236,10 +238,10 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                   const actualPoints = data.map((item, index) => {
                     const x = padding + (index * (width - 2 * padding)) / (data.length - 1);
                     const y = height - padding - ((item.actual / maxAmount) * (height - 2 * padding));
-                    return { 
-                      x, 
-                      y, 
-                      amount: item.actual, 
+                    return {
+                      x,
+                      y,
+                      amount: item.actual,
                       month: item.month,
                       isCurrentMonth: item.isCurrentMonth,
                       isFutureMonth: item.isFutureMonth
@@ -250,10 +252,10 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                   const expectedPoints = data.map((item, index) => {
                     const x = padding + (index * (width - 2 * padding)) / (data.length - 1);
                     const y = height - padding - ((item.expected / maxAmount) * (height - 2 * padding));
-                    return { 
-                      x, 
-                      y, 
-                      amount: item.expected, 
+                    return {
+                      x,
+                      y,
+                      amount: item.expected,
                       month: item.month,
                       isCurrentMonth: item.isCurrentMonth,
                       isFutureMonth: item.isFutureMonth
@@ -442,13 +444,12 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                             x={point.x}
                             y={height - padding + 25}
                             textAnchor="middle"
-                            className={`text-xs font-medium ${
-                              point.isCurrentMonth 
-                                ? 'fill-emerald-600' 
-                                : point.isFutureMonth 
-                                  ? 'fill-gray-300' 
-                                  : 'fill-gray-500'
-                            }`}
+                            className={`text-xs font-medium ${point.isCurrentMonth
+                              ? 'fill-emerald-600'
+                              : point.isFutureMonth
+                                ? 'fill-gray-300'
+                                : 'fill-gray-500'
+                              }`}
                           >
                             {point.month}
                           </text>
@@ -462,7 +463,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                             <stop offset="50%" stopColor="#059669" stopOpacity="0.2" />
                             <stop offset="100%" stopColor="#047857" stopOpacity="0.05" />
                           </linearGradient>
-                          
+
                           <linearGradient id="modernExpectedGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                             <stop offset="0%" stopColor="#6b7280" stopOpacity="0.3" />
                             <stop offset="100%" stopColor="#9ca3af" stopOpacity="0.05" />
@@ -493,15 +494,15 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
 
                           {/* Modern filters */}
                           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                            <feMerge> 
-                              <feMergeNode in="coloredBlur"/>
-                              <feMergeNode in="SourceGraphic"/>
+                            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                            <feMerge>
+                              <feMergeNode in="coloredBlur" />
+                              <feMergeNode in="SourceGraphic" />
                             </feMerge>
                           </filter>
 
                           <filter id="pointShadow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.3"/>
+                            <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.3" />
                           </filter>
                         </defs>
                       </svg>
@@ -522,7 +523,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
         >
           <Card className="relative overflow-hidden h-64">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pagos Pendientes</CardTitle>
+              <CardTitle className="text-sm font-medium">🔔 Pagos Pendientes</CardTitle>
               <motion.div
                 animate={{
                   rotate: stats.pendingDeposits > 0 ? [0, 10, -10, 0] : 0,
@@ -549,7 +550,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
               <p className="text-sm text-muted-foreground text-center mb-4">
                 {stats.pendingDeposits > 0 ? 'Requieren atención inmediata' : 'Todos los pagos al día'}
               </p>
-              
+
               {stats.pendingDeposits > 0 && (
                 <div className="space-y-2">
                   <div className="bg-red-50 p-3 rounded-lg">
@@ -562,7 +563,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                   </div>
                 </div>
               )}
-              
+
               {stats.pendingDeposits === 0 && (
                 <div className="bg-green-50 p-3 rounded-lg">
                   <p className="text-xs text-green-700 text-center">
@@ -575,97 +576,115 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
         </motion.div>
       </div>
 
-      <motion.div
+
+
+      {/* 🎯 Tarjetas KPI Modernizadas (copiadas de Analytics) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Revenue Card */}
+        <motion.div
           initial="hidden"
           animate="visible"
           variants={cardVariants}
-          transition={{ delay: 0.4, duration: 0.6 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
         >
-          <Card className="relative overflow-hidden border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-5 h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-800">
-                <Zap className="h-5 w-5" />
-                Insights
-              </CardTitle>
-              <CardDescription className="text-blu e-700">
-                Recomendaciones personalizadas basadas en tus datos
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {stats.occupancyRate >= 85 ? (
-                <div className="p-3 bg-blue-100 rounded-lg text-sm text-blue-800">
-                  📈 Excelente: Tu tasa de ocupación del {stats.occupancyRate.toFixed(1)}% está por encima del promedio del mercado (85%)
+          <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 text-white border-0 shadow-xl">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-emerald-100 text-sm font-medium">💰 Ingresos Mensuales</p>
+                  <p className="text-3xl font-bold">€{stats.monthlyRevenue.toLocaleString()}</p>
+                  <p className="text-emerald-100 text-xs">
+                    €{stats.occupiedUnits > 0 ? (stats.monthlyRevenue / stats.occupiedUnits).toFixed(0) : '0'} promedio por unidad
+                  </p>
                 </div>
-              ) : stats.occupancyRate >= 70 ? (
-                <div className="p-3 bg-yellow-100 rounded-lg text-sm text-yellow-800">
-                  📊 Tu tasa de ocupación del {stats.occupancyRate.toFixed(1)}% está cerca del promedio del mercado (85%)
+                <div className="bg-white/20 p-3 rounded-full">
+                  <DollarSign className="h-8 w-8" />
                 </div>
-              ) : (
-                <div className="p-3 bg-orange-100 rounded-lg text-sm text-orange-800">
-                  📉 Tu tasa de ocupación del {stats.occupancyRate.toFixed(1)}% está por debajo del promedio del mercado (85%)
-                </div>
-              )}
-
-              {stats.totalUnits - stats.occupiedUnits > 0 ? (
-                <div className="p-3 bg-green-100 rounded-lg text-sm text-green-800">
-                  💰 Tienes {stats.totalUnits - stats.occupiedUnits} unidad{stats.totalUnits - stats.occupiedUnits > 1 ? 'es' : ''} disponible{stats.totalUnits - stats.occupiedUnits > 1 ? 's' : ''} - Oportunidad de aumentar ingresos
-                </div>
-              ) : (
-                <div className="p-3 bg-emerald-100 rounded-lg text-sm text-emerald-800">
-                  🎯 ¡Perfecto! Todas tus unidades están ocupadas - Considera aumentar precios gradualmente
-                </div>
-              )}
-
-              <div className="p-3 bg-amber-100 rounded-lg text-sm text-amber-800">
-                ⏰ Unidades disponibles: {(100 - stats.occupancyRate).toFixed(1)}% - {stats.totalUnits > 0 ? 'Revisa estrategias de marketing' : 'Agrega propiedades para comenzar'}
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <Badge className="bg-white/20 text-white border-white/30">
+                  {stats.occupiedUnits} fuentes activas
+                </Badge>
+                <TrendingUp className="h-4 w-4" />
               </div>
             </CardContent>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
+          </Card>
+        </motion.div>
+
+        {/* Occupancy Card */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={cardVariants}
+          transition={{ delay: 0.6, duration: 0.6 }}
+        >
+          <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-0 shadow-xl">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-blue-100 text-sm font-medium">🏢 Tasa de Ocupación</p>
+                  <p className="text-3xl font-bold">{stats.occupancyRate.toFixed(1)}%</p>
+                  <p className="text-blue-100 text-xs">
+                    {stats.occupiedUnits} de {stats.totalUnits} unidades ocupadas
+                  </p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-full">
+                  <Building2 className="h-8 w-8" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <Badge className={`${stats.occupancyRate > 80 ? 'bg-green-500/20 text-green-100' :
+                  stats.occupancyRate > 60 ? 'bg-yellow-500/20 text-yellow-100' :
+                    'bg-red-500/20 text-red-100'} border-0`}>
+                  {stats.occupancyRate > 80 ? '🎯 Excelente' :
+                    stats.occupancyRate > 60 ? '📈 Bueno' :
+                      '⚠️ Mejorar'}
+                </Badge>
+              </div>
+            </CardContent>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
+          </Card>
+        </motion.div>
+
+        {/* Collection Rate Card */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={cardVariants}
+          transition={{ delay: 0.7, duration: 0.6 }}
+        >
+          <Card className="relative overflow-hidden bg-gradient-to-br from-purple-500 to-pink-600 text-white border-0 shadow-xl">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="text-purple-100 text-sm font-medium">📊 Tasa de Cobranza</p>
+                  <p className="text-3xl font-bold">{stats.collectionRate.toFixed(1)}%</p>
+                  <p className="text-purple-100 text-xs">
+                    Pagos completados este mes
+                  </p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-full">
+                  <BarChart3 className="h-8 w-8" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <Badge className={`${stats.collectionRate > 95 ? 'bg-green-500/20 text-green-100' :
+                  stats.collectionRate > 80 ? 'bg-yellow-500/20 text-yellow-100' :
+                    'bg-red-500/20 text-red-100'} border-0`}>
+                  {stats.collectionRate > 95 ? '💎 Excelente' :
+                    stats.collectionRate > 80 ? '👍 Bueno' :
+                      '🔔 Atención'}
+                </Badge>
+              </div>
+            </CardContent>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
           </Card>
         </motion.div>
       </div>
-
-      {/* Banner de Upgrade para usuarios Free */}
-      {!isPremium && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-        >
-          <Card className="relative overflow-hidden border-2 border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-amber-800">
-                <Crown className="h-5 w-5" />
-                Desbloquea RentaFlux Premium
-              </CardTitle>
-              <CardDescription className="text-amber-700">
-                Accede a análisis avanzados, reportes automáticos y gestión ilimitada de propiedades
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-amber-700">
-                  <Zap className="h-4 w-4" />
-                  Análisis IA de rentabilidad
-                </div>
-                <div className="flex items-center gap-2 text-sm text-amber-700">
-                  <BarChart3 className="h-4 w-4" />
-                  Reportes automáticos PDF/Excel
-                </div>
-                <div className="flex items-center gap-2 text-sm text-amber-700">
-                  <Building2 className="h-4 w-4" />
-                  Propiedades ilimitadas
-                </div>
-              </div>
-              <Button className="bg-amber-600 hover:bg-amber-700 text-white">
-                Actualizar a Premium
-              </Button>
-            </CardContent>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-400/20 to-transparent rounded-bl-full" />
-          </Card>
-        </motion.div>
-      )}
-
-      {/* Insights moved above, replacing tenant summary card */}
     </div>
+
+      {/* Dashboard modernizado - Banner Premium eliminado */ }
+    </div >
   );
 }
