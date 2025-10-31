@@ -68,7 +68,7 @@ const Analytics = () => {
         const monthlyRevenue = units.filter(u => !u.is_available).reduce((sum, unit) => sum + (unit.monthly_rent || 0), 0);
         
         // Calculate collection rate from payment tracking table (tabla de seguimiento)
-        const currentMonth = new Date().getMonth();
+        const currentMonth = new Date().getMonth(); // 0-indexed (0-11)
         const currentYear = new Date().getFullYear();
         
         const activeTenants = tenants.filter(t => t.status === 'active');
@@ -81,11 +81,23 @@ const Analytics = () => {
         if (storedRecords && activeTenants.length > 0) {
           try {
             const records = JSON.parse(storedRecords);
+            
+            // Debug: Log para verificar los datos
+            console.log('Analytics Debug:', {
+              currentMonth,
+              currentYear,
+              totalRecords: records.length,
+              activeTenants: activeTenants.length,
+              sampleRecord: records[0]
+            });
+            
             const currentMonthPaidRecords = records.filter((r: any) => 
               r.year === currentYear && r.month === currentMonth && r.paid
             );
             
-            collectionRate = (currentMonthPaidRecords.length / activeTenants.length) * 100;
+            console.log('Current month paid records:', currentMonthPaidRecords.length);
+            
+            collectionRate = activeTenants.length > 0 ? (currentMonthPaidRecords.length / activeTenants.length) * 100 : 0;
           } catch (error) {
             console.error('Error calculating collection rate:', error);
             collectionRate = 0;
@@ -152,9 +164,17 @@ const Analytics = () => {
             r.year === currentYear && r.month === month && r.paid
           );
           
-          // Calculate actual revenue from paid records
-          const avgRentPerTenant = kpis.monthlyRevenue / Math.max(kpis.activeTenants, 1);
-          monthlyRevenue = monthRecords.length * avgRentPerTenant;
+          // Calculate actual revenue from paid records using real amounts
+          monthlyRevenue = monthRecords.reduce((total: number, record: any) => {
+            // Use the stored amount if available
+            if (record.amount && record.amount > 0) {
+              return total + record.amount;
+            } else {
+              // Fallback: find tenant and use their rent amount
+              const tenant = analyticsData.tenants.find(t => t.id === record.tenantId);
+              return total + (tenant?.rent_amount || 0);
+            }
+          }, 0);
         } catch (error) {
           console.error('Error parsing payment records:', error);
         }

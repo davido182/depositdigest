@@ -2,14 +2,10 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import {
   TrendingUp,
   Building2,
   AlertCircle,
-  Users,
-  DollarSign,
   BarChart3,
   Crown,
   Zap
@@ -385,7 +381,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                         
                         {/* Area under the line */}
                         <path
-                          d={`${pathData} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`}
+                          d={`${pathData} L ${points[points.length - 1]?.x || 0} ${height - padding} L ${points[0]?.x || 0} ${height - padding} Z`}
                           fill="url(#gradient)"
                           opacity="0.2"
                         />

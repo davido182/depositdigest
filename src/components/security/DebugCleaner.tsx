@@ -1,90 +1,116 @@
 import { useEffect } from 'react';
 
 /**
- * Componente de seguridad que limpia cualquier información de debug
- * que pueda estar siendo mostrada en el DOM
+ * Componente de seguridad ULTRA AGRESIVO que elimina cualquier información de debug
  */
 export function DebugCleaner() {
   useEffect(() => {
-    // Función para limpiar cualquier elemento de debug del DOM
+    let isActive = true;
+
     const cleanDebugElements = () => {
+      if (!isActive) return;
+
       try {
-        // Lista de patrones de texto sensible a eliminar
-        const sensitivePatterns = [
+        // Patrones más específicos basados en el texto exacto que aparece
+        const exactPatterns = [
           'Debug: Revenue Calculation',
-          'Storage Key:',
-          'payment_records_',
-          'Has Records:',
+          'Storage Key: payment_records_',
+          'Has Records: ✅',
           'Total Records:',
-          'Sample Records:',
           'Current Month Paid:',
           'Current Month Revenue:',
-          'Debug:',
-          'Storage Key: payment_records_'
+          'Sample Records:',
+          'tenantId',
+          'payment_records_18eaaefa',
+          '18eaaefa-169b-4d7d-978f-7dcde085def3'
         ];
 
-        // Buscar y eliminar cualquier elemento que contenga información sensible
-        const debugSelectors = [
-          '[data-debug]',
-          '.debug-info',
-          '.revenue-debug',
-          '*[class*="debug"]',
-          '*[id*="debug"]',
-          'div',
-          'span',
-          'p',
-          'pre',
-          'code'
-        ];
+        // Buscar en TODOS los elementos del DOM
+        const allElements = document.querySelectorAll('*');
+        const elementsToRemove: Element[] = [];
 
-        debugSelectors.forEach(selector => {
-          try {
-            const elements = document.querySelectorAll(selector);
-            elements.forEach(element => {
-              const textContent = element.textContent || '';
-              
-              // Verificar si contiene algún patrón sensible
-              const containsSensitiveInfo = sensitivePatterns.some(pattern => 
-                textContent.includes(pattern)
-              );
+        allElements.forEach(element => {
+          const textContent = element.textContent || '';
+          const innerHTML = element.innerHTML || '';
+          
+          // Verificar si contiene información sensible
+          const hasSensitiveContent = exactPatterns.some(pattern => 
+            textContent.includes(pattern) || innerHTML.includes(pattern)
+          );
 
-              if (containsSensitiveInfo) {
-                console.warn('🔒 Security: Removing debug element from DOM', element);
-                element.remove();
-              }
-            });
-          } catch (error) {
-            console.error('Error cleaning debug elements:', error);
+          if (hasSensitiveContent) {
+            // Si es un elemento pequeño que solo contiene debug info, eliminarlo
+            if (textContent.length < 2000 && (
+              textContent.includes('Debug: Revenue') ||
+              textContent.includes('Storage Key:') ||
+              textContent.includes('payment_records_')
+            )) {
+              elementsToRemove.push(element);
+            } else {
+              // Si es un elemento grande, limpiar solo el contenido sensible
+              exactPatterns.forEach(pattern => {
+                if (element.innerHTML.includes(pattern)) {
+                  element.innerHTML = element.innerHTML.replace(new RegExp(pattern, 'g'), '[REMOVED FOR SECURITY]');
+                }
+              });
+            }
           }
         });
 
-        // Buscar específicamente por texto que contenga IDs de usuario
-        const allTextNodes = document.createTreeWalker(
+        // Eliminar elementos que contienen solo información de debug
+        elementsToRemove.forEach(element => {
+          try {
+            console.warn('🔒 SECURITY: Removing debug element:', element.textContent?.substring(0, 100));
+            element.remove();
+          } catch (error) {
+            console.error('Error removing element:', error);
+          }
+        });
+
+        // Buscar y limpiar nodos de texto específicos
+        const walker = document.createTreeWalker(
           document.body,
           NodeFilter.SHOW_TEXT,
-          null,
+          {
+            acceptNode: (node) => {
+              const text = node.textContent || '';
+              return exactPatterns.some(pattern => text.includes(pattern)) 
+                ? NodeFilter.FILTER_ACCEPT 
+                : NodeFilter.FILTER_REJECT;
+            }
+          },
           false
         );
 
-        const nodesToRemove: Node[] = [];
+        const textNodesToClean: Node[] = [];
         let node;
-        while (node = allTextNodes.nextNode()) {
-          const text = node.textContent || '';
-          if (text.includes('payment_records_') || 
-              text.includes('Debug: Revenue') ||
-              text.includes('Storage Key:') ||
-              text.includes('Has Records:')) {
-            nodesToRemove.push(node.parentElement || node);
-          }
+        while (node = walker.nextNode()) {
+          textNodesToClean.push(node);
         }
 
-        nodesToRemove.forEach(node => {
+        textNodesToClean.forEach(textNode => {
           try {
-            node.remove();
+            if (textNode.parentElement) {
+              console.warn('🔒 SECURITY: Cleaning text node:', textNode.textContent?.substring(0, 50));
+              textNode.parentElement.remove();
+            }
           } catch (error) {
-            console.error('Error removing node:', error);
+            console.error('Error cleaning text node:', error);
           }
         });
+
+        // Limpiar localStorage si contiene información sensible visible
+        try {
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes('payment_records_')) {
+              // No eliminar los datos, pero asegurar que no se muestren en el DOM
+              console.warn('🔒 SECURITY: Found sensitive localStorage key, ensuring it\'s not displayed');
+            }
+          }
+        } catch (error) {
+          console.error('Error checking localStorage:', error);
+        }
 
       } catch (error) {
         console.error('Error in cleanDebugElements:', error);
@@ -94,27 +120,64 @@ export function DebugCleaner() {
     // Limpiar inmediatamente
     cleanDebugElements();
 
-    // Limpiar cada 500ms para ser más agresivo
-    const interval = setInterval(cleanDebugElements, 500);
+    // Limpiar cada 100ms para ser ultra agresivo
+    const rapidInterval = setInterval(cleanDebugElements, 100);
 
-    // Observer para detectar cambios en el DOM
-    const observer = new MutationObserver(() => {
-      cleanDebugElements();
+    // Observer para cambios en el DOM
+    const observer = new MutationObserver((mutations) => {
+      let shouldClean = false;
+      
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE) {
+              const text = node.textContent || '';
+              if (text.includes('Debug:') || text.includes('Storage Key:') || text.includes('payment_records_')) {
+                shouldClean = true;
+              }
+            }
+          });
+        }
+      });
+
+      if (shouldClean) {
+        setTimeout(cleanDebugElements, 10);
+      }
     });
 
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-      characterData: true
+      characterData: true,
+      attributes: true
     });
+
+    // Interceptar console.log para evitar que se muestre información sensible
+    const originalConsoleLog = console.log;
+    console.log = (...args) => {
+      const message = args.join(' ');
+      if (message.includes('payment_records_') || message.includes('Debug: Revenue')) {
+        console.warn('🔒 SECURITY: Blocked sensitive console.log');
+        return;
+      }
+      originalConsoleLog.apply(console, args);
+    };
 
     // Limpiar cuando el componente se desmonte
     return () => {
-      clearInterval(interval);
+      isActive = false;
+      clearInterval(rapidInterval);
       observer.disconnect();
+      console.log = originalConsoleLog;
     };
   }, []);
 
-  // Este componente no renderiza nada visible
-  return null;
+  // Renderizar un elemento invisible que ayude a identificar si hay debug info
+  return (
+    <div 
+      style={{ display: 'none' }} 
+      data-security-cleaner="active"
+      suppressHydrationWarning
+    />
+  );
 }
