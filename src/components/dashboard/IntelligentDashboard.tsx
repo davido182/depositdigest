@@ -152,29 +152,31 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
   // Calculate real revenue trend from payment tracking (tabla de seguimiento de pagos)
   const getRevenueData = () => {
     const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
     const months = [];
 
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-      const monthName = date.toLocaleDateString('es-ES', { month: 'short' });
-      const year = date.getFullYear();
-      const month = date.getMonth();
+    // Calculate expected revenue based on all units (occupied + vacant)
+    const expectedMonthlyRevenue = stats.totalUnits * (stats.monthlyRevenue / Math.max(stats.occupiedUnits, 1));
+
+    // Generate data for all 12 months (Enero - Diciembre)
+    for (let month = 0; month < 12; month++) {
+      const monthName = new Date(currentYear, month, 1).toLocaleDateString('es-ES', { month: 'short' });
 
       // Get payment records for this month from localStorage (tabla de seguimiento)
-      const storageKey = `payment_records_${user?.id}_${year}`;
+      const storageKey = `payment_records_${user?.id}_${currentYear}`;
       const storedRecords = localStorage.getItem(storageKey);
-      let monthlyRevenue = 0;
+      let actualRevenue = 0;
 
       if (storedRecords) {
         try {
           const records = JSON.parse(storedRecords);
           const monthRecords = records.filter((r: any) =>
-            r.year === year && r.month === month && r.paid
+            r.year === currentYear && r.month === month && r.paid
           );
 
           // Calculate actual revenue from paid records using real amounts
           if (monthRecords.length > 0) {
-            monthlyRevenue = monthRecords.reduce((total: number, record: any) => {
+            actualRevenue = monthRecords.reduce((total: number, record: any) => {
               // Use the stored amount from the payment record
               return total + (record.amount || 0);
             }, 0);
@@ -186,7 +188,10 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
 
       months.push({
         month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-        amount: Math.max(monthlyRevenue, 0)
+        actual: Math.max(actualRevenue, 0),
+        expected: Math.max(expectedMonthlyRevenue, 0),
+        isCurrentMonth: month === currentDate.getMonth(),
+        isFutureMonth: month > currentDate.getMonth()
       });
     }
 
@@ -200,76 +205,322 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* Métricas Principales */}
+      {/* Gráfico de Ingresos y Pagos Pendientes */}
       <div className="grid gap-6 md:grid-cols-3">
+        {/* Gráfico de Evolución - 2 columnas */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={cardVariants}
-          transition={{ delay: 0, duration: 0.6 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="md:col-span-2"
         >
-          <Card className="relative overflow-hidden h-40">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ingresos Mensuales</CardTitle>
-              <motion.div
-                animate={{ y: [-2, 2, -2] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-              >
-                <TrendingUp className="h-6 w-6 text-emerald-500" />
-              </motion.div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Evolución de Ingresos
+              </CardTitle>
+              <CardDescription>Ingresos reales vs esperados - Año completo {new Date().getFullYear()}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-emerald-500">
-                €<AnimatedCounter value={stats.monthlyRevenue} />
+              <div className="h-80 w-full">
+                {(() => {
+                  const data = getRevenueData();
+                  const maxAmount = Math.max(...data.map(d => Math.max(d.actual, d.expected)), 1);
+                  const width = 500;
+                  const height = 280;
+                  const padding = 60;
+
+                  // Calculate points for actual revenue line
+                  const actualPoints = data.map((item, index) => {
+                    const x = padding + (index * (width - 2 * padding)) / (data.length - 1);
+                    const y = height - padding - ((item.actual / maxAmount) * (height - 2 * padding));
+                    return { 
+                      x, 
+                      y, 
+                      amount: item.actual, 
+                      month: item.month,
+                      isCurrentMonth: item.isCurrentMonth,
+                      isFutureMonth: item.isFutureMonth
+                    };
+                  });
+
+                  // Calculate points for expected revenue line
+                  const expectedPoints = data.map((item, index) => {
+                    const x = padding + (index * (width - 2 * padding)) / (data.length - 1);
+                    const y = height - padding - ((item.expected / maxAmount) * (height - 2 * padding));
+                    return { 
+                      x, 
+                      y, 
+                      amount: item.expected, 
+                      month: item.month,
+                      isCurrentMonth: item.isCurrentMonth,
+                      isFutureMonth: item.isFutureMonth
+                    };
+                  });
+
+                  const actualPathData = actualPoints.map((point, index) =>
+                    `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
+                  ).join(' ');
+
+                  const expectedPathData = expectedPoints.map((point, index) =>
+                    `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
+                  ).join(' ');
+
+                  return (
+                    <div className="relative">
+                      {/* Modern Legend */}
+                      <div className="flex gap-6 mb-6 text-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="w-4 h-4 bg-gradient-to-r from-emerald-500 to-green-600 rounded-full shadow-lg"></div>
+                          <span className="font-medium text-gray-700">Ingresos Reales</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-4 h-4 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full opacity-60 border-2 border-dashed border-gray-300"></div>
+                          <span className="font-medium text-gray-700">Ingresos Esperados</span>
+                        </div>
+                      </div>
+
+                      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible drop-shadow-sm">
+                        {/* Modern Grid */}
+                        {[0, 0.2, 0.4, 0.6, 0.8, 1].map((ratio) => (
+                          <line
+                            key={ratio}
+                            x1={padding}
+                            y1={height - padding - ratio * (height - 2 * padding)}
+                            x2={width - padding}
+                            y2={height - padding - ratio * (height - 2 * padding)}
+                            stroke="#f1f5f9"
+                            strokeWidth="1"
+                          />
+                        ))}
+
+                        {/* Vertical grid lines for months */}
+                        {actualPoints.map((point, index) => (
+                          <line
+                            key={`vgrid-${index}`}
+                            x1={point.x}
+                            y1={padding}
+                            x2={point.x}
+                            y2={height - padding}
+                            stroke="#f8fafc"
+                            strokeWidth="1"
+                          />
+                        ))}
+
+                        {/* Y-axis labels with modern styling */}
+                        {[0, 0.2, 0.4, 0.6, 0.8, 1].map((ratio) => (
+                          <text
+                            key={ratio}
+                            x={padding - 15}
+                            y={height - padding - ratio * (height - 2 * padding) + 4}
+                            textAnchor="end"
+                            className="text-xs fill-gray-400 font-medium"
+                          >
+                            €{Math.round(maxAmount * ratio).toLocaleString()}
+                          </text>
+                        ))}
+
+                        {/* Expected revenue area with modern gradient */}
+                        <path
+                          d={`${expectedPathData} L ${expectedPoints[expectedPoints.length - 1]?.x || 0} ${height - padding} L ${expectedPoints[0]?.x || 0} ${height - padding} Z`}
+                          fill="url(#modernExpectedGradient)"
+                          opacity="0.15"
+                        />
+
+                        {/* Actual revenue area with modern gradient */}
+                        <path
+                          d={`${actualPathData} L ${actualPoints[actualPoints.length - 1]?.x || 0} ${height - padding} L ${actualPoints[0]?.x || 0} ${height - padding} Z`}
+                          fill="url(#modernActualGradient)"
+                          opacity="0.25"
+                        />
+
+                        {/* Expected revenue line with modern styling */}
+                        <path
+                          d={expectedPathData}
+                          fill="none"
+                          stroke="url(#expectedLineGradient)"
+                          strokeWidth="3"
+                          strokeDasharray="8,4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          opacity="0.7"
+                        />
+
+                        {/* Actual revenue line with modern gradient */}
+                        <path
+                          d={actualPathData}
+                          fill="none"
+                          stroke="url(#actualLineGradient)"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          filter="url(#glow)"
+                        />
+
+                        {/* Modern data points for actual revenue */}
+                        {actualPoints.map((point, index) => (
+                          <g key={`actual-${index}`}>
+                            {/* Outer glow */}
+                            <circle
+                              cx={point.x}
+                              cy={point.y}
+                              r="8"
+                              fill="url(#actualPointGradient)"
+                              opacity="0.2"
+                            />
+                            {/* Main point */}
+                            <circle
+                              cx={point.x}
+                              cy={point.y}
+                              r="5"
+                              fill="url(#actualPointGradient)"
+                              stroke="white"
+                              strokeWidth="3"
+                              filter="url(#pointShadow)"
+                            />
+                            {/* Current month indicator */}
+                            {point.isCurrentMonth && (
+                              <circle
+                                cx={point.x}
+                                cy={point.y}
+                                r="12"
+                                fill="none"
+                                stroke="#10b981"
+                                strokeWidth="2"
+                                strokeDasharray="3,3"
+                                opacity="0.6"
+                              />
+                            )}
+                            {/* Interactive area */}
+                            <circle
+                              cx={point.x}
+                              cy={point.y}
+                              r="12"
+                              fill="transparent"
+                              className="hover:fill-emerald-100 cursor-pointer transition-all duration-200"
+                            >
+                              <title>
+                                {point.month}: €{Math.round(point.amount).toLocaleString()} (Real)
+                                {point.isCurrentMonth ? ' - Mes Actual' : ''}
+                              </title>
+                            </circle>
+                          </g>
+                        ))}
+
+                        {/* Modern data points for expected revenue */}
+                        {expectedPoints.map((point, index) => (
+                          <g key={`expected-${index}`}>
+                            <circle
+                              cx={point.x}
+                              cy={point.y}
+                              r="4"
+                              fill="url(#expectedPointGradient)"
+                              stroke="white"
+                              strokeWidth="2"
+                              opacity="0.8"
+                            />
+                            <circle
+                              cx={point.x}
+                              cy={point.y}
+                              r="10"
+                              fill="transparent"
+                              className="hover:fill-gray-100 cursor-pointer transition-all duration-200"
+                            >
+                              <title>
+                                {point.month}: €{Math.round(point.amount).toLocaleString()} (Esperado)
+                              </title>
+                            </circle>
+                          </g>
+                        ))}
+
+                        {/* X-axis labels with modern styling */}
+                        {actualPoints.map((point, index) => (
+                          <text
+                            key={index}
+                            x={point.x}
+                            y={height - padding + 25}
+                            textAnchor="middle"
+                            className={`text-xs font-medium ${
+                              point.isCurrentMonth 
+                                ? 'fill-emerald-600' 
+                                : point.isFutureMonth 
+                                  ? 'fill-gray-300' 
+                                  : 'fill-gray-500'
+                            }`}
+                          >
+                            {point.month}
+                          </text>
+                        ))}
+
+                        {/* Modern gradient and filter definitions */}
+                        <defs>
+                          {/* Gradients for areas */}
+                          <linearGradient id="modernActualGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
+                            <stop offset="50%" stopColor="#059669" stopOpacity="0.2" />
+                            <stop offset="100%" stopColor="#047857" stopOpacity="0.05" />
+                          </linearGradient>
+                          
+                          <linearGradient id="modernExpectedGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#6b7280" stopOpacity="0.3" />
+                            <stop offset="100%" stopColor="#9ca3af" stopOpacity="0.05" />
+                          </linearGradient>
+
+                          {/* Gradients for lines */}
+                          <linearGradient id="actualLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#10b981" />
+                            <stop offset="50%" stopColor="#059669" />
+                            <stop offset="100%" stopColor="#047857" />
+                          </linearGradient>
+
+                          <linearGradient id="expectedLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#9ca3af" />
+                            <stop offset="100%" stopColor="#6b7280" />
+                          </linearGradient>
+
+                          {/* Gradients for points */}
+                          <radialGradient id="actualPointGradient">
+                            <stop offset="0%" stopColor="#34d399" />
+                            <stop offset="100%" stopColor="#059669" />
+                          </radialGradient>
+
+                          <radialGradient id="expectedPointGradient">
+                            <stop offset="0%" stopColor="#d1d5db" />
+                            <stop offset="100%" stopColor="#9ca3af" />
+                          </radialGradient>
+
+                          {/* Modern filters */}
+                          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                            <feMerge> 
+                              <feMergeNode in="coloredBlur"/>
+                              <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                          </filter>
+
+                          <filter id="pointShadow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.3"/>
+                          </filter>
+                        </defs>
+                      </svg>
+                    </div>
+                  );
+                })()}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {revenueChangePercent > 0 ? '+' : ''}{revenueChangePercent}% respecto al mes anterior
-              </p>
-              <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-bl-full" />
             </CardContent>
           </Card>
         </motion.div>
 
+        {/* Pagos Pendientes - 1 columna */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={cardVariants}
-          transition={{ delay: 0.1, duration: 0.6 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
         >
-          <Card className="relative overflow-hidden h-40">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ocupación</CardTitle>
-              <motion.div
-                animate={{ scaleX: [1, 0.8, 1] }}
-                transition={{ repeat: Infinity, duration: 3 }}
-              >
-                <div className="w-6 h-4 bg-blue-500 rounded-sm relative overflow-hidden">
-                  <motion.div
-                    className="absolute top-0 left-0 h-full bg-blue-300"
-                    animate={{ width: [`${stats.occupancyRate}%`, `${Math.max(stats.occupancyRate - 10, 20)}%`, `${stats.occupancyRate}%`] }}
-                    transition={{ repeat: Infinity, duration: 3 }}
-                  />
-                </div>
-              </motion.div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-500 text-center">
-                <AnimatedCounter value={stats.occupancyRate} suffix="%" />
-              </div>
-              <p className="text-xs text-muted-foreground text-center mt-2">
-                {stats.occupiedUnits} de {stats.totalUnits} unidades
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={cardVariants}
-          transition={{ delay: 0.2, duration: 0.6 }}
-        >
-          <Card className="relative overflow-hidden h-40">
+          <Card className="relative overflow-hidden h-64">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pagos Pendientes</CardTitle>
               <motion.div
@@ -283,165 +534,48 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
               </motion.div>
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold text-center ${stats.pendingDeposits > 0 ? 'text-red-500' : 'text-gray-600'}`}>
+              <div className={`text-4xl font-bold text-center mb-4 ${stats.pendingDeposits > 0 ? 'text-red-500' : 'text-gray-600'}`}>
                 <AnimatedCounter value={stats.pendingDeposits} />
                 {stats.pendingDeposits > 0 && (
                   <motion.span
                     animate={{ opacity: [1, 0.5, 1] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
-                    className="ml-2 text-xs"
+                    className="ml-2 text-lg"
                   >
                     🔴
                   </motion.span>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                {stats.pendingDeposits > 0 ? 'Requieren atención' : 'Todo al día'}
+              <p className="text-sm text-muted-foreground text-center mb-4">
+                {stats.pendingDeposits > 0 ? 'Requieren atención inmediata' : 'Todos los pagos al día'}
               </p>
+              
+              {stats.pendingDeposits > 0 && (
+                <div className="space-y-2">
+                  <div className="bg-red-50 p-3 rounded-lg">
+                    <p className="text-xs text-red-700 font-medium">Acciones recomendadas:</p>
+                    <ul className="text-xs text-red-600 mt-1 space-y-1">
+                      <li>• Revisar tabla de seguimiento</li>
+                      <li>• Contactar inquilinos</li>
+                      <li>• Verificar fechas de vencimiento</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+              
+              {stats.pendingDeposits === 0 && (
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <p className="text-xs text-green-700 text-center">
+                    ✅ Excelente gestión de cobranza
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
-      {/* Gráfico de Ingresos y Estado General */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={cardVariants}
-          transition={{ delay: 0.3, duration: 0.6 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Evolución de Ingresos
-              </CardTitle>
-              <CardDescription>Últimos 6 meses</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-48 w-full">
-                {(() => {
-                  const data = getRevenueData();
-                  const maxAmount = Math.max(...data.map(d => d.amount), 1);
-                  const width = 300;
-                  const height = 150;
-                  const padding = 40;
-                  
-                  // Calculate points for the line
-                  const points = data.map((item, index) => {
-                    const x = padding + (index * (width - 2 * padding)) / (data.length - 1);
-                    const y = height - padding - ((item.amount / maxAmount) * (height - 2 * padding));
-                    return { x, y, amount: item.amount, month: item.month };
-                  });
-                  
-                  const pathData = points.map((point, index) => 
-                    `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
-                  ).join(' ');
-
-                  return (
-                    <div className="relative">
-                      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
-                        {/* Grid lines */}
-                        {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
-                          <line
-                            key={ratio}
-                            x1={padding}
-                            y1={height - padding - ratio * (height - 2 * padding)}
-                            x2={width - padding}
-                            y2={height - padding - ratio * (height - 2 * padding)}
-                            stroke="#e5e7eb"
-                            strokeWidth="1"
-                            strokeDasharray="2,2"
-                          />
-                        ))}
-                        
-                        {/* Y-axis labels */}
-                        {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
-                          <text
-                            key={ratio}
-                            x={padding - 10}
-                            y={height - padding - ratio * (height - 2 * padding) + 4}
-                            textAnchor="end"
-                            className="text-xs fill-gray-500"
-                          >
-                            €{Math.round(maxAmount * ratio).toLocaleString()}
-                          </text>
-                        ))}
-                        
-                        {/* Line */}
-                        <path
-                          d={pathData}
-                          fill="none"
-                          stroke="#3b82f6"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        
-                        {/* Area under the line */}
-                        <path
-                          d={`${pathData} L ${points[points.length - 1]?.x || 0} ${height - padding} L ${points[0]?.x || 0} ${height - padding} Z`}
-                          fill="url(#gradient)"
-                          opacity="0.2"
-                        />
-                        
-                        {/* Data points */}
-                        {points.map((point, index) => (
-                          <g key={index}>
-                            <circle
-                              cx={point.x}
-                              cy={point.y}
-                              r="4"
-                              fill="#3b82f6"
-                              stroke="white"
-                              strokeWidth="2"
-                            />
-                            {/* Tooltip on hover */}
-                            <circle
-                              cx={point.x}
-                              cy={point.y}
-                              r="8"
-                              fill="transparent"
-                              className="hover:fill-blue-100 cursor-pointer"
-                            >
-                              <title>
-                                {point.month}: €{Math.round(point.amount).toLocaleString()}
-                              </title>
-                            </circle>
-                          </g>
-                        ))}
-                        
-                        {/* X-axis labels */}
-                        {points.map((point, index) => (
-                          <text
-                            key={index}
-                            x={point.x}
-                            y={height - padding + 20}
-                            textAnchor="middle"
-                            className="text-xs fill-gray-500"
-                          >
-                            {point.month}
-                          </text>
-                        ))}
-                        
-                        {/* Gradient definition */}
-                        <defs>
-                          <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
-                            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-                          </linearGradient>
-                        </defs>
-                      </svg>
-                    </div>
-                  );
-                })()}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
+      <motion.div
           initial="hidden"
           animate="visible"
           variants={cardVariants}
@@ -471,7 +605,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                   📉 Tu tasa de ocupación del {stats.occupancyRate.toFixed(1)}% está por debajo del promedio del mercado (85%)
                 </div>
               )}
-              
+
               {stats.totalUnits - stats.occupiedUnits > 0 ? (
                 <div className="p-3 bg-green-100 rounded-lg text-sm text-green-800">
                   💰 Tienes {stats.totalUnits - stats.occupiedUnits} unidad{stats.totalUnits - stats.occupiedUnits > 1 ? 'es' : ''} disponible{stats.totalUnits - stats.occupiedUnits > 1 ? 's' : ''} - Oportunidad de aumentar ingresos
@@ -481,7 +615,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                   🎯 ¡Perfecto! Todas tus unidades están ocupadas - Considera aumentar precios gradualmente
                 </div>
               )}
-              
+
               <div className="p-3 bg-amber-100 rounded-lg text-sm text-amber-800">
                 ⏰ Unidades disponibles: {(100 - stats.occupancyRate).toFixed(1)}% - {stats.totalUnits > 0 ? 'Revisa estrategias de marketing' : 'Agrega propiedades para comenzar'}
               </div>
