@@ -102,12 +102,7 @@ export function useAppData() {
       const properties = propertiesResult.data || [];
       const units = unitsResult.data || [];
 
-      console.log('useAppData: Fetched data:', {
-        tenantsCount: tenants.length,
-        paymentsCount: payments.length,
-        propertiesCount: properties.length,
-        unitsCount: units.length
-      });
+      // Data fetched successfully
 
       // Calculate aggregated stats with detailed logging
       const totalProperties = properties.length;
@@ -116,8 +111,7 @@ export function useAppData() {
       const vacantUnits = totalUnits - occupiedUnits;
       const activeTenants = tenants.filter(t => t.is_active).length;
       
-      console.log('useAppData: Units analysis:', {
-        totalUnits,
+      // Calculating unit statistics
         occupiedUnits: units.filter(u => !u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number, monthly_rent: u.monthly_rent })),
         vacantUnits: units.filter(u => u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number }))
       });

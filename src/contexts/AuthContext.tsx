@@ -42,12 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  console.log("🔐 AuthProvider render:", { 
-    hasUser: !!user, 
-    userRole, 
-    isLoading, 
-    isInitialized,
-    timestamp: new Date().toISOString()
+  // AuthProvider initialized
   });
 
   // Computed properties
@@ -119,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Removed console.log for security
 
       if (roleError) {
-        console.error("❌ Error fetching user role:", roleError);
+        // Error fetching user role, using default
         // Removed console.log for security
         setUserRole('landlord_free');
         return;
@@ -130,9 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const trialEndDate = new Date();
         trialEndDate.setDate(trialEndDate.getDate() + 7); // 7 días de prueba premium
         
-        console.log("📝 Inserting new role with data:", {
-          user_id: userToCheck.id,
-          role: 'landlord_premium',
+        // Creating new user role
           trial_end_date: trialEndDate.toISOString()
         });
         

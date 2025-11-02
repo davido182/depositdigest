@@ -593,8 +593,58 @@ const Analytics = () => {
               </TabsContent>
             </Tabs>
             
+            {/* Insights Card - Moved from Dashboard */}
+            <Card className="relative overflow-hidden border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-blue-800">Insights Inteligentes</h3>
+              </div>
+              <p className="text-sm text-blue-700 mb-4">Recomendaciones personalizadas basadas en tus datos</p>
+              
+              <div className="space-y-3">
+                {(() => {
+                  const occupancyRate = kpis.occupancyRate;
+                  return (
+                    <>
+                      {occupancyRate >= 85 ? (
+                        <div className="p-3 bg-blue-100 rounded-lg text-sm text-blue-800">
+                          📈 Excelente: Tu tasa de ocupación del {occupancyRate.toFixed(1)}% está por encima del promedio del mercado (85%)
+                        </div>
+                      ) : occupancyRate >= 70 ? (
+                        <div className="p-3 bg-yellow-100 rounded-lg text-sm text-yellow-800">
+                          📊 Tu tasa de ocupación del {occupancyRate.toFixed(1)}% está cerca del promedio del mercado (85%)
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-orange-100 rounded-lg text-sm text-orange-800">
+                          📉 Tu tasa de ocupación del {occupancyRate.toFixed(1)}% está por debajo del promedio del mercado (85%)
+                        </div>
+                      )}
+                      
+                      {kpis.totalUnits - kpis.occupiedUnits > 0 ? (
+                        <div className="p-3 bg-green-100 rounded-lg text-sm text-green-800">
+                          💰 Tienes {kpis.totalUnits - kpis.occupiedUnits} unidad{kpis.totalUnits - kpis.occupiedUnits > 1 ? 'es' : ''} disponible{kpis.totalUnits - kpis.occupiedUnits > 1 ? 's' : ''} - Oportunidad de aumentar ingresos
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-emerald-100 rounded-lg text-sm text-emerald-800">
+                          🎯 ¡Perfecto! Todas tus unidades están ocupadas - Considera aumentar precios gradualmente
+                        </div>
+                      )}
+                      
+                      <div className="p-3 bg-amber-100 rounded-lg text-sm text-amber-800">
+                        ⏰ Unidades disponibles: {(100 - occupancyRate).toFixed(1)}% - {kpis.totalUnits > 0 ? 'Revisa estrategias de marketing' : 'Agrega propiedades para comenzar'}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </Card>
+
             <Card className="p-6">
-              <h3 className="text-lg font-medium mb-4">Recomendaciones KPI</h3>
+              <h3 className="text-lg font-medium mb-4">🎯 Recomendaciones Inteligentes</h3>
               <div className="space-y-3">
                 <p className="text-sm">Basado en los datos de tu propiedad, recomendamos monitorear estas métricas clave:</p>
                 <ul className="list-disc pl-5 space-y-2 text-sm">
