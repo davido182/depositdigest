@@ -75,7 +75,8 @@ export function SecureChatAssistant() {
           *,
           tenants!inner(landlord_id)
         `).eq('tenants.landlord_id', user?.id).limit(500),
-        supabase.from('maintenance_requests').select('*').eq('landlord_id', user?.id).limit(100)
+        // supabase.from('maintenance_requests').select('*').eq('landlord_id', user?.id).limit(100) // Deshabilitado temporalmente
+        Promise.resolve({ data: [], error: null })
       ]);
 
       const data: UserData = {

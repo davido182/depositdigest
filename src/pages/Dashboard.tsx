@@ -1,22 +1,18 @@
 import { Layout } from "@/components/Layout";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
-import { IntelligentDashboard } from "@/components/dashboard/IntelligentDashboard";
+import { CleanDashboard } from "@/components/dashboard/CleanDashboard";
 import { DebugCleaner } from "@/components/security/DebugCleaner";
 import { EmergencySecurityOverlay } from "@/components/security/EmergencySecurityOverlay";
 
-import { TenantCard } from "@/components/tenants/TenantCard";
 import { TenantEditForm } from "@/components/tenants/TenantEditForm";
 import { PropertyForm } from "@/components/properties/PropertyForm";
 import { FinalImport } from "@/components/data/FinalImport";
-
 import TenantDashboard from "@/components/tenant/TenantDashboard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tenant } from "@/types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Building, Plus, Users, DollarSign, MapPin, Calendar, FileSpreadsheet } from "lucide-react";
+import { Plus, FileSpreadsheet } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { tenantService } from "@/services/TenantService";
 import { useAppData } from "@/hooks/use-app-data";
@@ -42,41 +38,30 @@ const Dashboard = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { stats, refetch } = useAppData();
+  const appData = useAppData();
+  const stats = (appData as any)?.stats || {
+    totalProperties: 0,
+    totalUnits: 0,
+    occupiedUnits: 0,
+    vacantUnits: 0,
+    monthlyRevenue: 0,
+    activeTenants: 0,
+    occupancyRate: 0,
+    collectionRate: 0,
+    totalTenants: 0,
+    overduePayments: 0,
+    pendingDeposits: 0,
+    upcomingMoveIns: 0,
+    upcomingMoveOuts: 0
+  };
+  const refetch = (appData as any)?.refetch || (() => {});
 
   // Show tenant dashboard for tenant users
   if (userRole === 'tenant') {
     return <TenantDashboard />;
   }
 
-  // Function to create a test maintenance request
-  const createTestMaintenanceRequest = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('maintenance_requests')
-        .insert({
-          user_id: user?.id,
-          landlord_id: user?.id,
-          title: 'Prueba de Notificación',
-          description: 'Esta es una solicitud de mantenimiento de prueba para verificar las notificaciones.',
-          priority: 'high',
-          status: 'pending',
-          unit_number: '101'
-        });
-
-      if (error) {
-        console.error('Error creating test maintenance request:', error);
-        toast.error('Error al crear solicitud de prueba');
-      } else {
-        toast.success('Solicitud de mantenimiento de prueba creada');
-        // Refresh the page to see the notification
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al crear solicitud de prueba');
-    }
-  };
+  // Función de maintenance deshabilitada temporalmente
 
   useEffect(() => {
     const loadData = async () => {
@@ -105,7 +90,7 @@ const Dashboard = () => {
               const mappedProperties = dbProperties.map(dbProp => {
                 const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
                 const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
-                const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.monthly_rent || 0), 0);
+                const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
 
                 // Removed console.log for security
 
@@ -154,22 +139,7 @@ const Dashboard = () => {
     setIsPropertyModalOpen(true);
   };
 
-  const handleEditTenant = (tenant: Tenant) => {
-    setCurrentTenant(tenant);
-    setIsEditModalOpen(true);
-  };
-
-  const handleDeleteTenant = async (tenant: Tenant) => {
-    try {
-      await tenantService.deleteTenant(tenant.id);
-      setTenants(tenants.filter(t => t.id !== tenant.id));
-      refetch();
-      toast.success(`Inquilino ${tenant.name} eliminado exitosamente`);
-    } catch (error) {
-      console.error("Error removing tenant:", error);
-      toast.error("Error al eliminar el inquilino");
-    }
-  };
+  // Funciones de edición movidas a la página de Inquilinos
 
   const handleSaveTenant = async (updatedTenant: Tenant) => {
     try {
@@ -200,8 +170,9 @@ const Dashboard = () => {
         .insert([{
           name: propertyData.name,
           address: propertyData.address,
-          description: propertyData.description,
-          total_units: propertyData.units
+          description: (propertyData as any).description || '',
+          total_units: propertyData.units,
+          user_id: user.id
         }])
         .select()
         .single();
@@ -212,7 +183,8 @@ const Dashboard = () => {
       const units = Array.from({ length: propertyData.units }, (_, i) => ({
         property_id: data.id,
         unit_number: `${i + 1}`,
-        is_available: true
+        is_available: true,
+        user_id: user.id
       }));
 
       const { error: unitsError } = await supabase
@@ -283,7 +255,7 @@ const Dashboard = () => {
 
         <DashboardSummary />
 
-        <IntelligentDashboard stats={stats} />
+        <CleanDashboard stats={stats} />
 
         {/* Las tarjetas de inquilinos se movieron a la sección de Inquilinos */}
 
@@ -337,7 +309,7 @@ const Dashboard = () => {
                     const mappedProperties = dbProperties.map(dbProp => {
                       const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
                       const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
-                      const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.monthly_rent || 0), 0);
+                      const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
 
                       return {
                         id: dbProp.id,
