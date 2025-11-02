@@ -26,7 +26,7 @@ export function EmergencyChart({ data }: EmergencyChartProps) {
   // Calcular estadísticas básicas
   const totalActual = data.reduce((sum, item) => sum + (item.actual || 0), 0);
   const totalExpected = data.reduce((sum, item) => sum + (item.expected || 0), 0);
-  const currentMonth = data.find(item => item.isCurrentMonth);
+  // currentMonth se define dentro del scope donde se usa
   const maxValue = Math.max(...data.map(d => Math.max(d.actual || 0, d.expected || 0)));
 
   return (
@@ -48,14 +48,25 @@ export function EmergencyChart({ data }: EmergencyChartProps) {
 
       {/* Gráfico de barras mejorado */}
       <div className="mb-4">
-        <div className="flex items-end justify-between h-48 bg-gradient-to-t from-gray-50 to-white rounded-lg p-4 border relative group">
+        <div className="flex items-end justify-between h-48 bg-gradient-to-t from-gray-50 to-white rounded-lg p-4 border relative">
           {data.map((item, index) => {
             // LÓGICA CORREGIDA: La barra gris siempre es 100% (potencial máximo)
             // La barra verde es proporcional al valor real vs máximo
             const actualHeight = maxValue > 0 ? (item.actual / maxValue) * 100 : 0;
             
             return (
-              <div key={index} className="flex flex-col items-center flex-1 mx-1 relative group">
+              <div 
+                key={index} 
+                className="flex flex-col items-center flex-1 mx-1 relative"
+                onMouseEnter={(e) => {
+                  const tooltip = e.currentTarget.querySelector('.tooltip-hover');
+                  if (tooltip) tooltip.classList.remove('opacity-0');
+                }}
+                onMouseLeave={(e) => {
+                  const tooltip = e.currentTarget.querySelector('.tooltip-hover');
+                  if (tooltip) tooltip.classList.add('opacity-0');
+                }}
+              >
                 {/* Barra con fondo transparente */}
                 <div className="relative w-full flex justify-center mb-2 cursor-pointer">
                   {/* Barra de fondo (potencial máximo) - SIEMPRE altura completa */}
@@ -80,7 +91,7 @@ export function EmergencyChart({ data }: EmergencyChartProps) {
                     />
                     
                     {/* Valor dinámico SOLO en hover de ESTA barra específica */}
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-xs bg-black/80 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                    <div className="tooltip-hover absolute -top-8 left-1/2 transform -translate-x-1/2 text-xs bg-black/90 text-white px-2 py-1 rounded opacity-0 transition-opacity whitespace-nowrap z-20 pointer-events-none">
                       <div className="font-bold">€{item.actual.toLocaleString()}</div>
                       <div className="text-gray-300 text-xs">de €{item.expected.toLocaleString()}</div>
                     </div>
@@ -138,35 +149,7 @@ export function EmergencyChart({ data }: EmergencyChartProps) {
         ) : null;
       })()}
 
-      {/* Estadísticas del mes actual */}
-      {currentMonth && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-          <h4 className="font-semibold text-emerald-800 mb-2">📅 {currentMonth.month} (Mes Actual)</h4>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-600">Ingresos Reales:</span>
-              <div className="font-bold text-emerald-700">€{currentMonth.actual.toLocaleString()}</div>
-            </div>
-            <div>
-              <span className="text-gray-600">Ingresos Esperados:</span>
-              <div className="font-bold text-blue-700">€{currentMonth.expected.toLocaleString()}</div>
-            </div>
-          </div>
-          
-          {currentMonth.actual > 0 && currentMonth.expected > 0 && (
-            <div className="mt-2 text-sm">
-              <span className="text-gray-600">Rendimiento:</span>
-              <div className={`font-bold ${
-                currentMonth.actual >= currentMonth.expected 
-                  ? 'text-emerald-600' 
-                  : 'text-orange-600'
-              }`}>
-                {((currentMonth.actual / currentMonth.expected) * 100).toFixed(1)}%
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Sección duplicada eliminada */}
 
       {/* Debug info removed for production */}
     </div>
