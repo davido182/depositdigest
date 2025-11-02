@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { BarChart3, AlertCircle, DollarSign, Building2, TrendingUp } from "lucide-react";
+import { AlertCircle, DollarSign } from "lucide-react";
 import { DashboardStats } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmergencyChart } from "./EmergencyChart";
@@ -19,7 +18,10 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
     const currentYear = currentDate.getFullYear();
     const months = [];
 
-    const expectedMonthlyRevenue = stats.totalUnits * (stats.monthlyRevenue / Math.max(stats.occupiedUnits, 1));
+    // LÓGICA CORREGIDA: Ingresos potenciales = suma de TODAS las rentas de TODAS las unidades
+    // Necesitamos obtener la suma real de todas las rentas, no un promedio
+    // Usar el potencial que ya viene calculado en stats, o calcularlo si no existe
+    const maxPotentialRevenue = (stats as any).potentialMonthlyRevenue || (stats.totalUnits * (stats.monthlyRevenue / Math.max(stats.occupiedUnits, 1)));
 
     for (let month = 0; month < 12; month++) {
       const monthName = new Date(currentYear, month, 1).toLocaleDateString('es-ES', { month: 'short' });
@@ -48,7 +50,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
       months.push({
         month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
         actual: Math.max(actualRevenue, 0),
-        expected: Math.max(expectedMonthlyRevenue, 0),
+        expected: Math.max(maxPotentialRevenue, 0), // Máximo potencial (100% ocupación)
         isCurrentMonth: month === currentDate.getMonth(),
         isFutureMonth: month > currentDate.getMonth()
       });
@@ -110,29 +112,110 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-center mb-2">
-                  {stats.overduePayments || 0}
+                  {(() => {
+                    // CÁLCULO CORRECTO: Verificar pagos realmente pendientes y vencidos
+                    const today = new Date();
+                    const currentMonth = today.getMonth();
+                    const currentYear = today.getFullYear();
+                    
+                    // Obtener inquilinos activos
+                    const activeTenants = stats.totalTenants || 0;
+                    
+                    // Verificar pagos del mes actual
+                    const storageKey = `payment_records_${user?.id}_${currentYear}`;
+                    const storedRecords = localStorage.getItem(storageKey);
+                    let paidThisMonth = 0;
+                    
+                    if (storedRecords) {
+                      try {
+                        const records = JSON.parse(storedRecords);
+                        paidThisMonth = records.filter((r: any) => 
+                          r.year === currentYear && 
+                          r.month === currentMonth && 
+                          r.paid === true
+                        ).length;
+                      } catch (error) {
+                        console.error('Error parsing payment records:', error);
+                      }
+                    }
+                    
+                    // Pagos pendientes = inquilinos activos - pagos realizados este mes
+                    const realPendingPayments = Math.max(activeTenants - paidThisMonth, 0);
+                    return realPendingPayments;
+                  })()}
                 </div>
                 <p className="text-xs text-muted-foreground text-center mb-3">
-                  {stats.overduePayments > 0 ? 'Requieren atención' : 'Todo al día'}
+                  {(() => {
+                    const today = new Date();
+                    const currentMonth = today.getMonth();
+                    const currentYear = today.getFullYear();
+                    const activeTenants = stats.totalTenants || 0;
+                    const storageKey = `payment_records_${user?.id}_${currentYear}`;
+                    const storedRecords = localStorage.getItem(storageKey);
+                    let paidThisMonth = 0;
+                    
+                    if (storedRecords) {
+                      try {
+                        const records = JSON.parse(storedRecords);
+                        paidThisMonth = records.filter((r: any) => 
+                          r.year === currentYear && 
+                          r.month === currentMonth && 
+                          r.paid === true
+                        ).length;
+                      } catch (error) {
+                        console.error('Error parsing payment records:', error);
+                      }
+                    }
+                    
+                    const realPendingPayments = Math.max(activeTenants - paidThisMonth, 0);
+                    return realPendingPayments > 0 ? 'Requieren atención este mes' : 'Todo al día este mes';
+                  })()}
                 </p>
                 
-                {stats.overduePayments > 0 && (
-                  <div className="bg-red-50 p-2 rounded-lg">
-                    <p className="text-xs text-red-700 font-medium">⚠️ Acción requerida</p>
-                    <p className="text-xs text-red-600 mt-1">
-                      Contacta con los inquilinos morosos
-                    </p>
-                  </div>
-                )}
-                
-                {stats.overduePayments === 0 && (
-                  <div className="bg-green-50 p-2 rounded-lg">
-                    <p className="text-xs text-green-700 font-medium">✅ Excelente</p>
-                    <p className="text-xs text-green-600 mt-1">
-                      Todos los pagos están al día
-                    </p>
-                  </div>
-                )}
+                {(() => {
+                  const today = new Date();
+                  const currentMonth = today.getMonth();
+                  const currentYear = today.getFullYear();
+                  const activeTenants = stats.totalTenants || 0;
+                  const storageKey = `payment_records_${user?.id}_${currentYear}`;
+                  const storedRecords = localStorage.getItem(storageKey);
+                  let paidThisMonth = 0;
+                  
+                  if (storedRecords) {
+                    try {
+                      const records = JSON.parse(storedRecords);
+                      paidThisMonth = records.filter((r: any) => 
+                        r.year === currentYear && 
+                        r.month === currentMonth && 
+                        r.paid === true
+                      ).length;
+                    } catch (error) {
+                      console.error('Error parsing payment records:', error);
+                    }
+                  }
+                  
+                  const realPendingPayments = Math.max(activeTenants - paidThisMonth, 0);
+                  
+                  if (realPendingPayments > 0) {
+                    return (
+                      <div className="bg-red-50 p-2 rounded-lg">
+                        <p className="text-xs text-red-700 font-medium">⚠️ Acción requerida</p>
+                        <p className="text-xs text-red-600 mt-1">
+                          {realPendingPayments} inquilino{realPendingPayments > 1 ? 's' : ''} sin pagar este mes
+                        </p>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div className="bg-green-50 p-2 rounded-lg">
+                        <p className="text-xs text-green-700 font-medium">✅ Excelente</p>
+                        <p className="text-xs text-green-600 mt-1">
+                          Todos los pagos están al día
+                        </p>
+                      </div>
+                    );
+                  }
+                })()}
               </CardContent>
             </Card>
           </motion.div>
@@ -207,98 +290,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
         </div>
       </div>
 
-      {/* LAS 3 TARJETAS BONITAS DE ANALYTICS - AL FINAL */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={cardVariants}
-        transition={{ delay: 0.6, duration: 0.6 }}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* Tarjeta de Ingresos (Verde) */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 text-white border-0 shadow-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-emerald-100 text-sm font-medium">💰 Ingresos Mensuales</p>
-                  <p className="text-3xl font-bold">€{stats.monthlyRevenue.toLocaleString()}</p>
-                  <p className="text-emerald-100 text-xs">
-                    €{stats.totalTenants > 0 ? (stats.monthlyRevenue / stats.totalTenants).toFixed(0) : '0'} promedio por inquilino
-                  </p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <DollarSign className="h-8 w-8" />
-                </div>
-              </div>
-              <div className="mt-4 flex items-center gap-2">
-                <Badge className="bg-white/20 text-white border-white/30">
-                  {stats.totalTenants} fuentes activas
-                </Badge>
-                <TrendingUp className="h-4 w-4" />
-              </div>
-            </CardContent>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
-          </Card>
-          
-          {/* Tarjeta de Ocupación (Azul) */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-0 shadow-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-blue-100 text-sm font-medium">🏢 Tasa de Ocupación</p>
-                  <p className="text-3xl font-bold">{stats.occupancyRate.toFixed(1)}%</p>
-                  <p className="text-blue-100 text-xs">
-                    {stats.occupiedUnits} de {stats.totalUnits} unidades ocupadas
-                  </p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <Building2 className="h-8 w-8" />
-                </div>
-              </div>
-              <div className="mt-4">
-                <Badge className={`${stats.occupancyRate > 80 ? 'bg-green-500/20 text-green-100' : 
-                                  stats.occupancyRate > 60 ? 'bg-yellow-500/20 text-yellow-100' : 
-                                  'bg-red-500/20 text-red-100'} border-0`}>
-                  {stats.occupancyRate > 80 ? '🎯 Excelente' : 
-                   stats.occupancyRate > 60 ? '📈 Bueno' : 
-                   '⚠️ Mejorar'}
-                </Badge>
-              </div>
-            </CardContent>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
-          </Card>
-          
-          {/* Tarjeta de Cobranza (Morado) */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-purple-500 to-pink-600 text-white border-0 shadow-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-purple-100 text-sm font-medium">📊 Tasa de Cobranza</p>
-                  <p className="text-3xl font-bold">{stats.collectionRate.toFixed(1)}%</p>
-                  <p className="text-purple-100 text-xs">
-                    Pagos completados este mes
-                  </p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <BarChart3 className="h-8 w-8" />
-                </div>
-              </div>
-              <div className="mt-4">
-                <Badge className={`${stats.collectionRate > 95 ? 'bg-green-500/20 text-green-100' : 
-                                  stats.collectionRate > 80 ? 'bg-yellow-500/20 text-yellow-100' : 
-                                  'bg-red-500/20 text-red-100'} border-0`}>
-                  {stats.collectionRate > 95 ? '💎 Excelente' : 
-                   stats.collectionRate > 80 ? '👍 Bueno' : 
-                   '🔔 Atención'}
-                </Badge>
-              </div>
-            </CardContent>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
-          </Card>
-
-        </div>
-      </motion.div>
+      {/* Tarjetas problemáticas eliminadas según solicitud */}
     </div>
   );
 }

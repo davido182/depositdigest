@@ -61,67 +61,91 @@ export function DashboardSummary({
     );
   }
 
-  const occupancyRate = displayStats.totalUnits > 0 ? (displayStats.occupiedUnits / displayStats.totalUnits) * 100 : 0;
+  // Occupancy rate calculation removed - not needed
 
   return (
     <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
-      {/* Total Properties Card */}
-      <Card>
+      {/* Total Properties Card - Mejorada */}
+      <Card className="relative overflow-hidden">
         <CardContent className="flex items-center p-6">
-          <Building2 className="h-8 w-8 text-muted-foreground" />
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">
+          <div className="bg-blue-100 p-3 rounded-full">
+            <Building2 className="h-8 w-8 text-blue-600" />
+          </div>
+          <div className="ml-4 space-y-1 flex-1">
+            <p className="text-sm font-medium text-gray-600">
               Total Propiedades
             </p>
-            <p className="text-2xl font-bold">
+            <p className="text-3xl font-bold text-gray-900">
               {displayStats.totalProperties}
             </p>
+            <p className="text-xs text-gray-500">
+              {displayStats.totalUnits} unidades en total
+            </p>
           </div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-blue-50 rounded-full -translate-y-8 translate-x-8" />
         </CardContent>
       </Card>
 
-      {/* Total Units Card */}
-      <Card>
+      {/* Total Units Card - Mejorada */}
+      <Card className="relative overflow-hidden">
         <CardContent className="flex items-center p-6">
-          <Building2 className="h-8 w-8 text-muted-foreground" />
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">
+          <div className="bg-emerald-100 p-3 rounded-full">
+            <Building2 className="h-8 w-8 text-emerald-600" />
+          </div>
+          <div className="ml-4 space-y-1 flex-1">
+            <p className="text-sm font-medium text-gray-600">
               Total Unidades
             </p>
-            <p className="text-2xl font-bold">
+            <p className="text-3xl font-bold text-gray-900">
               {displayStats.totalUnits}
             </p>
+            <p className="text-xs text-gray-500">
+              Capacidad de alquiler
+            </p>
           </div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-full -translate-y-8 translate-x-8" />
         </CardContent>
       </Card>
 
-      {/* Occupied Units Card */}
-      <Card>
+      {/* Occupied Units Card - Mejorada */}
+      <Card className="relative overflow-hidden">
         <CardContent className="flex items-center p-6">
-          <DollarSign className="h-8 w-8 text-muted-foreground" />
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">
+          <div className="bg-green-100 p-3 rounded-full">
+            <DollarSign className="h-8 w-8 text-green-600" />
+          </div>
+          <div className="ml-4 space-y-1 flex-1">
+            <p className="text-sm font-medium text-gray-600">
               Unidades Ocupadas
             </p>
-            <p className="text-2xl font-bold">
+            <p className="text-3xl font-bold text-gray-900">
               {displayStats.occupiedUnits}
             </p>
+            <p className="text-xs text-gray-500">
+              {displayStats.totalUnits > 0 ? Math.round((displayStats.occupiedUnits / displayStats.totalUnits) * 100) : 0}% de ocupación
+            </p>
           </div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-green-50 rounded-full -translate-y-8 translate-x-8" />
         </CardContent>
       </Card>
 
-      {/* Available Units Card */}
-      <Card>
+      {/* Available Units Card - Mejorada */}
+      <Card className="relative overflow-hidden">
         <CardContent className="flex items-center p-6">
-          <BarChart3 className="h-8 w-8 text-muted-foreground" />
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">
+          <div className="bg-orange-100 p-3 rounded-full">
+            <BarChart3 className="h-8 w-8 text-orange-600" />
+          </div>
+          <div className="ml-4 space-y-1 flex-1">
+            <p className="text-sm font-medium text-gray-600">
               Unidades Disponibles
             </p>
-            <p className="text-2xl font-bold">
+            <p className="text-3xl font-bold text-gray-900">
               {displayStats.vacantUnits}
             </p>
+            <p className="text-xs text-gray-500">
+              {displayStats.vacantUnits > 0 ? 'Oportunidad de ingresos' : 'Completamente ocupado'}
+            </p>
           </div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-orange-50 rounded-full -translate-y-8 translate-x-8" />
         </CardContent>
       </Card>
     </div>

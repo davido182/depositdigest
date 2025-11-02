@@ -50,22 +50,23 @@ export function EmergencyChart({ data }: EmergencyChartProps) {
       <div className="mb-4">
         <div className="flex items-end justify-between h-48 bg-gradient-to-t from-gray-50 to-white rounded-lg p-4 border relative group">
           {data.map((item, index) => {
+            // LÓGICA CORREGIDA: La barra gris siempre es 100% (potencial máximo)
+            // La barra verde es proporcional al valor real vs máximo
             const actualHeight = maxValue > 0 ? (item.actual / maxValue) * 100 : 0;
-            const expectedHeight = maxValue > 0 ? (item.expected / maxValue) * 100 : 0;
             
             return (
               <div key={index} className="flex flex-col items-center flex-1 mx-1 relative group">
                 {/* Barra con fondo transparente */}
                 <div className="relative w-full flex justify-center mb-2 cursor-pointer">
-                  {/* Barra de fondo (esperado) - transparente */}
+                  {/* Barra de fondo (potencial máximo) - SIEMPRE altura completa */}
                   <div 
                     className="w-6 bg-gray-200 rounded-t relative hover:bg-gray-300 transition-colors"
                     style={{ 
-                      height: `${Math.max(expectedHeight, 2)}%`,
+                      height: '100%', // SIEMPRE altura completa = potencial máximo
                       minHeight: '4px'
                     }}
                   >
-                    {/* Barra real encima */}
+                    {/* Barra real encima - proporcional al valor real vs máximo */}
                     <div 
                       className={`absolute bottom-0 left-0 w-full rounded-t transition-all duration-700 ${
                         item.isCurrentMonth 
@@ -73,15 +74,15 @@ export function EmergencyChart({ data }: EmergencyChartProps) {
                           : 'bg-emerald-500'
                       } hover:brightness-110`}
                       style={{ 
-                        height: `${Math.min((actualHeight / expectedHeight) * 100, 100)}%`,
-                        minHeight: actualHeight > 0 ? '4px' : '0px'
+                        height: `${Math.max(actualHeight, 0)}%`, // Altura basada en valor real vs máximo
+                        minHeight: item.actual > 0 ? '4px' : '0px'
                       }}
                     />
                     
-                    {/* Valor dinámico semitransparente */}
-                    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs bg-black/70 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                    {/* Valor dinámico SOLO en hover de ESTA barra específica */}
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-xs bg-black/80 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
                       <div className="font-bold">€{item.actual.toLocaleString()}</div>
-                      <div className="text-gray-300">de €{item.expected.toLocaleString()}</div>
+                      <div className="text-gray-300 text-xs">de €{item.expected.toLocaleString()}</div>
                     </div>
                   </div>
                 </div>
@@ -114,20 +115,22 @@ export function EmergencyChart({ data }: EmergencyChartProps) {
                 <div className="font-bold text-emerald-700">€{currentMonth.actual.toLocaleString()}</div>
               </div>
               <div>
-                <span className="text-gray-600">Ingresos Esperados:</span>
-                <div className="font-bold text-blue-700">€{currentMonth.expected.toLocaleString()}</div>
+                <span className="text-gray-600">Potencial Máximo:</span>
+                <div className="font-bold text-gray-700">€{currentMonth.expected.toLocaleString()}</div>
               </div>
             </div>
             
-            {currentMonth.actual > 0 && currentMonth.expected > 0 && (
+            {currentMonth.expected > 0 && (
               <div className="mt-2 text-xs">
-                <span className="text-gray-600">Rendimiento:</span>
+                <span className="text-gray-600">Aprovechamiento:</span>
                 <div className={`font-bold ${
-                  currentMonth.actual >= currentMonth.expected 
+                  (currentMonth.actual / currentMonth.expected) >= 0.8
                     ? 'text-emerald-600' 
+                    : (currentMonth.actual / currentMonth.expected) >= 0.6
+                    ? 'text-yellow-600'
                     : 'text-orange-600'
                 }`}>
-                  {((currentMonth.actual / currentMonth.expected) * 100).toFixed(1)}%
+                  {((currentMonth.actual / currentMonth.expected) * 100).toFixed(1)}% del potencial
                 </div>
               </div>
             )}
