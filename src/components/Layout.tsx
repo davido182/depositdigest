@@ -19,7 +19,7 @@ export function Layout({ children }: LayoutProps) {
   const [mounted, setMounted] = useState(false);
   const { isNative, platform } = useDeviceFeatures();
   const { orientation, isLandscape } = useOrientation();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isLoading, user, isInitialized } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -38,7 +38,7 @@ export function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     // Removed console.log for security
-  }, [isAuthenticated, isLoading, user]);
+  }, [user, isLoading, isInitialized]);
 
   if (!mounted) {
     // Removed console.log for security
@@ -60,7 +60,7 @@ export function Layout({ children }: LayoutProps) {
   }
 
   // Only show sidebar if user is authenticated
-  if (!isAuthenticated) {
+  if (isInitialized && !user) {
     // Removed console.log for security
     return (
       <MobileOrientationWrapper className={cn(

@@ -1,6 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
-import { CleanDashboard } from "@/components/dashboard/CleanDashboard";
+import { FinalDashboard } from "@/components/dashboard/FinalDashboard";
 import { DebugCleaner } from "@/components/security/DebugCleaner";
 import { EmergencySecurityOverlay } from "@/components/security/EmergencySecurityOverlay";
 
@@ -256,7 +256,7 @@ const Dashboard = () => {
 
         <DashboardSummary />
 
-        <CleanDashboard stats={stats} />
+        <FinalDashboard stats={stats} />
 
         {/* Las tarjetas de inquilinos se movieron a la sección de Inquilinos */}
 

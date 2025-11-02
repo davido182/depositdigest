@@ -55,31 +55,31 @@ export function EmergencyChart({ data }: EmergencyChartProps) {
             
             return (
               <div key={index} className="flex flex-col items-center flex-1 mx-1">
-                {/* Barras */}
-                <div className="relative w-full flex justify-center gap-1 mb-2">
-                  {/* Barra esperada (fondo) */}
+                {/* Barra con fondo transparente */}
+                <div className="relative w-full flex justify-center mb-2">
+                  {/* Barra de fondo (esperado) - transparente */}
                   <div 
-                    className="w-3 bg-blue-200 rounded-t transition-all duration-700"
+                    className="w-6 bg-gray-200 rounded-t relative"
                     style={{ 
                       height: `${Math.max(expectedHeight, 2)}%`,
                       minHeight: '4px'
                     }}
                     title={`Esperado: €${item.expected?.toLocaleString() || 0}`}
-                  />
-                  
-                  {/* Barra real */}
-                  <div 
-                    className={`w-3 rounded-t transition-all duration-700 ${
-                      item.isCurrentMonth 
-                        ? 'bg-emerald-600 shadow-lg' 
-                        : 'bg-emerald-500'
-                    }`}
-                    style={{ 
-                      height: `${Math.max(actualHeight, 2)}%`,
-                      minHeight: '4px'
-                    }}
-                    title={`Real: €${item.actual?.toLocaleString() || 0}`}
-                  />
+                  >
+                    {/* Barra real encima */}
+                    <div 
+                      className={`absolute bottom-0 left-0 w-full rounded-t transition-all duration-700 ${
+                        item.isCurrentMonth 
+                          ? 'bg-emerald-600 shadow-lg' 
+                          : 'bg-emerald-500'
+                      }`}
+                      style={{ 
+                        height: `${Math.min((actualHeight / expectedHeight) * 100, 100)}%`,
+                        minHeight: actualHeight > 0 ? '4px' : '0px'
+                      }}
+                      title={`Real: €${item.actual?.toLocaleString() || 0}`}
+                    />
+                  </div>
                 </div>
                 
                 {/* Etiqueta del mes */}
@@ -135,11 +135,7 @@ export function EmergencyChart({ data }: EmergencyChartProps) {
         </div>
       )}
 
-      {/* Debug info */}
-      <div className="mt-4 text-xs text-gray-400 border-t pt-2">
-        <strong>Debug:</strong> {data.length} meses • Max: €{maxValue.toLocaleString()} • 
-        Componente de emergencia activo
-      </div>
+      {/* Debug info removed for production */}
     </div>
   );
 }
