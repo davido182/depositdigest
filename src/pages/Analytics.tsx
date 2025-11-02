@@ -3,6 +3,7 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AreaChart, BarChart, PieChart } from "@/components/ui/chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Analytics = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [analyticsData, setAnalyticsData] = useState({
     tenants: [],
     payments: [],
@@ -217,7 +219,7 @@ const Analytics = () => {
         ) : (
           <div className="space-y-8">
             {/* 🚀 ANALYTICS COMPLETAMENTE MODERNIZADO - 4 TARJETAS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Revenue Card */}
               <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 text-white border-0 shadow-xl">
                 <CardContent className="p-6">
@@ -299,69 +301,7 @@ const Analytics = () => {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
               </Card>
 
-              {/* Rentabilidad Card */}
-              <Card className="relative overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-0 shadow-xl">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-2">
-                      <p className="text-indigo-100 text-sm font-medium">💎 Rentabilidad (ROI)</p>
-                      <p className="text-3xl font-bold">
-                        {(() => {
-                          const estimatedExpenses = kpis.monthlyRevenue * 0.30; // 30% de gastos estimados
-                          const netIncome = kpis.monthlyRevenue - estimatedExpenses;
-                          const roi = kpis.monthlyRevenue > 0 ? (netIncome / kpis.monthlyRevenue) * 100 : 0;
-                          return `${roi.toFixed(1)}%`;
-                        })()}
-                      </p>
-                      <p className="text-indigo-200 text-xs">
-                        {(() => {
-                          const estimatedExpenses = kpis.monthlyRevenue * 0.30;
-                          const netIncome = kpis.monthlyRevenue - estimatedExpenses;
-                          return `€${Math.round(netIncome).toLocaleString()} ingreso neto mensual`;
-                        })()}
-                      </p>
-                    </div>
-                    <div className="bg-white/20 p-3 rounded-full">
-                      <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <div className="bg-white/20 text-white border-white/30 px-3 py-1 rounded-full text-xs inline-flex items-center gap-2">
-                      {(() => {
-                        const estimatedExpenses = kpis.monthlyRevenue * 0.30;
-                        const netIncome = kpis.monthlyRevenue - estimatedExpenses;
-                        const roi = kpis.monthlyRevenue > 0 ? (netIncome / kpis.monthlyRevenue) * 100 : 0;
-                        
-                        if (roi >= 60) {
-                          return (
-                            <>
-                              <span className="w-2 h-2 bg-green-300 rounded-full"></span>
-                              <span>🚀 Excelente ROI</span>
-                            </>
-                          );
-                        } else if (roi >= 40) {
-                          return (
-                            <>
-                              <span className="w-2 h-2 bg-yellow-300 rounded-full"></span>
-                              <span>📈 Buen ROI</span>
-                            </>
-                          );
-                        } else {
-                          return (
-                            <>
-                              <span className="w-2 h-2 bg-red-300 rounded-full"></span>
-                              <span>⚠️ Mejorar ROI</span>
-                            </>
-                          );
-                        }
-                      })()}
-                    </div>
-                  </div>
-                </CardContent>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16" />
-              </Card>
+              {/* Tarjeta ROI eliminada según solicitud */}
             </div>
 
             {/* Call to Action Section */}
@@ -379,7 +319,18 @@ const Analytics = () => {
                       }
                     </p>
                   </div>
-                  <Button className="bg-white text-orange-600 hover:bg-orange-50 font-semibold">
+                  <Button 
+                    className="bg-white text-orange-600 hover:bg-orange-50 font-semibold"
+                    onClick={() => {
+                      if (kpis.occupancyRate < 80) {
+                        navigate('/properties');
+                      } else if (kpis.collectionRate < 90) {
+                        navigate('/payments');
+                      } else {
+                        navigate('/properties');
+                      }
+                    }}
+                  >
                     {kpis.occupancyRate < 80 ? 'Ver Unidades' : 
                      kpis.collectionRate < 90 ? 'Gestionar Pagos' : 
                      'Agregar Propiedad'}
@@ -451,7 +402,7 @@ const Analytics = () => {
               
               {/* Revenue Tab */}
               <TabsContent value="revenue" className="space-y-6">
-                <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 text-white border-0 shadow-xl p-6">
+                <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500/70 to-green-600/70 text-white border-0 shadow-xl p-6">
                   <h3 className="text-lg font-medium mb-4 text-emerald-100">💰 Ingresos Reales del Año {new Date().getFullYear()}</h3>
                   <p className="text-sm text-emerald-200 mb-4">
                     Basado en la tabla de seguimiento de pagos

@@ -46,25 +46,24 @@ export function EmergencyChart({ data }: EmergencyChartProps) {
         </div>
       </div>
 
-      {/* Gráfico de barras simple */}
-      <div className="mb-6">
-        <div className="flex items-end justify-between h-48 bg-gradient-to-t from-gray-50 to-white rounded-lg p-4 border">
+      {/* Gráfico de barras mejorado */}
+      <div className="mb-4">
+        <div className="flex items-end justify-between h-48 bg-gradient-to-t from-gray-50 to-white rounded-lg p-4 border relative group">
           {data.map((item, index) => {
             const actualHeight = maxValue > 0 ? (item.actual / maxValue) * 100 : 0;
             const expectedHeight = maxValue > 0 ? (item.expected / maxValue) * 100 : 0;
             
             return (
-              <div key={index} className="flex flex-col items-center flex-1 mx-1">
+              <div key={index} className="flex flex-col items-center flex-1 mx-1 relative group">
                 {/* Barra con fondo transparente */}
-                <div className="relative w-full flex justify-center mb-2">
+                <div className="relative w-full flex justify-center mb-2 cursor-pointer">
                   {/* Barra de fondo (esperado) - transparente */}
                   <div 
-                    className="w-6 bg-gray-200 rounded-t relative"
+                    className="w-6 bg-gray-200 rounded-t relative hover:bg-gray-300 transition-colors"
                     style={{ 
                       height: `${Math.max(expectedHeight, 2)}%`,
                       minHeight: '4px'
                     }}
-                    title={`Esperado: €${item.expected?.toLocaleString() || 0}`}
                   >
                     {/* Barra real encima */}
                     <div 
@@ -72,17 +71,22 @@ export function EmergencyChart({ data }: EmergencyChartProps) {
                         item.isCurrentMonth 
                           ? 'bg-emerald-600 shadow-lg' 
                           : 'bg-emerald-500'
-                      }`}
+                      } hover:brightness-110`}
                       style={{ 
                         height: `${Math.min((actualHeight / expectedHeight) * 100, 100)}%`,
                         minHeight: actualHeight > 0 ? '4px' : '0px'
                       }}
-                      title={`Real: €${item.actual?.toLocaleString() || 0}`}
                     />
+                    
+                    {/* Valor dinámico semitransparente */}
+                    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs bg-black/70 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                      <div className="font-bold">€{item.actual.toLocaleString()}</div>
+                      <div className="text-gray-300">de €{item.expected.toLocaleString()}</div>
+                    </div>
                   </div>
                 </div>
                 
-                {/* Etiqueta del mes */}
+                {/* Etiqueta del mes - sin números */}
                 <div className={`text-xs text-center ${
                   item.isCurrentMonth 
                     ? 'font-bold text-emerald-600' 
@@ -92,18 +96,44 @@ export function EmergencyChart({ data }: EmergencyChartProps) {
                 }`}>
                   {item.month}
                 </div>
-                
-                {/* Valor actual */}
-                {item.actual > 0 && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    €{item.actual.toLocaleString()}
-                  </div>
-                )}
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Información del mes actual - dentro del gráfico */}
+      {(() => {
+        const currentMonth = data.find(item => item.isCurrentMonth);
+        return currentMonth ? (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-4">
+            <h4 className="font-semibold text-emerald-800 mb-2 text-sm">📅 {currentMonth.month} (Mes Actual)</h4>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-gray-600">Ingresos Reales:</span>
+                <div className="font-bold text-emerald-700">€{currentMonth.actual.toLocaleString()}</div>
+              </div>
+              <div>
+                <span className="text-gray-600">Ingresos Esperados:</span>
+                <div className="font-bold text-blue-700">€{currentMonth.expected.toLocaleString()}</div>
+              </div>
+            </div>
+            
+            {currentMonth.actual > 0 && currentMonth.expected > 0 && (
+              <div className="mt-2 text-xs">
+                <span className="text-gray-600">Rendimiento:</span>
+                <div className={`font-bold ${
+                  currentMonth.actual >= currentMonth.expected 
+                    ? 'text-emerald-600' 
+                    : 'text-orange-600'
+                }`}>
+                  {((currentMonth.actual / currentMonth.expected) * 100).toFixed(1)}%
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null;
+      })()}
 
       {/* Estadísticas del mes actual */}
       {currentMonth && (

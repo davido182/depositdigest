@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, AlertCircle, DollarSign, Building2, TrendingUp } from "lucide-react";
 import { DashboardStats } from "@/types";
@@ -76,13 +76,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
           className="md:col-span-2"
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Ingresos de este año
-              </CardTitle>
-              <CardDescription>Evolución mensual de ingresos reales vs esperados</CardDescription>
-            </CardHeader>
+            {/* Header removido - más espacio para el gráfico */}
             <CardContent>
               <div className="h-80 w-full">
                 <EmergencyChart data={getRevenueData()} />
