@@ -18,16 +18,36 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
     const currentYear = currentDate.getFullYear();
     const months = [];
 
-    // LÓGICA CORREGIDA: Ingresos potenciales = suma de TODAS las rentas de TODAS las unidades
-    // Necesitamos obtener la suma real de todas las rentas, no un promedio
-    // Usar el potencial que ya viene calculado en stats, o calcularlo si no existe
-    const maxPotentialRevenue = (stats as any).potentialMonthlyRevenue || (stats.totalUnits * (stats.monthlyRevenue / Math.max(stats.occupiedUnits, 1)));
+    // CÁLCULO CORRECTO: Potencial total = suma de TODAS las rentas de TODAS las unidades
+    // Obtener todas las unidades del usuario desde localStorage o calcular desde stats
+    const storageKey = `app_data_${user?.id}`;
+    const storedAppData = localStorage.getItem(storageKey);
+    let totalPotentialRevenue = 0;
+
+    if (storedAppData) {
+      try {
+        const appData = JSON.parse(storedAppData);
+        // Sumar todas las rentas de todas las unidades (ocupadas y vacantes)
+        totalPotentialRevenue = appData.units?.reduce((sum: number, unit: any) => {
+          return sum + (unit.monthly_rent || 0);
+        }, 0) || 0;
+      } catch (error) {
+        console.error('Error parsing app data:', error);
+      }
+    }
+
+    // Fallback: calcular desde stats si no hay datos en localStorage
+    if (totalPotentialRevenue === 0) {
+      // Estimar basado en unidades ocupadas y su ingreso promedio
+      const avgRentPerUnit = stats.occupiedUnits > 0 ? stats.monthlyRevenue / stats.occupiedUnits : 0;
+      totalPotentialRevenue = stats.totalUnits * avgRentPerUnit;
+    }
 
     for (let month = 0; month < 12; month++) {
       const monthName = new Date(currentYear, month, 1).toLocaleDateString('es-ES', { month: 'short' });
 
-      const storageKey = `payment_records_${user?.id}_${currentYear}`;
-      const storedRecords = localStorage.getItem(storageKey);
+      const paymentStorageKey = `payment_records_${user?.id}_${currentYear}`;
+      const storedRecords = localStorage.getItem(paymentStorageKey);
       let actualRevenue = 0;
 
       if (storedRecords) {
@@ -50,7 +70,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
       months.push({
         month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
         actual: Math.max(actualRevenue, 0),
-        expected: Math.max(maxPotentialRevenue, 0), // Máximo potencial (100% ocupación)
+        expected: Math.max(totalPotentialRevenue, 0), // Potencial total de TODAS las unidades
         isCurrentMonth: month === currentDate.getMonth(),
         isFutureMonth: month > currentDate.getMonth()
       });
