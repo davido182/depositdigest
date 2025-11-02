@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { DashboardStats } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAppData } from "@/hooks/use-app-data";
+// useAppData no es necesario aquí, usamos los datos que vienen del Dashboard
 import { ModernChart } from "./ModernChart";
 
 interface IntelligentDashboardProps {
@@ -32,7 +32,23 @@ const AnimatedCounter = ({ value }: { value: number }) => {
 
 export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
   const { user } = useAuth();
-  const { stats: kpis } = useAppData(); // Usar los mismos datos que Analytics
+
+  // Usar los datos que se pasan como parámetro (que vienen de useAppData en Dashboard.tsx)
+  const kpis = {
+    totalProperties: stats.totalUnits > 0 ? 1 : 0, // Estimación
+    totalUnits: stats.totalUnits,
+    occupiedUnits: stats.occupiedUnits,
+    vacantUnits: stats.vacantUnits,
+    monthlyRevenue: stats.monthlyRevenue,
+    activeTenants: stats.totalTenants,
+    occupancyRate: stats.occupancyRate,
+    collectionRate: stats.collectionRate || 85, // Valor por defecto si no existe
+    totalTenants: stats.totalTenants,
+    overduePayments: stats.overduePayments,
+    pendingDeposits: stats.pendingDeposits,
+    upcomingMoveIns: stats.upcomingMoveIns,
+    upcomingMoveOuts: stats.upcomingMoveOuts
+  };
 
   // Función para obtener datos de ingresos de 12 meses
   const getRevenueData = () => {
