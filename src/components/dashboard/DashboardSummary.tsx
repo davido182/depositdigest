@@ -1,11 +1,9 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Building2,
   DollarSign,
   BarChart3,
-  TrendingUp,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAppData } from "@/hooks/use-app-data";
@@ -22,7 +20,23 @@ export function DashboardSummary({
   occupiedUnits,
 }: DashboardSummaryProps = {}) {
   const isMobile = useIsMobile();
-  const { stats, isLoading } = useAppData();
+  const appData = useAppData();
+  const stats = appData?.stats || {
+    totalProperties: 0,
+    totalUnits: 0,
+    occupiedUnits: 0,
+    vacantUnits: 0,
+    monthlyRevenue: 0,
+    activeTenants: 0,
+    occupancyRate: 0,
+    collectionRate: 0,
+    totalTenants: 0,
+    overduePayments: 0,
+    pendingDeposits: 0,
+    upcomingMoveIns: 0,
+    upcomingMoveOuts: 0
+  };
+  const isLoading = appData?.isLoading || false;
 
   // Use props if provided, otherwise fall back to centralized data
   const displayStats = {

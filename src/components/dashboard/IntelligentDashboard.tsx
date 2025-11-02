@@ -12,7 +12,7 @@ import {
 import { DashboardStats } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 // useAppData no es necesario aquí, usamos los datos que vienen del Dashboard
-import { ModernChart } from "./ModernChart";
+import { ModernChartFixed } from "./ModernChartFixed";
 
 interface IntelligentDashboardProps {
   stats: DashboardStats;
@@ -56,7 +56,11 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
     const currentYear = currentDate.getFullYear();
     const months = [];
 
+    console.log('📊 getRevenueData: Generando datos del gráfico');
+    console.log('📊 KPIs disponibles:', kpis);
+
     const expectedMonthlyRevenue = kpis.totalUnits * (kpis.monthlyRevenue / Math.max(kpis.occupiedUnits, 1));
+    console.log('📊 Ingreso mensual esperado:', expectedMonthlyRevenue);
 
     for (let month = 0; month < 12; month++) {
       const monthName = new Date(currentYear, month, 1).toLocaleDateString('es-ES', { month: 'short' });
@@ -91,6 +95,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
       });
     }
 
+    console.log('📊 Datos del gráfico generados:', months);
     return months;
   };
 
@@ -115,13 +120,13 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5" />
-                📈 Gráfico Moderno Completamente Nuevo
+                Ingresos de este año
               </CardTitle>
-              <CardDescription>Ingresos potenciales vs ingresos reales - Diseño elegante</CardDescription>
+              <CardDescription>Ingresos potenciales vs ingresos reales</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-80 w-full">
-                <ModernChart data={getRevenueData()} />
+                <ModernChartFixed data={getRevenueData()} />
               </div>
             </CardContent>
           </Card>
@@ -360,4 +365,4 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
       </div>
     </div>
   );
-}
+} 

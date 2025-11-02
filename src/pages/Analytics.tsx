@@ -82,14 +82,7 @@ const Analytics = () => {
           try {
             const records = JSON.parse(storedRecords);
             
-            // Debug: Log para verificar los datos
-            console.log('Analytics Debug:', {
-              currentMonth,
-              currentYear,
-              totalRecords: records.length,
-              activeTenants: activeTenants.length,
-              sampleRecord: records[0]
-            });
+            // Analytics calculation in progress
             
             const currentMonthPaidRecords = records.filter((r: any) => 
               r.year === currentYear && r.month === currentMonth && r.paid

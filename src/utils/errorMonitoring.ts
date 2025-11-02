@@ -2,8 +2,14 @@ import * as Sentry from "@sentry/react";
 
 // Configuración de Sentry para monitoreo de errores
 export const initErrorMonitoring = () => {
+  // Sentry deshabilitado hasta configurar DSN real
+  if (!process.env.VITE_SENTRY_DSN || process.env.VITE_SENTRY_DSN.includes('your-sentry-dsn')) {
+    console.log('Sentry no configurado - saltando inicialización');
+    return;
+  }
+  
   Sentry.init({
-    dsn: "https://your-sentry-dsn@sentry.io/project-id", // Configurar con tu DSN real
+    dsn: process.env.VITE_SENTRY_DSN,
     environment: process.env.NODE_ENV || "development",
     debug: process.env.NODE_ENV === "development",
     integrations: [
