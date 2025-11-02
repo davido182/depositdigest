@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, DollarSign } from "lucide-react";
 import { DashboardStats } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { EmergencyChart } from "./EmergencyChart";
+import { CleanChart } from "./CleanChart";
 
 interface FinalDashboardProps {
   stats: DashboardStats;
@@ -68,7 +68,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
     <div className="space-y-6">
       {/* Layout: Gráfico (2 columnas) + Tarjetas laterales (1 columna) */}
       <div className="grid gap-6 md:grid-cols-3">
-        
+
         {/* Gráfico de Ingresos - 2 columnas */}
         <motion.div
           initial="hidden"
@@ -81,7 +81,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
             {/* Header removido - más espacio para el gráfico */}
             <CardContent>
               <div className="h-80 w-full">
-                <EmergencyChart data={getRevenueData()} />
+                <CleanChart data={getRevenueData()} />
               </div>
             </CardContent>
           </Card>
@@ -89,7 +89,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
 
         {/* Columna derecha con tarjetas apiladas */}
         <div className="space-y-6">
-          
+
           {/* Pagos Pendientes */}
           <motion.div
             initial="hidden"
@@ -117,28 +117,28 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                     const today = new Date();
                     const currentMonth = today.getMonth();
                     const currentYear = today.getFullYear();
-                    
+
                     // Obtener inquilinos activos
                     const activeTenants = stats.totalTenants || 0;
-                    
+
                     // Verificar pagos del mes actual
                     const storageKey = `payment_records_${user?.id}_${currentYear}`;
                     const storedRecords = localStorage.getItem(storageKey);
                     let paidThisMonth = 0;
-                    
+
                     if (storedRecords) {
                       try {
                         const records = JSON.parse(storedRecords);
-                        paidThisMonth = records.filter((r: any) => 
-                          r.year === currentYear && 
-                          r.month === currentMonth && 
+                        paidThisMonth = records.filter((r: any) =>
+                          r.year === currentYear &&
+                          r.month === currentMonth &&
                           r.paid === true
                         ).length;
                       } catch (error) {
                         console.error('Error parsing payment records:', error);
                       }
                     }
-                    
+
                     // Pagos pendientes = inquilinos activos - pagos realizados este mes
                     const realPendingPayments = Math.max(activeTenants - paidThisMonth, 0);
                     return realPendingPayments;
@@ -153,25 +153,25 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                     const storageKey = `payment_records_${user?.id}_${currentYear}`;
                     const storedRecords = localStorage.getItem(storageKey);
                     let paidThisMonth = 0;
-                    
+
                     if (storedRecords) {
                       try {
                         const records = JSON.parse(storedRecords);
-                        paidThisMonth = records.filter((r: any) => 
-                          r.year === currentYear && 
-                          r.month === currentMonth && 
+                        paidThisMonth = records.filter((r: any) =>
+                          r.year === currentYear &&
+                          r.month === currentMonth &&
                           r.paid === true
                         ).length;
                       } catch (error) {
                         console.error('Error parsing payment records:', error);
                       }
                     }
-                    
+
                     const realPendingPayments = Math.max(activeTenants - paidThisMonth, 0);
                     return realPendingPayments > 0 ? 'Requieren atención este mes' : 'Todo al día este mes';
                   })()}
                 </p>
-                
+
                 {(() => {
                   const today = new Date();
                   const currentMonth = today.getMonth();
@@ -180,22 +180,22 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                   const storageKey = `payment_records_${user?.id}_${currentYear}`;
                   const storedRecords = localStorage.getItem(storageKey);
                   let paidThisMonth = 0;
-                  
+
                   if (storedRecords) {
                     try {
                       const records = JSON.parse(storedRecords);
-                      paidThisMonth = records.filter((r: any) => 
-                        r.year === currentYear && 
-                        r.month === currentMonth && 
+                      paidThisMonth = records.filter((r: any) =>
+                        r.year === currentYear &&
+                        r.month === currentMonth &&
                         r.paid === true
                       ).length;
                     } catch (error) {
                       console.error('Error parsing payment records:', error);
                     }
                   }
-                  
+
                   const realPendingPayments = Math.max(activeTenants - paidThisMonth, 0);
-                  
+
                   if (realPendingPayments > 0) {
                     return (
                       <div className="bg-red-50 p-2 rounded-lg">
