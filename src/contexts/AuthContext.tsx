@@ -15,9 +15,10 @@ interface AuthContextType {
   isPasswordRecovery: boolean;
   isInitialized: boolean;
   signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string) => Promise<any>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<any>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<any>;
+  updatePassword: (newPassword: string) => Promise<any>;
   refreshUserRole: (currentUser?: User) => Promise<void>;
   isLandlord: boolean;
   isTenant: boolean;
@@ -114,13 +115,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, fullName?: string) => {
     try {
       setIsLoading(true);
       
       const { data, error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          data: {
+            full_name: fullName
+          }
+        }
       });
       
       if (error) throw error;
@@ -168,6 +174,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email);
     if (error) throw error;
     return data;
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const initializeAuth = async () => {
@@ -226,6 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('🔄 AuthContext: Auth state change:', event, !!session?.user);
         
         switch (event) {
+          case 'INITIAL_SESSION':
           case 'SIGNED_IN':
             if (session?.user) {
               console.log('👤 AuthContext: Usuario logueado');
@@ -298,6 +318,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUp,
     signOut,
     resetPassword,
+    updatePassword,
     refreshUserRole,
     isLandlord,
     isTenant,

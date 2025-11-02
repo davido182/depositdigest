@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { AuthDebugInfo } from "@/components/AuthDebugInfo";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -16,20 +17,21 @@ const Login = () => {
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showResetForm, setShowResetForm] = useState(false);
-  const { signIn, signUp, resetPassword, updatePassword, user, isAuthenticated, isPasswordRecovery } = useAuth();
+  const { signIn, signUp, resetPassword, user, isPasswordRecovery, isInitialized, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // Simple auth check - no complex logic
   useEffect(() => {
-    if (isAuthenticated && !isPasswordRecovery) {
+    if (isInitialized && user && !isPasswordRecovery && !authLoading) {
+      console.log('🔄 Login: Navegando al dashboard');
       navigate("/dashboard");
     }
     
     if (isPasswordRecovery && user) {
       toast.info("Ahora puedes establecer tu nueva contraseña");
     }
-  }, [isAuthenticated, isPasswordRecovery, user, navigate]);
+  }, [user, isPasswordRecovery, isInitialized, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,6 +272,7 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
+      <AuthDebugInfo />
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center mb-4">

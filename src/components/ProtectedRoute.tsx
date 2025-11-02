@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 
 const ProtectedRoute = () => {
-  const { isAuthenticated, isLoading, userRole, user } = useAuth();
+  const { isLoading, userRole, user, isInitialized } = useAuth();
   const [showTimeoutError, setShowTimeoutError] = useState(false);
 
   // Removed console.log for security
@@ -64,8 +64,8 @@ const ProtectedRoute = () => {
   }
 
   // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    // Removed console.log for security
+  if (isInitialized && !user) {
+    console.log('🔄 ProtectedRoute: Redirigiendo a login - usuario no autenticado');
     return <Navigate to="/login" replace />;
   }
 
