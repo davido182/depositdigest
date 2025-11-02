@@ -223,14 +223,14 @@ const Analytics = () => {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* 🎯 KPI Hero Cards - 4 Tarjetas Modernizadas */}
+            {/* 🚀 ANALYTICS COMPLETAMENTE MODERNIZADO - 4 TARJETAS */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Revenue Card */}
               <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 text-white border-0 shadow-xl">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-2">
-                      <p className="text-emerald-100 text-sm font-medium">💰 Ingresos Mensuales</p>
+                      <p className="text-emerald-100 text-sm font-medium">🚀 INGRESOS ANALYTICS</p>
                       <p className="text-3xl font-bold">€{kpis.monthlyRevenue.toLocaleString()}</p>
                       <p className="text-emerald-100 text-xs">
                         €{kpis.activeTenants > 0 ? (kpis.monthlyRevenue / kpis.activeTenants).toFixed(0) : '0'} promedio por inquilino

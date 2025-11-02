@@ -208,6 +208,7 @@ export interface DashboardStats {
   pendingDeposits: number;
   upcomingMoveIns: number;
   upcomingMoveOuts: number;
+  collectionRate: number;
 }
 
 // Aggregated stats interface for useAppData

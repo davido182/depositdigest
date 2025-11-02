@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   TrendingUp,
   Building2,
   AlertCircle,
   BarChart3,
-  Crown,
-  Zap,
   DollarSign
 } from "lucide-react";
 import { DashboardStats } from "@/types";
@@ -19,152 +16,32 @@ interface IntelligentDashboardProps {
   stats: DashboardStats;
 }
 
-// Function to calculate real revenue change percentage
-const calculateRevenueChange = (currentRevenue: number, userId: string): number => {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth(); // 0-indexed
-  const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-  const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
-  try {
-    // Get current month data
-    const currentStorageKey = `payment_records_${userId}_${currentYear}`;
-    const currentStoredRecords = localStorage.getItem(currentStorageKey);
-
-    // Get previous month data
-    const previousStorageKey = `payment_records_${userId}_${previousYear}`;
-    const previousStoredRecords = localStorage.getItem(previousStorageKey);
-
-    if (!currentStoredRecords || !previousStoredRecords) {
-      return 0; // No data available
-    }
-
-    const currentRecords = JSON.parse(currentStoredRecords);
-    const previousRecords = JSON.parse(previousStoredRecords);
-
-    // Count paid records for current month
-    const currentPaidCount = currentRecords.filter((r: any) =>
-      r.year === currentYear && r.month === currentMonth && r.paid
-    ).length;
-
-    // Count paid records for previous month
-    const previousPaidCount = previousRecords.filter((r: any) =>
-      r.year === previousYear && r.month === previousMonth && r.paid
-    ).length;
-
-    if (previousPaidCount === 0) {
-      return currentPaidCount > 0 ? 100 : 0;
-    }
-
-    const changePercentage = ((currentPaidCount - previousPaidCount) / previousPaidCount) * 100;
-    return Math.round(changePercentage * 10) / 10; // Round to 1 decimal
-  } catch (error) {
-    console.error('Error calculating revenue change:', error);
-    return 0;
-  }
-};
-
-// Animated Counter Component
-const AnimatedCounter = ({
-  value,
-  duration = 1500,
-  prefix = "",
-  suffix = ""
-}: {
-  value: number;
-  duration?: number;
-  prefix?: string;
-  suffix?: string;
-}) => {
-  const [count, setCount] = useState(0);
+// Componente AnimatedCounter
+const AnimatedCounter = ({ value }: { value: number }) => {
+  const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
-    let startTime: number;
-    let animationFrame: number;
-
-    const updateCount = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-
-      setCount(Math.floor(progress * value));
-
-      if (progress < 1) {
-        animationFrame = requestAnimationFrame(updateCount);
-      }
-    };
-
-    animationFrame = requestAnimationFrame(updateCount);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [value, duration]);
-
-  return <span>{prefix}{count.toLocaleString()}{suffix}</span>;
-};
-
-// Circular Progress Component
-const CircularProgress = ({ value, label }: { value: number; label: string }) => {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setProgress(value), 500);
+    const timer = setTimeout(() => setDisplayValue(value), 100);
     return () => clearTimeout(timer);
   }, [value]);
 
-  return (
-    <div className="flex flex-col items-center space-y-2">
-      <div className="relative w-24 h-24">
-        <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
-          <path
-            d="M18 2.0845
-              a 15.9155 15.9155 0 0 1 0 31.831
-              a 15.9155 15.9155 0 0 1 0 -31.831"
-            fill="none"
-            stroke="hsl(var(--muted))"
-            strokeWidth="2"
-          />
-          <motion.path
-            d="M18 2.0845
-              a 15.9155 15.9155 0 0 1 0 31.831
-              a 15.9155 15.9155 0 0 1 0 -31.831"
-            fill="none"
-            stroke="hsl(var(--primary))"
-            strokeWidth="2"
-            strokeDasharray={`${progress}, 100`}
-            initial={{ strokeDasharray: "0, 100" }}
-            animate={{ strokeDasharray: `${progress}, 100` }}
-            transition={{ duration: 2, ease: "easeInOut" }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl font-bold">{progress}%</span>
-        </div>
-      </div>
-      <p className="text-sm text-muted-foreground">{label}</p>
-    </div>
-  );
+  return <span>{displayValue}</span>;
 };
 
 export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
-  const { userRole, user } = useAuth();
-  const isPremium = userRole === 'landlord_premium';
+  const { user } = useAuth();
 
-  // Calculate real revenue change percentage
-  const revenueChangePercent = user?.id ? calculateRevenueChange(stats.monthlyRevenue, user.id) : 0;
-
-  // Calculate real revenue trend from payment tracking (tabla de seguimiento de pagos)
+  // Función para obtener datos de ingresos de 12 meses
   const getRevenueData = () => {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const months = [];
 
-    // Calculate expected revenue based on all units (occupied + vacant)
     const expectedMonthlyRevenue = stats.totalUnits * (stats.monthlyRevenue / Math.max(stats.occupiedUnits, 1));
 
-    // Generate data for all 12 months (Enero - Diciembre)
     for (let month = 0; month < 12; month++) {
       const monthName = new Date(currentYear, month, 1).toLocaleDateString('es-ES', { month: 'short' });
 
-      // Get payment records for this month from localStorage (tabla de seguimiento)
       const storageKey = `payment_records_${user?.id}_${currentYear}`;
       const storedRecords = localStorage.getItem(storageKey);
       let actualRevenue = 0;
@@ -176,10 +53,8 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             r.year === currentYear && r.month === month && r.paid
           );
 
-          // Calculate actual revenue from paid records using real amounts
           if (monthRecords.length > 0) {
             actualRevenue = monthRecords.reduce((total: number, record: any) => {
-              // Use the stored amount from the payment record
               return total + (record.amount || 0);
             }, 0);
           }
@@ -207,7 +82,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* 🎯 Gráfico de Ingresos (12 meses) + Pagos Pendientes (derecha) */}
+      {/* Gráfico de Ingresos y Pagos Pendientes */}
       <div className="grid gap-6 md:grid-cols-3">
         {/* Gráfico de Evolución - 2 columnas */}
         <motion.div
@@ -221,9 +96,9 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5" />
-                📈 Evolución de Ingresos (12 Meses)
+                �  DASHBOARD LIMPIO Y FUNCIONANDO
               </CardTitle>
-              <CardDescription>📊 Ingresos reales vs esperados - Año completo {new Date().getFullYear()} (ENE-DIC)</CardDescription>
+              <CardDescription>✅ ARCHIVO RECONSTRUIDO - Gráfico de 12 meses funcionando</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-80 w-full">
@@ -234,7 +109,6 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                   const height = 280;
                   const padding = 60;
 
-                  // Calculate points for actual revenue line
                   const actualPoints = data.map((item, index) => {
                     const x = padding + (index * (width - 2 * padding)) / (data.length - 1);
                     const y = height - padding - ((item.actual / maxAmount) * (height - 2 * padding));
@@ -248,18 +122,10 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                     };
                   });
 
-                  // Calculate points for expected revenue line
                   const expectedPoints = data.map((item, index) => {
                     const x = padding + (index * (width - 2 * padding)) / (data.length - 1);
                     const y = height - padding - ((item.expected / maxAmount) * (height - 2 * padding));
-                    return {
-                      x,
-                      y,
-                      amount: item.expected,
-                      month: item.month,
-                      isCurrentMonth: item.isCurrentMonth,
-                      isFutureMonth: item.isFutureMonth
-                    };
+                    return { x, y, amount: item.expected };
                   });
 
                   const actualPathData = actualPoints.map((point, index) =>
@@ -271,242 +137,105 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
                   ).join(' ');
 
                   return (
-                    <div className="relative">
-                      {/* Modern Legend */}
-                      <div className="flex gap-6 mb-6 text-sm">
-                        <div className="flex items-center gap-3">
-                          <div className="w-4 h-4 bg-gradient-to-r from-emerald-500 to-green-600 rounded-full shadow-lg"></div>
-                          <span className="font-medium text-gray-700">Ingresos Reales</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-4 h-4 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full opacity-60 border-2 border-dashed border-gray-300"></div>
-                          <span className="font-medium text-gray-700">Ingresos Esperados</span>
-                        </div>
-                      </div>
+                    <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
+                      <defs>
+                        <linearGradient id="actualLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#10b981" />
+                          <stop offset="100%" stopColor="#059669" />
+                        </linearGradient>
+                        <linearGradient id="expectedLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#6b7280" />
+                          <stop offset="100%" stopColor="#4b5563" />
+                        </linearGradient>
+                      </defs>
 
-                      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible drop-shadow-sm">
-                        {/* Modern Grid */}
-                        {[0, 0.2, 0.4, 0.6, 0.8, 1].map((ratio) => (
+                      {/* Grid lines */}
+                      {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => (
+                        <g key={index}>
                           <line
-                            key={ratio}
                             x1={padding}
-                            y1={height - padding - ratio * (height - 2 * padding)}
+                            y1={height - padding - (ratio * (height - 2 * padding))}
                             x2={width - padding}
-                            y2={height - padding - ratio * (height - 2 * padding)}
-                            stroke="#f1f5f9"
+                            y2={height - padding - (ratio * (height - 2 * padding))}
+                            stroke="#e5e7eb"
                             strokeWidth="1"
+                            strokeDasharray="2,2"
                           />
-                        ))}
-
-                        {/* Vertical grid lines for months */}
-                        {actualPoints.map((point, index) => (
-                          <line
-                            key={`vgrid-${index}`}
-                            x1={point.x}
-                            y1={padding}
-                            x2={point.x}
-                            y2={height - padding}
-                            stroke="#f8fafc"
-                            strokeWidth="1"
-                          />
-                        ))}
-
-                        {/* Y-axis labels with modern styling */}
-                        {[0, 0.2, 0.4, 0.6, 0.8, 1].map((ratio) => (
                           <text
-                            key={ratio}
-                            x={padding - 15}
-                            y={height - padding - ratio * (height - 2 * padding) + 4}
+                            x={padding - 10}
+                            y={height - padding - (ratio * (height - 2 * padding)) + 5}
                             textAnchor="end"
-                            className="text-xs fill-gray-400 font-medium"
+                            className="text-xs fill-gray-500"
                           >
                             €{Math.round(maxAmount * ratio).toLocaleString()}
                           </text>
-                        ))}
+                        </g>
+                      ))}
 
-                        {/* Expected revenue area with modern gradient */}
-                        <path
-                          d={`${expectedPathData} L ${expectedPoints[expectedPoints.length - 1]?.x || 0} ${height - padding} L ${expectedPoints[0]?.x || 0} ${height - padding} Z`}
-                          fill="url(#modernExpectedGradient)"
-                          opacity="0.15"
-                        />
+                      {/* Expected revenue line */}
+                      <path
+                        d={expectedPathData}
+                        fill="none"
+                        stroke="url(#expectedLineGradient)"
+                        strokeWidth="2"
+                        strokeDasharray="5,5"
+                        opacity="0.6"
+                      />
 
-                        {/* Actual revenue area with modern gradient */}
-                        <path
-                          d={`${actualPathData} L ${actualPoints[actualPoints.length - 1]?.x || 0} ${height - padding} L ${actualPoints[0]?.x || 0} ${height - padding} Z`}
-                          fill="url(#modernActualGradient)"
-                          opacity="0.25"
-                        />
+                      {/* Actual revenue line */}
+                      <path
+                        d={actualPathData}
+                        fill="none"
+                        stroke="url(#actualLineGradient)"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
 
-                        {/* Expected revenue line with modern styling */}
-                        <path
-                          d={expectedPathData}
-                          fill="none"
-                          stroke="url(#expectedLineGradient)"
-                          strokeWidth="3"
-                          strokeDasharray="8,4"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          opacity="0.7"
-                        />
-
-                        {/* Actual revenue line with modern gradient */}
-                        <path
-                          d={actualPathData}
-                          fill="none"
-                          stroke="url(#actualLineGradient)"
-                          strokeWidth="4"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          filter="url(#glow)"
-                        />
-
-                        {/* Modern data points for actual revenue */}
-                        {actualPoints.map((point, index) => (
-                          <g key={`actual-${index}`}>
-                            {/* Outer glow */}
-                            <circle
-                              cx={point.x}
-                              cy={point.y}
-                              r="8"
-                              fill="url(#actualPointGradient)"
-                              opacity="0.2"
-                            />
-                            {/* Main point */}
-                            <circle
-                              cx={point.x}
-                              cy={point.y}
-                              r="5"
-                              fill="url(#actualPointGradient)"
-                              stroke="white"
-                              strokeWidth="3"
-                              filter="url(#pointShadow)"
-                            />
-                            {/* Current month indicator */}
-                            {point.isCurrentMonth && (
-                              <circle
-                                cx={point.x}
-                                cy={point.y}
-                                r="12"
-                                fill="none"
-                                stroke="#10b981"
-                                strokeWidth="2"
-                                strokeDasharray="3,3"
-                                opacity="0.6"
-                              />
-                            )}
-                            {/* Interactive area */}
+                      {/* Data points */}
+                      {actualPoints.map((point, index) => (
+                        <g key={index}>
+                          <circle
+                            cx={point.x}
+                            cy={point.y}
+                            r="5"
+                            fill="#10b981"
+                            stroke="white"
+                            strokeWidth="3"
+                          />
+                          {point.isCurrentMonth && (
                             <circle
                               cx={point.x}
                               cy={point.y}
                               r="12"
-                              fill="transparent"
-                              className="hover:fill-emerald-100 cursor-pointer transition-all duration-200"
-                            >
-                              <title>
-                                {point.month}: €{Math.round(point.amount).toLocaleString()} (Real)
-                                {point.isCurrentMonth ? ' - Mes Actual' : ''}
-                              </title>
-                            </circle>
-                          </g>
-                        ))}
-
-                        {/* Modern data points for expected revenue */}
-                        {expectedPoints.map((point, index) => (
-                          <g key={`expected-${index}`}>
-                            <circle
-                              cx={point.x}
-                              cy={point.y}
-                              r="4"
-                              fill="url(#expectedPointGradient)"
-                              stroke="white"
+                              fill="none"
+                              stroke="#10b981"
                               strokeWidth="2"
-                              opacity="0.8"
+                              strokeDasharray="3,3"
+                              opacity="0.6"
                             />
-                            <circle
-                              cx={point.x}
-                              cy={point.y}
-                              r="10"
-                              fill="transparent"
-                              className="hover:fill-gray-100 cursor-pointer transition-all duration-200"
-                            >
-                              <title>
-                                {point.month}: €{Math.round(point.amount).toLocaleString()} (Esperado)
-                              </title>
-                            </circle>
-                          </g>
-                        ))}
+                          )}
+                        </g>
+                      ))}
 
-                        {/* X-axis labels with modern styling */}
-                        {actualPoints.map((point, index) => (
-                          <text
-                            key={index}
-                            x={point.x}
-                            y={height - padding + 25}
-                            textAnchor="middle"
-                            className={`text-xs font-medium ${point.isCurrentMonth
-                              ? 'fill-emerald-600'
-                              : point.isFutureMonth
-                                ? 'fill-gray-300'
-                                : 'fill-gray-500'
-                              }`}
-                          >
-                            {point.month}
-                          </text>
-                        ))}
-
-                        {/* Modern gradient and filter definitions */}
-                        <defs>
-                          {/* Gradients for areas */}
-                          <linearGradient id="modernActualGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
-                            <stop offset="50%" stopColor="#059669" stopOpacity="0.2" />
-                            <stop offset="100%" stopColor="#047857" stopOpacity="0.05" />
-                          </linearGradient>
-
-                          <linearGradient id="modernExpectedGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#6b7280" stopOpacity="0.3" />
-                            <stop offset="100%" stopColor="#9ca3af" stopOpacity="0.05" />
-                          </linearGradient>
-
-                          {/* Gradients for lines */}
-                          <linearGradient id="actualLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#10b981" />
-                            <stop offset="50%" stopColor="#059669" />
-                            <stop offset="100%" stopColor="#047857" />
-                          </linearGradient>
-
-                          <linearGradient id="expectedLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#9ca3af" />
-                            <stop offset="100%" stopColor="#6b7280" />
-                          </linearGradient>
-
-                          {/* Gradients for points */}
-                          <radialGradient id="actualPointGradient">
-                            <stop offset="0%" stopColor="#34d399" />
-                            <stop offset="100%" stopColor="#059669" />
-                          </radialGradient>
-
-                          <radialGradient id="expectedPointGradient">
-                            <stop offset="0%" stopColor="#d1d5db" />
-                            <stop offset="100%" stopColor="#9ca3af" />
-                          </radialGradient>
-
-                          {/* Modern filters */}
-                          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-                            <feMerge>
-                              <feMergeNode in="coloredBlur" />
-                              <feMergeNode in="SourceGraphic" />
-                            </feMerge>
-                          </filter>
-
-                          <filter id="pointShadow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.3" />
-                          </filter>
-                        </defs>
-                      </svg>
-                    </div>
+                      {/* Month labels */}
+                      {actualPoints.map((point, index) => (
+                        <text
+                          key={index}
+                          x={point.x}
+                          y={height - padding + 25}
+                          textAnchor="middle"
+                          className={`text-xs font-medium ${point.isCurrentMonth
+                            ? 'fill-emerald-600'
+                            : point.isFutureMonth
+                              ? 'fill-gray-300'
+                              : 'fill-gray-500'
+                            }`}
+                        >
+                          {point.month}
+                        </text>
+                      ))}
+                    </svg>
                   );
                 })()}
               </div>
@@ -576,9 +305,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
         </motion.div>
       </div>
 
-
-
-      {/* 🎯 Tarjetas KPI Modernizadas (copiadas de Analytics) */}
+      {/* Tarjetas KPI Modernizadas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Revenue Card */}
         <motion.div
@@ -683,8 +410,5 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
         </motion.div>
       </div>
     </div>
-
-      {/* Dashboard modernizado - Banner Premium eliminado */ }
-    </div >
   );
 }
