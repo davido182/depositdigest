@@ -111,10 +111,7 @@ export function useAppData() {
       const vacantUnits = totalUnits - occupiedUnits;
       const activeTenants = tenants.filter(t => t.is_active).length;
       
-      // Calculating unit statistics
-        occupiedUnits: units.filter(u => !u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number, monthly_rent: u.monthly_rent })),
-        vacantUnits: units.filter(u => u.is_available).map(u => ({ id: u.id, unit_number: u.unit_number }))
-      });
+      // Unit statistics calculated above
       
       // Calculate monthly revenue from payment tracking table (like Analytics)
       const activeTenantsList = tenants.filter(t => t.status === 'active');

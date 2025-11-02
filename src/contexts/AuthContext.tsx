@@ -1,35 +1,27 @@
-
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { User, Session } from '@supabase/supabase-js';
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { User, Session } from "@supabase/supabase-js";
+// sessionMonitor removed for build compatibility
 
-type UserRole = 'landlord_free' | 'landlord_premium' | 'tenant';
-type AppPlan = 'free' | 'premium';
+export type UserRole = 'landlord_free' | 'landlord_premium' | 'tenant';
+export type AppPlan = 'free' | 'premium';
 
-type AuthContextType = {
+interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRole: UserRole | null;
-  isLandlord: boolean;
-  isTenant: boolean;
-  isPremium: boolean;
-  hasActivePremium: boolean;
   subscriptionPlan: AppPlan | null;
-  isAuthenticated: boolean;
   isLoading: boolean;
   isPasswordRecovery: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  isInitialized: boolean;
+  signIn: (email: string, password: string) => Promise<any>;
+  signUp: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  updatePassword: (newPassword: string) => Promise<void>;
-  checkSubscription: () => Promise<void>;
-  createCheckoutSession: () => Promise<string>;
-  createTenantInvitation: (unitNumber: string, email?: string) => Promise<any>;
-  acceptTenantInvitation: (invitationCode: string) => Promise<any>;
+  resetPassword: (email: string) => Promise<any>;
   refreshUserRole: (currentUser?: User) => Promise<void>;
-  upgradeUserToPremium: (userId?: string) => Promise<void>;
-};
+  isLandlord: boolean;
+  isTenant: boolean;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -42,76 +34,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // AuthProvider initialized
-  });
-
   // Computed properties
   const isLandlord = userRole === 'landlord_free' || userRole === 'landlord_premium';
   const isTenant = userRole === 'tenant';
-  const isPremium = userRole === 'landlord_premium';
-  const hasActivePremium = userRole === 'landlord_premium';
 
-  // Manual function to upgrade user to premium (for testing)
-  const upgradeUserToPremium = async (userId?: string) => {
-    const targetUserId = userId || user?.id;
-    if (!targetUserId) {
-      console.error("❌ No user ID provided for premium upgrade");
-      return;
-    }
-
-    try {
-      // Upgrading user to premium
-      
-      const { error } = await supabase
-        .from('user_roles')
-        .upsert({
-          user_id: targetUserId,
-          role: 'landlord_premium' as UserRole
-        }, {
-          onConflict: 'user_id'
-        });
-
-      if (error) {
-        console.error("❌ Error upgrading to premium:", error);
-        throw error;
-      }
-
-      // Removed console.log for security
-      // Refresh the role
-      await refreshUserRole();
-      
-    } catch (error) {
-      console.error("💥 Exception upgrading to premium:", error);
-    }
-  };
-
-  const refreshUserRole = async (currentUser?: User) => {
+  const refreshUserRole = async (currentUser?: User): Promise<void> => {
     const userToCheck = currentUser || user;
     
-    console.log("🔄 refreshUserRole called:", { 
-      hasUser: !!userToCheck, 
-      userId: userToCheck?.id,
-      email: userToCheck?.email,
-      timestamp: new Date().toISOString()
-    });
-    
     if (!userToCheck) {
-      // Removed console.log for security
       setUserRole(null);
       return;
     }
 
     try {
-      // Removed console.log for security
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
-        .select('role, trial_end_date')
+        .select('role')
         .eq('user_id', userToCheck.id)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-        
-      // Removed console.log for security
 
       if (roleError) {
         console.error('❌ AuthContext: Error en refreshUserRole:', roleError);
@@ -120,128 +62,143 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!roleData) {
-        // Removed console.log for security
-        const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 7); // 7 días de prueba premium
-        
-        // Creating new user role
-          trial_end_date: trialEndDate.toISOString()
-        });
-        
+        // Create new user role
         const { data: newRoleData, error: createError } = await supabase
           .from('user_roles')
           .insert([{
             user_id: userToCheck.id,
-            role: 'landlord_premium' as UserRole, // Empezar con premium trial
-            trial_end_date: trialEndDate.toISOString()
+            role: 'landlord_premium' as UserRole
           }])
-          .select('role, trial_end_date')
+          .select('role')
           .single();
-          
-        // Removed console.log for security
-        
+
         if (createError) {
-          console.error("❌ Error creating user role:", createError);
-          // Removed console.log for security
+          console.error('Error creating user role:', createError);
           setUserRole('landlord_free');
         } else {
-          // Removed console.log for security
-          setUserRole(newRoleData?.role || 'landlord_free');
-          
-          // Verificar inmediatamente en la base de datos
-          // Removed console.log for security
-          const { data: verifyData, error: verifyError } = await supabase
-            .from('user_roles')
-            .select('*')
-            .eq('user_id', userToCheck.id);
-          
-          // Removed console.log for security
-          
-          // También verificar en toda la tabla
-          const { data: allRoles, error: allError } = await supabase
-            .from('user_roles')
-            .select('*');
-          
-          // Removed console.log for security
-        }
-          
-        if (createError) {
-          console.error("❌ Error creating user role:", createError);
-          // Removed console.log for security
-          setUserRole('landlord_free');
-        } else {
-          // Removed console.log for security
-          setUserRole(newRoleData.role);
+          setUserRole(newRoleData.role as UserRole);
+          setSubscriptionPlan(newRoleData.role === 'landlord_premium' ? 'premium' : 'free');
         }
       } else {
-        // Removed console.log for security
-        
-        // Check if trial has expired for premium users
-        if (roleData.role === 'landlord_premium' && roleData.trial_end_date) {
-          const trialEndDate = new Date(roleData.trial_end_date);
-          const now = new Date();
-          
-          if (now > trialEndDate) {
-            // Removed console.log for security
-            
-            // Update role to free in database
-            const { error: updateError } = await supabase
-              .from('user_roles')
-              .update({ role: 'landlord_free' })
-              .eq('user_id', userToCheck.id);
-              
-            if (updateError) {
-              console.error("❌ Error downgrading expired trial:", updateError);
-            } else {
-              // Removed console.log for security
-            }
-            
-            setUserRole('landlord_free');
-          } else {
-            // Removed console.log for security
-            setUserRole(roleData.role);
-          }
-        } else {
-          setUserRole(roleData.role);
-        }
+        setUserRole(roleData.role as UserRole);
+        setSubscriptionPlan(roleData.role === 'landlord_premium' ? 'premium' : 'free');
       }
     } catch (error) {
-      console.error("💥 Exception in refreshUserRole:", error);
-      // Removed console.log for security
+      console.error('❌ AuthContext: Excepción en refreshUserRole:', error);
       setUserRole('landlord_free');
     }
   };
 
-  const checkSubscription = async () => {
-    const currentUser = user;
-    if (!currentUser) return;
-    
+  const signIn = async (email: string, password: string) => {
     try {
-      // Removed console.log for security
-      const { data, error } = await supabase.functions.invoke('check-subscription');
+      setIsLoading(true);
+      console.log('🔐 AuthContext: Iniciando login');
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
       if (error) {
-        console.error("❌ Subscription check error:", error);
+        console.error('❌ AuthContext: Error en login:', error.message);
+        throw error;
+      }
+      
+      console.log('✅ AuthContext: Login exitoso');
+      return data;
+    } catch (error) {
+      console.error('❌ AuthContext: Excepción en signIn:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signUp = async (email: string, password: string) => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
+      return data;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      setIsLoading(true);
+      console.log('👋 AuthContext: Iniciando logout');
+      
+      // Clear local state first
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
+      setIsPasswordRecovery(false);
+      
+      // Clear localStorage
+      localStorage.removeItem('rentaflux_has_visited');
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('❌ AuthContext: Error en logout:', error.message);
+        throw error;
+      }
+      
+      console.log('✅ AuthContext: Logout exitoso');
+    } catch (error) {
+      console.error('❌ AuthContext: Excepción en signOut:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+      setIsInitialized(true);
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+    return data;
+  };
+
+  const initializeAuth = async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('❌ AuthContext: Error obteniendo sesión:', error);
+        setIsLoading(false);
+        setIsInitialized(true);
         return;
       }
       
-      if (data) {
-        // Removed console.log for security
-        setSubscriptionPlan(data.plan);
-        
-        if (data.plan === 'premium' && userRole === 'landlord_free') {
-          const { error: updateError } = await supabase
-            .from('user_roles')
-            .update({ role: 'landlord_premium' })
-            .eq('user_id', currentUser.id);
-          
-          if (!updateError) {
-            setUserRole('landlord_premium');
-          }
-        }
+      if (session?.user) {
+        console.log('✅ AuthContext: Sesión existente encontrada');
+        setUser(session.user);
+        setSession(session);
+        // Delay para evitar race conditions
+        setTimeout(() => {
+          refreshUserRole(session.user);
+        }, 1000);
+      } else {
+        console.log('ℹ️ AuthContext: No hay sesión existente');
       }
+      
+      setIsLoading(false);
+      setIsInitialized(true);
     } catch (error) {
-      console.error("💥 Error checking subscription:", error);
+      console.error('Error initializing auth:', error);
+      setIsLoading(false);
+      setIsInitialized(true);
     }
   };
 
@@ -249,343 +206,104 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let isMounted = true;
     let initializationTimeout: NodeJS.Timeout;
 
-    // Removed console.log for security
-
-    const initializeAuth = async () => {
-      try {
-        // Set timeout as fallback
-        initializationTimeout = setTimeout(() => {
-          if (isMounted && !isInitialized) {
-            // Removed console.log for security
-            setIsLoading(false);
-            setIsInitialized(true);
-          }
-        }, 10000); // 10 second timeout
-
-        // Removed console.log for security
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("❌ Error getting session:", error);
-          if (isMounted) {
-            setIsLoading(false);
-            setIsInitialized(true);
-          }
-          return;
-        }
-        
-        // Removed console.log for security
-        
-        if (session?.user && isMounted) {
-          // Removed console.log for security
-          setUser(session.user);
-          setSession(session);
-          
-          // Defer role fetching to avoid blocking
-          setTimeout(() => {
-            if (isMounted) {
-              refreshUserRole(session.user);
-            }
-          }, 100);
-        }
-        
-        if (isMounted) {
-          setIsLoading(false);
-          setIsInitialized(true);
-          clearTimeout(initializationTimeout);
-        }
-      } catch (error) {
-        console.error("💥 Error initializing auth:", error);
-        if (isMounted) {
-          setIsLoading(false);
-          setIsInitialized(true);
-          clearTimeout(initializationTimeout);
-        }
-      }
-    };
-
     // Initialize auth
     initializeAuth();
 
+    // Set timeout for initialization
+    initializationTimeout = setTimeout(() => {
+      if (isMounted && !isInitialized) {
+        console.log('⏰ AuthContext: Timeout de inicialización alcanzado');
+        setIsLoading(false);
+        setIsInitialized(true);
+      }
+    }, 30000); // 30 second timeout
+
     // Listen for auth changes
-    // Removed console.log for security
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!isMounted) return;
         
-        // Removed console.log for security
+        console.log('🔄 AuthContext: Auth state change:', event, !!session?.user);
         
-        if (event === 'PASSWORD_RECOVERY') {
-          // Removed console.log for security
-          setIsPasswordRecovery(true);
-          setUser(session?.user ?? null);
-          setSession(session);
-          setIsLoading(false);
-          return;
+        switch (event) {
+          case 'SIGNED_IN':
+            if (session?.user) {
+              console.log('👤 AuthContext: Usuario logueado');
+              setIsPasswordRecovery(false);
+              setUser(session.user);
+              setSession(session);
+              setIsLoading(false);
+              
+              // Delay role refresh to avoid race conditions
+              setTimeout(() => {
+                if (isMounted) {
+                  refreshUserRole(session.user);
+                }
+              }, 2000);
+              setIsInitialized(true);
+            }
+            break;
+            
+          case 'SIGNED_OUT':
+            console.log('👋 AuthContext: Usuario deslogueado');
+            // Report unexpected logout if not initiated by user
+            if (!isLoading) {
+              console.log('🚨 Logout inesperado detectado');
+            }
+            setIsPasswordRecovery(false);
+            setUserRole(null);
+            setUser(null);
+            setSession(null);
+            setIsLoading(false);
+            setIsInitialized(true);
+            break;
+            
+          case 'TOKEN_REFRESHED':
+            if (session?.user) {
+              console.log('🔄 AuthContext: Token refrescado');
+              setUser(session.user);
+              setSession(session);
+              setIsLoading(false);
+              setIsInitialized(true);
+            }
+            break;
+            
+          default:
+            console.log('❓ AuthContext: Evento no manejado:', event);
         }
-        
-        if (event === 'SIGNED_UP' && session?.user) {
-          // Removed console.log for security
-          setUser(session.user);
-          setSession(session);
-          setIsLoading(false);
-          
-          // Force create role for new user immediately
-          // Removed console.log for security
-          const trialEndDate = new Date();
-          trialEndDate.setDate(trialEndDate.getDate() + 7);
-          
-          supabase
-            .from('user_roles')
-            .upsert({
-              user_id: session.user.id,
-              role: 'landlord_premium',
-              trial_end_date: trialEndDate.toISOString()
-            }, {
-              onConflict: 'user_id'
-            })
-            .then(({ data, error }) => {
-              // Removed console.log for security
-              if (!error) {
-                setUserRole('landlord_premium');
-              }
-            });
-          
-          return;
-        }
-        
-        if (event === 'SIGNED_OUT') {
-          // Removed console.log for security
-          setIsPasswordRecovery(false);
-          setUserRole(null);
-          setSubscriptionPlan(null);
-          setUser(null);
-          setSession(null);
-          setIsLoading(false);
-          return;
-        }
-        
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Removed console.log for security
-          setIsPasswordRecovery(false);
-          setUser(session.user);
-          setSession(session);
-          setIsLoading(false);
-          
-          // Force role creation/refresh immediately
-          // Removed console.log for security
-          refreshUserRole(session.user);
-          return;
-        }
-        
-        if (event === 'TOKEN_REFRESHED' && session?.user) {
-          // Removed console.log for security
-          setUser(session.user);
-          setSession(session);
-          return;
-        }
-
-        // For any other event, ensure loading is false
-        setIsLoading(false);
       }
     );
+    
+    // Session monitoring disabled for build compatibility
 
     return () => {
-      // Removed console.log for security
       isMounted = false;
       subscription.unsubscribe();
+      // sessionMonitor.stopMonitoring(); // Disabled for build compatibility
       if (initializationTimeout) {
         clearTimeout(initializationTimeout);
       }
     };
-  }, []); // Empty dependency array - only run once
+  }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
-    // Removed console.log for security
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/login?reset=true`,
-          data: {
-            full_name: fullName || email.split('@')[0],
-            name: fullName || email.split('@')[0]
-          }
-        }
-      });
-
-      if (error) {
-        console.error("❌ SignUp error:", error);
-        throw error;
-      }
-
-      // Removed console.log for security
-      
-      // If user is created and confirmed, create role immediately
-      if (data.user && !data.user.email_confirmed_at) {
-        // Removed console.log for security
-      } else if (data.user) {
-        // Removed console.log for security
-        // Create role immediately for confirmed users
-        setTimeout(() => {
-          refreshUserRole(data.user);
-        }, 500);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const signIn = async (email: string, password: string) => {
-    // Removed console.log for security
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) {
-        console.error("❌ SignIn error:", error);
-        throw error;
-      }
-      
-      // Removed console.log for security
-      
-      // Force role refresh after successful login
-      if (data.user) {
-        // Removed console.log for security
-        setTimeout(() => {
-          refreshUserRole(data.user);
-        }, 1000);
-      }
-    } catch (error) {
-      console.error("💥 SignIn exception:", error);
-      setIsLoading(false);
-      throw error;
-    }
-  };
-
-  const signOut = async () => {
-    // Removed console.log for security
-    setIsLoading(true);
-    
-    try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error("❌ SignOut error:", error);
-        throw error;
-      }
-      
-      // Clear the visited flag so user sees landing page on next visit
-      localStorage.removeItem('rentaflux_has_visited');
-      
-      // Removed console.log for security
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetPassword = async (email: string) => {
-    // Removed console.log for security
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/login?reset=true`
-    });
-
-    if (error) {
-      console.error("❌ Password reset error:", error);
-      throw error;
-    }
-
-    // Removed console.log for security
-  };
-
-  const updatePassword = async (newPassword: string) => {
-    // Removed console.log for security
-    
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword
-    });
-
-    if (error) {
-      console.error("❌ Password update error:", error);
-      throw error;
-    }
-
-    // Removed console.log for security
-    setIsPasswordRecovery(false);
-  };
-
-  const createCheckoutSession = async (): Promise<string> => {
-    const { data, error } = await supabase.functions.invoke('create-checkout');
-    
-    if (error) throw error;
-    return data.url;
-  };
-
-  const createTenantInvitation = async (unitNumber: string, email?: string) => {
-    const { data, error } = await supabase.functions.invoke('create-tenant-invitation', {
-      body: { unit_number: unitNumber, email }
-    });
-    
-    if (error) throw error;
-    return data;
-  };
-
-  const acceptTenantInvitation = async (invitationCode: string) => {
-    const { data, error } = await supabase.functions.invoke('accept-tenant-invitation', {
-      body: { invitation_code: invitationCode }
-    });
-    
-    if (error) throw error;
-    return data;
-  };
-
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     userRole,
-    isLandlord,
-    isTenant,
-    isPremium,
-    hasActivePremium,
     subscriptionPlan,
-    isAuthenticated: !!user && !isPasswordRecovery,
     isLoading,
     isPasswordRecovery,
-    signUp,
+    isInitialized,
     signIn,
+    signUp,
     signOut,
     resetPassword,
-    updatePassword,
-    checkSubscription,
-    createCheckoutSession,
-    createTenantInvitation,
-    acceptTenantInvitation,
     refreshUserRole,
-    upgradeUserToPremium
+    isLandlord,
+    isTenant,
   };
 
-  console.log("📊 AuthProvider context value:", {
-    hasUser: !!user,
-    isAuthenticated: !!user && !isPasswordRecovery,
-    userRole,
-    isLoading,
-    isPasswordRecovery,
-    timestamp: new Date().toISOString()
-  });
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
