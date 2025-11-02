@@ -161,6 +161,10 @@ export function SmartNotifications() {
 
   const checkUrgentMaintenance = async (notifications: SmartNotification[]) => {
     try {
+      // Temporalmente deshabilitado para evitar errores 400
+      console.log('🔧 SmartNotifications: checkUrgentMaintenance deshabilitado temporalmente');
+      return;
+      
       const { data: maintenance, error } = await supabase
         .from('maintenance_requests')
         .select('id, title, priority, unit_number, created_at')
@@ -168,7 +172,12 @@ export function SmartNotifications() {
         .in('status', ['pending'])
         .in('priority', ['emergency', 'high']);
 
-      if (!error && maintenance && maintenance.length > 0) {
+      if (error) {
+        console.error('❌ SmartNotifications: Error en maintenance_requests:', error);
+        return;
+      }
+
+      if (maintenance && maintenance.length > 0) {
         maintenance.forEach(request => {
           notifications.push({
             id: `maintenance-urgent-${request.id}`,

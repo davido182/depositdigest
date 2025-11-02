@@ -12,7 +12,7 @@ import {
 import { DashboardStats } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 // useAppData no es necesario aquí, usamos los datos que vienen del Dashboard
-import { ModernChartFixed } from "./ModernChartFixed";
+import { EmergencyChart } from "./EmergencyChart";
 
 interface IntelligentDashboardProps {
   stats: DashboardStats;
@@ -126,7 +126,7 @@ export function IntelligentDashboard({ stats }: IntelligentDashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="h-80 w-full">
-                <ModernChartFixed data={getRevenueData()} />
+                <EmergencyChart data={getRevenueData()} />
               </div>
             </CardContent>
           </Card>

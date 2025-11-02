@@ -114,8 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Removed console.log for security
 
       if (roleError) {
-        // Error fetching user role, using default
-        // Removed console.log for security
+        console.error('❌ AuthContext: Error en refreshUserRole:', roleError);
         setUserRole('landlord_free');
         return;
       }
