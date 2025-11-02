@@ -4,8 +4,11 @@ import { useEffect } from 'react';
  * COMPONENTE DE SEGURIDAD NUCLEAR - ELIMINA TODO
  */
 export function DebugCleaner() {
+  // DESHABILITADO TEMPORALMENTE - CAUSABA ERRORES DE DOM Y PANTALLAS EN BLANCO
+  return null;
+  
   useEffect(() => {
-    let isActive = true;
+    let isActive = false;
 
     // FUNCIÓN NUCLEAR DE LIMPIEZA
     const nuclearClean = () => {

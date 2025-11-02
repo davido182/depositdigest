@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react';
  * COMPONENTE DE EMERGENCIA - SE SUPERPONE A TODO Y ELIMINA INFORMACIÓN SENSIBLE
  */
 export function EmergencySecurityOverlay() {
-  const [isActive, setIsActive] = useState(true);
+  // DESHABILITADO TEMPORALMENTE - CAUSABA ERRORES DE DOM
+  return null;
+  
+  const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
     if (!isActive) return;

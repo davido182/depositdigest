@@ -142,7 +142,7 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <AuthDebugger />
-            <DebugCleaner />
+            {/* <DebugCleaner /> */}
           </BrowserRouter>
           <Toaster />
           <Sonner position="top-right" />

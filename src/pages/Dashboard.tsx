@@ -214,8 +214,9 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <EmergencySecurityOverlay />
-      <DebugCleaner />
+      {/* Componentes de seguridad deshabilitados temporalmente */}
+      {/* <EmergencySecurityOverlay /> */}
+      {/* <DebugCleaner /> */}
       <div className={`space-y-6 ${isMobile ? 'px-2' : ''}`}>
         <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between items-center'}`}>
           <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>Dashboard</h1>
