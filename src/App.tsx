@@ -27,6 +27,11 @@ import InviteTenant from "./pages/InviteTenant";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Landing from "./pages/Landing";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import LegalNotice from "./pages/LegalNotice";
+import CookiePolicy from "./pages/CookiePolicy";
+import TermsOfService from "./pages/TermsOfService";
+import Accessibility from "./pages/Accessibility";
 import { useEffect, useRef, useState } from "react";
 import { App as CapApp } from "@capacitor/app";
 import { useDeviceFeatures } from "./hooks/use-device-features";
@@ -120,6 +125,13 @@ const App = () => {
               <Route path="/landing" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/tenant-signup" element={<TenantSignup />} />
+              
+              {/* Legal pages */}
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/legal" element={<LegalNotice />} />
+              <Route path="/cookies" element={<CookiePolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/accessibility" element={<Accessibility />} />
 
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>

@@ -177,7 +177,7 @@ Procesado: ${new Date().toLocaleString()}`;
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Procesador de Comprobantes [en desarrollo]
+            Procesador de Comprobantes [En Desarrollo]
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

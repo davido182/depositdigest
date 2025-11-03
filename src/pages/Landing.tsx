@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { CookieBanner } from "@/components/CookieBanner";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -259,7 +260,7 @@ Enviado desde www.rentaflux.com
                 <CardTitle>Pagos Automáticos</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Recibe pagos directamente a tu cuenta desde la app con Stripe</p>
+                <p className="text-gray-600">Recibe pagos directamente a tu cuenta desde la app</p>
               </CardContent>
             </Card>
 
@@ -286,7 +287,7 @@ Enviado desde www.rentaflux.com
             <Card className="text-center">
               <CardHeader>
                 <MessageCircle className="h-12 w-12 text-orange-600 mx-auto mb-4" />
-                <CardTitle>Asistente IA Premium</CardTitle>
+                <CardTitle>Asistente IA</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">Asistente inteligente para consultas y análisis avanzados</p>
@@ -446,7 +447,7 @@ Enviado desde www.rentaflux.com
                 </div>
                 <div className="text-left">
                   <p className="font-semibold">Descargar en</p>
-                  <p className="text-lg font-bold">App Store</p>
+                  <p className="text-lg font-bold">App Store (Próximamente)</p>
                 </div>
               </div>
             </Card>
@@ -551,9 +552,11 @@ Enviado desde www.rentaflux.com
             <div>
               <h4 className="font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>Privacidad</li>
-                <li>Términos</li>
-                <li>Cookies</li>
+                <li><a href="/privacy" className="hover:text-white transition-colors">Política de Privacidad</a></li>
+                <li><a href="/terms" className="hover:text-white transition-colors">Términos y Condiciones</a></li>
+                <li><a href="/legal" className="hover:text-white transition-colors">Aviso Legal</a></li>
+                <li><a href="/cookies" className="hover:text-white transition-colors">Política de Cookies</a></li>
+                <li><a href="/accessibility" className="hover:text-white transition-colors">Accesibilidad</a></li>
               </ul>
             </div>
           </div>
@@ -562,6 +565,9 @@ Enviado desde www.rentaflux.com
           </div>
         </div>
       </footer>
+
+      {/* Cookie Banner */}
+      <CookieBanner />
     </div>
   );
 };

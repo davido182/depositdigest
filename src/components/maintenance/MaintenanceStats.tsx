@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Clock, 
-  CheckCircle, 
-  AlertTriangle, 
-  Users, 
+import {
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  Users,
   TrendingUp,
   Calendar
 } from "lucide-react";
@@ -57,7 +57,7 @@ export function MaintenanceStats() {
       // Calculate average completion time (simplified - using created_at as approximation)
       const completedRequests = requests?.filter(r => r.status === 'completed') || [];
       let avg_completion_days = 0;
-      
+
       if (completedRequests.length > 0) {
         // Simplified calculation: assume average completion time based on request age
         const totalDays = completedRequests.reduce((sum, request) => {
