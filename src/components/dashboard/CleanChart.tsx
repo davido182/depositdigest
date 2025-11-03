@@ -26,29 +26,26 @@ export function CleanChart({ data }: CleanChartProps) {
 
   // LÓGICA CORREGIDA: El máximo debe ser el valor esperado (que es constante para todos los meses)
   const maxValue = Math.max(...data.map(d => Math.max(d.expected || 0, d.actual || 0)));
-  const totalActual = data.reduce((sum, item) => sum + (item.actual || 0), 0);
-  const currentMonthData = data.find(item => item.isCurrentMonth);
-  const expectedThisMonth = currentMonthData?.expected || 0;
 
   return (
     <div className="w-full h-full">
-      {/* Header con leyenda */}
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3">📈 Ingresos de este año</h3>
-        <div className="flex gap-6 text-sm mb-4">
+      {/* Header con leyenda - centrado y con más espacio */}
+      <div className="mb-6 text-center">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">📈 Ingresos de este año</h3>
+        <div className="flex justify-center gap-8 text-sm mb-6">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-            <span className="text-gray-600">Ingresos Reales: <strong>€{totalActual.toLocaleString()}</strong></span>
+            <span className="text-gray-600">Ingresos Reales</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-blue-300/60 rounded-full"></div>
-            <span className="text-gray-600">Esperado este mes: <strong>€{expectedThisMonth.toLocaleString()}</strong></span>
+            <span className="text-gray-600">Esperado este mes</span>
           </div>
         </div>
       </div>
 
-      {/* Gráfico con altura ajustada para coincidir con las tarjetas laterales */}
-      <div className="h-72 mb-4">
+      {/* Gráfico ajustado para coincidir exactamente con la altura de las tarjetas laterales */}
+      <div className="h-64">
         <div className="relative h-full bg-gradient-to-t from-gray-50 to-white rounded-lg p-4">
 
           {/* Eje Y transparente con valores */}
@@ -97,8 +94,8 @@ export function CleanChart({ data }: CleanChartProps) {
                       {/* Barra verde (real) - ENCIMA y centrada */}
                       <div
                         className={`absolute bottom-0 w-full rounded-t transition-all duration-700 ${item.isCurrentMonth
-                            ? 'bg-emerald-600 shadow-lg'
-                            : 'bg-emerald-500'
+                          ? 'bg-emerald-600 shadow-lg'
+                          : 'bg-emerald-500'
                           }`}
                         style={{
                           height: `${Math.max(actualHeightPercent, 1)}%`,
@@ -121,10 +118,10 @@ export function CleanChart({ data }: CleanChartProps) {
 
                   {/* Etiqueta del mes (Eje X) */}
                   <div className={`text-xs text-center ${item.isCurrentMonth
-                      ? 'font-bold text-emerald-600'
-                      : item.isFutureMonth
-                        ? 'text-gray-400'
-                        : 'text-gray-600'
+                    ? 'font-bold text-emerald-600'
+                    : item.isFutureMonth
+                      ? 'text-gray-400'
+                      : 'text-gray-600'
                     }`}>
                     {item.month}
                   </div>

@@ -26,7 +26,7 @@ export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessor
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [processedReceipts, setProcessedReceipts] = useState<Array<{id: string, fileName: string, date: string, amount: number}>>([]);
+  const [processedReceipts, setProcessedReceipts] = useState<Array<{ id: string, fileName: string, date: string, amount: number }>>([]);
   const [verificationData, setVerificationData] = useState({
     tenantId: '',
     amount: '',
@@ -48,11 +48,11 @@ export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessor
   const processReceipt = async (file: File) => {
     setIsProcessing(true);
     // Removed console.log for security
-    
+
     try {
       // Simular tiempo de procesamiento
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       // En lugar de inventar datos, solo preparar el formulario para entrada manual
       const mockExtractedData: ExtractedData = {
         fileName: file.name,
@@ -60,9 +60,9 @@ export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessor
         date: new Date().toISOString().split('T')[0], // Fecha actual por defecto
         // No inventar monto - dejar que el usuario lo ingrese
       };
-      
+
       // Removed console.log for security
-      
+
       setExtractedData(mockExtractedData);
       setVerificationData(prev => ({
         ...prev,
@@ -70,7 +70,7 @@ export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessor
         // No pre-llenar el monto - usuario debe ingresarlo manualmente
         amount: ''
       }));
-      
+
       toast.success(`Archivo "${file.name}" cargado. Por favor ingresa los datos manualmente.`);
     } catch (error) {
       console.error('Error processing receipt:', error);
@@ -114,14 +114,14 @@ export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessor
       date: verificationData.date,
       amount: parseFloat(verificationData.amount)
     };
-    
+
     setProcessedReceipts(prev => [...prev, receiptRecord]);
-    
+
     onPaymentCreated(newPayment);
-    
+
     // Limpiar formulario
     handleReject();
-    
+
     toast.success(`Pago de $${verificationData.amount} registrado para ${selectedTenant.name}`);
   };
 
@@ -135,7 +135,7 @@ export function ReceiptProcessor({ tenants, onPaymentCreated }: ReceiptProcessor
       month: '',
       description: 'rent'
     });
-    
+
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -150,7 +150,7 @@ Archivo: ${receipt.fileName}
 Fecha: ${receipt.date}
 Monto: $${receipt.amount.toLocaleString()}
 Procesado: ${new Date().toLocaleString()}`;
-      
+
       const blob = new Blob([content], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -160,14 +160,14 @@ Procesado: ${new Date().toLocaleString()}`;
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
       toast.success('Comprobante descargado');
     }
   };
 
   // Filtrar inquilinos activos para mostrar en el selector
   const activeTenantsForSelector = tenants.filter(tenant => tenant.status === 'active');
-  
+
   // Removed console.log for security
   // Removed console.log for security));
 
@@ -177,7 +177,7 @@ Procesado: ${new Date().toLocaleString()}`;
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Procesador de Comprobantes
+            Procesador de Comprobantes [en desarrollo]
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -234,8 +234,8 @@ Procesado: ${new Date().toLocaleString()}`;
                   >
                     <SelectTrigger>
                       <SelectValue placeholder={
-                        activeTenantsForSelector.length > 0 
-                          ? "Seleccionar inquilino" 
+                        activeTenantsForSelector.length > 0
+                          ? "Seleccionar inquilino"
                           : "No hay inquilinos activos disponibles"
                       } />
                     </SelectTrigger>
@@ -313,8 +313,8 @@ Procesado: ${new Date().toLocaleString()}`;
               </div>
 
               <div className="flex gap-2">
-                <Button 
-                  onClick={handleConfirmPayment} 
+                <Button
+                  onClick={handleConfirmPayment}
                   className="flex-1"
                   disabled={!verificationData.tenantId || !verificationData.amount || !verificationData.date}
                 >
