@@ -39,8 +39,11 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
         const { supabase } = await import('@/integrations/supabase/client');
         const { data: units, error } = await supabase
           .from('units')
-          .select('monthly_rent')
-          .eq('user_id', user?.id || '');
+          .select(`
+            monthly_rent,
+            properties!inner(landlord_id)
+          `)
+          .eq('properties.landlord_id', user?.id || '');
 
         if (error) {
           console.error('Error fetching units:', error);
@@ -130,7 +133,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
           <Card>
             {/* Header removido - más espacio para el gráfico */}
             <CardContent>
-              <div className="h-96 w-full">
+              <div className="h-106 w-full">
                 <CleanChart data={revenueData} />
               </div>
             </CardContent>

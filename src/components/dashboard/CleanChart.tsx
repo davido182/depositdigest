@@ -122,7 +122,7 @@ export function CleanChart({ data }: CleanChartProps) {
                       {/* Tooltip detallado en hover */}
                       <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-xs bg-black/90 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none">
                         <div className="font-bold">Ingresos Reales: €{item.actual.toLocaleString()}</div>
-                        <div className="text-blue-300 text-xs">Potencial Total: €{item.expected.toLocaleString()}</div>
+                        <div className="text-blue-300 text-xs">Potencial {item.month}: €{item.expected.toLocaleString()}</div>
                       </div>
                     </div>
                   </div>
