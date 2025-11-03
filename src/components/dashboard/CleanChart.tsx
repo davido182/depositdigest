@@ -41,8 +41,8 @@ export function CleanChart({ data }: CleanChartProps) {
   return (
     <div className="w-full h-full">
       {/* Header con leyenda - centrado y con más espacio */}
-      <div className="mb-6 text-center">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4"> <br /> 📈 Ingresos de este año</h3>
+      <div className="mb-6 text-center pt-4">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">📈 Ingresos de este año</h3>
         <div className="flex justify-center gap-8 text-sm mb-6">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>

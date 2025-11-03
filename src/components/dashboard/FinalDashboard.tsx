@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, DollarSign } from "lucide-react";
@@ -11,52 +12,65 @@ interface FinalDashboardProps {
 
 export function FinalDashboard({ stats }: FinalDashboardProps) {
   const { user } = useAuth();
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadRevenueData = async () => {
+      if (user?.id) {
+        const data = await getRevenueData();
+        setRevenueData(data);
+      }
+    };
+    loadRevenueData();
+  }, [user?.id, stats]);
 
   // Función para obtener datos de ingresos de 12 meses
-  const getRevenueData = () => {
+  const getRevenueData = async () => {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const months = [];
 
-    // CÁLCULO CORRECTO: Potencial total = suma REAL de TODAS las rentas de TODAS las unidades
+    // CÁLCULO CORRECTO: Obtener la suma REAL de TODAS las rentas de TODAS las unidades desde la base de datos
     let totalPotentialRevenue = 0;
 
-    // Método 1: Obtener datos reales de unidades desde localStorage (más preciso)
-    const storageKey = `app_data_${user?.id}`;
-    const storedAppData = localStorage.getItem(storageKey);
-    
-    if (storedAppData) {
+    // Obtener datos reales de unidades desde Supabase
+    const fetchUnitsData = async () => {
       try {
-        const appData = JSON.parse(storedAppData);
-        if (appData.units && Array.isArray(appData.units)) {
-          // Sumar TODAS las rentas de TODAS las unidades (ocupadas y vacantes)
-          totalPotentialRevenue = appData.units.reduce((sum: number, unit: any) => {
-            // Probar ambos nombres de campo: monthly_rent y rent_amount
-            const rent = unit.monthly_rent || unit.rent_amount || 0;
-            console.log('🔍 DEBUG Unit:', { 
-              unit_id: unit.id, 
-              monthly_rent: unit.monthly_rent, 
-              rent_amount: unit.rent_amount, 
-              final_rent: rent 
-            });
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: units, error } = await supabase
+          .from('units')
+          .select('rent_amount, monthly_rent')
+          .eq('user_id', user?.id || '');
+
+        if (error) {
+          console.error('Error fetching units:', error);
+          return 0;
+        }
+
+        if (units && units.length > 0) {
+          const total = units.reduce((sum: number, unit: any) => {
+            const rent = unit.rent_amount || unit.monthly_rent || 0;
+            console.log('🔍 DEBUG Real Unit:', { rent_amount: unit.rent_amount, monthly_rent: unit.monthly_rent, final_rent: rent });
             return sum + rent;
           }, 0);
-          console.log('💰 DEBUG Total Potential Revenue:', totalPotentialRevenue);
+          console.log('💰 DEBUG Real Total from DB:', total);
+          return total;
         }
+        return 0;
       } catch (error) {
-        console.error('Error parsing app data:', error);
+        console.error('Error in fetchUnitsData:', error);
+        return 0;
       }
-    }
+    };
 
-    // Método 2: Fallback usando promedio de unidades ocupadas
+    // Usar datos reales de la base de datos
+    totalPotentialRevenue = await fetchUnitsData();
+
+    // Fallback solo si no hay datos en la base de datos
     if (totalPotentialRevenue === 0 && stats.totalUnits > 0 && stats.monthlyRevenue > 0) {
       const avgRentPerUnit = stats.occupiedUnits > 0 ? stats.monthlyRevenue / stats.occupiedUnits : 0;
       totalPotentialRevenue = stats.totalUnits * avgRentPerUnit;
-    }
-
-    // Método 3: Fallback final - estimación conservadora
-    if (totalPotentialRevenue === 0 && stats.totalUnits > 0) {
-      totalPotentialRevenue = stats.totalUnits * 800; // €800 por unidad como estimación
+      console.log('💰 DEBUG Using fallback calculation:', totalPotentialRevenue);
     }
 
     for (let month = 0; month < 12; month++) {
@@ -117,7 +131,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
             {/* Header removido - más espacio para el gráfico */}
             <CardContent>
               <div className="h-96 w-full">
-                <CleanChart data={getRevenueData()} />
+                <CleanChart data={revenueData} />
               </div>
             </CardContent>
           </Card>
