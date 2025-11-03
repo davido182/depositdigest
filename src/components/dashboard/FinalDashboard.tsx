@@ -53,10 +53,8 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
         if (units && units.length > 0) {
           const total = units.reduce((sum: number, unit: any) => {
             const rent = unit.monthly_rent || 0;
-            console.log('🔍 DEBUG Real Unit:', { monthly_rent: unit.monthly_rent, final_rent: rent });
             return sum + rent;
           }, 0);
-          console.log('💰 DEBUG Real Total from DB:', total);
           return total;
         }
         return 0;
@@ -125,7 +123,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
   return (
     <div className="space-y-6">
       {/* Layout: Gráfico (2 columnas) + Tarjetas laterales (1 columna) */}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
 
         {/* Gráfico de Ingresos - 2 columnas */}
         <motion.div
@@ -133,12 +131,12 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
           animate="visible"
           variants={cardVariants}
           transition={{ delay: 0.3, duration: 0.6 }}
-          className="md:col-span-2"
+          className="lg:col-span-2"
         >
-          <Card>
+          <Card className="h-full">
             {/* Header removido - más espacio para el gráfico */}
-            <CardContent>
-              <div className="h-106 w-full">
+            <CardContent className="h-full p-6">
+              <div className="h-96 w-full">
                 <CleanChart data={revenueData} />
               </div>
             </CardContent>

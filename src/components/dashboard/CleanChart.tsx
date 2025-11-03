@@ -30,37 +30,31 @@ export function CleanChart({ data }: CleanChartProps) {
   const maxActualValue = Math.max(...data.map(d => d.actual || 0));
   const maxValue = Math.max(potentialValue, maxActualValue, 100); // Mínimo 100 para evitar división por 0
 
-  console.log('📊 DEBUG CleanChart:', {
-    potentialValue,
-    maxValue,
-    firstItemExpected: data[0]?.expected,
-    firstItemActual: data[0]?.actual,
-    dataLength: data.length
-  });
+
 
   return (
-    <div className="w-full h-full">
-      {/* Header con leyenda - centrado y con más espacio */}
-      <div className="mb-6 text-center pt-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">📈 Ingresos de este año</h3>
-        <div className="flex justify-center gap-8 text-sm mb-6">
+    <div className="w-full h-full flex flex-col overflow-hidden">
+      {/* Header con leyenda - más compacto */}
+      <div className="flex-shrink-0 text-center py-2">
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">📈 Ingresos de este año</h3>
+        <div className="flex justify-center gap-4 lg:gap-8 text-sm mb-2">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-            <span className="text-gray-600">Ingresos Reales</span>
+            <span className="text-gray-600 text-xs lg:text-sm">Ingresos Reales</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-blue-300/60 rounded-full"></div>
-            <span className="text-gray-600">Esperado este mes</span>
+            <span className="text-gray-600 text-xs lg:text-sm">Esperado este mes</span>
           </div>
         </div>
       </div>
 
-      {/* Gráfico ajustado para coincidir exactamente con la altura de las tarjetas laterales */}
-      <div className="h-64">
-        <div className="relative h-full bg-gradient-to-t from-gray-50 to-white rounded-lg p-4">
+      {/* Gráfico que se adapta al espacio disponible */}
+      <div className="flex-1 min-h-0 max-h-80">
+        <div className="relative h-full bg-gradient-to-t from-gray-50 to-white rounded-lg p-2 lg:p-4 overflow-hidden">
 
           {/* Eje Y transparente con valores */}
-          <div className="absolute left-2 top-4 bottom-8 w-8 flex flex-col justify-between text-xs text-gray-400">
+          <div className="absolute left-1 lg:left-2 top-2 lg:top-4 bottom-6 lg:bottom-8 w-6 lg:w-8 flex flex-col justify-between text-xs text-gray-400">
             {(() => {
               const steps = 5; // 5 líneas horizontales
               const yAxisValues = [];
@@ -79,7 +73,7 @@ export function CleanChart({ data }: CleanChartProps) {
           </div>
 
           {/* Área de barras con margen para el eje Y */}
-          <div className="ml-10 h-full flex items-end justify-between relative">
+          <div className="ml-6 lg:ml-10 h-full flex items-end justify-between relative overflow-hidden">
             {data.map((item, index) => {
               // Altura proporcional basada en el eje Y
               const actualHeightPercent = maxValue > 0 ? (item.actual / maxValue) * 100 : 0;
@@ -91,8 +85,8 @@ export function CleanChart({ data }: CleanChartProps) {
                   className="flex flex-col items-center flex-1 mx-1 relative group"
                 >
                   {/* Contenedor de barra */}
-                  <div className="relative w-full flex justify-center mb-2 cursor-pointer">
-                    <div className="relative w-10 h-full flex justify-center">
+                  <div className="relative w-full flex justify-center mb-1 lg:mb-2 cursor-pointer">
+                    <div className="relative w-6 lg:w-10 h-full flex justify-center">
                       {/* Barra azul transparente de fondo (esperado) - DETRÁS */}
                       <div
                         className="absolute bottom-0 w-full bg-blue-300/30 rounded-t"
@@ -126,13 +120,13 @@ export function CleanChart({ data }: CleanChartProps) {
                   </div>
 
                   {/* Etiqueta del mes (Eje X) */}
-                  <div className={`text-xs text-center ${item.isCurrentMonth
+                  <div className={`text-xs lg:text-sm text-center truncate max-w-full ${item.isCurrentMonth
                     ? 'font-bold text-emerald-600'
                     : item.isFutureMonth
                       ? 'text-gray-400'
                       : 'text-gray-600'
                     }`}>
-                    {item.month}
+                    {item.month.slice(0, 3)}
                   </div>
                 </div>
               );
