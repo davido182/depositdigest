@@ -31,7 +31,9 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
         if (appData.units && Array.isArray(appData.units)) {
           // Sumar TODAS las rentas de TODAS las unidades (ocupadas y vacantes)
           totalPotentialRevenue = appData.units.reduce((sum: number, unit: any) => {
-            return sum + (unit.monthly_rent || 0);
+            // Probar ambos nombres de campo: monthly_rent y rent_amount
+            const rent = unit.monthly_rent || unit.rent_amount || 0;
+            return sum + rent;
           }, 0);
         }
       } catch (error) {

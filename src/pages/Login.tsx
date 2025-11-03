@@ -150,11 +150,9 @@ const Login = () => {
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <div className="flex items-center justify-center mb-4">
-              <img 
-                src="/logo-rentaflux.ico" 
-                alt="RentaFlux Logo" 
-                className="h-8 w-8 mr-2"
-              />
+              <div className="h-8 w-8 mr-2 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">R</span>
+              </div>
               <h1 className="text-2xl font-bold tracking-tight">RentaFlux</h1>
             </div>
             <p className="text-muted-foreground">Recuperar contraseña</p>
@@ -209,11 +207,9 @@ const Login = () => {
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <div className="flex items-center justify-center mb-4">
-              <img 
-                src="/logo-rentaflux.ico" 
-                alt="RentaFlux Logo" 
-                className="h-8 w-8 mr-2"
-              />
+              <div className="h-8 w-8 mr-2 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">R</span>
+              </div>
               <h1 className="text-2xl font-bold tracking-tight">RentaFlux</h1>
             </div>
             <p className="text-muted-foreground">Establecer nueva contraseña</p>
@@ -274,11 +270,9 @@ const Login = () => {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center mb-4">
-            <img 
-              src="/logo-rentaflux.ico" 
-              alt="RentaFlux Logo" 
-              className="h-8 w-8 mr-2"
-            />
+            <div className="h-8 w-8 mr-2 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">R</span>
+            </div>
             <h1 className="text-2xl font-bold tracking-tight">RentaFlux</h1>
           </div>
           <p className="text-muted-foreground">Gestiona tus propiedades de alquiler con facilidad</p>
