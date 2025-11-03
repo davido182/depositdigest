@@ -24,8 +24,11 @@ export function CleanChart({ data }: CleanChartProps) {
     );
   }
 
-  // LÓGICA CORREGIDA: El máximo debe ser el valor esperado (que es constante para todos los meses)
-  const maxValue = Math.max(...data.map(d => Math.max(d.expected || 0, d.actual || 0)));
+  // LÓGICA CORREGIDA: El máximo debe ser el valor esperado (potencial mensual constante)
+  // Como el potencial es constante, usamos ese valor como escala máxima
+  const potentialValue = data.length > 0 ? (data[0]?.expected || 0) : 0;
+  const maxActualValue = Math.max(...data.map(d => d.actual || 0));
+  const maxValue = Math.max(potentialValue, maxActualValue);
 
   return (
     <div className="w-full h-full">
@@ -110,8 +113,8 @@ export function CleanChart({ data }: CleanChartProps) {
 
                       {/* Tooltip detallado en hover */}
                       <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-xs bg-black/90 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none">
-                        <div className="font-bold">Real: €{item.actual.toLocaleString()}</div>
-                        <div className="text-blue-300 text-xs">Potencial: €{item.expected.toLocaleString()}</div>
+                        <div className="font-bold">Real {item.month}: €{item.actual.toLocaleString()}</div>
+                        <div className="text-blue-300 text-xs">Potencial {item.month}: €{item.expected.toLocaleString()}</div>
                       </div>
                     </div>
                   </div>
