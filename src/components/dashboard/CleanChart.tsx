@@ -97,8 +97,7 @@ export function CleanChart({ data }: CleanChartProps) {
                       <div
                         className="absolute bottom-0 w-full bg-blue-300/30 rounded-t"
                         style={{
-                          height: `${Math.max(expectedHeightPercent, 2)}%`,
-                          minHeight: '4px'
+                          height: `${Math.max(expectedHeightPercent * 2, 8)}px`,
                         }}
                       />
 
@@ -109,8 +108,7 @@ export function CleanChart({ data }: CleanChartProps) {
                           : 'bg-emerald-500'
                           }`}
                         style={{
-                          height: `${Math.max(actualHeightPercent, 1)}%`,
-                          minHeight: item.actual > 0 ? '4px' : '0px'
+                          height: `${Math.max(actualHeightPercent * 2, item.actual > 0 ? 4 : 0)}px`,
                         }}
                       />
 

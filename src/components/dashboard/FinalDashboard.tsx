@@ -90,11 +90,16 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
             r.year === currentYear && r.month === month && r.paid
           );
 
-          if (monthRecords.length > 0) {
-            actualRevenue = monthRecords.reduce((total: number, record: any) => {
-              return total + (record.amount || 0);
-            }, 0);
-          }
+          // Calculate actual revenue from paid records using real amounts (same as Analytics)
+          actualRevenue = monthRecords.reduce((total: number, record: any) => {
+            // Use the stored amount if available
+            if (record.amount && record.amount > 0) {
+              return total + record.amount;
+            } else {
+              // Fallback: find tenant and use their rent amount
+              return total + 0; // We don't have tenant data here, so use 0 as fallback
+            }
+          }, 0);
         } catch (error) {
           console.error('Error parsing payment records:', error);
         }
