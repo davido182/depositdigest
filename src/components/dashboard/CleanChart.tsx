@@ -24,17 +24,25 @@ export function CleanChart({ data }: CleanChartProps) {
     );
   }
 
-  // LÓGICA CORREGIDA: El máximo debe ser el valor esperado (potencial mensual constante)
-  // Como el potencial es constante, usamos ese valor como escala máxima
+  // LÓGICA CORREGIDA: El máximo del eje Y debe ser el valor del potencial (constante)
+  // La barra azul siempre será del 100% de altura (potencial completo)
+  // La barra verde será proporcional a su valor real vs el potencial
   const potentialValue = data.length > 0 ? (data[0]?.expected || 0) : 0;
-  const maxActualValue = Math.max(...data.map(d => d.actual || 0));
-  const maxValue = Math.max(potentialValue, maxActualValue);
+  const maxValue = potentialValue; // El eje Y va de 0 al potencial máximo
+
+  console.log('📊 DEBUG CleanChart:', {
+    potentialValue,
+    maxValue,
+    firstItemExpected: data[0]?.expected,
+    firstItemActual: data[0]?.actual,
+    dataLength: data.length
+  });
 
   return (
     <div className="w-full h-full">
       {/* Header con leyenda - centrado y con más espacio */}
       <div className="mb-6 text-center">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">📈 Ingresos de este año</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4"> <br /> 📈 Ingresos de este año</h3>
         <div className="flex justify-center gap-8 text-sm mb-6">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
@@ -113,8 +121,8 @@ export function CleanChart({ data }: CleanChartProps) {
 
                       {/* Tooltip detallado en hover */}
                       <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-xs bg-black/90 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none">
-                        <div className="font-bold">Real {item.month}: €{item.actual.toLocaleString()}</div>
-                        <div className="text-blue-300 text-xs">Potencial {item.month}: €{item.expected.toLocaleString()}</div>
+                        <div className="font-bold">Ingresos Reales: €{item.actual.toLocaleString()}</div>
+                        <div className="text-blue-300 text-xs">Potencial Total: €{item.expected.toLocaleString()}</div>
                       </div>
                     </div>
                   </div>

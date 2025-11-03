@@ -33,8 +33,15 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
           totalPotentialRevenue = appData.units.reduce((sum: number, unit: any) => {
             // Probar ambos nombres de campo: monthly_rent y rent_amount
             const rent = unit.monthly_rent || unit.rent_amount || 0;
+            console.log('🔍 DEBUG Unit:', { 
+              unit_id: unit.id, 
+              monthly_rent: unit.monthly_rent, 
+              rent_amount: unit.rent_amount, 
+              final_rent: rent 
+            });
             return sum + rent;
           }, 0);
+          console.log('💰 DEBUG Total Potential Revenue:', totalPotentialRevenue);
         }
       } catch (error) {
         console.error('Error parsing app data:', error);
