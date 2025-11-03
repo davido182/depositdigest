@@ -24,11 +24,11 @@ export function CleanChart({ data }: CleanChartProps) {
     );
   }
 
-  // LÓGICA CORREGIDA: El máximo del eje Y debe ser el valor del potencial (constante)
-  // La barra azul siempre será del 100% de altura (potencial completo)
-  // La barra verde será proporcional a su valor real vs el potencial
+  // LÓGICA CORREGIDA: El máximo del eje Y debe ser el mayor valor entre potencial y actual
+  // Si el potencial es 0, usar el máximo de los valores reales
   const potentialValue = data.length > 0 ? (data[0]?.expected || 0) : 0;
-  const maxValue = potentialValue; // El eje Y va de 0 al potencial máximo
+  const maxActualValue = Math.max(...data.map(d => d.actual || 0));
+  const maxValue = Math.max(potentialValue, maxActualValue, 100); // Mínimo 100 para evitar división por 0
 
   console.log('📊 DEBUG CleanChart:', {
     potentialValue,

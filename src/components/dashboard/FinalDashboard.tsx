@@ -39,7 +39,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
         const { supabase } = await import('@/integrations/supabase/client');
         const { data: units, error } = await supabase
           .from('units')
-          .select('rent_amount, monthly_rent')
+          .select('monthly_rent')
           .eq('user_id', user?.id || '');
 
         if (error) {
@@ -49,8 +49,8 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
 
         if (units && units.length > 0) {
           const total = units.reduce((sum: number, unit: any) => {
-            const rent = unit.rent_amount || unit.monthly_rent || 0;
-            console.log('🔍 DEBUG Real Unit:', { rent_amount: unit.rent_amount, monthly_rent: unit.monthly_rent, final_rent: rent });
+            const rent = unit.monthly_rent || 0;
+            console.log('🔍 DEBUG Real Unit:', { monthly_rent: unit.monthly_rent, final_rent: rent });
             return sum + rent;
           }, 0);
           console.log('💰 DEBUG Real Total from DB:', total);
