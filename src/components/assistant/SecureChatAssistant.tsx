@@ -108,45 +108,8 @@ export function SecureChatAssistant() {
       return "Estoy cargando tus datos, por favor espera un momento...";
     }
 
-    const lowerQuery = query.toLowerCase();
-
-    // Saludos y consultas generales
-    if (lowerQuery.match(/(hola|hi|hey|buenos|buenas)/)) {
-      return `¡Hola! 😊 Veo que tienes ${userData.properties.length} propiedades con ${userData.units.length} unidades y ${userData.tenants.filter(t => t.is_active).length} inquilinos activos. ¿En qué puedo ayudarte hoy?`;
-    }
-
-    // Consultas sobre propiedades
-    if (lowerQuery.includes('propiedad')) {
-      return handlePropertyQueries(lowerQuery);
-    }
-
-    // Consultas sobre inquilinos
-    if (lowerQuery.match(/(inquilino|tenant)/)) {
-      return handleTenantQueries(lowerQuery);
-    }
-
-    // Consultas sobre pagos e ingresos
-    if (lowerQuery.match(/(pago|ingreso|dinero|cobr|gano|ganancia)/)) {
-      return handlePaymentQueries(lowerQuery);
-    }
-
-    // Consultas sobre unidades
-    if (lowerQuery.match(/(unidad|apartamento|ocupacion|vacia|libre)/)) {
-      return handleUnitQueries(lowerQuery);
-    }
-
-    // Consultas sobre mantenimiento
-    if (lowerQuery.match(/(mantenimiento|reparacion|arreglo)/)) {
-      return handleMaintenanceQueries(lowerQuery);
-    }
-
-    // Resumen general
-    if (lowerQuery.match(/(resumen|estado|situacion|como va|negocio)/)) {
-      return handleGeneralSummary();
-    }
-
-    // Respuesta por defecto más conversacional
-    return generateConversationalResponse(lowerQuery);
+    // NUEVO ASISTENTE LIBRE - Sin restricciones, más conversacional
+    return generateIntelligentResponse(query);
   };
 
   const handlePropertyQueries = (query: string): string => {

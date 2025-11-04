@@ -40,12 +40,12 @@ export const CookieBanner = () => {
           
           <div className="flex-1">
             <h3 className="font-semibold text-gray-900 mb-2">
-              🍪 Uso de Cookies
+              💾 Almacenamiento Local
             </h3>
             <p className="text-sm text-gray-700 mb-4">
-              Utilizamos cookies técnicas estrictamente necesarias para el funcionamiento de RentaFlux. 
-              Estas cookies son esenciales para que puedas iniciar sesión, navegar por la plataforma 
-              y utilizar sus funciones de forma segura.
+              RentaFlux utiliza almacenamiento local del navegador (no cookies tradicionales) para 
+              funciones esenciales como mantener su sesión activa, guardar preferencias y datos de 
+              la aplicación. Estos datos son técnicamente necesarios para el funcionamiento.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
@@ -55,14 +55,14 @@ export const CookieBanner = () => {
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                   size="sm"
                 >
-                  Aceptar cookies necesarias
+                  Entendido
                 </Button>
                 <Button 
                   onClick={rejectCookies}
                   variant="outline"
                   size="sm"
                 >
-                  Rechazar
+                  Más información
                 </Button>
               </div>
               
@@ -71,7 +71,7 @@ export const CookieBanner = () => {
                 target="_blank"
                 className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
               >
-                Más información sobre cookies
+                Política de almacenamiento
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
@@ -89,8 +89,8 @@ export const CookieBanner = () => {
 
         <div className="mt-4 pt-4 border-t border-gray-200">
           <p className="text-xs text-gray-500">
-            ℹ️ <strong>Importante:</strong> Si rechazas las cookies técnicas, es posible que algunas 
-            funciones de RentaFlux no funcionen correctamente (inicio de sesión, pagos seguros, etc.).
+            ℹ️ <strong>Nota:</strong> RentaFlux no utiliza cookies tradicionales de seguimiento. 
+            El almacenamiento local es técnicamente necesario para que la aplicación funcione correctamente.
           </p>
         </div>
       </Card>

@@ -25,7 +25,7 @@ const CookiePolicy = () => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Card>
           <CardHeader>
-            <CardTitle className="text-3xl">Política de Cookies</CardTitle>
+            <CardTitle className="text-3xl">Política de Almacenamiento Local</CardTitle>
             <p className="text-gray-600">Última actualización: {new Date().toLocaleDateString('es-ES')}</p>
           </CardHeader>
           <CardContent className="prose max-w-none">
@@ -38,99 +38,119 @@ const CookiePolicy = () => {
               sitio o navegue de una página a otra.
             </p>
 
-            <h2>2. ¿Cómo Utilizamos las Cookies?</h2>
+            <h2>2. ¿Cómo Utilizamos las Cookies y Almacenamiento Local?</h2>
             <p>
-              En RentaFlux utilizamos cookies únicamente para garantizar el funcionamiento técnico 
-              de nuestra plataforma. No utilizamos cookies de seguimiento, publicitarias o de análisis 
-              de terceros.
+              <strong>IMPORTANTE:</strong> RentaFlux NO utiliza cookies tradicionales. En su lugar, 
+              utilizamos tecnologías de almacenamiento local del navegador (localStorage y sessionStorage) 
+              que son técnicamente necesarias para el funcionamiento de la aplicación.
             </p>
 
-            <h2>3. Tipos de Cookies que Utilizamos</h2>
+            <h2>3. Tecnologías de Almacenamiento que Utilizamos</h2>
             
-            <h3>3.1 Cookies Técnicas Estrictamente Necesarias</h3>
+            <h3>3.1 Local Storage (Almacenamiento Local)</h3>
             <p>
-              Estas cookies son esenciales para que pueda navegar por la plataforma y utilizar sus 
-              funciones. Sin estas cookies, no podríamos proporcionar los servicios solicitados.
+              Utilizamos localStorage para almacenar datos que persisten entre sesiones del navegador. 
+              Estos datos son esenciales para el funcionamiento de la aplicación.
             </p>
 
             <div className="bg-gray-50 p-4 rounded-lg">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-2">Cookie</th>
+                    <th className="text-left p-2">Dato Almacenado</th>
+                    <th className="text-left p-2">Propósito</th>
+                    <th className="text-left p-2">Tipo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b">
+                    <td className="p-2"><code>rentaflux_has_visited</code></td>
+                    <td className="p-2">Recordar si ha visitado la landing page</td>
+                    <td className="p-2">Funcional</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="p-2"><code>payment_records_*</code></td>
+                    <td className="p-2">Datos de seguimiento de pagos</td>
+                    <td className="p-2">Funcional</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="p-2"><code>app-language</code></td>
+                    <td className="p-2">Idioma preferido de la interfaz</td>
+                    <td className="p-2">Preferencias</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="p-2"><code>data_backups</code></td>
+                    <td className="p-2">Respaldos locales de datos</td>
+                    <td className="p-2">Funcional</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="p-2"><code>security_events</code></td>
+                    <td className="p-2">Registro de eventos de seguridad</td>
+                    <td className="p-2">Seguridad</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2"><code>rentaflux_cookie_consent</code></td>
+                    <td className="p-2">Su decisión sobre el consentimiento</td>
+                    <td className="p-2">Legal</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>3.2 Session Storage (Almacenamiento de Sesión)</h3>
+            <p>
+              Utilizamos sessionStorage para datos temporales que solo duran mientras tiene 
+              abierta la pestaña del navegador.
+            </p>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2">Dato Almacenado</th>
                     <th className="text-left p-2">Propósito</th>
                     <th className="text-left p-2">Duración</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b">
-                    <td className="p-2"><code>session_token</code></td>
-                    <td className="p-2">Mantener su sesión activa</td>
-                    <td className="p-2">Sesión</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-2"><code>auth_token</code></td>
-                    <td className="p-2">Autenticación de usuario</td>
-                    <td className="p-2">7 días</td>
-                  </tr>
                   <tr className="border-b">
                     <td className="p-2"><code>csrf_token</code></td>
                     <td className="p-2">Protección contra ataques CSRF</td>
                     <td className="p-2">Sesión</td>
                   </tr>
                   <tr>
-                    <td className="p-2"><code>preferences</code></td>
-                    <td className="p-2">Recordar configuraciones de la interfaz</td>
-                    <td className="p-2">30 días</td>
+                    <td className="p-2"><code>temp_session_data</code></td>
+                    <td className="p-2">Datos temporales de la sesión</td>
+                    <td className="p-2">Sesión</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <h3>3.2 Cookies de Funcionalidad</h3>
-            <p>
-              Estas cookies permiten que la plataforma recuerde las elecciones que hace (como su idioma 
-              preferido o la región en la que se encuentra) y proporcionan características mejoradas y 
-              más personales.
-            </p>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">Cookie</th>
-                    <th className="text-left p-2">Propósito</th>
-                    <th className="text-left p-2">Duración</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b">
-                    <td className="p-2"><code>language</code></td>
-                    <td className="p-2">Recordar idioma preferido</td>
-                    <td className="p-2">1 año</td>
-                  </tr>
-                  <tr>
-                    <td className="p-2"><code>theme</code></td>
-                    <td className="p-2">Recordar tema visual (claro/oscuro)</td>
-                    <td className="p-2">1 año</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <h2>4. Cookies de Terceros</h2>
+            <h2>4. Servicios de Terceros</h2>
             
-            <h3>4.1 Supabase (Proveedor de Base de Datos)</h3>
+            <h3>4.1 Supabase (Proveedor de Base de Datos y Autenticación)</h3>
             <p>
-              Utilizamos Supabase para el almacenamiento y gestión de datos. Supabase puede establecer 
-              cookies técnicas necesarias para el funcionamiento del servicio de autenticación.
+              Utilizamos Supabase para autenticación y almacenamiento de datos. Supabase puede 
+              utilizar su propio almacenamiento local para tokens de autenticación y gestión de sesiones. 
+              Estos datos son técnicamente necesarios para el funcionamiento del servicio.
             </p>
 
             <h3>4.2 Stripe (Procesamiento de Pagos)</h3>
             <p>
-              Para el procesamiento seguro de pagos, utilizamos Stripe, que puede establecer cookies 
-              necesarias para la seguridad y funcionamiento del sistema de pagos.
+              Para el procesamiento seguro de pagos, utilizamos Stripe. Cuando utiliza nuestro 
+              sistema de pagos, Stripe puede establecer sus propias cookies y almacenamiento local 
+              necesarios para la seguridad y funcionamiento del sistema de pagos.
             </p>
+
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-blue-800 font-semibold">ℹ️ Aclaración Importante:</p>
+              <p className="text-blue-700 text-sm mt-2">
+                RentaFlux como aplicación web NO establece cookies tradicionales. Todo el almacenamiento 
+                se realiza mediante localStorage y sessionStorage del navegador, que son tecnologías 
+                diferentes a las cookies y no requieren el mismo tipo de consentimiento bajo la normativa europea.
+              </p>
+            </div>
 
             <h2>5. ¿Cómo Controlar las Cookies?</h2>
             
@@ -149,30 +169,32 @@ const CookiePolicy = () => {
               <li><strong>Edge:</strong> Configuración → Cookies y permisos del sitio</li>
             </ul>
 
-            <h3>5.3 Consecuencias de Deshabilitar Cookies</h3>
+            <h3>5.3 Consecuencias de Deshabilitar el Almacenamiento Local</h3>
             <div className="bg-red-50 p-4 rounded-lg">
               <p className="text-red-800 font-semibold">⚠️ Importante:</p>
               <p className="text-red-700 text-sm mt-2">
-                Si deshabilita las cookies técnicas necesarias, es posible que no pueda utilizar 
-                todas las funciones de RentaFlux correctamente. Esto incluye:
+                Si deshabilita el almacenamiento local en su navegador, RentaFlux no funcionará 
+                correctamente. Esto afectará:
               </p>
               <ul className="text-red-700 text-sm mt-2">
-                <li>Iniciar sesión en su cuenta</li>
-                <li>Mantener su sesión activa</li>
+                <li>Iniciar sesión y mantener su sesión activa</li>
+                <li>Guardar datos de pagos y seguimiento</li>
+                <li>Recordar sus preferencias de idioma</li>
+                <li>Funciones de respaldo y seguridad</li>
                 <li>Realizar pagos de forma segura</li>
-                <li>Guardar sus preferencias</li>
               </ul>
             </div>
 
-            <h2>6. Cookies en Aplicaciones Móviles</h2>
+            <h2>6. Almacenamiento en Aplicaciones Móviles</h2>
             <p>
-              Nuestras aplicaciones móviles nativas (iOS y Android) no utilizan cookies tradicionales, 
-              sino que almacenan datos necesarios localmente en el dispositivo utilizando:
+              Nuestras aplicaciones móviles nativas (iOS y Android) utilizan almacenamiento local 
+              del dispositivo en lugar de cookies:
             </p>
             <ul>
-              <li><strong>Local Storage:</strong> Para datos de sesión y preferencias</li>
-              <li><strong>Secure Storage:</strong> Para tokens de autenticación</li>
-              <li><strong>Cache:</strong> Para mejorar el rendimiento</li>
+              <li><strong>Secure Storage:</strong> Para tokens de autenticación y datos sensibles</li>
+              <li><strong>Local Database:</strong> Para datos de la aplicación (SQLite)</li>
+              <li><strong>Preferences:</strong> Para configuraciones del usuario</li>
+              <li><strong>Cache:</strong> Para mejorar el rendimiento y funcionalidad offline</li>
             </ul>
 
             <h2>7. Actualizaciones de esta Política</h2>
@@ -183,9 +205,10 @@ const CookiePolicy = () => {
 
             <h2>8. Base Legal</h2>
             <p>
-              El uso de cookies técnicas estrictamente necesarias se basa en nuestro interés legítimo 
-              de proporcionar y mantener nuestros servicios. Para cookies de funcionalidad, solicitamos 
-              su consentimiento cuando sea requerido por la ley.
+              El uso de almacenamiento local (localStorage y sessionStorage) se basa en nuestro 
+              interés legítimo de proporcionar y mantener nuestros servicios. Estas tecnologías 
+              son técnicamente necesarias para el funcionamiento de la aplicación web y no están 
+              sujetas a los mismos requisitos de consentimiento que las cookies bajo la Directiva ePrivacy.
             </p>
 
             <h2>9. Contacto</h2>
@@ -199,9 +222,9 @@ const CookiePolicy = () => {
             <div className="bg-blue-50 p-4 rounded-lg mt-8">
               <h3 className="font-semibold text-blue-800 mb-2">Resumen</h3>
               <p className="text-blue-700 text-sm">
-                RentaFlux utiliza únicamente cookies técnicas necesarias para el funcionamiento de la 
-                plataforma. No utilizamos cookies de seguimiento o publicitarias. Puede gestionar las 
-                cookies desde la configuración de su navegador.
+                RentaFlux NO utiliza cookies tradicionales. Utilizamos únicamente almacenamiento local 
+                del navegador (localStorage/sessionStorage) que es técnicamente necesario para el 
+                funcionamiento de la aplicación. No utilizamos tecnologías de seguimiento o publicitarias.
               </p>
             </div>
 
