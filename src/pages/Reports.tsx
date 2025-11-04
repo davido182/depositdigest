@@ -5,16 +5,12 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { DatabaseService } from "@/services/DatabaseService";
 import { Tenant, Payment } from "@/types";
-import { FileDown, FileText as FilePdfIcon, PieChart, Filter } from "lucide-react";
+import { FileDown, FileText as FilePdfIcon } from "lucide-react";
 import { TenantsPdfReport } from "@/components/reports/TenantsPdfReport";
 
 const Reports = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [occupancyRate, setOccupancyRate] = useState<string>("0");
-  const [collectionRate, setCollectionRate] = useState<string>("0");
-  const [totalUnits, setTotalUnits] = useState(20);
 
   useEffect(() => {
     const loadData = async () => {
@@ -22,15 +18,9 @@ const Reports = () => {
         setIsLoading(true);
         const dbService = DatabaseService.getInstance();
         const loadedTenants = await dbService.getTenants();
-        const loadedPayments = await dbService.getPayments();
-        const units = dbService.getTotalUnits();
         
         setTenants(loadedTenants);
-        setPayments(loadedPayments);
-        setTotalUnits(units);
-        
-        calculateOccupancy(loadedTenants, units);
-        calculateRentCollection(loadedTenants, loadedPayments);
+
       } catch (error) {
         console.error("Error loading report data:", error);
         toast.error("Failed to load report data");
@@ -42,57 +32,7 @@ const Reports = () => {
     loadData();
   }, []);
 
-  const calculateOccupancy = (currentTenants: Tenant[], units: number) => {
-    const activeCount = currentTenants.filter(t => t.status === 'active').length;
-    const rate = units > 0 ? (activeCount / units * 100).toFixed(1) : "0";
-    setOccupancyRate(rate);
-    return rate;
-  };
 
-  const calculateRentCollection = (currentTenants: Tenant[], currentPayments: Payment[]) => {
-    const totalRent = currentTenants.reduce((sum, tenant) => sum + (tenant.rentAmount || 0), 0);
-    const collectedRent = currentPayments.filter(p => p.status === 'completed').reduce((sum, payment) => sum + payment.amount, 0);
-    const rate = totalRent > 0 ? (collectedRent / totalRent * 100).toFixed(1) : "0";
-    setCollectionRate(rate);
-    return rate;
-  };
-
-  const generateOccupancyReport = () => {
-    const rate = calculateOccupancy(tenants, totalUnits);
-    
-    toast.success(`Reporte de Ocupación: ${rate}% de ocupación`);
-    
-    const activeCount = tenants.filter(t => t.status === 'active').length;
-    const noticeCount = tenants.filter(t => t.status === 'notice').length;
-    const inactiveCount = tenants.filter(t => t.status === 'inactive').length;
-    const lateCount = tenants.filter(t => t.status === 'late').length;
-    
-    console.log({
-      total: totalUnits,
-      active: activeCount,
-      notice: noticeCount,
-      inactive: inactiveCount,
-      late: lateCount,
-      occupancyRate: rate
-    });
-  };
-
-  const generateRentCollectionReport = () => {
-    const rate = calculateRentCollection(tenants, payments);
-    
-    toast.success(`Reporte de Cobros: ${rate}% de cobro efectivo`);
-    
-    const totalRent = tenants.reduce((sum, tenant) => sum + (tenant.rentAmount || 0), 0);
-    const collectedRent = payments.filter(p => p.status === 'completed').reduce((sum, payment) => sum + payment.amount, 0);
-    const pendingRent = payments.filter(p => p.status === 'pending').reduce((sum, payment) => sum + payment.amount, 0);
-    
-    console.log({
-      totalRent,
-      collectedRent,
-      pendingRent,
-      collectionRate: rate
-    });
-  };
 
   const exportTenantData = () => {
     try {
@@ -274,43 +214,6 @@ const Reports = () => {
           </div>
         ) : (
           <div className="grid gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="p-6 hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h2 className="text-xl font-semibold">Reporte de Ocupación</h2>
-                    <p className="text-muted-foreground text-sm mt-1">
-                      Tasa de ocupación actual: {occupancyRate}%
-                    </p>
-                  </div>
-                  <PieChart className="h-6 w-6 text-primary" />
-                </div>
-                <Button 
-                  onClick={generateOccupancyReport} 
-                  className="w-full mt-4"
-                >
-                  Generar Reporte
-                </Button>
-              </Card>
-              
-              <Card className="p-6 hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h2 className="text-xl font-semibold">Reporte de Cobros</h2>
-                    <p className="text-muted-foreground text-sm mt-1">
-                      Tasa de cobro actual: {collectionRate}%
-                    </p>
-                  </div>
-                  <Filter className="h-6 w-6 text-primary" />
-                </div>
-                <Button 
-                  onClick={generateRentCollectionReport} 
-                  className="w-full mt-4"
-                >
-                  Generar Reporte
-                </Button>
-              </Card>
-            </div>
             
             {/* Exportar Datos de Inquilinos */}
             <Card className="p-6 hover:shadow-md transition-shadow">

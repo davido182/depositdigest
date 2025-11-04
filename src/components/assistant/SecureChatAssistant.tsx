@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Send, Bot, User, Loader2, MessageCircle } from "lucide-react";
+import { Send, Bot, User, MessageCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -108,8 +108,53 @@ export function SecureChatAssistant() {
       return "Estoy cargando tus datos, por favor espera un momento...";
     }
 
-    // NUEVO ASISTENTE LIBRE - Sin restricciones, más conversacional
-    return generateIntelligentResponse(query);
+    const lowerQuery = query.toLowerCase();
+
+    // Detectar tipo de consulta y responder apropiadamente
+    if (lowerQuery.match(/(propiedad|propiedades|casa|edificio|inmueble)/)) {
+      return handlePropertyQueries(query);
+    }
+    
+    if (lowerQuery.match(/(inquilino|inquilinos|tenant|arrendatario)/)) {
+      return handleTenantQueries(query);
+    }
+    
+    if (lowerQuery.match(/(pago|pagos|dinero|cobro|ingreso|renta|alquiler|gano|ganancia)/)) {
+      return handlePaymentQueries(query);
+    }
+    
+    if (lowerQuery.match(/(unidad|unidades|apartamento|ocupacion|vacia|libre|disponible)/)) {
+      return handleUnitQueries(query);
+    }
+    
+    if (lowerQuery.match(/(mantenimiento|reparacion|arreglo|problema)/)) {
+      return handleMaintenanceQueries(query);
+    }
+
+    if (lowerQuery.match(/(resumen|estado|como|va|negocio|general)/)) {
+      return handleGeneralSummary();
+    }
+
+    if (lowerQuery.match(/(ayuda|help|como|usar|funciona)/)) {
+      return `🆘 **¡Estoy aquí para ayudarte!** 
+
+📊 **Puedo contarte sobre:**
+• Tus propiedades e inquilinos
+• Estado de pagos e ingresos  
+• Ocupación de unidades
+• Solicitudes de mantenimiento
+
+💡 **También puedo darte:**
+• Consejos para mejorar tu negocio
+• Estrategias de ocupación
+• Análisis de rentabilidad
+• Ayuda con la aplicación
+
+¡Pregúntame lo que necesites! 😊`;
+    }
+
+    // Respuesta conversacional libre
+    return generateConversationalResponse(query);
   };
 
   const handlePropertyQueries = (query: string): string => {
@@ -234,6 +279,7 @@ export function SecureChatAssistant() {
       return "🏠 Veo que aún no tienes inquilinos activos. ¡Pero eso puede cambiar pronto! 🚀 Agrega tus primeros inquilinos para empezar a generar ingresos. ¿Te ayudo con el proceso? 😊";
     }
 
+    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.rent_amount || 0), 0);
     return `💼 Tienes ${activeTenants.length} inquilinos activos generando €${monthlyRevenue.toLocaleString()} mensuales potenciales. ¡Tu negocio está en marcha! 🎯`;
   };
 
@@ -284,7 +330,8 @@ export function SecureChatAssistant() {
   };
 
   const handleGeneralSummary = (): string => {
-    const { properties, tenants, units, maintenance } = userData!;
+    if (!userData) return "Cargando datos...";
+    const { properties, tenants, units, maintenance } = userData;
 
     const activeTenants = tenants.filter(t => t.status === 'active');
     const occupiedUnits = units.filter(u => !u.is_available).length;
@@ -316,105 +363,18 @@ export function SecureChatAssistant() {
   };
 
   const generateConversationalResponse = (query: string): string => {
-    // Función para detectar palabras similares (tolerancia a errores de escritura)
-    const fuzzyMatch = (word: string, targets: string[]): boolean => {
-      return targets.some(target => {
-        // Coincidencia exacta
-        if (word.includes(target) || target.includes(word)) return true;
-        
-        // Tolerancia a errores comunes
-        const distance = levenshteinDistance(word, target);
-        return distance <= Math.max(1, Math.floor(target.length * 0.3));
-      });
-    };
-
-    // Función para calcular distancia de Levenshtein (errores de escritura)
-    const levenshteinDistance = (str1: string, str2: string): number => {
-      const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
-      
-      for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
-      for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
-      
-      for (let j = 1; j <= str2.length; j++) {
-        for (let i = 1; i <= str1.length; i++) {
-          const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
-          matrix[j][i] = Math.min(
-            matrix[j][i - 1] + 1,
-            matrix[j - 1][i] + 1,
-            matrix[j - 1][i - 1] + indicator
-          );
-        }
-      }
-      
-      return matrix[str2.length][str1.length];
-    };
-
-    // Detectar intenciones con tolerancia a errores
-    const words = query.toLowerCase().split(/\s+/);
+    if (!userData) return "Cargando datos...";
     
-    // Propiedades (con errores comunes)
-    if (fuzzyMatch(query, ['propiedad', 'propiedades', 'casa', 'casas', 'edificio', 'inmueble'])) {
-      return handlePropertyQueries(query);
-    }
-    
-    // Inquilinos (con errores comunes)
-    if (fuzzyMatch(query, ['inquilino', 'inquilinos', 'tenant', 'tenants', 'arrendatario', 'cliente'])) {
-      return handleTenantQueries(query);
-    }
-    
-    // Pagos (con errores comunes)
-    if (fuzzyMatch(query, ['pago', 'pagos', 'dinero', 'cobro', 'ingreso', 'renta', 'alquiler'])) {
-      return handlePaymentQueries(query);
-    }
-    
-    // Unidades (con errores comunes)
-    if (fuzzyMatch(query, ['unidad', 'unidades', 'apartamento', 'depto', 'ocupacion', 'vacia', 'libre'])) {
-      return handleUnitQueries(query);
-    }
-    
-    // Mantenimiento (con errores comunes)
-    if (fuzzyMatch(query, ['mantenimiento', 'reparacion', 'arreglo', 'problema', 'averia'])) {
-      return handleMaintenanceQueries(query);
-    }
-
-    // Ayuda y funciones
-    if (fuzzyMatch(query, ['ayuda', 'help', 'como', 'usar', 'funciona', 'tutorial'])) {
-      return `🆘 **¡Estoy aquí para ayudarte!** Puedo ayudarte con:\n\n📊 **Análisis de tu negocio:**\n• Estado de propiedades e inquilinos\n• Análisis de rentabilidad\n• Estrategias de ocupación\n\n💡 **Consejos empresariales:**\n• Optimización de ingresos\n• Gestión de inquilinos\n• Mantenimiento preventivo\n\n🔧 **Uso de la app:**\n• Seguimiento de pagos\n• Gestión de propiedades\n• Reportes y análisis\n\n¡Pregúntame cualquier cosa sobre tu negocio inmobiliario! 🏠✨`;
-    }
-
-    // Consejos de negocio específicos
-    if (fuzzyMatch(query, ['consejo', 'sugerencia', 'mejorar', 'optimizar', 'estrategia', 'crecer'])) {
-      const { tenants, units } = userData!;
-      const activeTenants = tenants.filter(t => t.status === 'active');
-      const occupancyRate = units.length > 0 ? (activeTenants.length / units.length) * 100 : 0;
+    // Respuestas contextuales simples
+    const responses = [
+      `🤔 Entiendo que quieres información. \n\n💡 **Puedo ayudarte con:**\n• Tus ${userData.properties.length} propiedades\n• Tus ${userData.tenants.filter(t => t.status === 'active').length} inquilinos activos\n• Estado de pagos e ingresos\n• Ocupación de unidades\n\n¿Sobre cuál te gustaría saber más?`,
       
-      let advice = '💡 **Consejos personalizados para tu negocio:**\n\n';
+      `😊 ¡Perfecto! Veo que tienes consultas. \n\n🎯 **Soy experto en:**\n• Análisis de tu cartera inmobiliaria\n• Seguimiento de inquilinos y pagos\n• Estadísticas de ocupación\n• Gestión de mantenimiento\n\n¿Qué área te interesa más?`,
       
-      if (occupancyRate < 80) {
-        advice += '🎯 **Mejorar ocupación:**\n• Revisa precios vs. mercado local\n• Mejora fotos y descripción de unidades\n• Considera incentivos (1er mes gratis)\n• Implementa tours virtuales\n\n';
-      }
-      
-      if (activeTenants.length > 0) {
-        advice += '💰 **Optimizar ingresos:**\n• Revisa rentas anualmente\n• Ofrece servicios adicionales (parking, storage)\n• Implementa pagos automáticos\n• Considera contratos más largos con descuentos\n\n';
-      }
-      
-      advice += '🔧 **Mantenimiento inteligente:**\n• Inspecciones preventivas trimestrales\n• Mantén reserva del 5-10% para reparaciones\n• Crea relaciones con proveedores confiables\n\n';
-      
-      advice += '📈 **Crecimiento del negocio:**\n• Reinvierte 20-30% de ganancias\n• Considera propiedades en zonas emergentes\n• Diversifica tipos de propiedad\n• Mantén buenas relaciones con inquilinos';
-      
-      return advice;
-    }
-
-    // Respuestas más inteligentes y contextuales
-    const contextualResponses = [
-      `🤔 Entiendo que quieres información, pero no estoy seguro sobre qué específicamente. \n\n💡 **Puedo ayudarte con:**\n• Tus ${userData?.properties.length || 0} propiedades\n• Tus ${userData?.tenants.filter(t => t.is_active).length || 0} inquilinos activos\n• Estado de pagos e ingresos\n• Ocupación de unidades\n\n¿Sobre cuál te gustaría saber más?`,
-      
-      `😊 ¡Perfecto! Veo que tienes consultas. Para darte la mejor respuesta:\n\n🎯 **Soy experto en:**\n• Análisis de tu cartera inmobiliaria\n• Seguimiento de inquilinos y pagos\n• Estadísticas de ocupación\n• Gestión de mantenimiento\n\n¿Qué área te interesa más?`,
-      
-      `🚀 ¡Excelente! Estoy aquí para maximizar tu éxito inmobiliario.\n\n📈 **Actualmente tienes:**\n• ${userData?.properties.length || 0} propiedades gestionadas\n• ${userData?.units.length || 0} unidades totales\n• ${((userData?.units.filter(u => !u.is_available).length || 0) / Math.max(userData?.units.length || 1, 1) * 100).toFixed(1)}% de ocupación\n\n¿Quieres profundizar en algún aspecto?`
+      `🚀 ¡Excelente! Estoy aquí para maximizar tu éxito inmobiliario.\n\n📈 **Actualmente tienes:**\n• ${userData.properties.length} propiedades gestionadas\n• ${userData.units.length} unidades totales\n• ${((userData.units.filter(u => !u.is_available).length) / Math.max(userData.units.length, 1) * 100).toFixed(1)}% de ocupación\n\n¿Quieres profundizar en algún aspecto?`
     ];
 
-    return contextualResponses[Math.floor(Math.random() * contextualResponses.length)];
+    return responses[Math.floor(Math.random() * responses.length)];
   };
 
   const handleSendMessage = async () => {
@@ -476,7 +436,7 @@ export function SecureChatAssistant() {
   };
 
   return (
-    <Card className="h-[600px] flex flex-col shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
+    <Card className="h-[700px] flex flex-col shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
       <CardHeader className="pb-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
         <CardTitle className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -500,18 +460,18 @@ export function SecureChatAssistant() {
                 key={message.id}
                 className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`flex gap-3 max-w-[85%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`flex gap-3 max-w-[90%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-md ${message.type === 'user'
                     ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
                     : 'bg-gradient-to-br from-purple-500 to-purple-600 text-white'
                     }`}>
                     {message.type === 'user' ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
                   </div>
-                  <div className={`rounded-2xl px-4 py-3 shadow-sm ${message.type === 'user'
+                  <div className={`rounded-2xl px-4 py-3 shadow-sm min-w-0 flex-1 ${message.type === 'user'
                     ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
                     : 'bg-white border border-gray-200 text-gray-800'
                     }`}>
-                    <div className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</div>
+                    <div className="text-sm whitespace-pre-wrap leading-relaxed break-words">{message.content}</div>
                     <div className={`text-xs mt-2 ${message.type === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
                       {message.timestamp.toLocaleTimeString('es-ES', {
                         hour: '2-digit',
