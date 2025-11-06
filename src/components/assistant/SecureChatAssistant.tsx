@@ -105,95 +105,364 @@ export function SecureChatAssistant() {
 
   const processUserQuery = async (query: string): Promise<string> => {
     if (!userData) {
-      return "Estoy cargando tus datos, por favor espera un momento...";
+      return "Un momento, estoy cargando tus datos... 🔄";
     }
 
-    const lowerQuery = query.toLowerCase();
+    const lowerQuery = query.toLowerCase().trim();
 
-    // Detectar tipo de consulta y responder apropiadamente
-    if (lowerQuery.match(/(propiedad|propiedades|casa|edificio|inmueble)/)) {
+    // Saludos y conversación básica
+    if (lowerQuery.match(/^(hola|hi|hello|buenas|buenos dias|buenas tardes|buenas noches|hey)$/)) {
+      const hour = new Date().getHours();
+      let greeting = "¡Hola!";
+      if (hour < 12) greeting = "¡Buenos días!";
+      else if (hour < 18) greeting = "¡Buenas tardes!";
+      else greeting = "¡Buenas noches!";
+      
+      return `${greeting} 😊 Soy tu asistente de RentaFlux. ¿En qué puedo ayudarte hoy?`;
+    }
+
+    // Despedidas
+    if (lowerQuery.match(/(adios|bye|hasta luego|nos vemos|chau)/)) {
+      return "¡Hasta luego! 👋 Aquí estaré cuando me necesites. ¡Que tengas un excelente día! 😊";
+    }
+
+    // Consultas específicas sobre inquilinos
+    if (lowerQuery.match(/(inquilino.*antiguo|mas.*antiguo|quien.*lleva.*mas.*tiempo)/)) {
+      return handleOldestTenantQuery();
+    }
+
+    if (lowerQuery.match(/(inquilino.*nuevo|mas.*nuevo|ultimo.*inquilino)/)) {
+      return handleNewestTenantQuery();
+    }
+
+    // Consultas sobre pagos específicos
+    if (lowerQuery.match(/(quien.*debe|quien.*no.*pago|pendiente.*pagar)/)) {
+      return handlePendingPaymentsQuery();
+    }
+
+    if (lowerQuery.match(/(cuanto.*gano|ingresos.*mes|dinero.*mes)/)) {
+      return handleMonthlyIncomeQuery();
+    }
+
+    // Consejos de negocio específicos
+    if (lowerQuery.match(/(mejorar.*negocio|consejos.*negocio|como.*mejorar|que.*hacer.*mejorar|expandir.*portafolio|crecer.*negocio|estrategias|optimizar|aumentar.*ingresos)/)) {
+      return handleBusinessAdviceQuery();
+    }
+
+    // Consultas generales por categoría
+    if (lowerQuery.match(/(propiedad|propiedades|casa|edificio)/)) {
       return handlePropertyQueries(query);
     }
     
-    if (lowerQuery.match(/(inquilino|inquilinos|tenant|arrendatario)/)) {
+    if (lowerQuery.match(/(inquilino|inquilinos|tenant)/)) {
       return handleTenantQueries(query);
     }
     
-    if (lowerQuery.match(/(pago|pagos|dinero|cobro|ingreso|renta|alquiler|gano|ganancia)/)) {
+    if (lowerQuery.match(/(pago|pagos|dinero|cobro|ingreso)/)) {
       return handlePaymentQueries(query);
     }
     
-    if (lowerQuery.match(/(unidad|unidades|apartamento|ocupacion|vacia|libre|disponible)/)) {
+    if (lowerQuery.match(/(unidad|unidades|apartamento|ocupacion)/)) {
       return handleUnitQueries(query);
     }
-    
-    if (lowerQuery.match(/(mantenimiento|reparacion|arreglo|problema)/)) {
-      return handleMaintenanceQueries(query);
+
+    // Ayuda
+    if (lowerQuery.match(/(ayuda|help|que.*puedes.*hacer)/)) {
+      return `¡Por supuesto! 😊 Puedo ayudarte con:
+
+📊 **Información específica:**
+• "¿Cuál es mi inquilino más antiguo?"
+• "¿Quién me debe dinero?"
+• "¿Cuánto gané este mes?"
+
+🏠 **Estado general:**
+• "¿Cómo va mi negocio?"
+• "Resumen de mis propiedades"
+• "Estado de ocupación"
+
+¡Pregúntame cualquier cosa específica! 🚀`;
     }
 
-    if (lowerQuery.match(/(resumen|estado|como|va|negocio|general)/)) {
-      return handleGeneralSummary();
-    }
-
-    if (lowerQuery.match(/(ayuda|help|como|usar|funciona)/)) {
-      return `🆘 **¡Estoy aquí para ayudarte!** 
-
-📊 **Puedo contarte sobre:**
-• Tus propiedades e inquilinos
-• Estado de pagos e ingresos  
-• Ocupación de unidades
-• Solicitudes de mantenimiento
-
-💡 **También puedo darte:**
-• Consejos para mejorar tu negocio
-• Estrategias de ocupación
-• Análisis de rentabilidad
-• Ayuda con la aplicación
-
-¡Pregúntame lo que necesites! 😊`;
-    }
-
-    // Respuesta conversacional libre
-    return generateConversationalResponse(query);
+    // Respuesta inteligente por defecto
+    return generateSmartResponse(query);
   };
 
-  const handlePropertyQueries = (query: string): string => {
-    const { properties } = userData!;
+  const handleOldestTenantQuery = (): string => {
+    const activeTenants = userData!.tenants.filter(t => t.status === 'active');
+    
+    if (activeTenants.length === 0) {
+      return "No tienes inquilinos activos en este momento. 🏠";
+    }
+
+    // Buscar el inquilino con fecha de ingreso más antigua
+    const oldestTenant = activeTenants.reduce((oldest, current) => {
+      const oldestDate = new Date(oldest.lease_start_date || oldest.moveInDate || '2024-01-01');
+      const currentDate = new Date(current.lease_start_date || current.moveInDate || '2024-01-01');
+      return currentDate < oldestDate ? current : oldest;
+    });
+
+    const startDate = new Date(oldestTenant.lease_start_date || oldestTenant.moveInDate || '2024-01-01');
+    const monthsAgo = Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+
+    return `Tu inquilino más antiguo es **${oldestTenant.name || 'Sin nombre'}** 👤
+    
+📅 Lleva contigo ${monthsAgo} meses (desde ${startDate.toLocaleDateString('es-ES')})
+🏠 Unidad: ${oldestTenant.unit_number || oldestTenant.unit || 'N/A'}
+💰 Renta: €${oldestTenant.rent_amount || oldestTenant.rentAmount || 0}/mes
+
+¡Un inquilino de confianza! 🌟`;
+  };
+
+  const handleNewestTenantQuery = (): string => {
+    const activeTenants = userData!.tenants.filter(t => t.status === 'active');
+    
+    if (activeTenants.length === 0) {
+      return "No tienes inquilinos activos en este momento. 🏠";
+    }
+
+    const newestTenant = activeTenants.reduce((newest, current) => {
+      const newestDate = new Date(newest.lease_start_date || newest.moveInDate || '2024-01-01');
+      const currentDate = new Date(current.lease_start_date || current.moveInDate || '2024-01-01');
+      return currentDate > newestDate ? current : newest;
+    });
+
+    const startDate = new Date(newestTenant.lease_start_date || newestTenant.moveInDate || '2024-01-01');
+    const daysAgo = Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    return `Tu inquilino más reciente es **${newestTenant.name || 'Sin nombre'}** 🆕
+    
+📅 Ingresó hace ${daysAgo} días (${startDate.toLocaleDateString('es-ES')})
+🏠 Unidad: ${newestTenant.unit_number || newestTenant.unit || 'N/A'}
+💰 Renta: €${newestTenant.rent_amount || newestTenant.rentAmount || 0}/mes
+
+¡Bienvenido al equipo! 🎉`;
+  };
+
+  const handlePendingPaymentsQuery = (): string => {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    const storageKey = `payment_records_${user?.id}_${currentYear}`;
+    
+    try {
+      const storedRecords = localStorage.getItem(storageKey);
+      const activeTenants = userData!.tenants.filter(t => t.status === 'active');
+      
+      if (storedRecords) {
+        const records = JSON.parse(storedRecords);
+        const paidTenants = records.filter((r: any) => 
+          r.year === currentYear && r.month === currentMonth && r.paid
+        ).map((r: any) => r.tenantName);
+        
+        const pendingTenants = activeTenants.filter(t => !paidTenants.includes(t.name || ''));
+        
+        if (pendingTenants.length === 0) {
+          return "¡Excelente! 🎉 Todos tus inquilinos están al día con sus pagos este mes. 👏";
+        }
+
+        const pendingList = pendingTenants.slice(0, 3).map(t => 
+          `• ${t.name || 'Sin nombre'} - €${t.rent_amount || t.rentAmount || 0}`
+        ).join('\n');
+
+        return `Tienes ${pendingTenants.length} inquilinos con pagos pendientes: 📋
+
+${pendingList}${pendingTenants.length > 3 ? '\n... y más' : ''}
+
+💡 Puedes revisar el detalle en la tabla de seguimiento de pagos.`;
+      }
+    } catch (error) {
+      console.error('Error reading payment records:', error);
+    }
+
+    return "No puedo acceder a los datos de pagos en este momento. Revisa la tabla de seguimiento de pagos para más detalles. 📊";
+  };
+
+  const handleMonthlyIncomeQuery = (): string => {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    
+    const storageKey = `payment_records_${user?.id}_${currentYear}`;
+    let actualIncome = 0;
+    
+    try {
+      const storedRecords = localStorage.getItem(storageKey);
+      if (storedRecords) {
+        const records = JSON.parse(storedRecords);
+        const currentMonthPayments = records.filter((r: any) => 
+          r.year === currentYear && r.month === currentMonth && r.paid
+        );
+        actualIncome = currentMonthPayments.reduce((sum: number, payment: any) => 
+          sum + (payment.amount || 0), 0
+        );
+      }
+    } catch (error) {
+      console.error('Error reading payment records:', error);
+    }
+
+    const activeTenants = userData!.tenants.filter(t => t.status === 'active');
+    const potentialIncome = activeTenants.reduce((sum, t) => sum + (t.rent_amount || t.rentAmount || 0), 0);
+
+    if (actualIncome === 0 && potentialIncome === 0) {
+      return "Aún no tienes ingresos configurados. Agrega inquilinos para empezar a generar ingresos. 💰";
+    }
+
+    return `💰 **Ingresos de ${monthNames[currentMonth]}:**
+
+✅ **Cobrado:** €${actualIncome.toLocaleString()}
+📊 **Potencial:** €${potentialIncome.toLocaleString()}
+📈 **Progreso:** ${potentialIncome > 0 ? ((actualIncome / potentialIncome) * 100).toFixed(0) : 0}%
+
+${actualIncome >= potentialIncome ? '🎉 ¡Perfecto! Has cobrado todo.' : '⏰ Aún hay pagos pendientes.'}`;
+  };
+
+  const handleBusinessAdviceQuery = (): string => {
+    if (!userData) return "Cargando datos...";
+    
+    const { properties, tenants, units } = userData;
+    const activeTenants = tenants.filter(t => t.status === 'active');
+    const occupancyRate = units.length > 0 ? (activeTenants.length / units.length) * 100 : 0;
+    const monthlyRevenue = activeTenants.reduce((sum, t) => sum + (t.rent_amount || t.rentAmount || 0), 0);
+    
+    let advice = '💡 **Consejos personalizados para tu negocio:**\n\n';
+    
+    // Análisis de ocupación
+    if (occupancyRate >= 95) {
+      advice += `🎯 **Excelente ocupación (${occupancyRate.toFixed(0)}%):**\n`;
+      advice += '• Considera aumentos de renta del 3-5% anual\n';
+      advice += '• Es momento de expandir tu portafolio\n';
+      advice += '• Implementa mejoras que justifiquen precios premium\n';
+      advice += '• Busca propiedades en zonas similares\n\n';
+    } else if (occupancyRate >= 80) {
+      advice += `📈 **Buena ocupación (${occupancyRate.toFixed(0)}%):**\n`;
+      advice += '• Mejora marketing de unidades vacías\n';
+      advice += '• Revisa precios vs. competencia local\n';
+      advice += '• Ofrece incentivos (1er mes gratis)\n';
+      advice += '• Implementa tours virtuales\n\n';
+    } else {
+      advice += `⚠️ **Ocupación baja (${occupancyRate.toFixed(0)}%):**\n`;
+      advice += '• Revisa urgentemente tus precios\n';
+      advice += '• Mejora fotos y descripción de unidades\n';
+      advice += '• Considera renovaciones menores\n';
+      advice += '• Evalúa cambiar de agente inmobiliario\n\n';
+    }
+    
+    // Consejos de ingresos
+    if (monthlyRevenue > 0) {
+      advice += '💰 **Optimización de ingresos:**\n';
+      advice += '• Reserva 20-30% para reinversión\n';
+      advice += '• Ofrece servicios adicionales (parking, storage)\n';
+      advice += '• Implementa pagos automáticos\n';
+      advice += '• Considera contratos más largos con descuentos\n\n';
+    }
+    
+    // Consejos de mantenimiento
+    advice += '🔧 **Mantenimiento inteligente:**\n';
+    advice += '• Inspecciones preventivas cada 3 meses\n';
+    advice += '• Mantén reserva del 5-10% para reparaciones\n';
+    advice += '• Crea red de proveedores confiables\n';
+    advice += '• Documenta todo para deducciones fiscales\n\n';
+    
+    // Estrategias de crecimiento
+    if (properties.length >= 2) {
+      advice += '🚀 **Expansión del portafolio:**\n';
+      advice += '• Analiza ROI de cada propiedad\n';
+      advice += '• Considera refinanciamiento para comprar más\n';
+      advice += '• Diversifica ubicaciones geográficas\n';
+      advice += '• Evalúa propiedades comerciales\n\n';
+    } else {
+      advice += '🌱 **Primeros pasos de crecimiento:**\n';
+      advice += '• Establece un fondo de emergencia\n';
+      advice += '• Mejora tu score crediticio\n';
+      advice += '• Busca tu segunda propiedad\n';
+      advice += '• Considera sociedades con otros inversores\n\n';
+    }
+    
+    // Consejo final personalizado
+    if (occupancyRate >= 90 && monthlyRevenue > 1000) {
+      advice += '🎉 **¡Tu negocio va excelente!** Considera hablar con un asesor fiscal para optimizar impuestos y planificar la expansión.';
+    } else if (occupancyRate >= 70) {
+      advice += '👍 **Vas por buen camino.** Enfócate en llenar las unidades vacías y luego piensa en crecer.';
+    } else {
+      advice += '💪 **Hay oportunidades de mejora.** Prioriza la ocupación antes que la expansión.';
+    }
+    
+    return advice;
+  };
+
+  const generateSmartResponse = (query: string): string => {
+    if (!userData) return "Cargando datos...";
+    
+    // Respuestas más inteligentes basadas en el contexto
+    const { properties, tenants, units } = userData;
+    const activeTenants = tenants.filter(t => t.status === 'active');
+    
+    const responses = [
+      `Hmm, no estoy seguro de entender. 🤔 
+
+Tienes ${properties.length} propiedades y ${activeTenants.length} inquilinos activos. 
+
+¿Quieres saber algo específico sobre ellos?`,
+      
+      `¡Claro! Puedo ayudarte mejor si me preguntas algo específico. 😊
+
+Por ejemplo:
+• "¿Quién es mi inquilino más antiguo?"
+• "¿Cuánto gané este mes?"
+• "¿Quién me debe dinero?"`,
+      
+      `No entendí bien tu pregunta, pero puedo contarte que tienes ${units.length} unidades con ${((units.filter(u => !u.is_available).length / Math.max(units.length, 1)) * 100).toFixed(0)}% de ocupación. 📊
+
+¿Hay algo específico que quieras saber?`
+    ];
+
+    return responses[Math.floor(Math.random() * responses.length)];
+  };
+
+  const handlePropertyQueries = (_query: string): string => {
+    const { properties, units } = userData!;
 
     if (properties.length === 0) {
-      return "🏠 Aún no tienes propiedades registradas. ¡Es el momento perfecto para agregar tu primera propiedad! 🚀 Ve a la sección 'Propiedades' y haz clic en 'Agregar Propiedad'. ¿Te ayudo con el proceso? 😊";
+      return "No tienes propiedades registradas aún. 🏠 ¿Te ayudo a agregar tu primera propiedad?";
     }
 
-    if (query.includes('cuantas') || query.includes('total')) {
-      const totalUnits = userData!.units.length;
-      return `🏢 Tienes ${properties.length} propiedades registradas con un total de ${totalUnits} unidades. ${properties.length === 1 ? '¡Un buen comienzo!' : '¡Excelente portafolio!'} 🎯`;
+    if (_query.includes('cuantas') || _query.includes('total')) {
+      return `Tienes ${properties.length} propiedades con ${units.length} unidades totales. 🏢 ${properties.length === 1 ? '¡Buen comienzo!' : '¡Excelente portafolio!'}`;
     }
 
-    const propertyList = properties.slice(0, 5).map(p => `• ${p.name || 'Propiedad sin nombre'}`).join('\n');
-    return `🏠 **Tus propiedades (${properties.length}):**\n${propertyList}${properties.length > 5 ? '\n... y más' : ''}\n\n¿Te gustaría información específica sobre alguna? 😊`;
+    const propertyList = properties.slice(0, 3).map(p => 
+      `• ${p.name || 'Propiedad sin nombre'}`
+    ).join('\n');
+    
+    return `Tus propiedades (${properties.length}): 🏠
+
+${propertyList}${properties.length > 3 ? '\n... y más' : ''}
+
+¿Quieres saber algo específico sobre alguna?`;
   };
 
-  const handleTenantQueries = (query: string): string => {
+  const handleTenantQueries = (_query: string): string => {
     const { tenants } = userData!;
     const activeTenants = tenants.filter(t => t.status === 'active');
 
-    if (query.includes('activos') || query.includes('cuantos')) {
-      if (activeTenants.length === 0) {
-        return "👥 Actualmente no tienes inquilinos activos. ¡Pero eso puede cambiar pronto! 🌟 ¿Te ayudo a agregar tu primer inquilino? Ve a la sección 'Inquilinos' y empieza a hacer crecer tu negocio. 💪";
-      }
-
-      const tenantList = activeTenants.slice(0, 5).map(t => `• ${t.name || 'Sin nombre'} - €${t.rent_amount || 0}/mes`).join('\n');
-      return `Inquilinos activos (${activeTenants.length}):\n${tenantList}${activeTenants.length > 5 ? '\n... y más' : ''}`;
+    if (activeTenants.length === 0) {
+      return "No tienes inquilinos activos en este momento. 🏠 ¿Te ayudo a agregar tu primer inquilino?";
     }
 
-    if (tenants.length === 0) {
-      return "Aún no tienes inquilinos registrados. ¿Te gustaría agregar tu primer inquilino?";
+    if (_query.includes('cuantos') || _query.includes('activos')) {
+      const tenantList = activeTenants.slice(0, 3).map(t => 
+        `• ${t.name || 'Sin nombre'} - €${t.rent_amount || t.rentAmount || 0}/mes`
+      ).join('\n');
+      
+      return `Tienes ${activeTenants.length} inquilinos activos: 👥
+
+${tenantList}${activeTenants.length > 3 ? '\n... y más' : ''}`;
     }
 
-    return `Tienes ${tenants.length} inquilinos registrados, ${tenants.filter(t => t.status === 'active').length} están activos.`;
+    return `Tienes ${activeTenants.length} inquilinos activos de ${tenants.length} totales. 📊 ¿Quieres saber algo específico sobre alguno?`;
   };
 
-  const handlePaymentQueries = (query: string): string => {
+  const handlePaymentQueries = (_query: string): string => {
     const { tenants } = userData!;
 
     // Calcular ingresos REALES del mes actual desde localStorage (tabla de seguimiento)
@@ -362,7 +631,7 @@ export function SecureChatAssistant() {
 ¿Te gustaría profundizar en alguna estrategia específica? 🎯`;
   };
 
-  const generateConversationalResponse = (query: string): string => {
+  const generateConversationalResponse = (_query: string): string => {
     if (!userData) return "Cargando datos...";
     
     // Respuestas contextuales simples
@@ -437,7 +706,7 @@ export function SecureChatAssistant() {
 
   return (
     <Card className="h-[700px] flex flex-col shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
-      <CardHeader className="pb-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
+      <CardHeader className="pb-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg flex-shrink-0">
         <CardTitle className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
             <MessageCircle className="h-5 w-5" />
@@ -452,9 +721,9 @@ export function SecureChatAssistant() {
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0">
+      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
         <ScrollArea className="flex-1 px-6 py-4" ref={scrollAreaRef}>
-          <div className="space-y-6 pb-4">
+          <div className="space-y-6 min-h-full flex flex-col">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -502,10 +771,13 @@ export function SecureChatAssistant() {
                 </div>
               </div>
             )}
+            
+            {/* Spacer para empujar el input hacia abajo */}
+            <div className="flex-1 min-h-4"></div>
           </div>
         </ScrollArea>
 
-        <div className="border-t border-gray-200 p-4 bg-gray-50">
+        <div className="border-t border-gray-200 p-4 bg-gray-50 flex-shrink-0">
           <div className="flex gap-3">
             <Input
               ref={inputRef}

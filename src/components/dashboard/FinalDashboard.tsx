@@ -167,67 +167,6 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                 </motion.div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-center mb-2">
-                  {(() => {
-                    // CÁLCULO CORRECTO: Verificar pagos realmente pendientes y vencidos
-                    const today = new Date();
-                    const currentMonth = today.getMonth();
-                    const currentYear = today.getFullYear();
-
-                    // Obtener inquilinos activos
-                    const activeTenants = stats.totalTenants || 0;
-
-                    // Verificar pagos del mes actual
-                    const storageKey = `payment_records_${user?.id}_${currentYear}`;
-                    const storedRecords = localStorage.getItem(storageKey);
-                    let paidThisMonth = 0;
-
-                    if (storedRecords) {
-                      try {
-                        const records = JSON.parse(storedRecords);
-                        paidThisMonth = records.filter((r: any) =>
-                          r.year === currentYear &&
-                          r.month === currentMonth &&
-                          r.paid === true
-                        ).length;
-                      } catch (error) {
-                        console.error('Error parsing payment records:', error);
-                      }
-                    }
-
-                    // Pagos pendientes = inquilinos activos - pagos realizados este mes
-                    const realPendingPayments = Math.max(activeTenants - paidThisMonth, 0);
-                    return realPendingPayments;
-                  })()}
-                </div>
-                <p className="text-xs text-muted-foreground text-center mb-3">
-                  {(() => {
-                    const today = new Date();
-                    const currentMonth = today.getMonth();
-                    const currentYear = today.getFullYear();
-                    const activeTenants = stats.totalTenants || 0;
-                    const storageKey = `payment_records_${user?.id}_${currentYear}`;
-                    const storedRecords = localStorage.getItem(storageKey);
-                    let paidThisMonth = 0;
-
-                    if (storedRecords) {
-                      try {
-                        const records = JSON.parse(storedRecords);
-                        paidThisMonth = records.filter((r: any) =>
-                          r.year === currentYear &&
-                          r.month === currentMonth &&
-                          r.paid === true
-                        ).length;
-                      } catch (error) {
-                        console.error('Error parsing payment records:', error);
-                      }
-                    }
-
-                    const realPendingPayments = Math.max(activeTenants - paidThisMonth, 0);
-                    return realPendingPayments > 0 ? 'Requieren atención este mes' : 'Todo al día este mes';
-                  })()}
-                </p>
-
                 {(() => {
                   const today = new Date();
                   const currentMonth = today.getMonth();
@@ -235,42 +174,97 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                   const activeTenants = stats.totalTenants || 0;
                   const storageKey = `payment_records_${user?.id}_${currentYear}`;
                   const storedRecords = localStorage.getItem(storageKey);
+                  
                   let paidThisMonth = 0;
+                  let totalUnpaidMonths = 0;
+                  let unpaidByMonth: { [key: number]: number } = {};
 
                   if (storedRecords) {
                     try {
                       const records = JSON.parse(storedRecords);
+                      
+                      // Pagos del mes actual
                       paidThisMonth = records.filter((r: any) =>
                         r.year === currentYear &&
                         r.month === currentMonth &&
                         r.paid === true
                       ).length;
+
+                      // Calcular impagos por mes (solo meses pasados y actual)
+                      for (let month = 0; month <= currentMonth; month++) {
+                        const paidInMonth = records.filter((r: any) =>
+                          r.year === currentYear &&
+                          r.month === month &&
+                          r.paid === true
+                        ).length;
+                        
+                        const unpaidInMonth = Math.max(activeTenants - paidInMonth, 0);
+                        if (unpaidInMonth > 0) {
+                          unpaidByMonth[month] = unpaidInMonth;
+                          totalUnpaidMonths += unpaidInMonth;
+                        }
+                      }
                     } catch (error) {
                       console.error('Error parsing payment records:', error);
                     }
                   }
 
-                  const realPendingPayments = Math.max(activeTenants - paidThisMonth, 0);
+                  const currentMonthPending = Math.max(activeTenants - paidThisMonth, 0);
+                  const previousMonthsUnpaid = totalUnpaidMonths - currentMonthPending;
 
-                  if (realPendingPayments > 0) {
-                    return (
-                      <div className="bg-red-50 p-2 rounded-lg">
-                        <p className="text-xs text-red-700 font-medium">⚠️ Acción requerida</p>
-                        <p className="text-xs text-red-600 mt-1">
-                          {realPendingPayments} inquilino{realPendingPayments > 1 ? 's' : ''} sin pagar este mes
-                        </p>
+                  return (
+                    <>
+                      <div className="text-3xl font-bold text-center mb-2">
+                        {totalUnpaidMonths}
                       </div>
-                    );
-                  } else {
-                    return (
-                      <div className="bg-green-50 p-2 rounded-lg">
-                        <p className="text-xs text-green-700 font-medium">✅ Excelente</p>
-                        <p className="text-xs text-green-600 mt-1">
-                          Todos los pagos están al día
-                        </p>
-                      </div>
-                    );
-                  }
+                      <p className="text-xs text-muted-foreground text-center mb-3">
+                        Pagos pendientes acumulados
+                      </p>
+
+                      {totalUnpaidMonths > 0 ? (
+                        <div className="bg-red-50 p-3 rounded-lg space-y-2">
+                          <p className="text-xs text-red-700 font-medium">⚠️ Acción requerida</p>
+                          
+                          {currentMonthPending > 0 && (
+                            <p className="text-xs text-red-600">
+                              📅 <strong>Este mes:</strong> {currentMonthPending} inquilino{currentMonthPending > 1 ? 's' : ''} sin pagar
+                            </p>
+                          )}
+                          
+                          {previousMonthsUnpaid > 0 && (
+                            <p className="text-xs text-red-600">
+                              📋 <strong>Meses anteriores:</strong> {previousMonthsUnpaid} pago{previousMonthsUnpaid > 1 ? 's' : ''} atrasado{previousMonthsUnpaid > 1 ? 's' : ''}
+                            </p>
+                          )}
+
+                          {Object.keys(unpaidByMonth).length > 1 && (
+                            <div className="text-xs text-red-500 mt-2 pt-2 border-t border-red-200">
+                              <p className="font-medium mb-1">Detalle por mes:</p>
+                              {Object.entries(unpaidByMonth).map(([month, count]) => {
+                                const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
+                                                 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                                return (
+                                  <span key={month} className="inline-block mr-2 mb-1">
+                                    {monthNames[parseInt(month)]}: {count}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="bg-green-50 p-3 rounded-lg">
+                          <p className="text-xs text-green-700 font-medium">✅ Excelente</p>
+                          <p className="text-xs text-green-600 mt-1">
+                            Todos los pagos están al día
+                          </p>
+                          <p className="text-xs text-green-500 mt-1">
+                            Sin atrasos en todo el año
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  );
                 })()}
               </CardContent>
             </Card>
