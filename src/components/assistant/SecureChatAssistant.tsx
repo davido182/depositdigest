@@ -126,13 +126,18 @@ export function SecureChatAssistant() {
       return "¡Hasta luego! 👋 Aquí estaré cuando me necesites. ¡Que tengas un excelente día! 😊";
     }
 
-    // Consultas específicas sobre inquilinos
-    if (lowerQuery.match(/(inquilino.*antiguo|mas.*antiguo|quien.*lleva.*mas.*tiempo)/)) {
+    // Consultas específicas sobre inquilinos (español e inglés)
+    if (lowerQuery.match(/(inquilino.*antiguo|mas.*antiguo|quien.*lleva.*mas.*tiempo|oldest.*tenant|who.*is.*my.*oldest|longest.*tenant)/)) {
       return handleOldestTenantQuery();
     }
 
-    if (lowerQuery.match(/(inquilino.*nuevo|mas.*nuevo|ultimo.*inquilino)/)) {
+    if (lowerQuery.match(/(inquilino.*nuevo|mas.*nuevo|ultimo.*inquilino|newest.*tenant|latest.*tenant|most.*recent)/)) {
       return handleNewestTenantQuery();
+    }
+
+    // Consultas sobre inquilinos específicos por nombre
+    if (lowerQuery.match(/^(maria|maría|jose|josé|juan|carlos|ana|luis|pedro|carmen|antonio|francisco|manuel|david|daniel|miguel|rafael|javier|alejandro|fernando|sergio|pablo|jorge|alberto|adrian|gonzalez|rodriguez|martinez|garcia|lopez|hernandez|perez|sanchez|ramirez|torres|flores|rivera|gomez|diaz|morales|cruz|ortiz|gutierrez|chavez|vargas|castillo|jimenez|ruiz|mendoza|silva|castro|herrera|medina|guerrero|ramos|ayala|delgado|aguilar|vega|leon|moreno|valdez|santiago|espinoza|soto|contreras|lara|pena|navarro|rojas|dominguez|acosta|rubio|escobar|reyes|luna|mejia|pacheco|cardenas|miranda|salazar|duran|trejo|estrada|campos|cortes|cedillo|sandoval|cabrera|figueroa|villanueva|rosales|vazquez|romero|camacho|cervantes|rios|alvarado|cano|avila|fuentes|tapia|meza|montes|trevino|valdovinos|galvan|salas|cordova|ochoa|zepeda|velasco|corona|juarez|espinosa|ibarra|escalante|nuñez|zavala|arroyo|cisneros|carrillo|montoya|nava|marquez|bautista|mercado|tello|guzman|caballero|franco|tovar|garza|villa|palma|duarte|mora|parra|orozco|rocha|medrano|aguirre|murillo|solis|ornelas|zapata|macias|saenz|hurtado|amaya|esquivel|castrejon|quintero|rosas|padilla|molina|torres|blanco|marin|cuevas|rico|beltran|serrano|iglesias|cortez|suarez|vidal|lozano|ferrer|pascual|santana|hidalgo|gimenez|rubio|moya|pardo|delgado|peña|vega|cano|prieto|nieto|garrido|santos|calvo|campos|vidal|reyes|cruz|jimenez|moreno|muñoz|alonso|romero|navarro|gutierrez|torres|dominguez|vazquez|ramos|gil|ramirez|serrano|blanco|molina|morales|suarez|ortega|delgado|castro|ortiz|rubio|marin|sanz|iglesias|nuñez|medina|garrido|santos|castillo|cortes|lozano|guerrero|cano|prieto|mendez|calvo|cruz|gallego|vidal|leon|herrera|marquez|perez|moreno|carmona|jimenez|ruiz|hernandez|lopez|gonzalez|martin|garcia|rodriguez|fernandez|alvarez|gomez|sanchez|diaz|vazquez|ramos|castro|suarez|vargas|herrera|ortega|romero|soto|contreras|mendoza|guerrero|medina|rojas|campos|flores|luna|torres|rivera|gomez|morales|reyes|cruz|gutierrez|ortiz|chavez|ramirez|castillo|herrera|vazquez|moreno|jimenez|ruiz|hernandez|lopez|gonzalez|garcia|rodriguez|fernandez|martinez|sanchez|perez|gomez|martin|diaz|muppet|sr\.?\s*muppet|señor\s*muppet|mr\.?\s*muppet)(\s|$)/)) {
+      return handleSpecificTenantQuery(lowerQuery);
     }
 
     // Consultas sobre pagos específicos
@@ -149,20 +154,20 @@ export function SecureChatAssistant() {
       return handleBusinessAdviceQuery();
     }
 
-    // Consultas generales por categoría
-    if (lowerQuery.match(/(propiedad|propiedades|casa|edificio)/)) {
+    // Consultas generales por categoría (español e inglés)
+    if (lowerQuery.match(/(propiedad|propiedades|casa|edificio|property|properties|building|house)/)) {
       return handlePropertyQueries(query);
     }
     
-    if (lowerQuery.match(/(inquilino|inquilinos|tenant)/)) {
+    if (lowerQuery.match(/(inquilino|inquilinos|tenant|tenants|renter|renters)/)) {
       return handleTenantQueries(query);
     }
     
-    if (lowerQuery.match(/(pago|pagos|dinero|cobro|ingreso)/)) {
+    if (lowerQuery.match(/(pago|pagos|dinero|cobro|ingreso|payment|payments|money|income|rent|revenue)/)) {
       return handlePaymentQueries(query);
     }
     
-    if (lowerQuery.match(/(unidad|unidades|apartamento|ocupacion)/)) {
+    if (lowerQuery.match(/(unidad|unidades|apartamento|ocupacion|unit|units|apartment|occupancy|vacancy)/)) {
       return handleUnitQueries(query);
     }
 
@@ -390,30 +395,125 @@ ${actualIncome >= potentialIncome ? '🎉 ¡Perfecto! Has cobrado todo.' : '⏰ 
     return advice;
   };
 
+  const handleSpecificTenantQuery = (query: string): string => {
+    if (!userData) return "Cargando datos...";
+    
+    const { tenants } = userData;
+    const activeTenants = tenants.filter(t => t.status === 'active');
+    
+    if (activeTenants.length === 0) {
+      return "No tienes inquilinos activos en este momento. 🏠";
+    }
+
+    // Extraer el nombre del query
+    const words = query.toLowerCase().split(/\s+/);
+    let searchName = '';
+    
+    // Buscar nombres comunes o específicos
+    for (const word of words) {
+      const cleanWord = word.replace(/[^\w\sáéíóúñü]/gi, '');
+      if (cleanWord.length > 2) {
+        const foundTenant = activeTenants.find(t => 
+          t.name && t.name.toLowerCase().includes(cleanWord)
+        );
+        if (foundTenant) {
+          searchName = cleanWord;
+          break;
+        }
+      }
+    }
+
+    if (!searchName) {
+      // Si no encuentra nombre específico, mostrar lista de inquilinos
+      const tenantList = activeTenants.slice(0, 3).map(t => 
+        `• ${t.name || 'Sin nombre'}`
+      ).join('\n');
+      
+      return `No encontré ese nombre específico. Tus inquilinos activos son: 👥
+
+${tenantList}${activeTenants.length > 3 ? '\n... y más' : ''}
+
+¿Sobre cuál quieres saber más?`;
+    }
+
+    // Buscar el inquilino específico
+    const tenant = activeTenants.find(t => 
+      t.name && t.name.toLowerCase().includes(searchName)
+    );
+
+    if (!tenant) {
+      return `No encontré a ningún inquilino con ese nombre. 🤔 ¿Te refieres a alguno de estos?
+
+${activeTenants.slice(0, 3).map(t => `• ${t.name || 'Sin nombre'}`).join('\n')}`;
+    }
+
+    // Información detallada del inquilino
+    const startDate = new Date(tenant.lease_start_date || tenant.moveInDate || '2024-01-01');
+    const monthsAgo = Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    const rent = tenant.rent_amount || tenant.rentAmount || 0;
+
+    return `📋 **${tenant.name || 'Sin nombre'}**
+
+📅 **Tiempo contigo:** ${monthsAgo} meses (desde ${startDate.toLocaleDateString('es-ES')})
+🏠 **Unidad:** ${tenant.unit_number || tenant.unit || 'N/A'}
+💰 **Renta:** €${rent}/mes
+📊 **Estado:** ${tenant.status === 'active' ? 'Activo ✅' : tenant.status}
+
+¿Quieres saber algo más específico sobre ${tenant.name || 'este inquilino'}?`;
+  };
+
   const generateSmartResponse = (query: string): string => {
     if (!userData) return "Cargando datos...";
     
-    // Respuestas más inteligentes basadas en el contexto
-    const { properties, tenants, units } = userData;
+    const { tenants, units } = userData;
     const activeTenants = tenants.filter(t => t.status === 'active');
+    const lowerQuery = query.toLowerCase();
     
-    const responses = [
-      `Hmm, no estoy seguro de entender. 🤔 
-
-Tienes ${properties.length} propiedades y ${activeTenants.length} inquilinos activos. 
-
-¿Quieres saber algo específico sobre ellos?`,
+    // Detectar si menciona nombres pero no los encuentra
+    if (lowerQuery.match(/^[a-záéíóúñü]{2,}(\s[a-záéíóúñü]{2,})?$/)) {
+      const tenantList = activeTenants.slice(0, 3).map(t => 
+        `• ${t.name || 'Sin nombre'}`
+      ).join('\n');
       
-      `¡Claro! Puedo ayudarte mejor si me preguntas algo específico. 😊
+      return `¿Te refieres a alguno de tus inquilinos? 🤔
 
-Por ejemplo:
+${tenantList}${activeTenants.length > 3 ? '\n... y más' : ''}
+
+Puedes preguntarme cosas como:
+• "¿Cómo está María?" 
+• "Información de Juan"
+• "¿Cuánto paga Carlos?"`;
+    }
+
+    // Detectar consultas en inglés no reconocidas
+    if (lowerQuery.match(/(who|what|how|when|where|which|tell|show|give|find)/)) {
+      return `I can help you in Spanish! 😊 Try asking:
+
+• "¿Quién es mi inquilino más antiguo?" (Who is my oldest tenant?)
+• "¿Cuánto gané este mes?" (How much did I earn this month?)
+• "¿Quién me debe dinero?" (Who owes me money?)
+
+Or just ask about your tenants by name! 🏠`;
+    }
+
+    // Respuestas contextuales inteligentes
+    const responses = [
+      `No estoy seguro de entender. 🤔 
+
+Tienes ${activeTenants.length} inquilinos activos. Puedes preguntarme sobre ellos por nombre o pedirme información específica.
+
+¿Qué te gustaría saber?`,
+      
+      `¡Puedo ayudarte! 😊 Prueba preguntarme:
+
+• Sobre inquilinos específicos por nombre
 • "¿Quién es mi inquilino más antiguo?"
 • "¿Cuánto gané este mes?"
-• "¿Quién me debe dinero?"`,
+• "Consejos para mi negocio"`,
       
-      `No entendí bien tu pregunta, pero puedo contarte que tienes ${units.length} unidades con ${((units.filter(u => !u.is_available).length / Math.max(units.length, 1)) * 100).toFixed(0)}% de ocupación. 📊
+      `Tienes ${units.length} unidades con ${((units.filter(u => !u.is_available).length / Math.max(units.length, 1)) * 100).toFixed(0)}% de ocupación. 📊
 
-¿Hay algo específico que quieras saber?`
+¿Quieres saber algo específico sobre tus inquilinos o propiedades?`
     ];
 
     return responses[Math.floor(Math.random() * responses.length)];
@@ -426,7 +526,7 @@ Por ejemplo:
       return "No tienes propiedades registradas aún. 🏠 ¿Te ayudo a agregar tu primera propiedad?";
     }
 
-    if (_query.includes('cuantas') || _query.includes('total')) {
+    if (_query.includes('cuantas') || _query.includes('total') || _query.includes('how many')) {
       return `Tienes ${properties.length} propiedades con ${units.length} unidades totales. 🏢 ${properties.length === 1 ? '¡Buen comienzo!' : '¡Excelente portafolio!'}`;
     }
 
@@ -449,7 +549,7 @@ ${propertyList}${properties.length > 3 ? '\n... y más' : ''}
       return "No tienes inquilinos activos en este momento. 🏠 ¿Te ayudo a agregar tu primer inquilino?";
     }
 
-    if (_query.includes('cuantos') || _query.includes('activos')) {
+    if (_query.includes('cuantos') || _query.includes('activos') || _query.includes('active') || _query.includes('how many')) {
       const tenantList = activeTenants.slice(0, 3).map(t => 
         `• ${t.name || 'Sin nombre'} - €${t.rent_amount || t.rentAmount || 0}/mes`
       ).join('\n');

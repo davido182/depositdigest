@@ -171,7 +171,34 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                   const today = new Date();
                   const currentMonth = today.getMonth();
                   const currentYear = today.getFullYear();
-                  const activeTenants = stats.totalTenants || 0;
+                  
+                  // Obtener inquilinos válidos desde localStorage o usar stats como fallback
+                  let activeTenants = 0;
+                  let validTenantNames: string[] = [];
+                  
+                  try {
+                    // Intentar obtener inquilinos desde el servicio de base de datos
+                    const tenantsData = localStorage.getItem('tenants');
+                    if (tenantsData) {
+                      const parsedTenants = JSON.parse(tenantsData);
+                      const validTenants = parsedTenants.filter((tenant: any) => 
+                        tenant && 
+                        tenant.status === 'active' && 
+                        tenant.name && 
+                        tenant.name !== 'N/A' &&
+                        tenant.name.trim() !== '' &&
+                        ((tenant.rent_amount && tenant.rent_amount > 0) || (tenant.rentAmount && tenant.rentAmount > 0))
+                      );
+                      activeTenants = validTenants.length;
+                      validTenantNames = validTenants.map((t: any) => t.name);
+                    } else {
+                      // Fallback: usar stats pero solo si es mayor que 0
+                      activeTenants = Math.max(stats.totalTenants || 0, 0);
+                    }
+                  } catch (error) {
+                    console.error('Error getting tenants data:', error);
+                    activeTenants = Math.max(stats.totalTenants || 0, 0);
+                  }
                   const storageKey = `payment_records_${user?.id}_${currentYear}`;
                   const storedRecords = localStorage.getItem(storageKey);
                   
@@ -179,12 +206,20 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                   let totalUnpaidMonths = 0;
                   let unpaidByMonth: { [key: number]: number } = {};
 
-                  if (storedRecords) {
+                  if (storedRecords && activeTenants > 0) {
                     try {
                       const records = JSON.parse(storedRecords);
                       
+                      // Filtrar solo registros de inquilinos válidos
+                      const validRecords = records.filter((r: any) => 
+                        r.tenantName && 
+                        r.tenantName !== 'N/A' && 
+                        r.tenantName.trim() !== '' &&
+                        (validTenantNames.length === 0 || validTenantNames.includes(r.tenantName))
+                      );
+                      
                       // Pagos del mes actual
-                      paidThisMonth = records.filter((r: any) =>
+                      paidThisMonth = validRecords.filter((r: any) =>
                         r.year === currentYear &&
                         r.month === currentMonth &&
                         r.paid === true
@@ -192,7 +227,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
 
                       // Calcular impagos por mes (solo meses pasados y actual)
                       for (let month = 0; month <= currentMonth; month++) {
-                        const paidInMonth = records.filter((r: any) =>
+                        const paidInMonth = validRecords.filter((r: any) =>
                           r.year === currentYear &&
                           r.month === month &&
                           r.paid === true
