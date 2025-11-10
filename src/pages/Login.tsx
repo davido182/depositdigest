@@ -26,7 +26,7 @@ const Login = () => {
       console.log('🔄 Login: Navegando al dashboard');
       navigate("/dashboard");
     }
-    
+
     if (isPasswordRecovery && user) {
       toast.info("Ahora puedes establecer tu nueva contraseña");
     }
@@ -34,14 +34,14 @@ const Login = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast.error("Por favor ingresa email y contraseña");
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       await signIn(email, password);
       toast.success("Sesión iniciada exitosamente");
@@ -61,7 +61,7 @@ const Login = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password || !fullName) {
       toast.error("Por favor completa todos los campos");
       return;
@@ -71,9 +71,9 @@ const Login = () => {
       toast.error("La contraseña debe tener al menos 6 caracteres");
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       await signUp(email, password, fullName);
       toast.success("Cuenta creada exitosamente. Revisa tu email para confirmar la cuenta.");
@@ -91,14 +91,14 @@ const Login = () => {
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) {
       toast.error("Por favor ingresa tu email");
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       await resetPassword(email);
       toast.success("Se ha enviado un enlace de recuperación a tu email. Revisa tu bandeja de entrada.");
@@ -113,7 +113,7 @@ const Login = () => {
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newPassword || !confirmPassword) {
       toast.error("Por favor completa ambos campos de contraseña");
       return;
@@ -128,9 +128,9 @@ const Login = () => {
       toast.error("La contraseña debe tener al menos 6 caracteres");
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       await updatePassword(newPassword);
       toast.success("Contraseña actualizada exitosamente");
@@ -157,7 +157,7 @@ const Login = () => {
             </div>
             <p className="text-muted-foreground">Recuperar contraseña</p>
           </div>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Recuperar Contraseña</CardTitle>
@@ -165,7 +165,7 @@ const Login = () => {
                 Ingresa tu email para recibir un enlace de recuperación
               </CardDescription>
             </CardHeader>
-            
+
             <form onSubmit={handlePasswordReset}>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -184,9 +184,9 @@ const Login = () => {
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Enviando..." : "Enviar Enlace de Recuperación"}
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
+                <Button
+                  type="button"
+                  variant="ghost"
                   className="w-full"
                   onClick={() => setShowResetForm(false)}
                 >
@@ -214,7 +214,7 @@ const Login = () => {
             </div>
             <p className="text-muted-foreground">Establecer nueva contraseña</p>
           </div>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Nueva Contraseña</CardTitle>
@@ -222,7 +222,7 @@ const Login = () => {
                 Ingresa tu nueva contraseña para {user.email}
               </CardDescription>
             </CardHeader>
-            
+
             <form onSubmit={handlePasswordUpdate}>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -277,7 +277,7 @@ const Login = () => {
           </div>
           <p className="text-muted-foreground">Gestiona tus propiedades de alquiler con facilidad</p>
         </div>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Bienvenido</CardTitle>
@@ -285,7 +285,7 @@ const Login = () => {
               Inicia sesión o crea una cuenta para acceder a tu panel
             </CardDescription>
           </CardHeader>
-          
+
           <Tabs defaultValue="signin" className="w-full">
             <CardContent className="pb-0">
               <TabsList className="grid w-full grid-cols-2">
@@ -293,7 +293,7 @@ const Login = () => {
                 <TabsTrigger value="signup">Registrarse</TabsTrigger>
               </TabsList>
             </CardContent>
-            
+
             <TabsContent value="signin">
               <form onSubmit={handleSignIn}>
                 <CardContent className="space-y-4">
@@ -320,9 +320,9 @@ const Login = () => {
                     />
                   </div>
                   <div className="text-center">
-                    <Button 
-                      type="button" 
-                      variant="link" 
+                    <Button
+                      type="button"
+                      variant="link"
                       className="text-sm"
                       onClick={() => setShowResetForm(true)}
                     >
@@ -337,7 +337,7 @@ const Login = () => {
                 </CardFooter>
               </form>
             </TabsContent>
-            
+
             <TabsContent value="signup">
               <form onSubmit={handleSignUp}>
                 <CardContent className="space-y-4">
