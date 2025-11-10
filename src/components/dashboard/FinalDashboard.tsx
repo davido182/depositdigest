@@ -168,9 +168,65 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
               </CardHeader>
               <CardContent>
                 {(() => {
-                  // Usar directamente stats.overduePayments que ya tiene el cálculo correcto
-                  const totalUnpaid = stats.overduePayments || 0;
-                  const activeTenants = stats.totalTenants || 0;
+                  const today = new Date();
+                  const currentMonth = today.getMonth();
+                  const currentYear = today.getFullYear();
+                  
+                  // Leer directamente de la tabla de seguimiento de pagos
+                  const storageKey = `payment_records_${user?.id}_${currentYear}`;
+                  const storedRecords = localStorage.getItem(storageKey);
+                  
+                  let activeTenants = 0;
+                  let currentMonthPending = 0;
+                  let previousMonthsUnpaid = 0;
+                  
+                  if (storedRecords) {
+                    try {
+                      const records = JSON.parse(storedRecords);
+                      
+                      // Obtener nombres únicos de inquilinos (excluyendo N/A)
+                      const uniqueTenants = [...new Set(
+                        records
+                          .filter((r: any) => r.tenantName && r.tenantName !== 'N/A' && r.tenantName.trim() !== '')
+                          .map((r: any) => r.tenantName)
+                      )];
+                      
+                      activeTenants = uniqueTenants.length;
+                      
+                      if (activeTenants > 0) {
+                        // Contar pagos del mes actual
+                        const paidThisMonth = records.filter((r: any) =>
+                          r.year === currentYear &&
+                          r.month === currentMonth &&
+                          r.paid === true &&
+                          r.tenantName && 
+                          r.tenantName !== 'N/A' && 
+                          r.tenantName.trim() !== ''
+                        ).length;
+                        
+                        currentMonthPending = Math.max(activeTenants - paidThisMonth, 0);
+                        
+                        // Contar pagos de meses anteriores
+                        for (let month = 0; month < currentMonth; month++) {
+                          const paidInMonth = records.filter((r: any) =>
+                            r.year === currentYear &&
+                            r.month === month &&
+                            r.paid === true &&
+                            r.tenantName && 
+                            r.tenantName !== 'N/A' && 
+                            r.tenantName.trim() !== ''
+                          ).length;
+                          
+                          const unpaidInMonth = Math.max(activeTenants - paidInMonth, 0);
+                          previousMonthsUnpaid += unpaidInMonth;
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error parsing payment records:', error);
+                    }
+                  }
+                  
+                  const totalUnpaid = currentMonthPending + previousMonthsUnpaid;
                   
                   // Si no hay inquilinos
                   if (activeTenants === 0) {
@@ -188,10 +244,6 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                       </>
                     );
                   }
-                  
-                  // Calcular desglose aproximado (este mes vs anteriores)
-                  const currentMonthPending = Math.min(totalUnpaid, activeTenants);
-                  const previousMonthsUnpaid = Math.max(totalUnpaid - currentMonthPending, 0);
 
                   return (
                     <>

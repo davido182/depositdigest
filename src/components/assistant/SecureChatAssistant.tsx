@@ -105,6 +105,22 @@ export function SecureChatAssistant() {
     }
 
     try {
+      // Obtener datos de la tabla de seguimiento de pagos
+      const currentYear = new Date().getFullYear();
+      const storageKey = `payment_records_${user?.id}_${currentYear}`;
+      const storedRecords = localStorage.getItem(storageKey);
+      
+      let paymentRecords: any[] = [];
+      if (storedRecords) {
+        try {
+          paymentRecords = JSON.parse(storedRecords).filter((r: any) => 
+            r.tenantName && r.tenantName !== 'N/A' && r.tenantName.trim() !== ''
+          );
+        } catch (error) {
+          console.error('Error parsing payment records:', error);
+        }
+      }
+
       // Llamar a la Edge Function con Cerebras AI
       const { data, error } = await supabase.functions.invoke('ai-assistant', {
         body: {
@@ -135,6 +151,14 @@ export function SecureChatAssistant() {
               payment_date: p.payment_date,
               status: p.status,
               tenant_name: p.tenant_name
+            })),
+            paymentRecords: paymentRecords.map(r => ({
+              tenantName: r.tenantName,
+              month: r.month,
+              year: r.year,
+              paid: r.paid,
+              amount: r.amount,
+              paymentDate: r.paymentDate
             })),
             maintenance: userData.maintenance.slice(0, 10).map(m => ({
               title: m.title,
