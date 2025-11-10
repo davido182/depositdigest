@@ -168,31 +168,11 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
               </CardHeader>
               <CardContent>
                 {(() => {
-                  const today = new Date();
-                  const currentMonth = today.getMonth();
-                  const currentYear = today.getFullYear();
+                  // Usar directamente stats.overduePayments que ya tiene el cálculo correcto
+                  const totalUnpaid = stats.overduePayments || 0;
+                  const activeTenants = stats.totalTenants || 0;
                   
-                  // Obtener inquilinos activos
-                  let activeTenants = 0;
-                  
-                  try {
-                    const tenantsData = localStorage.getItem('tenants');
-                    if (tenantsData) {
-                      const parsedTenants = JSON.parse(tenantsData);
-                      const validTenants = parsedTenants.filter((tenant: any) => 
-                        tenant && 
-                        tenant.status === 'active' && 
-                        tenant.name && 
-                        tenant.name !== 'N/A' &&
-                        tenant.name.trim() !== ''
-                      );
-                      activeTenants = validTenants.length;
-                    }
-                  } catch (error) {
-                    console.error('Error getting tenants data:', error);
-                  }
-                  
-                  // Si no hay inquilinos, mostrar 0
+                  // Si no hay inquilinos
                   if (activeTenants === 0) {
                     return (
                       <>
@@ -209,49 +189,9 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                     );
                   }
                   
-                  // Obtener registros de pago
-                  const storageKey = `payment_records_${user?.id}_${currentYear}`;
-                  const storedRecords = localStorage.getItem(storageKey);
-                  
-                  let paidThisMonth = 0;
-                  let paidPreviousMonths = 0;
-
-                  if (storedRecords) {
-                    try {
-                      const records = JSON.parse(storedRecords);
-                      
-                      // Contar pagos del mes actual
-                      paidThisMonth = records.filter((r: any) =>
-                        r.year === currentYear &&
-                        r.month === currentMonth &&
-                        r.paid === true &&
-                        r.tenantName && 
-                        r.tenantName !== 'N/A' && 
-                        r.tenantName.trim() !== ''
-                      ).length;
-
-                      // Contar pagos de meses anteriores
-                      for (let month = 0; month < currentMonth; month++) {
-                        const paidInMonth = records.filter((r: any) =>
-                          r.year === currentYear &&
-                          r.month === month &&
-                          r.paid === true &&
-                          r.tenantName && 
-                          r.tenantName !== 'N/A' && 
-                          r.tenantName.trim() !== ''
-                        ).length;
-                        paidPreviousMonths += paidInMonth;
-                      }
-                    } catch (error) {
-                      console.error('Error parsing payment records:', error);
-                    }
-                  }
-
-                  // Cálculos simples y directos
-                  const currentMonthPending = Math.max(activeTenants - paidThisMonth, 0);
-                  const expectedPreviousMonths = activeTenants * currentMonth;
-                  const previousMonthsUnpaid = Math.max(expectedPreviousMonths - paidPreviousMonths, 0);
-                  const totalUnpaid = currentMonthPending + previousMonthsUnpaid;
+                  // Calcular desglose aproximado (este mes vs anteriores)
+                  const currentMonthPending = Math.min(totalUnpaid, activeTenants);
+                  const previousMonthsUnpaid = Math.max(totalUnpaid - currentMonthPending, 0);
 
                   return (
                     <>

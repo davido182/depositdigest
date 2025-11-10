@@ -14,11 +14,25 @@ serve(async (req) => {
   try {
     const { query, userData } = await req.json();
     
-    // Get Cerebras API key from environment - SECURE
-    const cerebrasApiKey = Deno.env.get('PERPLEXITY_API_KEY'); // Using same env var name as configured
+    // Get Cerebras API key from environment - Try multiple possible names
+    const cerebrasApiKey = Deno.env.get('CEREBRAS_API_KEY') || 
+                          Deno.env.get('VITE_CEREBRAS_API_KEY') ||
+                          Deno.env.get('PERPLEXITY_API_KEY');
+    
     if (!cerebrasApiKey) {
-      throw new Error('CEREBRAS_API_KEY not configured');
+      console.error('CEREBRAS_API_KEY not found in environment');
+      console.error('Available env vars:', Object.keys(Deno.env.toObject()));
+      return new Response(JSON.stringify({ 
+        error: 'CEREBRAS_API_KEY not configured in Supabase Edge Functions',
+        success: false,
+        hint: 'Configure it in Supabase Dashboard > Edge Functions > Secrets'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+    
+    console.log('Cerebras API key found, length:', cerebrasApiKey.length);
 
     // Create context from user data
     const context = `
@@ -75,11 +89,21 @@ Si no tienes información suficiente en el contexto, di que necesitas más datos
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Cerebras API error:', errorText);
-      throw new Error(`Cerebras API error: ${response.status}`);
+      console.error('Cerebras API error:', response.status, errorText);
+      
+      return new Response(JSON.stringify({ 
+        error: `Cerebras API error: ${response.status}`,
+        details: errorText,
+        success: false 
+      }), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const data = await response.json();
+    console.log('Cerebras response received:', data.choices?.length || 0, 'choices');
+    
     const assistantResponse = data.choices[0]?.message?.content || 'Lo siento, no pude procesar tu consulta en este momento.';
 
     return new Response(JSON.stringify({ 
@@ -92,7 +116,8 @@ Si no tienes información suficiente en el contexto, di que necesitas más datos
   } catch (error) {
     console.error('Error in ai-assistant function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: error.message || 'Unknown error',
+      stack: error.stack,
       success: false 
     }), {
       status: 500,
