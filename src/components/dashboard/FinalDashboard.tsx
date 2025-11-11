@@ -189,29 +189,8 @@ export function FinalDashboard({ stats, tenants = [] }: FinalDashboardProps) {
                   
                   if (storedRecords && activeTenants > 0) {
                     try {
-                      let records = JSON.parse(storedRecords);
-                      console.log('Total payment records (raw):', records.length);
-                      
-                      // Clean up orphaned records (from deleted tenants)
-                      if (tenants.length > 0) {
-                        const validTenantIds = new Set(
-                          tenants.filter(t => t.status === 'active').map(t => t.id)
-                        );
-                        
-                        const beforeCount = records.length;
-                        records = records.filter((r: any) => 
-                          r.tenantId && validTenantIds.has(r.tenantId)
-                        );
-                        const afterCount = records.length;
-                        
-                        if (beforeCount !== afterCount) {
-                          console.log(`🧹 Cleaned ${beforeCount - afterCount} orphaned payment records`);
-                          // Save cleaned records
-                          localStorage.setItem(storageKey, JSON.stringify(records));
-                        }
-                      }
-                      
-                      console.log('Total payment records (cleaned):', records.length);
+                      const records = JSON.parse(storedRecords);
+                      console.log('Total payment records:', records.length);
                       
                       // PENDIENTES = Mes actual sin pagar
                       const paidThisMonth = records.filter((r: any) => 
