@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { paymentRecordService, PaymentRecord as PaymentRecordType } from "@/services/PaymentRecordService";
+import { cleanupOrphanedPaymentRecords, saveCleanedRecords } from "@/utils/cleanupPaymentRecords";
 
 interface PaymentRecord {
   tenantId: string;
@@ -130,11 +131,14 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
           amount: r.amount
         }));
 
-        setPaymentRecords(records);
+        // Clean up orphaned records
+        const cleanedRecords = cleanupOrphanedPaymentRecords(records, tenants);
         
-        // Also save to localStorage as cache
+        setPaymentRecords(cleanedRecords);
+        
+        // Save cleaned records to localStorage as cache
         const storageKey = `payment_records_${user.id}_${selectedYear}`;
-        localStorage.setItem(storageKey, JSON.stringify(records));
+        localStorage.setItem(storageKey, JSON.stringify(cleanedRecords));
         
       } catch (supabaseError) {
         console.error('Error loading from Supabase, trying localStorage:', supabaseError);
@@ -144,7 +148,15 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
         const storedRecords = localStorage.getItem(storageKey);
         const records: PaymentRecord[] = storedRecords ? JSON.parse(storedRecords) : [];
         
-        setPaymentRecords(records);
+        // Clean up orphaned records
+        const cleanedRecords = cleanupOrphanedPaymentRecords(records, tenants);
+        
+        setPaymentRecords(cleanedRecords);
+        
+        // Save cleaned records back
+        if (cleanedRecords.length !== records.length) {
+          saveCleanedRecords(user.id, selectedYear, cleanedRecords);
+        }
         
         // Try to migrate localStorage data to Supabase
         if (records.length > 0) {

@@ -8,9 +8,10 @@ import { CleanChart } from "./CleanChart";
 
 interface FinalDashboardProps {
   stats: DashboardStats;
+  tenants?: any[];
 }
 
-export function FinalDashboard({ stats }: FinalDashboardProps) {
+export function FinalDashboard({ stats, tenants = [] }: FinalDashboardProps) {
   const { user } = useAuth();
   const [revenueData, setRevenueData] = useState<any[]>([]);
 
@@ -172,77 +173,71 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                   const currentMonth = today.getMonth();
                   const currentYear = today.getFullYear();
                   
-                  // Leer directamente de la tabla de seguimiento de pagos
-                  const storageKey = `payment_records_${user?.id}_${currentYear}`;
-                  const storedRecords = localStorage.getItem(storageKey);
-                  
+                  // Obtener inquilinos activos REALES de la base de datos
                   let activeTenants = 0;
                   let currentMonthPending = 0;
                   let previousMonthsUnpaid = 0;
                   
-                  if (storedRecords) {
+                  // Contar inquilinos activos desde stats (datos reales)
+                  activeTenants = stats.totalTenants || 0;
+                  console.log('=== PAYMENT CALCULATION ===');
+                  console.log('Active tenants (from DB):', activeTenants);
+                  
+                  // Leer registros de pagos
+                  const storageKey = `payment_records_${user?.id}_${currentYear}`;
+                  const storedRecords = localStorage.getItem(storageKey);
+                  
+                  if (storedRecords && activeTenants > 0) {
                     try {
-                      const records = JSON.parse(storedRecords);
-                      console.log('=== PAYMENT RECORDS DEBUG ===');
-                      console.log('Total records:', records.length);
-                      console.log('Sample record:', JSON.stringify(records[0], null, 2));
-                      console.log('All fields:', Object.keys(records[0]));
+                      let records = JSON.parse(storedRecords);
+                      console.log('Total payment records (raw):', records.length);
                       
-                      // Obtener IDs únicos de inquilinos (excluyendo N/A)
-                      const uniqueTenantIds = [...new Set(
-                        records
-                          .filter((r: any) => {
-                            const hasId = r.tenantId && r.tenantId !== 'N/A';
-                            if (!hasId) console.log('Filtered out record:', r);
-                            return hasId;
-                          })
-                          .map((r: any) => r.tenantId)
-                      )];
-                      
-                      activeTenants = uniqueTenantIds.length;
-                      console.log('Active tenants from records:', activeTenants);
-                      console.log('Unique tenant IDs:', uniqueTenantIds);
-                      
-                      if (activeTenants > 0) {
-                        console.log('=== CALCULATING PAYMENTS ===');
-                        console.log('Active tenants:', activeTenants);
-                        console.log('Current month:', currentMonth, '(0=Enero, 10=Noviembre)');
+                      // Clean up orphaned records (from deleted tenants)
+                      if (tenants.length > 0) {
+                        const validTenantIds = new Set(
+                          tenants.filter(t => t.status === 'active').map(t => t.id)
+                        );
                         
-                        // PENDIENTES = Mes actual sin pagar
-                        const paidThisMonth = records.filter((r: any) => 
-                          r.year === currentYear &&
-                          r.month === currentMonth &&
-                          r.paid === true &&
-                          r.tenantId &&
-                          r.tenantId !== 'N/A'
-                        ).length;
+                        const beforeCount = records.length;
+                        records = records.filter((r: any) => 
+                          r.tenantId && validTenantIds.has(r.tenantId)
+                        );
+                        const afterCount = records.length;
                         
-                        currentMonthPending = Math.max(activeTenants - paidThisMonth, 0);
-                        console.log('✅ Paid this month:', paidThisMonth);
-                        console.log('📅 PENDIENTES (mes actual):', currentMonthPending);
-                        
-                        // VENCIDOS = Meses anteriores sin pagar
-                        previousMonthsUnpaid = 0;
-                        for (let month = 0; month < currentMonth; month++) {
-                          const paidInMonth = records.filter((r: any) =>
-                            r.year === currentYear &&
-                            r.month === month &&
-                            r.paid === true &&
-                            r.tenantId &&
-                            r.tenantId !== 'N/A'
-                          ).length;
-                          
-                          const unpaidInMonth = Math.max(activeTenants - paidInMonth, 0);
-                          previousMonthsUnpaid += unpaidInMonth;
-                          
-                          if (unpaidInMonth > 0) {
-                            console.log(`Month ${month}: ${unpaidInMonth} vencidos`);
-                          }
+                        if (beforeCount !== afterCount) {
+                          console.log(`🧹 Cleaned ${beforeCount - afterCount} orphaned payment records`);
+                          // Save cleaned records
+                          localStorage.setItem(storageKey, JSON.stringify(records));
                         }
-                        
-                        console.log('⏰ VENCIDOS (meses anteriores):', previousMonthsUnpaid);
-                        console.log('💰 TOTAL:', currentMonthPending + previousMonthsUnpaid);
                       }
+                      
+                      console.log('Total payment records (cleaned):', records.length);
+                      
+                      // PENDIENTES = Mes actual sin pagar
+                      const paidThisMonth = records.filter((r: any) => 
+                        r.year === currentYear &&
+                        r.month === currentMonth &&
+                        r.paid === true &&
+                        r.tenantId &&
+                        r.tenantId !== 'N/A'
+                      ).length;
+                      
+                      currentMonthPending = Math.max(activeTenants - paidThisMonth, 0);
+                      console.log('Current month:', currentMonth, '(Noviembre)');
+                      console.log('✅ Paid this month:', paidThisMonth);
+                      console.log('📅 PENDIENTES (mes actual):', currentMonthPending);
+                      
+                      // VENCIDOS = Solo registros marcados como NO pagados de meses anteriores
+                      previousMonthsUnpaid = records.filter((r: any) =>
+                        r.year === currentYear &&
+                        r.month < currentMonth &&
+                        r.paid === false &&
+                        r.tenantId &&
+                        r.tenantId !== 'N/A'
+                      ).length;
+                      
+                      console.log('⏰ VENCIDOS (meses anteriores):', previousMonthsUnpaid);
+                      console.log('💰 TOTAL:', currentMonthPending + previousMonthsUnpaid);
                     } catch (error) {
                       console.error('Error parsing payment records:', error);
                     }

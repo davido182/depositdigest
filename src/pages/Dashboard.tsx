@@ -256,7 +256,7 @@ const Dashboard = () => {
 
         <DashboardSummary />
 
-        <FinalDashboard stats={stats} />
+        <FinalDashboard stats={stats} tenants={appData.data?.tenants || []} />
 
         {/* Las tarjetas de inquilinos se movieron a la sección de Inquilinos */}
 
