@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { paymentRecordService, PaymentRecord as PaymentRecordType } from "@/services/PaymentRecordService";
 
 interface PaymentRecord {
   tenantId: string;
@@ -113,19 +114,53 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
 
     try {
       setIsLoading(true);
+      console.log('🔄 Loading payment records from Supabase...');
 
-      // Load from localStorage for now (more reliable)
-      const storageKey = `payment_records_${user.id}_${selectedYear}`;
-      const storedRecords = localStorage.getItem(storageKey);
+      // Try to load from Supabase first
+      try {
+        const supabaseRecords = await paymentRecordService.getPaymentRecords(user.id, selectedYear);
+        console.log(`✅ Loaded ${supabaseRecords.length} records from Supabase`);
+        
+        // Convert Supabase format to component format
+        const records: PaymentRecord[] = supabaseRecords.map(r => ({
+          tenantId: r.tenant_id,
+          year: r.year,
+          month: r.month,
+          paid: r.paid,
+          amount: r.amount
+        }));
 
-      const records: PaymentRecord[] = storedRecords ? JSON.parse(storedRecords) : [];
-      const receipts: PaymentReceipt[] = [];
+        setPaymentRecords(records);
+        
+        // Also save to localStorage as cache
+        const storageKey = `payment_records_${user.id}_${selectedYear}`;
+        localStorage.setItem(storageKey, JSON.stringify(records));
+        
+      } catch (supabaseError) {
+        console.error('Error loading from Supabase, trying localStorage:', supabaseError);
+        
+        // Fallback to localStorage
+        const storageKey = `payment_records_${user.id}_${selectedYear}`;
+        const storedRecords = localStorage.getItem(storageKey);
+        const records: PaymentRecord[] = storedRecords ? JSON.parse(storedRecords) : [];
+        
+        setPaymentRecords(records);
+        
+        // Try to migrate localStorage data to Supabase
+        if (records.length > 0) {
+          console.log('📤 Migrating localStorage data to Supabase...');
+          try {
+            await paymentRecordService.migrateFromLocalStorage(user.id, selectedYear);
+            console.log('✅ Migration completed');
+          } catch (migrationError) {
+            console.error('Migration failed:', migrationError);
+          }
+        }
+      }
 
-      setPaymentRecords(records);
-      setPaymentReceipts(receipts);
+      setPaymentReceipts([]);
     } catch (error) {
       console.error('Error loading payment records:', error);
-      // Don't show error toast for localStorage issues
       setPaymentRecords([]);
       setPaymentReceipts([]);
     } finally {
@@ -224,12 +259,30 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
         const tenant = tenants.find(t => t.id === tenantId);
         const rentAmount = tenant?.rentAmount || 0;
         
+        // Save to Supabase
+        try {
+          await paymentRecordService.upsertPaymentRecord({
+            landlord_id: user!.id,
+            tenant_id: tenantId,
+            year: selectedYear,
+            month: monthIndex,
+            paid: true,
+            amount: rentAmount,
+            payment_date: new Date().toISOString()
+          });
+          
+          console.log('✅ Payment saved to Supabase');
+        } catch (supabaseError) {
+          console.error('Error saving to Supabase:', supabaseError);
+          toast.error('Error al guardar en la nube, pero se guardó localmente');
+        }
+        
         const newRecord = { 
           tenantId, 
           year: selectedYear, 
           month: monthIndex, 
           paid: true,
-          amount: rentAmount // Include the actual rent amount
+          amount: rentAmount
         };
         const updatedRecords = [
           ...paymentRecords.filter(r => !(r.tenantId === tenantId && r.year === selectedYear && r.month === monthIndex)),
@@ -241,9 +294,27 @@ export function TenantPaymentTracker({ tenants }: TenantPaymentTrackerProps) {
 
         toast.success(`Pago de ${monthName} para ${tenant.name} marcado como pagado`);
       } else {
-        // Remove from local state and localStorage
-        const updatedRecords = paymentRecords.filter(r =>
-          !(r.tenantId === tenantId && r.year === selectedYear && r.month === monthIndex)
+        // Save to Supabase (mark as unpaid)
+        try {
+          await paymentRecordService.upsertPaymentRecord({
+            landlord_id: user!.id,
+            tenant_id: tenantId,
+            year: selectedYear,
+            month: monthIndex,
+            paid: false,
+            amount: tenant?.rentAmount || 0
+          });
+          
+          console.log('✅ Payment unmarked in Supabase');
+        } catch (supabaseError) {
+          console.error('Error saving to Supabase:', supabaseError);
+        }
+        
+        // Update local state
+        const updatedRecords = paymentRecords.map(r =>
+          (r.tenantId === tenantId && r.year === selectedYear && r.month === monthIndex)
+            ? { ...r, paid: false }
+            : r
         );
 
         setPaymentRecords(updatedRecords);

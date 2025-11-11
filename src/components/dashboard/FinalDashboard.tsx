@@ -204,7 +204,11 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                       console.log('Unique tenant IDs:', uniqueTenantIds);
                       
                       if (activeTenants > 0) {
-                        // Contar pagos del mes actual
+                        console.log('=== CALCULATING PAYMENTS ===');
+                        console.log('Active tenants:', activeTenants);
+                        console.log('Current month:', currentMonth, '(0=Enero, 10=Noviembre)');
+                        
+                        // PENDIENTES = Mes actual sin pagar
                         const paidThisMonth = records.filter((r: any) => 
                           r.year === currentYear &&
                           r.month === currentMonth &&
@@ -214,9 +218,11 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                         ).length;
                         
                         currentMonthPending = Math.max(activeTenants - paidThisMonth, 0);
-                        console.log('Current month:', currentMonth, 'Paid:', paidThisMonth, 'Pending:', currentMonthPending);
+                        console.log('✅ Paid this month:', paidThisMonth);
+                        console.log('📅 PENDIENTES (mes actual):', currentMonthPending);
                         
-                        // Contar pagos de meses anteriores
+                        // VENCIDOS = Meses anteriores sin pagar
+                        previousMonthsUnpaid = 0;
                         for (let month = 0; month < currentMonth; month++) {
                           const paidInMonth = records.filter((r: any) =>
                             r.year === currentYear &&
@@ -228,7 +234,14 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                           
                           const unpaidInMonth = Math.max(activeTenants - paidInMonth, 0);
                           previousMonthsUnpaid += unpaidInMonth;
+                          
+                          if (unpaidInMonth > 0) {
+                            console.log(`Month ${month}: ${unpaidInMonth} vencidos`);
+                          }
                         }
+                        
+                        console.log('⏰ VENCIDOS (meses anteriores):', previousMonthsUnpaid);
+                        console.log('💰 TOTAL:', currentMonthPending + previousMonthsUnpaid);
                       }
                     } catch (error) {
                       console.error('Error parsing payment records:', error);
