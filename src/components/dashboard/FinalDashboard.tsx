@@ -183,6 +183,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                   if (storedRecords) {
                     try {
                       const records = JSON.parse(storedRecords);
+                      console.log('Payment records found:', records.length);
                       
                       // Obtener nombres únicos de inquilinos (excluyendo N/A)
                       const uniqueTenants = [...new Set(
@@ -192,6 +193,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                       )];
                       
                       activeTenants = uniqueTenants.length;
+                      console.log('Active tenants from records:', activeTenants, uniqueTenants);
                       
                       if (activeTenants > 0) {
                         // Contar pagos del mes actual
@@ -205,6 +207,7 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                         ).length;
                         
                         currentMonthPending = Math.max(activeTenants - paidThisMonth, 0);
+                        console.log('Current month:', currentMonth, 'Paid:', paidThisMonth, 'Pending:', currentMonthPending);
                         
                         // Contar pagos de meses anteriores
                         for (let month = 0; month < currentMonth; month++) {

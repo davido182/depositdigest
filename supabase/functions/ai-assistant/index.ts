@@ -43,97 +43,57 @@ serve(async (req) => {
     const occupancyRate = userData.units?.length > 0 ? ((occupiedUnits / userData.units.length) * 100).toFixed(0) : 0;
     
     const context = `
-═══════════════════════════════════════════════════════════
-DATOS COMPLETOS DEL USUARIO - RENTAFLUX
-═══════════════════════════════════════════════════════════
-
-📊 RESUMEN GENERAL:
+RESUMEN:
 - Inquilinos activos: ${activeTenants.length}
-- Ingresos mensuales potenciales: €${totalMonthlyIncome}
-- Ocupación: ${occupancyRate}% (${occupiedUnits}/${userData.units?.length || 0} unidades)
-- Propiedades: ${userData.properties?.length || 0}
+- Ingresos mensuales: €${totalMonthlyIncome}
+- Ocupación: ${occupancyRate}%
 
-👥 INQUILINOS ACTIVOS (${activeTenants.length}):
-${activeTenants.length > 0 ? activeTenants.map((t: any) => {
-  const startDate = t.lease_start_date ? new Date(t.lease_start_date).toLocaleDateString('es-ES') : 'N/A';
-  return `• ${t.name}
-  - Unidad: ${t.unit_number}
-  - Renta: €${t.rent_amount}/mes
-  - Desde: ${startDate}
-  - Email: ${t.email || 'N/A'}
-  - Teléfono: ${t.phone || 'N/A'}`;
-}).join('\n\n') : 'No hay inquilinos activos'}
+INQUILINOS (${activeTenants.length}):
+${activeTenants.length > 0 ? activeTenants.map((t: any) => 
+  `${t.name} - Unidad ${t.unit_number} - €${t.rent_amount}/mes`
+).join('\n') : 'Sin inquilinos'}
 
-💰 REGISTROS DE PAGOS (${paymentRecords.length} registros):
-${paymentRecords.length > 0 ? paymentRecords.slice(0, 50).map((r: any) => 
-  `${r.tenantName} | ${monthNames[r.month]} ${r.year} | ${r.paid ? '✅ PAGADO' : '❌ PENDIENTE'} | €${r.amount || 0}${r.paymentDate ? ` | Fecha: ${r.paymentDate}` : ''}`
-).join('\n') : 'No hay registros de pago en la tabla de seguimiento'}
+REGISTROS DE PAGOS (${paymentRecords.length}):
+${paymentRecords.length > 0 ? paymentRecords.slice(0, 30).map((r: any) => 
+  `${r.tenantName} | ${monthNames[r.month]} ${r.year} | ${r.paid ? 'PAGADO' : 'PENDIENTE'} | €${r.amount || 0}`
+).join('\n') : 'Sin registros'}
 
-🏠 UNIDADES (${userData.units?.length || 0}):
-${userData.units?.length > 0 ? userData.units.map((u: any) => 
-  `• Unidad ${u.unit_number}: ${u.is_available ? '🟢 Disponible' : '🔴 Ocupada'} - €${u.rent_amount}/mes`
+UNIDADES (${userData.units?.length || 0}):
+${userData.units?.length > 0 ? userData.units.slice(0, 10).map((u: any) => 
+  `${u.unit_number}: ${u.is_available ? 'Disponible' : 'Ocupada'} - €${u.rent_amount}/mes`
 ).join('\n') : 'Sin unidades'}
-
-🏢 PROPIEDADES (${userData.properties?.length || 0}):
-${userData.properties?.length > 0 ? userData.properties.map((p: any) => 
-  `• ${p.name}
-  - Dirección: ${p.address}
-  - Tipo: ${p.type || 'N/A'}
-  - Unidades: ${p.units_count}`
-).join('\n\n') : 'Sin propiedades'}
-
-🔧 MANTENIMIENTO (${userData.maintenance?.length || 0}):
-${userData.maintenance?.length > 0 ? userData.maintenance.slice(0, 10).map((m: any) => 
-  `• ${m.title} - Estado: ${m.status} - Prioridad: ${m.priority}`
-).join('\n') : 'Sin solicitudes de mantenimiento'}
-
-═══════════════════════════════════════════════════════════
-USA ESTOS DATOS PARA RESPONDER DE FORMA INTELIGENTE
-═══════════════════════════════════════════════════════════
 `;
 
-    const systemPrompt = `Eres un asistente inteligente para RentaFlux, una aplicación de gestión de propiedades de alquiler. 
+    const systemPrompt = `Eres un asistente para RentaFlux, una aplicación de gestión de propiedades de alquiler.
 
-CAPACIDADES:
-Puedes ayudar con:
-- Información sobre inquilinos (nombres, unidades, rentas, fechas de ingreso)
-- Historial de pagos y análisis financiero
-- Estado de ocupación de unidades
-- Comparaciones entre inquilinos
-- Análisis de tendencias y patrones
-- Consejos personalizados de gestión
-- Cálculos de ingresos y proyecciones
-- Identificar pagos pendientes o atrasados
-
-DATOS DISPONIBLES:
-1. INQUILINOS: Nombre, unidad, renta mensual, estado, fecha de ingreso
-2. REGISTROS DE PAGOS: Historial completo mes por mes de cada inquilino
-   - ✅ PAGADO = El inquilino pagó ese mes
-   - ❌ PENDIENTE = El inquilino NO ha pagado ese mes
-3. UNIDADES: Número, disponibilidad, renta
-4. PROPIEDADES: Nombre, dirección, cantidad de unidades
-5. MANTENIMIENTO: Solicitudes y su estado
+REGLAS DE SEGURIDAD:
+- NUNCA menciones claves API, tokens, passwords o credenciales
+- NUNCA muestres datos de otros usuarios
+- Solo usa los datos del contexto proporcionado
+- No inventes información
 
 CÓMO RESPONDER:
-- Analiza TODOS los datos disponibles en el contexto
-- Da respuestas específicas con números y nombres reales
-- Si preguntan por pagos, usa "REGISTROS DE PAGOS"
-- Si preguntan por inquilinos, usa "INQUILINOS"
-- Haz comparaciones y análisis cuando sea relevante
-- Sé proactivo: sugiere insights útiles
-- Responde en español de manera amigable y profesional
-- Si falta información, di qué datos específicos necesitas
+- Responde SOLO lo que te preguntan, sé conciso
+- Si preguntan por pagos → usa "REGISTROS DE PAGOS"
+- Si preguntan por inquilinos → usa "INQUILINOS"
+- Si preguntan por ocupación → usa "UNIDADES"
+- Responde en español de manera amigable
+- Máximo 3-4 líneas por respuesta
 
-EJEMPLOS DE ANÁLISIS:
-- "¿Quién debe dinero?" → Busca en REGISTROS DE PAGOS los que dicen ❌ PENDIENTE
-- "¿Cuánto gano al mes?" → Suma las rentas de todos los inquilinos activos
-- "¿Quién es mi mejor inquilino?" → Analiza historial de pagos y antigüedad
-- "Compara María vs Juan" → Compara sus datos de renta, pagos, antigüedad
+EJEMPLOS:
+Pregunta: "¿Quién debe dinero?"
+Respuesta: "Según los registros, [nombres] tienen pagos pendientes de [meses]."
+
+Pregunta: "¿Cuántos inquilinos tengo?"
+Respuesta: "Tienes [X] inquilinos activos."
+
+Pregunta: "¿Cuánto gano al mes?"
+Respuesta: "Tus ingresos mensuales son €[X] de [Y] inquilinos."
 
 IMPORTANTE:
-- NO inventes datos, solo usa lo que está en el contexto
-- Si no hay datos, dilo claramente
-- Sé específico con números, fechas y nombres`;
+- NO des toda la información si no la piden
+- Sé breve y directo
+- Solo responde lo que te preguntan`;
 
     const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
       method: 'POST',
@@ -153,9 +113,9 @@ IMPORTANTE:
             content: query
           }
         ],
-        temperature: 0.3,
-        max_tokens: 800,
-        top_p: 0.9
+        temperature: 0.2,
+        max_tokens: 300,
+        top_p: 0.8
       }),
     });
 
