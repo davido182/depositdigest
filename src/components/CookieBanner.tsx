@@ -43,9 +43,7 @@ export const CookieBanner = () => {
               💾 Almacenamiento Local
             </h3>
             <p className="text-sm text-gray-700 mb-4">
-              RentaFlux utiliza almacenamiento local del navegador (no cookies tradicionales) para 
-              funciones esenciales como mantener su sesión activa, guardar preferencias y datos de 
-              la aplicación. Estos datos son técnicamente necesarios para el funcionamiento.
+              Utilizamos tecnologías esenciales para mantener tu sesión activa y guardar tus preferencias.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">

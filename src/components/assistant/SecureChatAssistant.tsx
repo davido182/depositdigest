@@ -113,9 +113,11 @@ export function SecureChatAssistant() {
       let paymentRecords: any[] = [];
       if (storedRecords) {
         try {
-          paymentRecords = JSON.parse(storedRecords).filter((r: any) => 
-            r.tenantName && r.tenantName !== 'N/A' && r.tenantName.trim() !== ''
+          const allRecords = JSON.parse(storedRecords);
+          paymentRecords = allRecords.filter((r: any) => 
+            r.tenantId && r.tenantId !== 'N/A'
           );
+          console.log('Payment records for AI:', paymentRecords.length);
         } catch (error) {
           console.error('Error parsing payment records:', error);
         }
@@ -152,14 +154,19 @@ export function SecureChatAssistant() {
               status: p.status,
               tenant_name: p.tenant_name
             })),
-            paymentRecords: paymentRecords.map(r => ({
-              tenantName: r.tenantName,
-              month: r.month,
-              year: r.year,
-              paid: r.paid,
-              amount: r.amount,
-              paymentDate: r.paymentDate
-            })),
+            paymentRecords: paymentRecords.map(r => {
+              // Buscar el nombre del inquilino por su ID
+              const tenant = userData.tenants.find(t => t.id === r.tenantId);
+              return {
+                tenantName: tenant?.name || 'Desconocido',
+                tenantId: r.tenantId,
+                month: r.month,
+                year: r.year,
+                paid: r.paid,
+                amount: r.amount,
+                paymentDate: r.paymentDate
+              };
+            }),
             maintenance: userData.maintenance.slice(0, 10).map(m => ({
               title: m.title,
               status: m.status,

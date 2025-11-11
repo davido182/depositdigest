@@ -183,50 +183,48 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                   if (storedRecords) {
                     try {
                       const records = JSON.parse(storedRecords);
-                      console.log('Payment records found:', records.length);
-                      console.log('First 3 records:', records.slice(0, 3));
+                      console.log('=== PAYMENT RECORDS DEBUG ===');
+                      console.log('Total records:', records.length);
+                      console.log('Sample record:', JSON.stringify(records[0], null, 2));
+                      console.log('All fields:', Object.keys(records[0]));
                       
-                      // Obtener nombres únicos de inquilinos (excluyendo N/A)
-                      const uniqueTenants = [...new Set(
+                      // Obtener IDs únicos de inquilinos (excluyendo N/A)
+                      const uniqueTenantIds = [...new Set(
                         records
                           .filter((r: any) => {
-                            console.log('Checking record:', r.tenantName, r.tenant_name);
-                            return (r.tenantName || r.tenant_name) && 
-                                   (r.tenantName || r.tenant_name) !== 'N/A' && 
-                                   (r.tenantName || r.tenant_name).trim() !== '';
+                            const hasId = r.tenantId && r.tenantId !== 'N/A';
+                            if (!hasId) console.log('Filtered out record:', r);
+                            return hasId;
                           })
-                          .map((r: any) => r.tenantName || r.tenant_name)
+                          .map((r: any) => r.tenantId)
                       )];
                       
-                      activeTenants = uniqueTenants.length;
-                      console.log('Active tenants from records:', activeTenants, uniqueTenants);
+                      activeTenants = uniqueTenantIds.length;
+                      console.log('Active tenants from records:', activeTenants);
+                      console.log('Unique tenant IDs:', uniqueTenantIds);
                       
                       if (activeTenants > 0) {
                         // Contar pagos del mes actual
-                        const paidThisMonth = records.filter((r: any) => {
-                          const name = r.tenantName || r.tenant_name;
-                          return r.year === currentYear &&
-                                 r.month === currentMonth &&
-                                 r.paid === true &&
-                                 name && 
-                                 name !== 'N/A' && 
-                                 name.trim() !== '';
-                        }).length;
+                        const paidThisMonth = records.filter((r: any) => 
+                          r.year === currentYear &&
+                          r.month === currentMonth &&
+                          r.paid === true &&
+                          r.tenantId &&
+                          r.tenantId !== 'N/A'
+                        ).length;
                         
                         currentMonthPending = Math.max(activeTenants - paidThisMonth, 0);
                         console.log('Current month:', currentMonth, 'Paid:', paidThisMonth, 'Pending:', currentMonthPending);
                         
                         // Contar pagos de meses anteriores
                         for (let month = 0; month < currentMonth; month++) {
-                          const paidInMonth = records.filter((r: any) => {
-                            const name = r.tenantName || r.tenant_name;
-                            return r.year === currentYear &&
-                                   r.month === month &&
-                                   r.paid === true &&
-                                   name && 
-                                   name !== 'N/A' && 
-                                   name.trim() !== '';
-                          }).length;
+                          const paidInMonth = records.filter((r: any) =>
+                            r.year === currentYear &&
+                            r.month === month &&
+                            r.paid === true &&
+                            r.tenantId &&
+                            r.tenantId !== 'N/A'
+                          ).length;
                           
                           const unpaidInMonth = Math.max(activeTenants - paidInMonth, 0);
                           previousMonthsUnpaid += unpaidInMonth;
