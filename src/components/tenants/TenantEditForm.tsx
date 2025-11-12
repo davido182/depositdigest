@@ -388,10 +388,10 @@ export function TenantEditForm({
         [name]: numValue,
       });
     } else if (name === "name" || name === "email") {
-      // Sanitize text inputs
+      // Allow spaces while typing, sanitize only on save
       setFormData({
         ...formData,
-        [name]: sanitizeInput(value),
+        [name]: value,
       });
     } else if (name === "phone") {
       // Format phone number
@@ -489,8 +489,11 @@ export function TenantEditForm({
       // Removed console.log for security
       // Removed console.log for security
 
+      // Sanitize text inputs before saving
       const updatedTenant = {
         ...formData,
+        name: sanitizeInput(formData.name),
+        email: formData.email ? sanitizeInput(formData.email) : '',
         updatedAt: new Date().toISOString(),
         id: formData.id || `tenant-${Date.now()}`,
         propertyId: selectedPropertyId, // Include selected property

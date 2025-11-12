@@ -32,7 +32,9 @@ serve(async (req) => {
 
     // Create context from user data
     const paymentRecords = userData.paymentRecords || [];
-    const currentMonth = new Date().getMonth();
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
                        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     
@@ -42,11 +44,27 @@ serve(async (req) => {
     const occupiedUnits = userData.units?.filter((u: any) => !u.is_available).length || 0;
     const occupancyRate = userData.units?.length > 0 ? ((occupiedUnits / userData.units.length) * 100).toFixed(0) : 0;
     
+    // Calcular pagos pendientes por mes
+    const pendingByMonth: any = {};
+    for (let month = 0; month <= currentMonth; month++) {
+      const monthKey = `${monthNames[month]} ${currentYear}`;
+      const monthRecords = paymentRecords.filter((r: any) => 
+        r.year === currentYear && r.month === month && !r.paid && r.tenantId && r.tenantId !== 'N/A'
+      );
+      if (monthRecords.length > 0) {
+        pendingByMonth[monthKey] = monthRecords.map((r: any) => ({
+          tenant: r.tenantName,
+          amount: r.amount || 0
+        }));
+      }
+    }
+    
     const context = `
 RESUMEN:
 - Inquilinos activos: ${activeTenants.length}
 - Ingresos mensuales: €${totalMonthlyIncome}
 - Ocupación: ${occupancyRate}%
+- Mes actual: ${monthNames[currentMonth]} ${currentYear}
 
 INQUILINOS (${activeTenants.length}):
 ${activeTenants.length > 0 ? activeTenants.map((t: any) => {
@@ -54,6 +72,14 @@ ${activeTenants.length > 0 ? activeTenants.map((t: any) => {
   const dateStr = moveInDate ? ` (desde ${moveInDate})` : '';
   return `${t.name} - Unidad ${t.unit_number} - €${t.rent_amount}/mes${dateStr}`;
 }).join('\n') : 'Sin inquilinos'}
+
+PAGOS PENDIENTES POR MES:
+${Object.keys(pendingByMonth).length > 0 ? 
+  Object.entries(pendingByMonth).map(([month, records]: [string, any]) => 
+    `${month}:\n${records.map((r: any) => `  - ${r.tenant}: €${r.amount}`).join('\n')}`
+  ).join('\n\n') : 
+  'No hay pagos pendientes'
+}
 
 REGISTROS DE PAGOS (${paymentRecords.length}):
 ${paymentRecords.length > 0 ? paymentRecords.slice(0, 30).map((r: any) => 
@@ -91,10 +117,12 @@ REGLAS:
 - Responde en español
 
 PARA CONSULTAS:
-- Usa "REGISTROS DE PAGOS" para preguntas de pagos
+- Usa "PAGOS PENDIENTES POR MES" para ver exactamente quién debe y cuánto por cada mes
+- Usa "REGISTROS DE PAGOS" para ver el historial completo
 - Usa "INQUILINOS" con sus fechas de ingreso para saber desde cuándo deben pagar
 - Si un inquilino entró en marzo, NO debe pagos de enero-febrero (esos son N/A)
-- Da respuestas directas y breves`;
+- Cuando pregunten por pagos pendientes de meses anteriores, lista TODOS los meses con pendientes
+- Da respuestas directas y breves con montos específicos`;
 
     const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
       method: 'POST',

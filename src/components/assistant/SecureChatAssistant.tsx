@@ -135,6 +135,7 @@ export function SecureChatAssistant() {
               rent_amount: t.rent_amount || t.rentAmount,
               lease_start_date: t.lease_start_date,
               move_in_date: t.move_in_date,
+              security_deposit: t.security_deposit || t.securityDeposit,
               email: t.email,
               phone: t.phone
             })),

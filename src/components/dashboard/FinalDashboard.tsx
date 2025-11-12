@@ -8,10 +8,9 @@ import { CleanChart } from "./CleanChart";
 
 interface FinalDashboardProps {
   stats: DashboardStats;
-  tenants?: any[];
 }
 
-export function FinalDashboard({ stats, tenants = [] }: FinalDashboardProps) {
+export function FinalDashboard({ stats }: FinalDashboardProps) {
   const { user } = useAuth();
   const [revenueData, setRevenueData] = useState<any[]>([]);
 
@@ -156,7 +155,7 @@ export function FinalDashboard({ stats, tenants = [] }: FinalDashboardProps) {
           >
             <Card className="relative overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">🔔 Pagos Pendientes Este Mes</CardTitle>
+                <CardTitle className="text-sm font-medium">🔔 Estado de Pagos</CardTitle>
                 <motion.div
                   animate={{
                     rotate: stats.overduePayments > 0 ? [0, 10, -10, 0] : 0,
@@ -206,23 +205,15 @@ export function FinalDashboard({ stats, tenants = [] }: FinalDashboardProps) {
                       console.log('✅ Paid this month:', paidThisMonth);
                       console.log('📅 PENDIENTES (mes actual):', currentMonthPending);
                       
-                      // VENCIDOS = Contar meses anteriores donde NO pagaron
-                      previousMonthsUnpaid = 0;
-                      for (let month = 0; month < currentMonth; month++) {
-                        const paidInMonth = records.filter((r: any) =>
-                          r.year === currentYear &&
-                          r.month === month &&
-                          r.paid === true &&
-                          r.tenantId &&
-                          r.tenantId !== 'N/A'
-                        ).length;
-                        
-                        // Si no pagaron todos, contar como vencidos
-                        const unpaidInMonth = activeTenants - paidInMonth;
-                        if (unpaidInMonth > 0) {
-                          previousMonthsUnpaid += unpaidInMonth;
-                        }
-                      }
+                      // VENCIDOS = Contar registros de meses anteriores que están marcados como NO pagados
+                      // Solo contar registros que existen y están pendientes (no N/A)
+                      previousMonthsUnpaid = records.filter((r: any) =>
+                        r.year === currentYear &&
+                        r.month < currentMonth &&
+                        r.paid === false &&
+                        r.tenantId &&
+                        r.tenantId !== 'N/A'
+                      ).length;
                       
                       console.log('⏰ VENCIDOS (meses anteriores):', previousMonthsUnpaid);
                       console.log('💰 TOTAL:', currentMonthPending + previousMonthsUnpaid);
@@ -231,8 +222,8 @@ export function FinalDashboard({ stats, tenants = [] }: FinalDashboardProps) {
                     }
                   }
                   
-                  // Solo mostrar pendientes del mes actual (no acumulados)
-                  const totalUnpaid = currentMonthPending;
+                  // Mostrar ambos: pendientes del mes actual Y vencidos de meses anteriores
+                  const totalUnpaid = currentMonthPending + previousMonthsUnpaid;
                   
                   // Si no hay inquilinos
                   if (activeTenants === 0) {
@@ -257,19 +248,32 @@ export function FinalDashboard({ stats, tenants = [] }: FinalDashboardProps) {
                         {totalUnpaid}
                       </div>
                       <p className="text-xs text-muted-foreground text-center mb-3">
-                        Pagos pendientes este mes
+                        Pagos pendientes totales
                       </p>
 
                       {totalUnpaid > 0 ? (
-                        <div className="bg-red-50 p-3 rounded-lg">
-                          <p className="text-xs text-red-600 mb-2">
-                            📅 {currentMonthPending} inquilino{currentMonthPending > 1 ? 's' : ''} sin pagar este mes
-                          </p>
+                        <div className="space-y-2">
+                          {currentMonthPending > 0 && (
+                            <div className="bg-orange-50 p-3 rounded-lg">
+                              <p className="text-xs text-orange-700 font-medium">📅 Este mes</p>
+                              <p className="text-xs text-orange-600 mt-1">
+                                {currentMonthPending} pago{currentMonthPending > 1 ? 's' : ''} pendiente{currentMonthPending > 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          )}
+                          {previousMonthsUnpaid > 0 && (
+                            <div className="bg-red-50 p-3 rounded-lg">
+                              <p className="text-xs text-red-700 font-medium">⏰ Meses anteriores</p>
+                              <p className="text-xs text-red-600 mt-1">
+                                {previousMonthsUnpaid} pago{previousMonthsUnpaid > 1 ? 's' : ''} vencido{previousMonthsUnpaid > 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          )}
                           <a 
                             href="/payments" 
-                            className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center justify-center gap-1"
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center justify-center gap-1 pt-1"
                           >
-                            Ver más →
+                            Ver detalles →
                           </a>
                         </div>
                       ) : (
