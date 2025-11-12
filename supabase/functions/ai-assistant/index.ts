@@ -49,9 +49,11 @@ RESUMEN:
 - Ocupación: ${occupancyRate}%
 
 INQUILINOS (${activeTenants.length}):
-${activeTenants.length > 0 ? activeTenants.map((t: any) => 
-  `${t.name} - Unidad ${t.unit_number} - €${t.rent_amount}/mes`
-).join('\n') : 'Sin inquilinos'}
+${activeTenants.length > 0 ? activeTenants.map((t: any) => {
+  const moveInDate = t.move_in_date || t.lease_start_date;
+  const dateStr = moveInDate ? ` (desde ${moveInDate})` : '';
+  return `${t.name} - Unidad ${t.unit_number} - €${t.rent_amount}/mes${dateStr}`;
+}).join('\n') : 'Sin inquilinos'}
 
 REGISTROS DE PAGOS (${paymentRecords.length}):
 ${paymentRecords.length > 0 ? paymentRecords.slice(0, 30).map((r: any) => 
@@ -90,7 +92,8 @@ REGLAS:
 
 PARA CONSULTAS:
 - Usa "REGISTROS DE PAGOS" para preguntas de pagos
-- Usa "INQUILINOS" para preguntas de inquilinos
+- Usa "INQUILINOS" con sus fechas de ingreso para saber desde cuándo deben pagar
+- Si un inquilino entró en marzo, NO debe pagos de enero-febrero (esos son N/A)
 - Da respuestas directas y breves`;
 
     const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {

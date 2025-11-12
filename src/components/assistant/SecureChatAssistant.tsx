@@ -133,7 +133,8 @@ export function SecureChatAssistant() {
               status: t.status,
               unit_number: t.unit_number || t.unit,
               rent_amount: t.rent_amount || t.rentAmount,
-              lease_start_date: t.lease_start_date || t.moveInDate,
+              lease_start_date: t.lease_start_date,
+              move_in_date: t.move_in_date,
               email: t.email,
               phone: t.phone
             })),
@@ -252,7 +253,7 @@ export function SecureChatAssistant() {
           </div>
           <div className="flex-1">
             <div className="font-semibold">Asistente RentaFlux AI</div>
-            <div className="text-xs text-white/80">Powered by Cerebras</div>
+            <div className="text-xs text-white/80">Powered by Cerebras AI</div>
           </div>
           <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
             {userData ? '🟢 Conectado' : '🔄 Cargando...'}
