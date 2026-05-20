@@ -150,9 +150,9 @@ const Sidebar = () => {
       <SidebarHeader>
         <div className="flex items-center space-x-2">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">RentaFlux</h1>
+            <h1 className="text-xl font-bold text-sidebar-foreground">RentaFlux</h1>
             {hasActivePremium && (
-              <div className="flex items-center text-xs text-yellow-600">
+              <div className="flex items-center text-xs text-yellow-500">
                 <Crown className="h-3 w-3 mr-1" />
                 Premium
               </div>
@@ -161,10 +161,10 @@ const Sidebar = () => {
         </div>
         
         <div className="space-y-1 mt-4">
-          <div className="text-sm font-medium text-gray-700">
+          <div className="text-sm font-medium text-sidebar-foreground">
             Hola, {getUserDisplayName()}
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-sidebar-foreground/60">
             {getRoleDisplayText()}
           </div>
         </div>
@@ -205,7 +205,7 @@ const Sidebar = () => {
               Continuar con Premium
               <ExternalLink className="h-3 w-3" />
             </button>
-            <div className="text-xs text-gray-600 text-center mt-2">
+            <div className="text-xs text-sidebar-foreground/60 text-center mt-2">
               💎 Mantén todas las funciones premium
             </div>
           </div>
@@ -222,7 +222,7 @@ const Sidebar = () => {
               Actualizar a Premium
               <ExternalLink className="h-3 w-3" />
             </button>
-            <div className="text-xs text-gray-600 text-center">
+            <div className="text-xs text-sidebar-foreground/60 text-center">
               🚀 Desbloquea RentaFlux Premium
             </div>
           </div>
@@ -230,10 +230,10 @@ const Sidebar = () => {
 
         {/* Website access for all users */}
         {(userRole === 'landlord_premium' || userRole === 'tenant') && (
-          <div className="p-3 bg-gray-50 rounded-lg">
+          <div className="p-3 bg-sidebar-accent/30 rounded-lg">
             <button
               onClick={handleLandingPageClick}
-              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs bg-sidebar-accent text-sidebar-accent-foreground rounded-lg hover:opacity-80 transition-colors"
             >
               <ExternalLink className="h-3 w-3" />
               Ir a Sitio Web

@@ -2,6 +2,11 @@ import { BaseService } from './BaseService';
 import { Tenant } from '@/types';
 import { normalizeTenant, normalizeArray } from '@/types/database';
 
+// Helper to cast DB tenant (name nullable) to app Tenant (name required)
+function toAppTenant(t: any): Tenant {
+  return normalizeTenant(t) as unknown as Tenant;
+}
+
 export class SupabaseTenantService extends BaseService {
   async getTenants(): Promise<Tenant[]> {
     // Fetching tenants from Supabase
@@ -49,20 +54,18 @@ export class SupabaseTenantService extends BaseService {
     // Transform tenant data using normalization helper
     return normalizeArray(
       tenantsData.filter((tenant: any) => {
-        // Check both name and first_name fields
         const hasName = (tenant?.name && tenant.name.trim() !== '') || 
                        (tenant?.first_name && tenant.first_name.trim() !== '');
         return hasName;
       }).map((tenant: any) => {
-        // Get property name from properties data
         const property = propertiesData.find(p => p.id === tenant.property_id);
         return {
           ...tenant,
           property_name: property?.name || tenant.property_name || '',
         };
       }),
-      normalizeTenant
-    );
+      toAppTenant
+    ) as Tenant[];
   }
 
   async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt' | 'paymentHistory'>): Promise<Tenant> {
@@ -236,8 +239,7 @@ export class SupabaseTenantService extends BaseService {
 
   // Helper method to format tenant response consistently
   private formatTenantResponse(data: any, unitNumber: string = ''): Tenant {
-    // Use normalization helper for consistency
-    return normalizeTenant({
+    return toAppTenant({
       ...data,
       unit_number: unitNumber || data.unit_number || '',
     });
@@ -281,7 +283,7 @@ export class SupabaseTenantService extends BaseService {
           .update({
             tenant_id: tenantId,
             is_available: false,
-            rent_amount: tenantData?.rent_amount || null // Sincronizar renta
+            monthly_rent: tenantData?.rent_amount || null // sync rent to units
           })
           .eq('unit_number', unitNumber)
           .eq('property_id', propertyId);

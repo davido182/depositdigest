@@ -189,6 +189,27 @@ const StripeSettings = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Disclaimer */}
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex gap-2">
+            <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-amber-800">
+              <p className="font-medium mb-1">Aviso importante</p>
+              <p>
+                RentaFlux no se hace responsable por el mal uso de esta configuración ni por
+                transacciones incorrectas derivadas de claves mal introducidas. Para una
+                configuración correcta y asistida,{" "}
+                <a
+                  href="/landing#contacto"
+                  className="underline font-medium hover:text-amber-900"
+                >
+                  consulta nuestros precios
+                </a>
+                .
+              </p>
+            </div>
+          </div>
+        </div>
         {/* Enable/Disable Switch */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">

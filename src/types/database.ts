@@ -169,12 +169,14 @@ export type Unit = Tables<'units'> & {
 export function normalizeUnit(unit: any): Unit {
   if (!unit) return unit;
   
+  // Real DB column is monthly_rent. rent_amount is just an alias.
+  const rent = unit.monthly_rent ?? unit.rent_amount ?? unit.rentAmount ?? 0;
+  
   return {
     ...unit,
-    // Renta (soporta múltiples nombres)
-    monthly_rent: unit.monthly_rent || unit.rent_amount || 0,
-    rent_amount: unit.rent_amount || unit.monthly_rent || 0,
-    rentAmount: unit.rentAmount || unit.monthly_rent || unit.rent_amount || 0,
+    monthly_rent: rent,
+    rent_amount: rent,   // alias for code compatibility
+    rentAmount: rent,    // alias for code compatibility
     
     // Disponibilidad
     is_available: unit.is_available !== undefined ? unit.is_available : true,
@@ -184,13 +186,13 @@ export function normalizeUnit(unit: any): Unit {
 
 /**
  * Prepara una unidad para insertar en Supabase
+ * Uses real DB columns: monthly_rent, is_available, tenant_id
  */
 export function unitToSupabase(unit: Partial<Unit>): any {
   return {
-    user_id: unit.user_id || '',
     property_id: unit.property_id || '',
     unit_number: unit.unit_number || '',
-    rent_amount: unit.rent_amount || unit.monthly_rent || unit.rentAmount || 0,
+    monthly_rent: unit.monthly_rent ?? (unit as any).rent_amount ?? (unit as any).rentAmount ?? 0,
     is_available: unit.is_available !== undefined ? unit.is_available : true,
     tenant_id: unit.tenant_id || null,
   };

@@ -69,10 +69,13 @@ export class UnitService extends BaseService {
 
     // Removed console.log for security
 
-    // Use unitToSupabase helper to prepare data
-    const insertData = {
-      ...unitToSupabase(unit),
-      user_id: user.id, // Add user_id for the new column
+    // Use real DB columns: monthly_rent (not rent_amount), no user_id
+    const insertData: any = {
+      property_id: unit.property_id,
+      unit_number: unit.unit_number,
+      monthly_rent: unit.monthly_rent || unit.rent_amount || unit.rentAmount || 0,
+      is_available: unit.is_available !== false,
+      tenant_id: unit.tenant_id || null,
     };
 
     const { data, error } = await supabase
@@ -117,16 +120,13 @@ export class UnitService extends BaseService {
       updatePayload.unit_number = updates.unit_number;
     }
     
-    // Support both monthly_rent and rent_amount
+    // Support both monthly_rent and rent_amount aliases — DB column is monthly_rent
     if (updates.monthly_rent !== undefined) {
       updatePayload.monthly_rent = updates.monthly_rent;
-      updatePayload.rent_amount = updates.monthly_rent; // Keep both in sync
     } else if (updates.rent_amount !== undefined) {
       updatePayload.monthly_rent = updates.rent_amount;
-      updatePayload.rent_amount = updates.rent_amount;
     } else if (updates.rentAmount !== undefined) {
       updatePayload.monthly_rent = updates.rentAmount;
-      updatePayload.rent_amount = updates.rentAmount;
     }
     
     if (updates.is_available !== undefined) {

@@ -45,12 +45,12 @@ const Properties = () => {
         const dbProperties = await propertyService.getProperties();
         // Removed console.log for security
 
-        // Get units to calculate occupancy - select only safe columns
+        // Get units to calculate occupancy - only columns that exist in real DB
         const unitsResult = await supabase
           .from('units')
-          .select('id, property_id, unit_number, tenant_id, is_available, monthly_rent, rent_amount');
+          .select('id, property_id, unit_number, tenant_id, is_available, monthly_rent');
 
-        // If columns don't exist yet (before SQL migration), use empty array
+        // If query fails, use empty array gracefully
         const units = unitsResult.error ? [] : (unitsResult.data || []);
 
         // Removed console.log for security
@@ -139,12 +139,12 @@ const Properties = () => {
       const dbProperties = await propertyService.getProperties();
       // Removed console.log for security
 
-      // Get units to calculate occupancy - select only safe columns
+      // Get units to calculate occupancy - only columns that exist in real DB
       const unitsResult = await supabase
         .from('units')
-        .select('id, property_id, unit_number, tenant_id, is_available, monthly_rent, rent_amount');
+        .select('id, property_id, unit_number, tenant_id, is_available, monthly_rent');
 
-      // If columns don't exist yet (before SQL migration), use empty array
+      // If query fails, use empty array gracefully
       const units = unitsResult.error ? [] : (unitsResult.data || []);
 
       // Map database properties to component format and calculate occupancy

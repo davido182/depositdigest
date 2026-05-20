@@ -357,33 +357,63 @@ export type Database = {
       properties: {
         Row: {
           address: string | null
+          city: string | null
+          country: string | null
           created_at: string
+          current_value: number | null
           description: string | null
+          documents: string[] | null
           id: string
+          is_active: boolean | null
+          landlord_id: string
           name: string
-          total_units: number
+          photos: string[] | null
+          postal_code: string | null
+          property_type: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          total_units: number | null
           updated_at: string
-          user_id: string
         }
         Insert: {
           address?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          current_value?: number | null
           description?: string | null
+          documents?: string[] | null
           id?: string
+          is_active?: boolean | null
+          landlord_id: string
           name: string
-          total_units?: number
+          photos?: string[] | null
+          postal_code?: string | null
+          property_type?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          total_units?: number | null
           updated_at?: string
-          user_id: string
         }
         Update: {
           address?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          current_value?: number | null
           description?: string | null
+          documents?: string[] | null
           id?: string
+          is_active?: boolean | null
+          landlord_id?: string
           name?: string
-          total_units?: number
+          photos?: string[] | null
+          postal_code?: string | null
+          property_type?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          total_units?: number | null
           updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -515,53 +545,110 @@ export type Database = {
       }
       tenants: {
         Row: {
+          birth_date: string | null
           created_at: string
+          deposit_paid: number | null
+          depositamount: number | null
+          dni: string | null
+          documents: string[] | null
           email: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          first_name: string | null
           id: string
+          is_active: boolean | null
           landlord_id: string | null
+          last_name: string | null
           lease_end_date: string | null
-          lease_start_date: string
-          name: string
+          lease_start_date: string | null
+          leaseenddate: string | null
+          monthly_income: number | null
+          monthly_rent: number | null
+          move_in_date: string | null
+          move_out_date: string | null
+          moveindate: string | null
+          name: string | null
+          notes: string | null
+          occupation: string | null
           phone: string | null
           property_id: string | null
           property_name: string | null
-          rent_amount: number
-          status: string
-          unit_number: string
+          rent_amount: number | null
+          status: string | null
+          unit_id: string | null
+          unit_number: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          birth_date?: string | null
           created_at?: string
+          deposit_paid?: number | null
+          depositamount?: number | null
+          dni?: string | null
+          documents?: string[] | null
           email: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          first_name?: string | null
           id?: string
+          is_active?: boolean | null
           landlord_id?: string | null
+          last_name?: string | null
           lease_end_date?: string | null
-          lease_start_date: string
-          name: string
+          lease_start_date?: string | null
+          leaseenddate?: string | null
+          monthly_income?: number | null
+          monthly_rent?: number | null
+          move_in_date?: string | null
+          move_out_date?: string | null
+          moveindate?: string | null
+          name?: string | null
+          notes?: string | null
+          occupation?: string | null
           phone?: string | null
           property_id?: string | null
           property_name?: string | null
-          rent_amount: number
-          status?: string
-          unit_number: string
+          rent_amount?: number | null
+          status?: string | null
+          unit_id?: string | null
+          unit_number?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          birth_date?: string | null
           created_at?: string
+          deposit_paid?: number | null
+          depositamount?: number | null
+          dni?: string | null
+          documents?: string[] | null
           email?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          first_name?: string | null
           id?: string
+          is_active?: boolean | null
           landlord_id?: string | null
+          last_name?: string | null
           lease_end_date?: string | null
-          lease_start_date?: string
-          name?: string
+          lease_start_date?: string | null
+          leaseenddate?: string | null
+          monthly_income?: number | null
+          monthly_rent?: number | null
+          move_in_date?: string | null
+          move_out_date?: string | null
+          moveindate?: string | null
+          name?: string | null
+          notes?: string | null
+          occupation?: string | null
           phone?: string | null
           property_id?: string | null
           property_name?: string | null
-          rent_amount?: number
-          status?: string
-          unit_number?: string
+          rent_amount?: number | null
+          status?: string | null
+          unit_id?: string | null
+          unit_number?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -573,48 +660,59 @@ export type Database = {
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "tenants_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
         ]
       }
       units: {
         Row: {
+          bathrooms: number | null
+          bedrooms: number | null
           created_at: string
+          deposit_amount: number | null
+          description: string | null
           id: string
-          is_available: boolean
+          is_available: boolean | null
+          is_furnished: boolean | null
+          monthly_rent: number | null
+          photos: string[] | null
           property_id: string
-          rent_amount: number | null
+          square_meters: number | null
           tenant_id: string | null
           unit_number: string
           updated_at: string
-          user_id: string
         }
         Insert: {
+          bathrooms?: number | null
+          bedrooms?: number | null
           created_at?: string
+          deposit_amount?: number | null
+          description?: string | null
           id?: string
-          is_available?: boolean
+          is_available?: boolean | null
+          is_furnished?: boolean | null
+          monthly_rent?: number | null
+          photos?: string[] | null
           property_id: string
-          rent_amount?: number | null
+          square_meters?: number | null
           tenant_id?: string | null
           unit_number: string
           updated_at?: string
-          user_id: string
         }
         Update: {
+          bathrooms?: number | null
+          bedrooms?: number | null
           created_at?: string
+          deposit_amount?: number | null
+          description?: string | null
           id?: string
-          is_available?: boolean
+          is_available?: boolean | null
+          is_furnished?: boolean | null
+          monthly_rent?: number | null
+          photos?: string[] | null
           property_id?: string
-          rent_amount?: number | null
+          square_meters?: number | null
           tenant_id?: string | null
           unit_number?: string
           updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
