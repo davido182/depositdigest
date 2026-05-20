@@ -59,7 +59,23 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
     const data = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim());
+      // Mejor manejo de CSV con valores que contienen comas
+      const values: string[] = [];
+      let currentValue = '';
+      let insideQuotes = false;
+
+      for (let char of lines[i]) {
+        if (char === '"') {
+          insideQuotes = !insideQuotes;
+        } else if (char === ',' && !insideQuotes) {
+          values.push(currentValue.trim());
+          currentValue = '';
+        } else {
+          currentValue += char;
+        }
+      }
+      values.push(currentValue.trim()); // Agregar el último valor
+
       if (values.length >= headers.length) {
         const row: any = {};
         headers.forEach((header, index) => {
@@ -75,16 +91,13 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
     if (!user) throw new Error('Usuario no autenticado');
 
     const tenants = tenantRows.map(row => {
-      // Split name into first_name and last_name
-      const fullName = row.name || 'Sin nombre';
-      const nameParts = fullName.trim().split(' ');
-      const firstName = nameParts[0] || 'Sin nombre';
-      const lastName = nameParts.slice(1).join(' ') || '';
+      // Mantener el nombre completo sin dividir
+      const fullName = (row.name || 'Sin nombre').trim();
 
       return {
         landlord_id: user.id,
-        first_name: firstName,
-        last_name: lastName,
+        first_name: fullName, // Guardar nombre completo en first_name
+        last_name: '', // Dejar last_name vacío
         email: row.email || null,
         phone: row.phone || null,
         move_in_date: row.move_in_date || row.lease_start_date || null,

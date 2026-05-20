@@ -1,56 +1,24 @@
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Building2,
-  CreditCard,
-  FileText,
   BarChart3,
-  Calculator,
   MessageCircle,
   Smartphone,
-  Crown,
-  Check,
   Users,
-  Wrench
+  Wrench,
+  ClipboardList
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { CookieBanner } from "@/components/CookieBanner";
 
 const Landing = () => {
   const navigate = useNavigate();
-
-  const features = {
-    free: [
-      "Gestión básica de inquilinos",
-      "Registro de pagos",
-      "Solicitudes de mantenimiento",
-      "Reportes básicos",
-      "1 propiedad, hasta 3 unidades"
-    ],
-    premium: [
-      "Todo lo de la versión gratuita",
-      "Contabilidad completa con reportes fiscales",
-      "Asistente IA especializado con NLP",
-      "Análisis avanzados y predictivos",
-      "Reportes automáticos PDF/Excel",
-      "Propiedades y unidades ilimitadas",
-      "Portal del cliente Stripe",
-      "Sin anuncios publicitarios",
-      "Soporte prioritario 24/7"
-    ],
-    tenant: [
-      "Ver información de la unidad",
-      "Realizar pagos",
-      "Solicitar mantenimiento",
-      "Comunicación con propietario"
-    ]
-  };
 
   const handleDemoClick = () => {
     window.open("https://depositdigest.lovable.app/", "_blank");
@@ -58,10 +26,8 @@ const Landing = () => {
 
   const handleMobileDownload = (platform: 'ios' | 'android') => {
     if (platform === 'ios') {
-      // Redirect to App Store when available
       window.open("https://apps.apple.com/search?term=rentaflux", "_blank");
     } else {
-      // Redirect to Google Play when available
       window.open("https://play.google.com/apps/test/com.rentaflux.app/1", "_blank");
     }
   };
@@ -81,17 +47,14 @@ const Landing = () => {
         description: "Por favor espera un momento.",
       });
 
-      // Usar Formspree (servicio gratuito)
       const response = await fetch('https://formspree.io/f/mzzjvrre', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: name,
-          email: email,
+          name,
+          email,
           subject: subjectRaw,
-          message: message,
+          message,
           _replyto: email,
           _subject: `${subjectRaw} - ${name}`,
         })
@@ -106,25 +69,10 @@ const Landing = () => {
       } else {
         throw new Error('Error en el servicio de email');
       }
-    } catch (err: any) {
-      console.error('Error enviando contacto:', err);
-
-      // Fallback a mailto
+    } catch {
       const subject = encodeURIComponent(`${subjectRaw} - ${name}`);
-      const body = encodeURIComponent(`
-Nombre: ${name}
-Email: ${email}
-
-Mensaje:
-${message}
-
----
-Enviado desde www.rentaflux.com
-      `);
-
-      const mailtoLink = `mailto:rentaflux@gmail.com?subject=${subject}&body=${body}`;
-      window.open(mailtoLink, '_blank');
-
+      const body = encodeURIComponent(`Nombre: ${name}\nEmail: ${email}\n\nMensaje:\n${message}\n\n---\nEnviado desde www.rentaflux.com`);
+      window.open(`mailto:rentaflux@gmail.com?subject=${subject}&body=${body}`, '_blank');
       toast({
         title: "Abriendo cliente de correo",
         description: "Se abrirá tu cliente de correo para enviar el mensaje.",
@@ -137,17 +85,13 @@ Enviado desde www.rentaflux.com
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <h1 className="text-2xl font-bold text-gray-900">RentaFlux</h1>
-          </div>
-          <div className="space-x-4">
-            <Button variant="ghost" onClick={() => {
-              localStorage.setItem('rentaflux_has_visited', 'true');
-              navigate("/login");
-            }}>
-              Iniciar Sesión
-            </Button>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-900">RentaFlux</h1>
+          <Button variant="ghost" onClick={() => {
+            localStorage.setItem('rentaflux_has_visited', 'true');
+            navigate("/login");
+          }}>
+            Iniciar Sesión
+          </Button>
         </div>
       </header>
 
@@ -156,10 +100,9 @@ Enviado desde www.rentaflux.com
         <div className="absolute inset-0 -z-10">
           <img
             src="/images/landing-hero.webp"
-            alt="Panorámica urbana de edificios residenciales con cielo en degradado y acento azul"
+            alt="Panorámica urbana de edificios residenciales"
             className="h-full w-full object-cover"
             loading="eager"
-            fetchPriority="high"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/50 to-background" />
         </div>
@@ -173,16 +116,22 @@ Enviado desde www.rentaflux.com
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             RentaFlux es la plataforma completa para propietarios e inquilinos.
-            Gestiona pagos, mantenimiento, contabilidad y más desde tu móvil o web.
+            Gestiona pagos, mantenimiento, reportes y más desde tu móvil o web.
           </p>
           <div className="flex flex-col lg:flex-row gap-8 justify-center items-center">
             <div className="flex flex-col sm:flex-row gap-4">
+              <Button size="lg" onClick={() => {
+                localStorage.setItem('rentaflux_has_visited', 'true');
+                navigate("/login");
+              }}>
+                Comenzar Gratis
+              </Button>
               <Button size="lg" variant="outline" onClick={handleDemoClick}>
                 Ver Demo
               </Button>
             </div>
 
-            {/* Dashboard Preview Box */}
+            {/* Dashboard Preview */}
             <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-6 w-80 shadow-lg">
               <div className="text-sm font-semibold text-gray-600 mb-4">Vista previa del Dashboard</div>
               <div className="space-y-3">
@@ -191,21 +140,15 @@ Enviado desde www.rentaflux.com
                     <div className="text-xs text-emerald-600">Ingresos Mensuales</div>
                     <div className="text-lg font-bold text-emerald-800 animate-pulse">€12,450</div>
                   </div>
-                  <div className="w-8 h-8 flex items-center justify-center">
-                    <div className="w-6 h-6 text-emerald-500 animate-bounce">
-                      ↗️
-                    </div>
-                  </div>
+                  <span className="text-emerald-500 text-xl">↗️</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                   <div>
                     <div className="text-xs text-blue-600">Ocupación</div>
                     <div className="text-lg font-bold text-blue-800 animate-pulse">92%</div>
                   </div>
-                  <div className="w-8 h-8 flex items-center justify-center">
-                    <div className="w-6 h-3 bg-blue-500 rounded-sm relative overflow-hidden">
-                      <div className="absolute top-0 left-0 h-full w-4 bg-blue-300 animate-pulse"></div>
-                    </div>
+                  <div className="w-8 h-3 bg-blue-500 rounded-sm relative overflow-hidden">
+                    <div className="absolute top-0 left-0 h-full w-4 bg-blue-300 animate-pulse" />
                   </div>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
@@ -213,9 +156,7 @@ Enviado desde www.rentaflux.com
                     <div className="text-xs text-orange-600">Alertas</div>
                     <div className="text-lg font-bold text-orange-800 animate-pulse">2</div>
                   </div>
-                  <div className="w-8 h-8 flex items-center justify-center">
-                    <div className="w-6 h-6 border-2 border-orange-500 rounded-full animate-ping"></div>
-                  </div>
+                  <div className="w-6 h-6 border-2 border-orange-500 rounded-full animate-ping" />
                 </div>
               </div>
             </div>
@@ -230,17 +171,17 @@ Enviado desde www.rentaflux.com
             Todo lo que necesitas en una sola app
           </h2>
           <p className="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
-            Desde gestión básica hasta análisis avanzados con IA
+            Gestión completa de propiedades, inquilinos y mantenimiento
           </p>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="text-center">
               <CardHeader>
                 <Building2 className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                 <CardTitle>Gestión de Propiedades</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Organiza propiedades con múltiples unidades e inquilinos</p>
+                <p className="text-gray-600">Organiza propiedades con múltiples unidades e inquilinos en un solo lugar</p>
               </CardContent>
             </Card>
 
@@ -250,17 +191,17 @@ Enviado desde www.rentaflux.com
                 <CardTitle>Gestión de Inquilinos</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Administra inquilinos, contratos y seguimiento de pagos</p>
+                <p className="text-gray-600">Administra inquilinos, contratos y seguimiento de pagos fácilmente</p>
               </CardContent>
             </Card>
 
             <Card className="text-center">
               <CardHeader>
-                <CreditCard className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                <CardTitle>Pagos Automáticos</CardTitle>
+                <ClipboardList className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                <CardTitle>Registro de Pagos</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Recibe pagos directamente a tu cuenta desde la app</p>
+                <p className="text-gray-600">Lleva un control claro de todos los pagos recibidos y pendientes</p>
               </CardContent>
             </Card>
 
@@ -276,21 +217,11 @@ Enviado desde www.rentaflux.com
 
             <Card className="text-center">
               <CardHeader>
-                <Calculator className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-                <CardTitle>Contabilidad Premium</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Contabilidad completa y reportes automáticos</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardHeader>
                 <MessageCircle className="h-12 w-12 text-orange-600 mx-auto mb-4" />
                 <CardTitle>Asistente IA</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Asistente inteligente para consultas y análisis avanzados</p>
+                <p className="text-gray-600">Consulta información de tus propiedades e inquilinos con lenguaje natural</p>
               </CardContent>
             </Card>
 
@@ -300,127 +231,7 @@ Enviado desde www.rentaflux.com
                 <CardTitle>Reportes y Analytics</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Análisis profundos de rentabilidad y reportes automáticos</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardHeader>
-                <FileText className="h-12 w-12 text-teal-600 mx-auto mb-4" />
-                <CardTitle>Exportación de Datos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Exporta todos tus datos en PDF o Excel</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4">
-            Planes para cada necesidad
-          </h2>
-          <p className="text-gray-600 text-center mb-12">
-            Desde una propiedad hasta portfolios ilimitados
-          </p>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Free Plan */}
-            <Card className="relative">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  Plan Gratuito
-                  <Badge variant="secondary">Gratis</Badge>
-                </CardTitle>
-                <CardDescription>
-                  <span className="text-3xl font-bold">$0</span>
-                  <span className="text-gray-600">/mes</span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  {features.free.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button className="w-full mt-6" variant="outline" onClick={() => {
-                  localStorage.setItem('rentaflux_has_visited', 'true');
-                  navigate("/login");
-                }}>
-                  Comenzar Gratis
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Premium Plan */}
-            <Card className="relative border-blue-500 border-2">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-blue-600 text-white">Más Popular</Badge>
-              </div>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  Plan Premium
-                  <Crown className="h-5 w-5 text-yellow-500" />
-                </CardTitle>
-                <CardDescription>
-                  <span className="text-3xl font-bold">Con invitación - contáctanos</span>
-
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  {features.premium.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="w-full mt-6 bg-blue-600 hover:bg-blue-700"
-                  onClick={() => {
-                    window.location.hash = 'contacto-premium';
-                    document.getElementById('contacto')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                >
-                  Quiero ser Premium
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Tenant Plan */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  App para Inquilinos
-                  <Smartphone className="h-5 w-5 text-blue-600" />
-                </CardTitle>
-                <CardDescription>
-                  <span className="text-3xl font-bold">Gratis</span>
-                  <span className="text-gray-600"> para inquilinos</span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  {features.tenant.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button className="w-full mt-6" variant="outline" onClick={() => {
-                  localStorage.setItem('rentaflux_has_visited', 'true');
-                  navigate("/tenant-signup");
-                }}>
-                  Acceso con Código
-                </Button>
+                <p className="text-gray-600">Análisis de rentabilidad y exportación de datos en PDF o Excel</p>
               </CardContent>
             </Card>
           </div>
@@ -428,7 +239,7 @@ Enviado desde www.rentaflux.com
       </section>
 
       {/* Mobile Apps Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">
             También disponible como app móvil
@@ -474,7 +285,7 @@ Enviado desde www.rentaflux.com
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-4">Contacto</h2>
           <p className="text-gray-600 text-center mb-8 max-w-2xl mx-auto">
-            Envíanos un mensaje y te responderemos a la brevedad.
+            ¿Tienes preguntas o quieres saber más sobre nuestros servicios? Escríbenos.
           </p>
           <div className="max-w-2xl mx-auto">
             <Card className="p-6">
@@ -502,10 +313,6 @@ Enviado desde www.rentaflux.com
                     placeholder="Cuéntanos cómo podemos ayudarte"
                     rows={5}
                     required
-                    defaultValue={window.location.hash === '#contacto-premium' ?
-                      'Hola, me interesa obtener acceso a RentaFlux Premium. Por favor, contáctenme para más información sobre los planes y precios.' :
-                      ''
-                    }
                   />
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -527,9 +334,7 @@ Enviado desde www.rentaflux.com
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <h3 className="text-xl font-bold">RentaFlux</h3>
-              </div>
+              <h3 className="text-xl font-bold mb-4">RentaFlux</h3>
               <p className="text-gray-400">
                 La plataforma completa para la gestión de propiedades en alquiler.
               </p>
@@ -538,14 +343,12 @@ Enviado desde www.rentaflux.com
               <h4 className="font-semibold mb-4">Producto</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>Características</li>
-                <li>Precios</li>
                 <li className="cursor-pointer hover:text-white" onClick={handleDemoClick}>Demo</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Soporte</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>Centro de Ayuda</li>
                 <li><a href="#contacto" className="hover:text-white">Contacto</a></li>
               </ul>
             </div>
@@ -565,9 +368,6 @@ Enviado desde www.rentaflux.com
           </div>
         </div>
       </footer>
-
-      {/* Cookie Banner */}
-      <CookieBanner />
     </div>
   );
 };

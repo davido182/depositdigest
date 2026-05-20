@@ -1,5 +1,6 @@
 import { BaseService } from './BaseService';
 import { Tenant } from '@/types';
+import { normalizeTenant, normalizeArray } from '@/types/database';
 
 export class SupabaseTenantService extends BaseService {
   async getTenants(): Promise<Tenant[]> {
@@ -29,7 +30,8 @@ export class SupabaseTenantService extends BaseService {
     // Get property names for tenants that have property_id
     const propertyIds = tenantsData
       .filter(tenant => tenant.property_id)
-      .map(tenant => tenant.property_id);
+      .map(tenant => tenant.property_id)
+      .filter((id): id is string => id !== null);
 
     let propertiesData: any[] = [];
     if (propertyIds.length > 0) {
@@ -44,61 +46,23 @@ export class SupabaseTenantService extends BaseService {
       }
     }
 
-    // Transform tenant data using available fields
-    return tenantsData
-      .filter(tenant => {
+    // Transform tenant data using normalization helper
+    return normalizeArray(
+      tenantsData.filter((tenant: any) => {
         // Check both name and first_name fields
         const hasName = (tenant?.name && tenant.name.trim() !== '') || 
                        (tenant?.first_name && tenant.first_name.trim() !== '');
-        // Removed console.log for security
         return hasName;
-      })
-      .map(tenant => {
-        // Use first_name as primary, fallback to name
-        const fullName = tenant.first_name || tenant.name || 'Sin nombre';
-        // Removed console.log for security`);
-        
+      }).map((tenant: any) => {
         // Get property name from properties data
         const property = propertiesData.find(p => p.id === tenant.property_id);
-        const propertyName = property?.name || tenant.property_name || '';
-        const propertyId = tenant.property_id || '';
-        
-        // Use unit_number from DB (will work after SQL execution)
-        const unitNumber = tenant.unit_number || '';
-
-        // Removed console.log for security
-
         return {
-          id: tenant.id,
-          user_id: tenant.landlord_id || '',
-          landlord_id: tenant.landlord_id,
-          name: fullName,
-          email: tenant.email || '',
-          phone: tenant.phone || '',
-          lease_start_date: tenant.lease_start_date || '',
-          lease_end_date: tenant.lease_end_date || '',
-          rent_amount: Number(tenant.rent_amount || 0),
-          status: tenant.status || 'active',
-          unit_number: unitNumber,
-          property_id: propertyId,
-          property_name: propertyName,
-          created_at: tenant.created_at,
-          updated_at: tenant.updated_at,
-
-          // Legacy aliases for forms
-          unit: unitNumber,
-          moveInDate: tenant.lease_start_date || '',
-          leaseEndDate: tenant.lease_end_date || '',
-          rentAmount: Number(tenant.rent_amount || 0),
-          depositAmount: 0,
-          paymentHistory: [],
-          createdAt: tenant.created_at,
-          updatedAt: tenant.updated_at,
-          propertyName: propertyName,
-          propertyAddress: '',
-          notes: (tenant as any).notes || '',
+          ...tenant,
+          property_name: property?.name || tenant.property_name || '',
         };
-      });
+      }),
+      normalizeTenant
+    );
   }
 
   async createTenant(tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt' | 'paymentHistory'>): Promise<Tenant> {
@@ -118,11 +82,10 @@ export class SupabaseTenantService extends BaseService {
       throw new Error('El nombre del inquilino es requerido');
     }
 
-    const insertData = {
+    const insertData: any = {
+      user_id: user.id,
       landlord_id: user.id,
-      first_name: tenantName, // BD usa first_name, no name
-      last_name: '', // Campo requerido, usar string vacío por defecto
-      name: tenantName, // Mantener ambos por compatibilidad
+      name: tenantName,
       email: tenant.email?.trim() || '',
       phone: tenant.phone?.trim() || null,
       lease_start_date: tenant.moveInDate || new Date().toISOString().split('T')[0],
@@ -151,7 +114,7 @@ export class SupabaseTenantService extends BaseService {
 
     // SINCRONIZACIÓN BIDIRECCIONAL: Actualizar tabla units también
     if (unitNumber && unitNumber.trim() !== '' && propertyId && propertyId.trim() !== '') {
-      await this.syncUnitsTableFromTenant(data.id, unitNumber, propertyId, user.id);
+      await this.syncUnitsTableFromTenant(data.id, unitNumber, propertyId);
     }
 
     return this.formatTenantResponse(data, unitNumber || '');
@@ -265,7 +228,7 @@ export class SupabaseTenantService extends BaseService {
 
     // SINCRONIZACIÓN BIDIRECCIONAL: Actualizar tabla units también
     if (updates.unit !== undefined || updates.propertyId !== undefined) {
-      await this.syncUnitsTableFromTenant(id, updates.unit, updates.propertyId, user.id);
+      await this.syncUnitsTableFromTenant(id, updates.unit, updates.propertyId);
     }
 
     return this.formatTenantResponse(data, updates.unit || data.unit_number || '');
@@ -273,49 +236,17 @@ export class SupabaseTenantService extends BaseService {
 
   // Helper method to format tenant response consistently
   private formatTenantResponse(data: any, unitNumber: string = ''): Tenant {
-    const finalUnitNumber = unitNumber || data.unit_number || '';
-    const finalPropertyName = data.property_name || '';
-    
-    // Use first_name as primary, fallback to name
-    const fullName = data.first_name || data.name || 'Sin nombre';
-    // Formatting tenant response
-    
-    return {
-      id: data.id,
-      user_id: data.landlord_id || '',
-      landlord_id: data.landlord_id,
-      name: fullName,
-      email: data.email || '',
-      phone: data.phone || '',
-      lease_start_date: data.lease_start_date || '',
-      lease_end_date: data.lease_end_date || '',
-      rent_amount: Number(data.rent_amount || 0),
-      status: data.status || 'active',
-      unit_number: finalUnitNumber,
-      property_id: data.property_id,
-      property_name: finalPropertyName,
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-
-      // Legacy aliases for forms - CRITICAL for form display
-      unit: finalUnitNumber,
-      moveInDate: data.lease_start_date || '',
-      leaseEndDate: data.lease_end_date || '',
-      rentAmount: Number(data.rent_amount || 0),
-      depositAmount: 0, // Column doesn't exist in database
-      paymentHistory: [],
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-      propertyName: finalPropertyName,
-      propertyAddress: '',
-      notes: data.notes || '',
-    };
+    // Use normalization helper for consistency
+    return normalizeTenant({
+      ...data,
+      unit_number: unitNumber || data.unit_number || '',
+    });
   }
 
 
 
   // Método para sincronizar tabla units cuando se edita un inquilino
-  private async syncUnitsTableFromTenant(tenantId: string, unitNumber?: string, propertyId?: string, userId?: string): Promise<void> {
+  private async syncUnitsTableFromTenant(tenantId: string, unitNumber?: string, propertyId?: string): Promise<void> {
     try {
       // Removed console.log for security
 
@@ -376,7 +307,7 @@ export class SupabaseTenantService extends BaseService {
     const user = await this.ensureAuthenticated();
 
     // Primero desasignar de units
-    await this.syncUnitsTableFromTenant(id, '', '', user.id);
+    await this.syncUnitsTableFromTenant(id, '', '');
 
     const { error } = await this.supabase
       .from('tenants')

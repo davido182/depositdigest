@@ -28,6 +28,7 @@ import { ValidationService } from "@/services/ValidationService";
 import { validatePhone, sanitizeInput } from "@/utils/validation";
 import { supabase } from "@/integrations/supabase/client";
 import { propertyService } from "@/services/PropertyService";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
 interface TenantEditFormProps {
   tenant: Tenant | null;
@@ -42,7 +43,10 @@ export function TenantEditForm({
   onClose,
   onSave,
 }: TenantEditFormProps) {
-  // Helper function to format date for input (YYYY-MM-DD)
+  // Usar el contexto de preferencias del usuario
+  const { formatDate } = useUserPreferences();
+
+  // Helper function to format date for input (YYYY-MM-DD) - siempre ISO para el input HTML
   const formatDateForInput = (dateString: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -50,12 +54,10 @@ export function TenantEditForm({
     return date.toISOString().split("T")[0];
   };
 
-  // Helper function to format date for display (DD/MM/YYYY)
+  // Helper function to format date for display - usa la preferencia del usuario
   const formatDateForDisplay = (dateString: string) => {
     if (!dateString) return "";
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "";
-    return date.toLocaleDateString('es-ES');
+    return formatDate(dateString); // Usa el formato configurado por el usuario
   };
 
   const emptyTenant: Tenant = {
@@ -96,57 +98,62 @@ export function TenantEditForm({
       // Always load properties first
       loadProperties();
 
-      if (tenant) {
-        // Loading existing tenant data
+      // Usar setTimeout para asegurar que los datos se carguen después del render
+      const timer = setTimeout(() => {
+        if (tenant) {
+          // Loading existing tenant data
 
-        // Set form data immediately with detailed logging
-        // Removed console.log for security
-
-        // Asegurar que las fechas se formateen correctamente
-        const formattedTenant = {
-          ...tenant,
-          moveInDate: tenant.moveInDate || tenant.lease_start_date || '',
-          leaseEndDate: tenant.leaseEndDate || tenant.lease_end_date || '',
-          rentAmount: tenant.rentAmount || tenant.rent_amount || 0,
-          unit: tenant.unit || tenant.unit_number || '',
-          propertyName: tenant.propertyName || tenant.property_name || ''
-        };
-
-        // Removed console.log for security
-
-        setFormData({ ...formattedTenant });
-        setHasDeposit((tenant.depositAmount || 0) > 0);
-        setErrors({});
-        setContractFile(null);
-        setExistingContract(null);
-
-        // Set property ID from tenant data
-        const tenantPropertyId = tenant.property_id || '';
-        // Removed console.log for security
-        setSelectedPropertyId(tenantPropertyId);
-
-        // Load units for the tenant's property if it exists
-        if (tenantPropertyId) {
+          // Set form data immediately with detailed logging
           // Removed console.log for security
-          loadUnitsForProperty(tenantPropertyId);
-        } else if (tenant.unit && tenant.unit !== 'Sin unidad') {
-          // Fallback: try to find property by unit number
+
+          // Asegurar que las fechas se formateen correctamente
+          const formattedTenant = {
+            ...tenant,
+            moveInDate: tenant.moveInDate || tenant.lease_start_date || '',
+            leaseEndDate: tenant.leaseEndDate || tenant.lease_end_date || '',
+            rentAmount: tenant.rentAmount || tenant.rent_amount || 0,
+            unit: tenant.unit || tenant.unit_number || '',
+            propertyName: tenant.propertyName || tenant.property_name || ''
+          };
+
           // Removed console.log for security
-          findPropertyByUnit(tenant.unit);
+
+          setFormData({ ...formattedTenant });
+          setHasDeposit((tenant.depositAmount || 0) > 0);
+          setErrors({});
+          setContractFile(null);
+          setExistingContract(null);
+
+          // Set property ID from tenant data
+          const tenantPropertyId = tenant.property_id || '';
+          // Removed console.log for security
+          setSelectedPropertyId(tenantPropertyId);
+
+          // Load units for the tenant's property if it exists
+          if (tenantPropertyId) {
+            // Removed console.log for security
+            loadUnitsForProperty(tenantPropertyId);
+          } else if (tenant.unit && tenant.unit !== 'Sin unidad') {
+            // Fallback: try to find property by unit number
+            // Removed console.log for security
+            findPropertyByUnit(tenant.unit);
+          } else {
+            // Removed console.log for security
+            loadAvailableUnits();
+          }
         } else {
           // Removed console.log for security
+          setFormData({ ...emptyTenant });
+          setHasDeposit(false);
+          setSelectedPropertyId('');
+          setErrors({});
+          setContractFile(null);
+          setExistingContract(null);
           loadAvailableUnits();
         }
-      } else {
-        // Removed console.log for security
-        setFormData({ ...emptyTenant });
-        setHasDeposit(false);
-        setSelectedPropertyId('');
-        setErrors({});
-        setContractFile(null);
-        setExistingContract(null);
-        loadAvailableUnits();
-      }
+      }, 50); // Pequeño delay de 50ms para asegurar que el modal esté completamente renderizado
+
+      return () => clearTimeout(timer);
     }
   }, [isOpen, tenant]);
 

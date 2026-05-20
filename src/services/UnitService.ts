@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { BaseService } from "./BaseService";
-import { Unit } from "@/types/index";
+import { Unit, normalizeUnit, normalizeArray, unitToSupabase } from '@/types/database';
 
 export class UnitService extends BaseService {
   async getUnitsByProperty(propertyId: string): Promise<Unit[]> {
@@ -34,19 +34,22 @@ export class UnitService extends BaseService {
       throw error;
     }
 
-    // Transform data to include tenant information
-    return (data || []).map(unit => {
-      const tenantName = unit.tenants?.name || 
-                        `${unit.tenants?.first_name || ''} ${unit.tenants?.last_name || ''}`.trim() || 
-                        null;
-      
-      return {
-        ...unit,
-        tenant_name: tenantName,
-        tenant_email: unit.tenants?.email || null,
-        tenant_status: unit.tenants?.status || null,
-      };
-    });
+    // Transform data to include tenant information and normalize
+    return normalizeArray(
+      (data || []).map(unit => {
+        const tenantName = unit.tenants?.name || 
+                          `${unit.tenants?.first_name || ''} ${unit.tenants?.last_name || ''}`.trim() || 
+                          null;
+        
+        return {
+          ...unit,
+          tenant_name: tenantName,
+          tenant_email: unit.tenants?.email || null,
+          tenant_status: unit.tenants?.status || null,
+        };
+      }),
+      normalizeUnit
+    );
   }
 
   async createUnit(unit: Omit<Unit, 'id' | 'created_at' | 'updated_at'>): Promise<Unit> {
@@ -66,15 +69,15 @@ export class UnitService extends BaseService {
 
     // Removed console.log for security
 
+    // Use unitToSupabase helper to prepare data
+    const insertData = {
+      ...unitToSupabase(unit),
+      user_id: user.id, // Add user_id for the new column
+    };
+
     const { data, error } = await supabase
       .from('units')
-      .insert({
-        property_id: unit.property_id,
-        unit_number: unit.unit_number,
-        monthly_rent: unit.monthly_rent || unit.rent_amount || 0,
-        is_available: unit.is_available !== false,
-        tenant_id: unit.tenant_id || null
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -84,7 +87,7 @@ export class UnitService extends BaseService {
     }
 
     // Removed console.log for security
-    return data;
+    return normalizeUnit(data);
   }
 
   async updateUnit(id: string, updates: Partial<Unit>): Promise<Unit> {
@@ -107,13 +110,34 @@ export class UnitService extends BaseService {
 
     // Removed console.log for security
     
-    const updatePayload = {
-      ...(updates.unit_number && { unit_number: updates.unit_number }),
-      ...(updates.monthly_rent !== undefined && { monthly_rent: updates.monthly_rent }),
-      ...(updates.rent_amount !== undefined && { monthly_rent: updates.rent_amount }),
-      ...(updates.is_available !== undefined && { is_available: updates.is_available }),
-      ...(updates.tenant_id !== undefined && { tenant_id: updates.tenant_id })
-    };
+    // Use hybrid type support for updates
+    const updatePayload: any = {};
+    
+    if (updates.unit_number !== undefined) {
+      updatePayload.unit_number = updates.unit_number;
+    }
+    
+    // Support both monthly_rent and rent_amount
+    if (updates.monthly_rent !== undefined) {
+      updatePayload.monthly_rent = updates.monthly_rent;
+      updatePayload.rent_amount = updates.monthly_rent; // Keep both in sync
+    } else if (updates.rent_amount !== undefined) {
+      updatePayload.monthly_rent = updates.rent_amount;
+      updatePayload.rent_amount = updates.rent_amount;
+    } else if (updates.rentAmount !== undefined) {
+      updatePayload.monthly_rent = updates.rentAmount;
+      updatePayload.rent_amount = updates.rentAmount;
+    }
+    
+    if (updates.is_available !== undefined) {
+      updatePayload.is_available = updates.is_available;
+    } else if (updates.isAvailable !== undefined) {
+      updatePayload.is_available = updates.isAvailable;
+    }
+    
+    if (updates.tenant_id !== undefined) {
+      updatePayload.tenant_id = updates.tenant_id;
+    }
     
     // Removed console.log for security
 
@@ -129,7 +153,7 @@ export class UnitService extends BaseService {
       throw error;
     }
 
-    return data;
+    return normalizeUnit(data);
   }
 
   async deleteUnit(id: string): Promise<boolean> {

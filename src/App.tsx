@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { UserPreferencesProvider } from "@/contexts/UserPreferencesContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AuthDebugger from "@/components/AuthDebugger";
 import { DevToolsPanel } from "@/hooks/useDevTools";
@@ -118,8 +119,9 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <BrowserRouter>
+        <UserPreferencesProvider>
+          <TooltipProvider>
+            <BrowserRouter>
             <Routes>
               <Route path="/" element={<SmartHome />} />
               <Route path="/landing" element={<Landing />} />
@@ -155,12 +157,13 @@ const App = () => {
             </Routes>
             <AuthDebugger />
             {/* <DebugCleaner /> */}
+            <Toaster />
+            <Sonner position="top-right" />
+            {/* <DevToolsPanel /> */}
+            <DevErrorNotice />
           </BrowserRouter>
-          <Toaster />
-          <Sonner position="top-right" />
-          {/* <DevToolsPanel /> */}
-          <DevErrorNotice />
-        </TooltipProvider>
+          </TooltipProvider>
+        </UserPreferencesProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

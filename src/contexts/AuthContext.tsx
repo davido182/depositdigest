@@ -171,7 +171,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    });
     if (error) throw error;
     return data;
   };
@@ -278,6 +280,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setIsInitialized(true);
             break;
             
+          case 'PASSWORD_RECOVERY':
+            console.log('🔑 AuthContext: Modo recuperación de contraseña');
+            if (session?.user) {
+              setUser(session.user);
+              setSession(session);
+              setIsPasswordRecovery(true);
+              setIsLoading(false);
+              setIsInitialized(true);
+              // Redirect to login page so the user can set a new password
+              window.location.href = '/login';
+            }
+            break;
+
           case 'TOKEN_REFRESHED':
             if (session?.user) {
               console.log('🔄 AuthContext: Token refrescado');

@@ -45,14 +45,8 @@ const Properties = () => {
         const dbProperties = await propertyService.getProperties();
         // Removed console.log for security
 
-        // Import tenant service
-        const { tenantService } = await import('@/services/TenantService');
-        
-        // Get tenants and units to calculate occupancy
-        const [tenantsData, unitsResult] = await Promise.all([
-          tenantService.getTenants(),
-          supabase.from('units').select('*')
-        ]);
+        // Get units to calculate occupancy
+        const unitsResult = await supabase.from('units').select('*');
 
         if (unitsResult.error) {
           console.error("Error loading units:", unitsResult.error);
@@ -60,7 +54,6 @@ const Properties = () => {
           return;
         }
 
-        const tenants = tenantsData || [];
         const units = unitsResult.data || [];
 
         // Removed console.log for security
@@ -149,11 +142,8 @@ const Properties = () => {
       const dbProperties = await propertyService.getProperties();
       // Removed console.log for security
 
-      // Get tenants and units to calculate occupancy
-      const [tenantsData, unitsResult] = await Promise.all([
-        tenantService.getTenants(),
-        supabase.from('units').select('*')
-      ]);
+      // Get units to calculate occupancy
+      const unitsResult = await supabase.from('units').select('*');
 
       if (unitsResult.error) {
         console.error("Error loading units:", unitsResult.error);
@@ -161,7 +151,6 @@ const Properties = () => {
         return;
       }
 
-      const tenants = tenantsData || [];
       const units = unitsResult.data || [];
 
       // Map database properties to component format and calculate occupancy

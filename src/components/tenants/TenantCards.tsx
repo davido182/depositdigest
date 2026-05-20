@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, MapPin, Home, DollarSign, Calendar } from "lucide-react";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
 interface TenantCardsProps {
   tenants: Tenant[];
@@ -11,6 +12,7 @@ interface TenantCardsProps {
 }
 
 export function TenantCards({ tenants, onEditTenant, onDeleteTenant }: TenantCardsProps) {
+  const { formatDate } = useUserPreferences();
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -69,13 +71,13 @@ export function TenantCards({ tenants, onEditTenant, onDeleteTenant }: TenantCar
                   {tenant.moveInDate && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" />
-                      <span>Entrada: {new Date(tenant.moveInDate).toLocaleDateString('es-ES')}</span>
+                      <span>Entrada: {formatDate(tenant.moveInDate)}</span>
                     </div>
                   )}
                   {tenant.leaseEndDate && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" />
-                      <span>Salida: {new Date(tenant.leaseEndDate).toLocaleDateString('es-ES')}</span>
+                      <span>Salida: {formatDate(tenant.leaseEndDate)}</span>
                     </div>
                   )}
                   {!tenant.moveInDate && !tenant.leaseEndDate && (

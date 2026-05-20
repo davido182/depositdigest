@@ -40,10 +40,10 @@ export const CookieBanner = () => {
           
           <div className="flex-1">
             <h3 className="font-semibold text-gray-900 mb-2">
-              💾 Almacenamiento Local
+              🍪 Aviso de Privacidad
             </h3>
             <p className="text-sm text-gray-700 mb-4">
-              Utilizamos tecnologías esenciales para mantener tu sesión activa y guardar tus preferencias.
+              Usamos almacenamiento local para mantener tu sesión activa. No utilizamos cookies de seguimiento ni compartimos tus datos con terceros.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
