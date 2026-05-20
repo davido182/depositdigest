@@ -73,9 +73,8 @@ export function UnitManagementModal({
       // Load available tenants (those without assigned units)
       const { data: tenantsData, error } = await supabase
         .from('tenants')
-        .select('*')
-        .eq('is_active', true)
-        .is('unit_id', null);
+        .select('id, name, email, unit_number, status, rent_amount')
+        .eq('status', 'active');
 
       if (error) {
         console.error('Error loading tenants:', error);

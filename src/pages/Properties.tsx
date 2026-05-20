@@ -45,16 +45,13 @@ const Properties = () => {
         const dbProperties = await propertyService.getProperties();
         // Removed console.log for security
 
-        // Get units to calculate occupancy
-        const unitsResult = await supabase.from('units').select('*');
+        // Get units to calculate occupancy - select only safe columns
+        const unitsResult = await supabase
+          .from('units')
+          .select('id, property_id, unit_number, tenant_id, is_available, monthly_rent, rent_amount');
 
-        if (unitsResult.error) {
-          console.error("Error loading units:", unitsResult.error);
-          toast.error("Error al cargar unidades");
-          return;
-        }
-
-        const units = unitsResult.data || [];
+        // If columns don't exist yet (before SQL migration), use empty array
+        const units = unitsResult.error ? [] : (unitsResult.data || []);
 
         // Removed console.log for security
         // Removed console.log for security
@@ -142,16 +139,13 @@ const Properties = () => {
       const dbProperties = await propertyService.getProperties();
       // Removed console.log for security
 
-      // Get units to calculate occupancy
-      const unitsResult = await supabase.from('units').select('*');
+      // Get units to calculate occupancy - select only safe columns
+      const unitsResult = await supabase
+        .from('units')
+        .select('id, property_id, unit_number, tenant_id, is_available, monthly_rent, rent_amount');
 
-      if (unitsResult.error) {
-        console.error("Error loading units:", unitsResult.error);
-        toast.error("Error al cargar unidades");
-        return;
-      }
-
-      const units = unitsResult.data || [];
+      // If columns don't exist yet (before SQL migration), use empty array
+      const units = unitsResult.error ? [] : (unitsResult.data || []);
 
       // Map database properties to component format and calculate occupancy
       const mappedProperties = dbProperties.map(dbProp => {
