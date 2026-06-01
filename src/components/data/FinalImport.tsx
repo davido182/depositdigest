@@ -23,9 +23,9 @@ export function FinalImport({ isOpen, onClose, onImportComplete }: FinalImportPr
     let filename = '';
 
     if (type === 'inquilinos') {
-      csvContent = `name,email,phone,unit_number,lease_start_date,lease_end_date,rent_amount,status,notes
-Juan Pérez,juan@email.com,555-0123,101,2024-01-01,2024-12-31,1200,active,Inquilino puntual
-María García,maria@email.com,555-0124,102,2024-02-01,2024-12-31,1300,active,Excelente inquilina`;
+      csvContent = `first_name,last_name,email,phone,unit_number,lease_start_date,lease_end_date,rent_amount,status,notes
+Juan,Pérez,juan@email.com,555-0123,101,2024-01-01,2024-12-31,1200,active,Inquilino puntual
+María,García,maria@email.com,555-0124,102,2024-02-01,2024-12-31,1300,active,Excelente inquilina`;
       filename = 'plantilla_inquilinos.csv';
     } else if (type === 'propiedades') {
       csvContent = `name,address,description,total_units
@@ -91,22 +91,28 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
     if (!user) throw new Error('Usuario no autenticado');
 
     const tenants = tenantRows.map(row => {
-      // Mantener el nombre completo sin dividir
-      const fullName = (row.name || 'Sin nombre').trim();
+      // Support both old (name) and new (first_name + last_name) formats
+      const firstName = (row.first_name || row.name || 'Sin nombre').trim();
+      const lastName = (row.last_name || '').trim();
+      const fullName = lastName ? `${firstName} ${lastName}` : firstName;
 
       return {
         landlord_id: user.id,
-        first_name: fullName, // Guardar nombre completo en first_name
-        last_name: '', // Dejar last_name vacío
+        user_id: user.id,
+        first_name: firstName,
+        last_name: lastName || null,
+        name: fullName,
         email: row.email || null,
         phone: row.phone || null,
-        move_in_date: row.move_in_date || row.lease_start_date || null,
-        move_out_date: row.move_out_date || row.lease_end_date || null,
-        monthly_rent: parseFloat(row.monthly_rent || row.rent_amount || '0') || 0,
+        lease_start_date: row.lease_start_date || row.move_in_date || new Date().toISOString().split('T')[0],
+        lease_end_date: row.lease_end_date || row.move_out_date || null,
+        rent_amount: parseFloat(row.rent_amount || row.monthly_rent || '0') || 0,
+        monthly_rent: parseFloat(row.rent_amount || row.monthly_rent || '0') || 0,
         deposit_paid: parseFloat(row.deposit_paid || row.deposit_amount || '0') || 0,
+        status: row.status || 'active',
         is_active: (row.status || 'active') === 'active',
-        notes: row.notes || null
-        // unit_id: null // Por ahora sin unidad específica
+        unit_number: row.unit_number || null,
+        notes: row.notes || null,
       };
     });
 
@@ -231,9 +237,8 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
       let paymentRows = [];
 
       // Detectar si es archivo de inquilinos
-      if (headers.includes('name') && headers.includes('email') && !headers.includes('tenant_email')) {
-        tenantRows = data.filter(row => row.name && row.email);
-        // Removed console.log for security
+      if ((headers.includes('first_name') || headers.includes('name')) && headers.includes('email') && !headers.includes('tenant_email')) {
+        tenantRows = data.filter(row => row.first_name || row.name);
       }
 
       // Detectar si es archivo de propiedades
@@ -422,13 +427,13 @@ maria@email.com,1300,2024-01-01,cash,completed,Pago enero`;
             <ul className="text-sm text-blue-800 space-y-1">
               <li>• Descarga la plantilla del tipo que necesites</li>
               <li>• <strong>Campos obligatorios:</strong></li>
-              <li>&nbsp;&nbsp;- Inquilinos: name + email</li>
-              <li>&nbsp;&nbsp;- Propiedades: name</li>
-              <li>&nbsp;&nbsp;- Pagos: tenant_email + amount</li>
+              <li>&nbsp;&nbsp;- Inquilinos: <code>first_name</code> + <code>email</code></li>
+              <li>&nbsp;&nbsp;- Propiedades: <code>name</code></li>
+              <li>&nbsp;&nbsp;- Pagos: <code>tenant_email</code> + <code>amount</code></li>
+              <li>• El campo <code>last_name</code> (apellidos) es opcional pero recomendado</li>
               <li>• <strong>Campos opcionales:</strong> Puedes dejarlos vacíos sin problema</li>
               <li>• Completa los datos y guarda como CSV</li>
               <li>• Los datos aparecerán automáticamente en la sección correspondiente</li>
-              <li>• Si hay errores, el mensaje te dirá exactamente qué está mal</li>
             </ul>
           </div>
         </div>

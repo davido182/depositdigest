@@ -52,12 +52,9 @@ export class SupabaseTenantService extends BaseService {
     }
 
     // Transform tenant data using normalization helper
+    // Include all tenants - normalizeTenant will build name from first_name+last_name if needed
     return normalizeArray(
-      tenantsData.filter((tenant: any) => {
-        const hasName = (tenant?.name && tenant.name.trim() !== '') || 
-                       (tenant?.first_name && tenant.first_name.trim() !== '');
-        return hasName;
-      }).map((tenant: any) => {
+      tenantsData.map((tenant: any) => {
         const property = propertiesData.find(p => p.id === tenant.property_id);
         return {
           ...tenant,
@@ -81,20 +78,28 @@ export class SupabaseTenantService extends BaseService {
 
     // Validar que el nombre no esté vacío
     const tenantName = tenant.name?.trim();
-    if (!tenantName || tenantName === '') {
+    const firstName = (tenant as any).first_name?.trim() || tenantName?.split(' ')[0] || '';
+    const lastName = (tenant as any).last_name?.trim() || tenantName?.split(' ').slice(1).join(' ') || '';
+    const fullName = tenantName || (lastName ? `${firstName} ${lastName}` : firstName);
+
+    if (!firstName) {
       throw new Error('El nombre del inquilino es requerido');
     }
 
     const insertData: any = {
       user_id: user.id,
       landlord_id: user.id,
-      name: tenantName,
+      name: fullName,
+      first_name: firstName,
+      last_name: lastName || null,
       email: tenant.email?.trim() || '',
       phone: tenant.phone?.trim() || null,
       lease_start_date: tenant.moveInDate || new Date().toISOString().split('T')[0],
       lease_end_date: tenant.leaseEndDate || null,
       rent_amount: Number(tenant.rentAmount || 0),
+      monthly_rent: Number(tenant.rentAmount || 0),
       status: tenant.status || 'active',
+      is_active: tenant.status !== 'inactive',
       property_id: propertyId,
       property_name: propertyName,
       unit_number: unitNumber,
@@ -133,10 +138,13 @@ export class SupabaseTenantService extends BaseService {
     const updateData: any = {};
 
     // Basic fields with null safety
-    if (updates.name !== undefined) {
-      const updatedName = updates.name?.trim() || 'Sin nombre';
-      updateData.name = updatedName;
-      updateData.first_name = updatedName; // Sincronizar ambos campos
+    if (updates.first_name !== undefined || updates.last_name !== undefined || updates.name !== undefined) {
+      const firstName = (updates.first_name || updates.name?.split(' ')[0] || '').trim();
+      const lastName = (updates.last_name ?? updates.name?.split(' ').slice(1).join(' ') ?? '').trim();
+      const fullName = lastName ? `${firstName} ${lastName}` : firstName;
+      updateData.first_name = firstName || 'Sin nombre';
+      updateData.last_name = lastName || null;
+      updateData.name = fullName || 'Sin nombre';
     }
     if (updates.email !== undefined) updateData.email = updates.email?.trim() || null;
     if (updates.phone !== undefined) updateData.phone = updates.phone?.trim() || null;

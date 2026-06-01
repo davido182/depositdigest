@@ -5,6 +5,8 @@ export interface Tenant {
   user_id: string; // Database field (required)
   landlord_id: string | null; // Database field
   name: string;
+  first_name?: string | null; // Database field
+  last_name?: string | null;  // Database field
   email: string;
   phone: string | null;
   lease_start_date: string; // Database field (required)

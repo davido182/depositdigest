@@ -62,15 +62,28 @@ export function TenantEditForm({
 
   const emptyTenant: Tenant = {
     id: "",
+    user_id: "",
+    landlord_id: null,
     name: "",
+    first_name: "",
+    last_name: "",
     email: "",
-    phone: "",
+    phone: null,
+    lease_start_date: new Date().toISOString().split("T")[0],
+    lease_end_date: null,
+    rent_amount: 0,
+    status: "active",
+    unit_number: "",
+    property_id: null,
+    property_name: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    // aliases
     unit: "",
     moveInDate: new Date().toISOString().split("T")[0],
     leaseEndDate: "",
     rentAmount: 0,
     depositAmount: 0,
-    status: "active",
     paymentHistory: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -109,6 +122,9 @@ export function TenantEditForm({
           // Asegurar que las fechas se formateen correctamente
           const formattedTenant = {
             ...tenant,
+            // Split name into first_name / last_name if not already set
+            first_name: tenant.first_name || tenant.name?.split(' ')[0] || '',
+            last_name: tenant.last_name || tenant.name?.split(' ').slice(1).join(' ') || '',
             moveInDate: tenant.moveInDate || tenant.lease_start_date || '',
             leaseEndDate: tenant.leaseEndDate || tenant.lease_end_date || '',
             rentAmount: tenant.rentAmount || tenant.rent_amount || 0,
@@ -197,7 +213,7 @@ export function TenantEditForm({
       // Update rent amount if available
       if (unitData.monthly_rent && unitData.monthly_rent > 0) {
         // Removed console.log for security
-        setFormData(prev => ({ ...prev, rentAmount: unitData.monthly_rent }));
+        setFormData(prev => ({ ...prev, rentAmount: unitData.monthly_rent ?? prev.rentAmount }));
       }
 
       // Load units for this property
@@ -394,7 +410,7 @@ export function TenantEditForm({
         ...formData,
         [name]: numValue,
       });
-    } else if (name === "name" || name === "email") {
+    } else if (name === "name" || name === "email" || name === "first_name" || name === "last_name") {
       // Allow spaces while typing, sanitize only on save
       setFormData({
         ...formData,
@@ -481,9 +497,13 @@ export function TenantEditForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validación adicional del nombre antes de proceder
-    if (!formData.name || formData.name.trim() === '') {
-      setErrors({ name: 'El nombre del inquilino es requerido' });
+    // Validación: al menos el nombre es requerido
+    const firstName = (formData.first_name || '').trim();
+    const lastName = (formData.last_name || '').trim();
+    const fullName = lastName ? `${firstName} ${lastName}` : firstName;
+
+    if (!firstName) {
+      setErrors({ first_name: 'El nombre es requerido' });
       toast.error('Por favor ingresa el nombre del inquilino');
       return;
     }
@@ -493,18 +513,17 @@ export function TenantEditForm({
     }
 
     try {
-      // Removed console.log for security
-      // Removed console.log for security
-
       // Sanitize text inputs before saving
       const updatedTenant = {
         ...formData,
-        name: sanitizeInput(formData.name),
+        first_name: sanitizeInput(firstName),
+        last_name: lastName ? sanitizeInput(lastName) : '',
+        name: sanitizeInput(fullName), // full name for display
         email: formData.email ? sanitizeInput(formData.email) : '',
         updatedAt: new Date().toISOString(),
         id: formData.id || `tenant-${Date.now()}`,
-        propertyId: selectedPropertyId, // Include selected property
-        unit: formData.unit || '', // Include selected unit with fallback
+        propertyId: selectedPropertyId,
+        unit: formData.unit || '',
       };
 
       // Removed console.log for security
@@ -544,22 +563,35 @@ export function TenantEditForm({
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name" className="flex items-center gap-1">
-                Nombre <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Ingresa el nombre completo del inquilino"
-                className={errors.name ? "border-destructive" : ""}
-                required
-              />
-              {errors.name && (
-                <p className="text-xs text-destructive">{errors.name}</p>
-              )}
+            {/* Nombre y Apellidos — dos campos separados */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="first_name" className="flex items-center gap-1">
+                  Nombre <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="first_name"
+                  name="first_name"
+                  value={formData.first_name || ""}
+                  onChange={handleChange}
+                  placeholder="Nombre"
+                  className={errors.first_name ? "border-destructive" : ""}
+                  required
+                />
+                {errors.first_name && (
+                  <p className="text-xs text-destructive">{errors.first_name}</p>
+                )}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="last_name">Apellidos</Label>
+                <Input
+                  id="last_name"
+                  name="last_name"
+                  value={formData.last_name || ""}
+                  onChange={handleChange}
+                  placeholder="Apellidos"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -588,7 +620,7 @@ export function TenantEditForm({
                   <Input
                     id="phone"
                     name="phone"
-                    value={formData.phone}
+                    value={formData.phone ?? ""}
                     onChange={handleChange}
                     placeholder="(555) 123-4567"
                   />
@@ -665,11 +697,10 @@ export function TenantEditForm({
                           if (error) {
                             console.error('❌ Error loading unit rent:', error);
                           } else if (unitData) {
-                            // Removed console.log for security
                             setFormData(prev => ({
                               ...prev,
                               unit: unitValue,
-                              rentAmount: unitData.monthly_rent || prev.rentAmount
+                              rentAmount: unitData.monthly_rent ?? prev.rentAmount
                             }));
                           }
                         } catch (error) {
@@ -740,7 +771,7 @@ export function TenantEditForm({
                     id="moveInDate"
                     name="moveInDate"
                     type="date"
-                    value={formatDateForInput(formData.moveInDate)}
+                    value={formatDateForInput(formData.moveInDate ?? "")}
                     onChange={handleChange}
                     className={errors.moveInDate ? "border-destructive" : ""}
                   />
