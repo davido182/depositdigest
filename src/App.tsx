@@ -38,6 +38,7 @@ import { useDeviceFeatures } from "./hooks/use-device-features";
 import { logger } from "@/utils/logger";
 import { config } from "@/utils/config";
 import { liveUpdatesService } from "@/services/LiveUpdatesService";
+import ResetPassword from "./pages/ResetPassword";
 
 // Create a new query client instance with simplified configuration
 const queryClient = new QueryClient({
@@ -125,6 +126,7 @@ const App = () => {
               <Route path="/landing" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/tenant-signup" element={<TenantSignup />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Legal pages */}
               <Route path="/privacy" element={<PrivacyPolicy />} />

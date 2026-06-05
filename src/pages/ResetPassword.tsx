@@ -49,23 +49,13 @@ const ResetPassword = () => {
 
     // Give Supabase time to process the token from the URL hash
     const timeout = setTimeout(() => {
-      // If still not in recovery mode after waiting, check if we have a valid
-      // session manually (the hash token might have been processed already)
-      supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
-          // We have a session — Supabase already processed the token.
-          // Check if the URL still has the recovery hash
-          const hash = window.location.hash;
-          if (hash.includes("type=recovery") || isPasswordRecovery) {
-            setStage("form");
-          } else {
-            // Normal session, not a recovery flow
-            setStage("invalid");
-          }
+        setStage("form");
         } else {
-          setStage("invalid");
+        setStage("invalid");
         }
-      });
+    });
     }, 2500);
 
     return () => clearTimeout(timeout);
