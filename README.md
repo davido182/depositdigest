@@ -1,13 +1,6 @@
 # RentaFlux - Plataforma de Gestión Inmobiliaria
 
-## 🏢 Descripción
-
-RentaFlux es una plataforma integral de gestión inmobiliaria que permite a propietarios e inquilinos gestionar eficientemente alquileres, pagos, mantenimiento y contabilidad. Cuanta con versiones free y premium.
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
+## 🏢 RentaFlux es una plataforma integral de gestión inmobiliaria que permite a propietarios e inquilinos gestionar eficientemente alquileres, pagos, mantenimiento y contabilidad.
 
 **Use your preferred IDE**
 
