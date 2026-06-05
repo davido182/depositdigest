@@ -46,10 +46,6 @@ const Tenants = () => {
   }, []);
 
   const handleAddTenant = () => {
-    if (userRole === 'landlord_free' && tenants.length >= 3) {
-      toast.error("Los usuarios gratuitos pueden tener máximo 3 inquilinos. Actualiza a Premium para inquilinos ilimitados");
-      return;
-    }
     setCurrentTenant(null);
     setIsEditModalOpen(true);
   };

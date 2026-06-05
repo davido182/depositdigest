@@ -358,7 +358,7 @@ const Properties = () => {
             setSelectedProperty(null);
           }}
           onSave={handleSaveProperty}
-          userRole={userRole || 'landlord_free'}
+          userRole="landlord_premium"
         />
 
         <PropertyDetails

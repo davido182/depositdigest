@@ -14,14 +14,20 @@ interface AuthContextType {
   isLoading: boolean;
   isPasswordRecovery: boolean;
   isInitialized: boolean;
+  isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<any>;
   signUp: (email: string, password: string, fullName?: string) => Promise<any>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<any>;
   updatePassword: (newPassword: string) => Promise<any>;
   refreshUserRole: (currentUser?: User) => Promise<void>;
+  checkSubscription: () => Promise<void>;
+  createCheckoutSession: () => Promise<string>;
+  upgradeUserToPremium: (userId?: string) => Promise<void>;
   isLandlord: boolean;
   isTenant: boolean;
+  isPremium: boolean;
+  hasActivePremium: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,6 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Computed properties
   const isLandlord = userRole === 'landlord_free' || userRole === 'landlord_premium';
   const isTenant = userRole === 'tenant';
+  const isPremium = userRole === 'landlord_premium';
+  const hasActivePremium = userRole === 'landlord_premium';
+  const isAuthenticated = !!user && !isPasswordRecovery;
 
   const refreshUserRole = async (currentUser?: User): Promise<void> => {
     const userToCheck = currentUser || user;
@@ -93,19 +102,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      console.log('🔐 AuthContext: Iniciando login');
-      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
-      
       if (error) {
         console.error('❌ AuthContext: Error en login:', error.message);
         throw error;
       }
-      
-      console.log('✅ AuthContext: Login exitoso');
       return data;
     } catch (error) {
       console.error('❌ AuthContext: Excepción en signIn:', error);
@@ -142,25 +146,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       setIsLoading(true);
-      console.log('👋 AuthContext: Iniciando logout');
-      
-      // Clear local state first
+      // Limpiar estado local primero
       setUser(null);
       setSession(null);
       setUserRole(null);
       setIsPasswordRecovery(false);
-      
-      // Clear localStorage
       localStorage.removeItem('rentaflux_has_visited');
-      
       const { error } = await supabase.auth.signOut();
-      
       if (error) {
         console.error('❌ AuthContext: Error en logout:', error.message);
         throw error;
       }
-      
-      console.log('✅ AuthContext: Logout exitoso');
     } catch (error) {
       console.error('❌ AuthContext: Excepción en signOut:', error);
       throw error;
@@ -172,7 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string) => {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/login`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) throw error;
     return data;
@@ -191,29 +187,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const checkSubscription = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      if (error) {
+        console.error('❌ Subscription check error:', error);
+        return;
+      }
+      if (data) {
+        setSubscriptionPlan(data.plan);
+        if (data.plan === 'premium' && userRole === 'landlord_free') {
+          const { error: updateError } = await supabase
+            .from('user_roles')
+            .update({ role: 'landlord_premium' })
+            .eq('user_id', user.id);
+          if (!updateError) setUserRole('landlord_premium');
+        }
+      }
+    } catch (error) {
+      console.error('💥 Error checking subscription:', error);
+    }
+  };
+
+  const createCheckoutSession = async (): Promise<string> => {
+    const { data, error } = await supabase.functions.invoke('create-checkout');
+    if (error) throw error;
+    return data.url;
+  };
+
+  const upgradeUserToPremium = async (userId?: string) => {
+    const targetUserId = userId || user?.id;
+    if (!targetUserId) return;
+    try {
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 7);
+      const { error } = await supabase
+        .from('user_roles')
+        .upsert({
+          user_id: targetUserId,
+          role: 'landlord_premium' as UserRole,
+          trial_end_date: trialEndDate.toISOString()
+        }, { onConflict: 'user_id' });
+      if (error) throw error;
+      await refreshUserRole();
+    } catch (error) {
+      console.error('💥 Exception upgrading to premium:', error);
+    }
+  };
+
   const initializeAuth = async () => {
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
-      
       if (error) {
         console.error('❌ AuthContext: Error obteniendo sesión:', error);
         setIsLoading(false);
         setIsInitialized(true);
         return;
       }
-      
       if (session?.user) {
-        console.log('✅ AuthContext: Sesión existente encontrada');
         setUser(session.user);
         setSession(session);
-        // Delay para evitar race conditions
         setTimeout(() => {
           refreshUserRole(session.user);
         }, 1000);
-      } else {
-        console.log('ℹ️ AuthContext: No hay sesión existente');
       }
-      
       setIsLoading(false);
       setIsInitialized(true);
     } catch (error) {
@@ -227,51 +265,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let isMounted = true;
     let initializationTimeout: NodeJS.Timeout;
 
-    // Initialize auth
     initializeAuth();
 
-    // Set timeout for initialization
     initializationTimeout = setTimeout(() => {
       if (isMounted && !isInitialized) {
-        console.log('⏰ AuthContext: Timeout de inicialización alcanzado');
         setIsLoading(false);
         setIsInitialized(true);
       }
-    }, 30000); // 30 second timeout
+    }, 30000);
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!isMounted) return;
-        
-        console.log('🔄 AuthContext: Auth state change:', event, !!session?.user);
-        
+
         switch (event) {
           case 'INITIAL_SESSION':
           case 'SIGNED_IN':
             if (session?.user) {
-              console.log('👤 AuthContext: Usuario logueado');
               setIsPasswordRecovery(false);
               setUser(session.user);
               setSession(session);
               setIsLoading(false);
-              
-              // Delay role refresh to avoid race conditions
               setTimeout(() => {
-                if (isMounted) {
-                  refreshUserRole(session.user);
-                }
+                if (isMounted) refreshUserRole(session.user);
               }, 2000);
               setIsInitialized(true);
             }
             break;
-            
+
           case 'SIGNED_OUT':
-            console.log('👋 AuthContext: Usuario deslogueado');
-            // Report unexpected logout if not initiated by user
-            if (!isLoading) {
-              console.log('🚨 Logout inesperado detectado');
-            }
             setIsPasswordRecovery(false);
             setUserRole(null);
             setUser(null);
@@ -279,45 +301,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setIsLoading(false);
             setIsInitialized(true);
             break;
-            
+
           case 'PASSWORD_RECOVERY':
-            console.log('🔑 AuthContext: Modo recuperación de contraseña');
             if (session?.user) {
               setUser(session.user);
               setSession(session);
               setIsPasswordRecovery(true);
               setIsLoading(false);
               setIsInitialized(true);
-              // Redirect to login page so the user can set a new password
-              window.location.href = '/login';
+              // Navigate without hard reload so React state is preserved
+              window.history.replaceState(null, '', '/reset-password');
             }
             break;
 
           case 'TOKEN_REFRESHED':
             if (session?.user) {
-              console.log('🔄 AuthContext: Token refrescado');
               setUser(session.user);
               setSession(session);
               setIsLoading(false);
               setIsInitialized(true);
             }
             break;
-            
+
           default:
-            console.log('❓ AuthContext: Evento no manejado:', event);
+            break;
         }
       }
     );
-    
-    // Session monitoring disabled for build compatibility
 
     return () => {
       isMounted = false;
       subscription.unsubscribe();
-      // sessionMonitor.stopMonitoring(); // Disabled for build compatibility
-      if (initializationTimeout) {
-        clearTimeout(initializationTimeout);
-      }
+      if (initializationTimeout) clearTimeout(initializationTimeout);
     };
   }, []);
 
@@ -329,14 +344,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     isPasswordRecovery,
     isInitialized,
+    isAuthenticated,
     signIn,
     signUp,
     signOut,
     resetPassword,
     updatePassword,
     refreshUserRole,
+    checkSubscription,
+    createCheckoutSession,
+    upgradeUserToPremium,
     isLandlord,
     isTenant,
+    isPremium,
+    hasActivePremium,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

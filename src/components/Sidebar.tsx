@@ -1,9 +1,7 @@
-
 import React from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTrialCountdown } from "@/hooks/use-trial";
+import { useI18n } from "@/contexts/i18nContext";
 import {
   Building2,
   Users,
@@ -14,14 +12,15 @@ import {
   Wrench,
   Calculator,
   MessageCircle,
-  Crown,
   UserPlus,
   ExternalLink,
   LogOut,
+  Home,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar as SidebarContainer,
   SidebarContent,
@@ -35,142 +34,110 @@ import {
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { userRole, hasActivePremium, user, signOut, isLoading } = useAuth();
-  const { trialDaysLeft, isTrialUser } = useTrialCountdown();
+  const { userRole, user, signOut } = useAuth();
+  const { t } = useI18n();
 
-  // Removed console.log for security
-
-  // Get user display name
   const getUserDisplayName = () => {
-    if (!user) return "Usuario";
-    
+    if (!user) return t.sidebar.greeting;
     const fullName = user.user_metadata?.full_name || user.user_metadata?.name;
     if (fullName) return fullName;
-    
-    if (user.email) {
-      return user.email.split('@')[0];
-    }
-    
-    return "Usuario";
+    if (user.email) return user.email.split('@')[0];
+    return t.sidebar.greeting;
   };
 
-  // Define navigation items based on user role
-  const getNavigationItems = () => {
-    // Removed console.log for security
-    
-    const baseItems = [
-      { name: "Dashboard", href: "/dashboard", icon: Building2 },
-    ];
+  const getUserInitials = () => {
+    const name = getUserDisplayName();
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
-    // Tenant view - limited options
+  const getNavigationItems = () => {
     if (userRole === 'tenant') {
       return [
-        { name: "Mi Unidad", href: "/dashboard", icon: Building2 },
-        { name: "Mis Pagos", href: "/payments", icon: CreditCard },
-        { name: "Mantenimiento", href: "/maintenance", icon: Wrench },
-        { name: "Configuración", href: "/settings", icon: Settings },
+        { name: t.nav.myUnit, href: "/dashboard", icon: Home },
+        { name: t.nav.myPayments, href: "/payments", icon: CreditCard },
+        { name: t.nav.maintenance, href: "/maintenance", icon: Wrench },
+        { name: t.nav.settings, href: "/settings", icon: Settings },
       ];
     }
 
-    // Landlord items - available for both free and premium
-    if (userRole === 'landlord_free' || userRole === 'landlord_premium') {
-      const landlordItems = [
-        ...baseItems,
-        { name: "Propiedades", href: "/properties", icon: Building2 },
-         { name: "Inquilinos", href: "/tenants", icon: Users },
-         { name: "Pagos", href: "/payments", icon: CreditCard },
-      ];
-
-      // Premium-only features
-      if (userRole === 'landlord_premium') {
-        landlordItems.push(
-          { name: "Mantenimiento", href: "/maintenance", icon: Wrench },
-          { name: "Invitar Inquilino", href: "/invite-tenant", icon: UserPlus },
-          { name: "Contabilidad", href: "/accounting", icon: Calculator },
-          { name: "Asistente IA", href: "/assistant", icon: MessageCircle },
-          { name: "Análisis", href: "/analytics", icon: BarChart3 },
-          { name: "Reportes", href: "/reports", icon: FileText }
-        );
-      }
-
-      // Add settings at the end
-      landlordItems.push({ name: "Configuración", href: "/settings", icon: Settings });
-      
-      // Removed console.log for security
-      return landlordItems;
-    }
-
-    // Removed console.log for security
-    return baseItems;
+    // All landlords get all features
+    return [
+      { name: t.nav.dashboard, href: "/dashboard", icon: Building2 },
+      { name: t.nav.properties, href: "/properties", icon: Building2 },
+      { name: t.nav.tenants, href: "/tenants", icon: Users },
+      { name: t.nav.payments, href: "/payments", icon: CreditCard },
+      { name: t.nav.maintenance, href: "/maintenance", icon: Wrench },
+      { name: t.nav.inviteTenant, href: "/invite-tenant", icon: UserPlus },
+      { name: t.nav.accounting, href: "/accounting", icon: Calculator },
+      { name: t.nav.assistant, href: "/assistant", icon: MessageCircle },
+      { name: t.nav.analytics, href: "/analytics", icon: BarChart3 },
+      { name: t.nav.reports, href: "/reports", icon: FileText },
+      { name: t.nav.settings, href: "/settings", icon: Settings },
+    ];
   };
 
   const navigationItems = getNavigationItems();
 
-  const handleLandingPageClick = () => {
-    navigate('/landing');
-  };
-
-  const handleUpgrade = async () => {
-    // Scroll to contact section on landing page
-    window.location.href = '/landing#contacto';
-  };
-
   const handleSignOut = async () => {
     try {
       await signOut();
-      toast.success("Sesión cerrada exitosamente");
-      // Pequeño delay para asegurar que el estado se actualice
-      setTimeout(() => {
-        navigate('/');
-      }, 100);
+      toast.success(t.sidebar.signOut);
+      setTimeout(() => navigate('/'), 100);
     } catch (error) {
       console.error("Error signing out:", error);
-      toast.error("Error al cerrar sesión");
     }
   };
 
-  const getRoleDisplayText = () => {
-    if (isLoading) return "Cargando...";
-    if (!userRole) return "Asignando rol...";
-    
-    switch (userRole) {
-      case 'landlord_free':
-        return 'Plan Gratuito';
-      case 'landlord_premium':
-        return 'Plan Premium';
-      case 'tenant':
-        return 'Inquilino';
-      default:
-        return "Plan Gratuito";
-    }
-  };
+  const displayName = getUserDisplayName();
+  const initials = getUserInitials();
+  const roleLabel = userRole === 'tenant' ? t.sidebar.tenantLabel : t.sidebar.landlordLabel;
 
   return (
     <SidebarContainer>
-      <SidebarHeader>
-        <div className="flex items-center space-x-2">
-          <div>
-            <h1 className="text-xl font-bold text-sidebar-foreground">RentaFlux</h1>
-            {hasActivePremium && (
-              <div className="flex items-center text-xs text-yellow-500">
-                <Crown className="h-3 w-3 mr-1" />
-                Premium
-              </div>
-            )}
+      {/* ── Header: Logo + Brand ── */}
+      <SidebarHeader className="pb-2">
+        <div className="flex items-center gap-3 px-1 pt-1">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
+            <Building2 className="h-4 w-4 text-primary-foreground" />
           </div>
+          <span className="text-lg font-bold tracking-tight text-sidebar-foreground">
+            RentaFlux
+          </span>
         </div>
-        
-        <div className="space-y-1 mt-4">
-          <div className="text-sm font-medium text-sidebar-foreground">
-            Hola, {getUserDisplayName()}
-          </div>
-          <div className="text-xs text-sidebar-foreground/60">
-            {getRoleDisplayText()}
+
+        {/* ── User Welcome Card ── */}
+        <div className="mt-4 mx-1 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/15 p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-11 w-11 ring-2 ring-primary/20 shadow-md">
+              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm font-semibold">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-sidebar-foreground leading-tight">
+                {t.sidebar.greeting}, {displayName}
+              </p>
+              <div className="flex items-center gap-1 mt-0.5">
+                <Mail className="h-3 w-3 text-sidebar-foreground/40 shrink-0" />
+                <p className="truncate text-xs text-sidebar-foreground/50">
+                  {user?.email || roleLabel}
+                </p>
+              </div>
+              <span className="inline-block mt-1.5 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
+                {roleLabel}
+              </span>
+            </div>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      {/* ── Navigation ── */}
+      <SidebarContent className="pt-2">
         <SidebarMenu>
           {navigationItems.map((item) => {
             const isActive = location.pathname === item.href;
@@ -178,7 +145,7 @@ const Sidebar = () => {
               <SidebarMenuItem key={item.name}>
                 <SidebarMenuButton asChild isActive={isActive}>
                   <NavLink to={item.href}>
-                    <item.icon className="h-5 w-5" />
+                    <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
                   </NavLink>
                 </SidebarMenuButton>
@@ -188,67 +155,24 @@ const Sidebar = () => {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter>
-        {/* Trial countdown for premium trial users */}
-        {isTrialUser && trialDaysLeft !== null && (
-          <div className="p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
-            <div className="text-center mb-2">
-              <div className="bg-green-100 text-green-800 px-2 py-1 rounded font-medium text-sm">
-                🎁 Prueba Premium: {trialDaysLeft} días restantes
-              </div>
-            </div>
-            <button
-              onClick={handleUpgrade}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:from-green-700 hover:to-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
-            >
-              <Crown className="h-4 w-4" />
-              Continuar con Premium
-              <ExternalLink className="h-3 w-3" />
-            </button>
-            <div className="text-xs text-sidebar-foreground/60 text-center mt-2">
-              💎 Mantén todas las funciones premium
-            </div>
-          </div>
-        )}
-
-        {/* Upgrade section for free users */}
-        {userRole === 'landlord_free' && !isTrialUser && (
-          <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-            <button
-              onClick={handleUpgrade}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md mb-2"
-            >
-              <Crown className="h-4 w-4" />
-              Actualizar a Premium
-              <ExternalLink className="h-3 w-3" />
-            </button>
-            <div className="text-xs text-sidebar-foreground/60 text-center">
-              🚀 Desbloquea RentaFlux Premium
-            </div>
-          </div>
-        )}
-
-        {/* Website access for all users */}
-        {(userRole === 'landlord_premium' || userRole === 'tenant') && (
-          <div className="p-3 bg-sidebar-accent/30 rounded-lg">
-            <button
-              onClick={handleLandingPageClick}
-              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs bg-sidebar-accent text-sidebar-accent-foreground rounded-lg hover:opacity-80 transition-colors"
-            >
-              <ExternalLink className="h-3 w-3" />
-              Ir a Sitio Web
-            </button>
-          </div>
-        )}
+      {/* ── Footer ── */}
+      <SidebarFooter className="gap-2 pb-4">
+        <button
+          onClick={() => navigate('/landing')}
+          className="mx-1 flex items-center justify-center gap-2 rounded-lg border border-sidebar-border px-3 py-2 text-xs text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          {t.sidebar.website}
+        </button>
 
         <Button
           onClick={handleSignOut}
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="w-full flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+          className="mx-1 w-auto justify-start gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           <LogOut className="h-4 w-4" />
-          Cerrar Sesión
+          {t.sidebar.signOut}
         </Button>
       </SidebarFooter>
     </SidebarContainer>

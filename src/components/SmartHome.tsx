@@ -1,19 +1,9 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import Landing from "@/pages/Landing";
-import { debugDatabaseStructure } from "@/utils/debugDatabase";
-import { useEffect } from "react";
 
 export function SmartHome() {
   const { isAuthenticated, isLoading } = useAuth();
-
-  // Debug database structure on load
-  useEffect(() => {
-    // Removed console.log for security
-    debugDatabaseStructure();
-  }, []);
-
-  // Removed console.log for security
 
   // Mostrar loading mientras se verifica la autenticación
   if (isLoading) {
@@ -24,8 +14,11 @@ export function SmartHome() {
     );
   }
 
-  // SIEMPRE mostrar landing en la ruta raíz (/), sin importar si está autenticado
-  // Los usuarios autenticados deben ir a /dashboard manualmente
-  // Removed console.log for security');
+  // Si el usuario ya está autenticado, redirigir al dashboard
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Si no está autenticado, mostrar la landing page
   return <Landing />;
 }

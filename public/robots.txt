@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+Allow: /landing
+Disallow: /dashboard
+Disallow: /properties
+Disallow: /tenants
+Disallow: /payments
+Disallow: /maintenance
+Disallow: /accounting
+Disallow: /assistant
+Disallow: /analytics
+Disallow: /reports
+Disallow: /settings
+Disallow: /invite-tenant
+Disallow: /subscription-success
+Disallow: /payment-success
+Disallow: /app
+
+Sitemap: https://www.rentaflux.com/sitemap.xml

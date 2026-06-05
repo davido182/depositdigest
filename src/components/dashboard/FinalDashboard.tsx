@@ -71,7 +71,6 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
     if (totalPotentialRevenue === 0 && stats.totalUnits > 0 && stats.monthlyRevenue > 0) {
       const avgRentPerUnit = stats.occupiedUnits > 0 ? stats.monthlyRevenue / stats.occupiedUnits : 0;
       totalPotentialRevenue = stats.totalUnits * avgRentPerUnit;
-      console.log('💰 DEBUG Using fallback calculation:', totalPotentialRevenue);
     }
 
     for (let month = 0; month < 12; month++) {
@@ -179,8 +178,6 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                   
                   // Contar inquilinos activos desde stats (datos reales)
                   activeTenants = stats.totalTenants || 0;
-                  console.log('=== PAYMENT CALCULATION ===');
-                  console.log('Active tenants (from DB):', activeTenants);
                   
                   // Leer registros de pagos
                   const storageKey = `payment_records_${user?.id}_${currentYear}`;
@@ -189,7 +186,6 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                   if (storedRecords && activeTenants > 0) {
                     try {
                       const records = JSON.parse(storedRecords);
-                      console.log('Total payment records:', records.length);
                       
                       // PENDIENTES = Mes actual sin pagar
                       const paidThisMonth = records.filter((r: any) => 
@@ -201,12 +197,8 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                       ).length;
                       
                       currentMonthPending = Math.max(activeTenants - paidThisMonth, 0);
-                      console.log('Current month:', currentMonth, '(Noviembre)');
-                      console.log('✅ Paid this month:', paidThisMonth);
-                      console.log('📅 PENDIENTES (mes actual):', currentMonthPending);
                       
                       // VENCIDOS = Contar registros de meses anteriores que están marcados como NO pagados
-                      // Solo contar registros que existen y están pendientes (no N/A)
                       previousMonthsUnpaid = records.filter((r: any) =>
                         r.year === currentYear &&
                         r.month < currentMonth &&
@@ -215,8 +207,6 @@ export function FinalDashboard({ stats }: FinalDashboardProps) {
                         r.tenantId !== 'N/A'
                       ).length;
                       
-                      console.log('⏰ VENCIDOS (meses anteriores):', previousMonthsUnpaid);
-                      console.log('💰 TOTAL:', currentMonthPending + previousMonthsUnpaid);
                     } catch (error) {
                       console.error('Error parsing payment records:', error);
                     }

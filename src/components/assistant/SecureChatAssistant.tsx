@@ -84,15 +84,6 @@ export function SecureChatAssistant() {
         maintenance: maintenanceRes.data || []
       };
 
-      console.log('SecureChatAssistant: Data loaded successfully:', {
-        properties: data.properties.length,
-        tenants: data.tenants.length,
-        activeTenants: data.tenants.filter(t => t.status === 'active').length,
-        units: data.units.length,
-        payments: data.payments.length,
-        maintenance: data.maintenance.length
-      });
-
       setUserData(data);
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -117,7 +108,6 @@ export function SecureChatAssistant() {
           paymentRecords = allRecords.filter((r: any) => 
             r.tenantId && r.tenantId !== 'N/A'
           );
-          console.log('Payment records for AI:', paymentRecords.length);
         } catch (error) {
           console.error('Error parsing payment records:', error);
         }

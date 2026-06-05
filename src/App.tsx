@@ -2,12 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserPreferencesProvider } from "@/contexts/UserPreferencesContext";
+import { I18nProvider } from "@/contexts/i18nContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import AuthDebugger from "@/components/AuthDebugger";
-import { DevToolsPanel } from "@/hooks/useDevTools";
 import { DevErrorNotice } from "@/components/ui/DevErrorNotice";
 import { SmartHome } from "@/components/SmartHome";
 import Index from "./pages/Index";
@@ -39,8 +38,6 @@ import { useDeviceFeatures } from "./hooks/use-device-features";
 import { logger } from "@/utils/logger";
 import { config } from "@/utils/config";
 import { liveUpdatesService } from "@/services/LiveUpdatesService";
-import { Layout } from "@/components/Layout";
-import { DebugCleaner } from "@/components/security/DebugCleaner";
 
 // Create a new query client instance with simplified configuration
 const queryClient = new QueryClient({
@@ -119,9 +116,10 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <UserPreferencesProvider>
-          <TooltipProvider>
-            <BrowserRouter>
+        <I18nProvider>
+          <UserPreferencesProvider>
+            <TooltipProvider>
+              <BrowserRouter>
             <Routes>
               <Route path="/" element={<SmartHome />} />
               <Route path="/landing" element={<Landing />} />
@@ -155,15 +153,13 @@ const App = () => {
 
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <AuthDebugger />
-            {/* <DebugCleaner /> */}
             <Toaster />
             <Sonner position="top-right" />
-            {/* <DevToolsPanel /> */}
             <DevErrorNotice />
           </BrowserRouter>
-          </TooltipProvider>
-        </UserPreferencesProvider>
+            </TooltipProvider>
+          </UserPreferencesProvider>
+        </I18nProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

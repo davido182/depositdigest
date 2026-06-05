@@ -2,28 +2,81 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+
+    <!-- ═══ Viewport & Mobile ═══ -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="RentaFlux" />
+    <meta name="application-name" content="RentaFlux" />
+    <meta name="theme-color" content="#3c6e71" />
+
+    <!-- ═══ Favicon / Icons ═══ -->
     <link rel="icon" type="image/svg+xml" href="/rentaflux-logo.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="RentaFlux - Sistema de gestión de propiedades y alquileres" />
-    <meta name="keywords" content="alquiler, propiedades, gestión, inquilinos, pagos" />
+    <link rel="apple-touch-icon" href="/rentaflux-logo.svg" />
+
+    <!-- ═══ SEO Core ═══ -->
+    <title>RentaFlux – Gestión de Propiedades y Alquileres</title>
+    <meta name="description" content="RentaFlux es el sistema todo-en-uno para gestionar propiedades, inquilinos y pagos de alquiler. Simplifica tu gestión inmobiliaria con IA integrada." />
+    <meta name="keywords" content="gestión de propiedades, alquiler, inquilinos, pagos de alquiler, software inmobiliario, RentaFlux, administración de propiedades" />
     <meta name="author" content="RentaFlux" />
-    
-    <!-- Open Graph / Facebook -->
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="https://www.rentaflux.com/" />
+
+    <!-- ═══ Open Graph (Facebook / LinkedIn) ═══ -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="RentaFlux" />
     <meta property="og:url" content="https://www.rentaflux.com/" />
-    <meta property="og:title" content="RentaFlux - Gestión de Propiedades" />
-    <meta property="og:description" content="Sistema completo para gestionar tus propiedades, inquilinos y pagos de forma eficiente" />
-    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:title" content="RentaFlux – Gestión de Propiedades y Alquileres" />
+    <meta property="og:description" content="Sistema todo-en-uno para gestionar propiedades, inquilinos y pagos. Con asistente IA, analíticas y más." />
+    <meta property="og:image" content="https://www.rentaflux.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:locale:alternate" content="en_US" />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://www.rentaflux.com/" />
-    <meta property="twitter:title" content="RentaFlux - Gestión de Propiedades" />
-    <meta property="twitter:description" content="Sistema completo para gestionar tus propiedades, inquilinos y pagos de forma eficiente" />
-    <meta property="twitter:image" content="/og-image.png" />
+    <!-- ═══ Twitter Card ═══ -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@rentaflux" />
+    <meta name="twitter:title" content="RentaFlux – Gestión de Propiedades y Alquileres" />
+    <meta name="twitter:description" content="Sistema todo-en-uno para gestionar propiedades, inquilinos y pagos. Con asistente IA, analíticas y más." />
+    <meta name="twitter:image" content="https://www.rentaflux.com/og-image.png" />
 
-    <title>RentaFlux - Gestión de Propiedades</title>
-    
+    <!-- ═══ Structured Data (JSON-LD) ═══ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "RentaFlux",
+      "description": "Sistema todo-en-uno para gestionar propiedades, inquilinos y pagos de alquiler con asistente IA integrado.",
+      "url": "https://www.rentaflux.com",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web, Android, iOS",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "inLanguage": ["es", "en"]
+    }
+    </script>
+
+    <!-- ═══ Security Headers (via meta — server headers are preferred) ═══ -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
+    <!--
+      NOTE: Content-Security-Policy should be set via HTTP response headers on the server
+      (Nginx / Cloudflare / Netlify _headers / Vercel headers) for full protection.
+      A meta CSP is a fallback only and does not protect against all injection vectors.
+    -->
+
+    <!-- ═══ Performance Hints ═══ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://supabase.io" />
+
     <style>
       :root {
         --jet: #353535;
@@ -31,62 +84,96 @@
         --white: #ffffff;
         --platinum: #d9d9d9;
         --indigo-dye: #284b63;
+        color-scheme: light dark;
       }
-      
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
         padding: 0;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-          sans-serif;
+          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         background-color: var(--white);
         color: var(--jet);
+        /* Prevent horizontal overflow on mobile */
+        overflow-x: hidden;
       }
-      
+
       #root {
         min-height: 100vh;
+        min-height: 100dvh;
       }
-      
-      /* Loading spinner */
+
+      /* Initial loading screen */
       .loading-container {
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         min-height: 100vh;
+        min-height: 100dvh;
         background-color: var(--white);
+        gap: 16px;
       }
-      
+
+      .loading-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .loading-brand-name {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--caribbean-current);
+        letter-spacing: -0.5px;
+      }
+
       .loading-spinner {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         border: 3px solid var(--platinum);
         border-top: 3px solid var(--caribbean-current);
         border-radius: 50%;
-        animation: spin 1s linear infinite;
+        animation: spin 0.8s linear infinite;
       }
-      
+
+      .loading-text {
+        color: var(--indigo-dye);
+        font-size: 13px;
+        opacity: 0.7;
+      }
+
       @keyframes spin {
-        0% { transform: rotate(0deg); }
+        0%   { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
-      
-      .loading-text {
-        margin-top: 16px;
-        color: var(--indigo-dye);
-        font-size: 14px;
-        text-align: center;
+
+      /* Safe area support for notched devices */
+      @supports (padding: env(safe-area-inset-top)) {
+        body {
+          padding-top: env(safe-area-inset-top);
+          padding-bottom: env(safe-area-inset-bottom);
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+        }
       }
     </style>
   </head>
   <body>
     <div id="root">
-      <div class="loading-container">
-        <div>
-          <div class="loading-spinner"></div>
-          <div class="loading-text">Cargando...</div>
+      <div class="loading-container" role="status" aria-label="Cargando RentaFlux">
+        <div class="loading-brand">
+          <div class="loading-brand-name">RentaFlux</div>
         </div>
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <div class="loading-text">Cargando...</div>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>

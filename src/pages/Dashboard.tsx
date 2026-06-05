@@ -14,6 +14,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Plus, FileSpreadsheet } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useI18n } from "@/contexts/i18nContext";
 import { tenantService } from "@/services/TenantService";
 import { useAppData } from "@/hooks/use-app-data";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +33,7 @@ interface Property {
 
 const Dashboard = () => {
   const { userRole, user } = useAuth();
+  const { t } = useI18n();
   const isMobile = useIsMobile();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -90,7 +92,7 @@ const Dashboard = () => {
               const mappedProperties = dbProperties.map(dbProp => {
                 const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
                 const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
-                const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
+                const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.monthly_rent || 0), 0);
 
                 // Removed console.log for security
 
@@ -120,10 +122,6 @@ const Dashboard = () => {
   }, [user]);
 
   const handleAddTenant = () => {
-    if (userRole === 'landlord_free') {
-      toast.error("La función de invitar inquilinos es exclusiva de usuarios Premium");
-      return;
-    }
     setCurrentTenant(null);
     setIsEditModalOpen(true);
   };
@@ -132,10 +130,6 @@ const Dashboard = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const handleAddProperty = () => {
-    if (userRole === 'landlord_free' && properties.length >= 1) {
-      toast.error("Los usuarios gratuitos pueden tener máximo 1 propiedad. Actualiza a Premium para propiedades ilimitadas.");
-      return;
-    }
     setIsPropertyModalOpen(true);
   };
 
@@ -219,38 +213,32 @@ const Dashboard = () => {
       {/* <DebugCleaner /> */}
       <div className={`space-y-6 ${isMobile ? 'px-2' : ''}`}>
         <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between items-center'}`}>
-          <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>Dashboard</h1>
+          <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold tracking-tight`}>{t.dashboard.title}</h1>
           <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
-            {/* Botón de importar datos - solo para usuarios premium */}
-            {userRole === 'landlord_premium' && (
-              <Button
-                onClick={() => setIsImportModalOpen(true)}
-                variant="outline"
-                className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
-                size={isMobile ? "sm" : "default"}
-              >
-                <FileSpreadsheet className="h-4 w-4" />
-                Importar Datos
-              </Button>
-            )}
+            <Button
+              onClick={() => setIsImportModalOpen(true)}
+              variant="outline"
+              className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+              size={isMobile ? "sm" : "default"}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              {t.dashboard.importData}
+            </Button>
 
-            {userRole === 'landlord_premium' && (
-              <Button onClick={handleAddTenant} className="gap-2" size={isMobile ? "sm" : "default"}>
-                <Plus className="h-4 w-4" />
-                Agregar Inquilino
-              </Button>
-            )}
-            {(userRole === 'landlord_free' && properties.length === 0) || userRole === 'landlord_premium' ? (
-              <Button
-                onClick={handleAddProperty}
-                variant="outline"
-                className="gap-2"
-                size={isMobile ? "sm" : "default"}
-              >
-                <Plus className="h-4 w-4" />
-                Agregar Propiedad
-              </Button>
-            ) : null}
+            <Button onClick={handleAddTenant} className="gap-2" size={isMobile ? "sm" : "default"}>
+              <Plus className="h-4 w-4" />
+              {t.dashboard.addTenant}
+            </Button>
+
+            <Button
+              onClick={handleAddProperty}
+              variant="outline"
+              className="gap-2"
+              size={isMobile ? "sm" : "default"}
+            >
+              <Plus className="h-4 w-4" />
+              {t.dashboard.addProperty}
+            </Button>
           </div>
         </div>
 
@@ -281,7 +269,7 @@ const Dashboard = () => {
         isOpen={isPropertyModalOpen}
         onClose={() => setIsPropertyModalOpen(false)}
         onSave={handleSaveProperty}
-        userRole={userRole || 'landlord_free'}
+        userRole="landlord_premium"
       />
 
       <FinalImport
@@ -310,7 +298,7 @@ const Dashboard = () => {
                     const mappedProperties = dbProperties.map(dbProp => {
                       const propertyUnits = units.filter(unit => unit.property_id === dbProp.id);
                       const occupiedUnits = propertyUnits.filter(unit => !unit.is_available);
-                      const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.rent_amount || 0), 0);
+                      const totalRevenue = occupiedUnits.reduce((sum, unit) => sum + (unit.monthly_rent || 0), 0);
 
                       return {
                         id: dbProp.id,
