@@ -312,7 +312,9 @@ export function PropertyForm({ property, isOpen, onClose, onSave, userRole }: Pr
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+      <Dialog open={isOpen} onOpenChange={(open) => {
+           if (!open) onClose();
+           }}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

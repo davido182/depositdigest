@@ -394,7 +394,9 @@ export function UnitEditForm({ unit, isOpen, onClose, onSave }: UnitEditFormProp
   if (!unit) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+   <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open) onClose();
+        }}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Editar Unidad</DialogTitle>
