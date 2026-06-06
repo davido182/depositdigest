@@ -86,7 +86,7 @@ export function normalizeTenant(tenant: any): Tenant {
     propertyName: tenant.propertyName || tenant.property_name || '',
     
     // Status
-    status: tenant.status || tenant.is_active === false ? 'inactive' : 'active',
+    status: tenant.status || (tenant.is_active === false ? 'inactive' : 'active'),
     is_active: tenant.is_active !== undefined ? tenant.is_active : tenant.status !== 'inactive',
     
     // Timestamps
