@@ -463,35 +463,32 @@ export function TenantEditForm({
     }
   };
 
-  const validateForm = () => {
+  const validateForm = (nameOverride?: string) => {
     const newErrors: Record<string, string> = {};
-
     try {
       const validationService = ValidationService.getInstance();
-
+      const dataToValidate = nameOverride 
+        ? { ...formData, name: nameOverride }
+        : formData;
+      
       if (tenant) {
-        // Editing existing tenant
-        validationService.validateTenantUpdate(formData, allTenants);
+        validationService.validateTenantUpdate(dataToValidate, allTenants);
       } else {
-        // Creating new tenant
-        validationService.validateTenant(formData, allTenants);
+        validationService.validateTenant(dataToValidate, allTenants);
       }
-
       return true;
     } catch (error: any) {
-      if (error.message.includes('name')) newErrors.name = error.message;
+      if (error.message.includes('name')) newErrors.first_name = error.message;
       else if (error.message.includes('email')) newErrors.email = error.message;
       else if (error.message.includes('rent')) newErrors.rentAmount = error.message;
       else if (error.message.includes('deposit')) newErrors.depositAmount = error.message;
       else if (error.message.includes('unit') || error.message.includes('occupied')) newErrors.unit = error.message;
       else if (error.message.includes('date')) newErrors.moveInDate = error.message;
-      else {
-        toast.error(error.message);
-      }
-
+      else toast.error(error.message);
+      
       setErrors(newErrors);
       return false;
-    }
+    }  
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -508,7 +505,7 @@ export function TenantEditForm({
       return;
     }
 
-    if (!validateForm()) {
+    if (!validateForm(fullName)) {
       return;
     }
 
@@ -548,8 +545,10 @@ export function TenantEditForm({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <Dialog open={isOpen} onOpenChange={(open) => {
+       if (!open) onClose();
+       }}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {tenant ? "Editar Inquilino" : "Agregar Nuevo Inquilino"}

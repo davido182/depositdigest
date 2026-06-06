@@ -125,7 +125,7 @@ const Landing = () => {
   };
 
   const handleDemoClick = () => {
-    window.open("https://depositdigest.lovable.app/", "_blank");
+    window.open("", "_blank");
   };
 
   const handleMobileDownload = (platform: "ios" | "android") => {
@@ -350,7 +350,7 @@ const Landing = () => {
                 Características
               </span>
               <h2 style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", fontWeight: 800, letterSpacing: "-0.8px", marginBottom: 12 }}>
-                Todo lo que necesitas en una sola app
+                Todo lo que necesitas en un solo sitio
               </h2>
               <p style={{ color: "#6b7280", maxWidth: 500, margin: "0 auto", lineHeight: 1.6 }}>
                 Gestión completa de propiedades, inquilinos, mantenimiento y finanzas
@@ -465,7 +465,7 @@ const Landing = () => {
                   background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.8)",
                   padding: "4px 14px", borderRadius: 100, fontSize: "0.8rem", fontWeight: 600,
                 }}>
-                  App Móvil
+                  Aplicaciones móviles en desarrollo
                 </span>
                 <h2 style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", fontWeight: 800, letterSpacing: "-0.8px", marginBottom: 16, lineHeight: 1.2 }}>
                   Gestiona desde cualquier lugar
