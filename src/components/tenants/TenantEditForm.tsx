@@ -745,7 +745,7 @@ export function TenantEditForm({
               <div className="grid gap-2">
                 <Label htmlFor="status">Estado</Label>
                 <Select
-                  value={formData.status}
+                  value={formData.status || "active"}
                   onValueChange={handleStatusChange}
                 >
                   <SelectTrigger>
