@@ -1,0 +1,32 @@
+# 🔒 ARCHIVO DE EJEMPLO - NO PONGAS CREDENCIALES REALES AQUÍ
+# Este archivo SÍ se sube a GitHub como referencia
+# Copia este archivo como .env.local y pon tus credenciales reales ahí
+
+# Configuración de RentaFlux - EJEMPLO
+# =====================================
+
+# Supabase Configuration (REEMPLAZA con tus valores reales)
+VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+VITE_SUPABASE_ANON_KEY=tu_clave_publica_aqui
+
+# App Configuration
+VITE_APP_NAME=RentaFlux
+VITE_APP_VERSION=1.0.0
+VITE_APP_DOMAIN=http://localhost:8080
+
+# Stripe Configuration (REEMPLAZA con tu clave de prueba)
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_tu_clave_de_prueba_aqui
+
+# Sentry Configuration (Opcional - para monitoreo de errores)
+VITE_SENTRY_DSN=tu_sentry_dsn_aqui
+
+# Environment
+NODE_ENV=development
+
+# 📝 INSTRUCCIONES:
+# 1. Copia este archivo: cp .env.example .env.local
+# 2. Edita .env.local con tus credenciales REALES
+# 3. NUNCA subas .env.local a GitHub
+# 4. Las credenciales las obtienes de:
+#    - Supabase: https://supabase.com/dashboard
+#    - Stripe: https://dashboard.stripe.com/test/apikeys

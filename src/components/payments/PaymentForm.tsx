@@ -263,7 +263,7 @@ export function PaymentForm({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>

@@ -18,6 +18,46 @@ import { Building2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 
 type Stage = "loading" | "form" | "success" | "invalid";
 
+
+// ── Shared wrapper ──────────────────────────────────────────────────────
+const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(160deg, #eff6ff 0%, #f8faff 50%, #faf5ff 100%)",
+        padding: "24px 16px",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 420 }}>
+        {/* Logo */}
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              background: "linear-gradient(135deg, #2563eb, #7c3aed)",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 12,
+              boxShadow: "0 4px 16px rgba(37,99,235,0.3)",
+            }}
+          >
+            <Building2 style={{ width: 22, height: 22, color: "#fff" }} />
+          </div>
+          <h1 style={{ fontSize: "1.4rem", fontWeight: 700, letterSpacing: "-0.5px", margin: 0 }}>
+            RentaFlux
+          </h1>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+
 const ResetPassword = () => {
   const navigate = useNavigate();
   const { isPasswordRecovery, user } = useAuth();
