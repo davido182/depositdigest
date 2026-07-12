@@ -49,8 +49,10 @@ jobs:
           VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.PRODUCTION_STRIPE_PUBLISHABLE_KEY }}
 
       # ── 6. Sync Capacitor → Android ──────────────────────────────────────
-      - name: Capacitor sync Android
-        run: npx cap sync android
+      - name: Capacitor add & sync Android
+        run: |
+          npx cap add android || true
+          npx cap sync android
 
       # ── 7. Bump versionCode & versionName in build.gradle ────────────────
       - name: Set version in build.gradle
