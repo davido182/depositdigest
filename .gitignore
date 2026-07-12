@@ -34,7 +34,6 @@ dist-ssr
 *.sw?
 
 # Capacitor
-android/
 ios/
 .capacitor/
 
