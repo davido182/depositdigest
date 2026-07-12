@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ── 1. Checkout ────────────────────────────────────────────────
+      # ── 1. Checkout ──────────────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -52,13 +52,8 @@ jobs:
 
       # ── 6. Verify android/ platform exists ───────────────────────────
       #    android/ is committed to the repo — skip "cap add", go direct to sync
-      - name: Verify Android platform
-        run: |
-          if [ ! -d "android" ]; then
-            echo "ERROR: android/ folder not found in repo."
-            exit 1
-          fi
-          echo "android/ found — skipping cap add, proceeding to sync"
+      - name: Capacitor — add Android platform
+        run: npx cap add android
 
       # ── 7. Sync web assets to Android ────────────────────────────────
       - name: Capacitor — sync web assets to Android
