@@ -10,7 +10,6 @@ import {
   BarChart3,
   Settings,
   Wrench,
-  Calculator,
   MessageCircle,
   UserPlus,
   ExternalLink,
@@ -65,7 +64,7 @@ const Sidebar = () => {
       ];
     }
 
-    // All landlords get all features
+    // All landlords get all features (accounting disabled)
     return [
       { name: t.nav.dashboard, href: "/dashboard", icon: Building2 },
       { name: t.nav.properties, href: "/properties", icon: Building2 },
@@ -73,7 +72,6 @@ const Sidebar = () => {
       { name: t.nav.payments, href: "/payments", icon: CreditCard },
       { name: t.nav.maintenance, href: "/maintenance", icon: Wrench },
       { name: t.nav.inviteTenant, href: "/invite-tenant", icon: UserPlus },
-      { name: t.nav.accounting, href: "/accounting", icon: Calculator },
       { name: t.nav.assistant, href: "/assistant", icon: MessageCircle },
       { name: t.nav.analytics, href: "/analytics", icon: BarChart3 },
       { name: t.nav.reports, href: "/reports", icon: FileText },
@@ -102,9 +100,11 @@ const Sidebar = () => {
       {/* ── Header: Logo + Brand ── */}
       <SidebarHeader className="pb-2">
         <div className="flex items-center gap-3 px-1 pt-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
-            <Building2 className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <img
+            src="/rentaflux-logo.svg"
+            alt="RentaFlux"
+            className="h-9 w-9 shrink-0"
+          />
           <span className="text-lg font-bold tracking-tight text-sidebar-foreground">
             RentaFlux
           </span>

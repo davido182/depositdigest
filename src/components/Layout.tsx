@@ -94,6 +94,17 @@ export function Layout({ children }: LayoutProps) {
               isNative && isLandscape ? "h-12" : "h-16"
             )}>
               <SidebarTrigger className="-ml-1" />
+
+              {/* App tagline — hidden on small screens */}
+              <div className="hidden sm:flex flex-col justify-center ml-1 min-w-0">
+                <span className="text-sm font-semibold text-foreground leading-tight truncate">
+                  RentaFlux
+                </span>
+                <span className="text-[11px] text-muted-foreground leading-tight truncate">
+                  Gestión completa de propiedades, inquilinos, mantenimiento y finanzas
+                </span>
+              </div>
+
               <div className="ml-auto flex items-center gap-2">
                 <SmartNotifications />
                 <OfflineBanner />

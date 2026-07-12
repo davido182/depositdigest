@@ -134,45 +134,37 @@ const Payments = () => {
         <Tabs defaultValue="tracker" className="w-full">
           <TabsList>
             <TabsTrigger value="tracker">Seguimiento de Pagos</TabsTrigger>
-            {userRole === 'landlord_premium' && (
-              <>
-                <TabsTrigger value="payments">Lista de Pagos</TabsTrigger>
-                <TabsTrigger value="processor">Procesar Comprobantes</TabsTrigger>
-              </>
-            )}
+            <TabsTrigger value="payments">Lista de Pagos</TabsTrigger>
+            <TabsTrigger value="processor">Procesar Comprobantes</TabsTrigger>
           </TabsList>
           
           <TabsContent value="tracker">
             <TenantPaymentTracker tenants={tenants} />
           </TabsContent>
           
-          {userRole === 'landlord_premium' && (
-            <TabsContent value="payments">
-              {isLoading ? (
-                <div className="flex justify-center p-8">
-                  <div className="text-center text-muted-foreground">Cargando pagos...</div>
-                </div>
-              ) : (
-                <PaymentsList
-                  payments={payments}
-                  tenants={tenants}
-                  tenantNames={tenantNames}
-                  onAddPayment={loadData}
-                  onUpdatePayment={handleUpdatePayment}
-                  onDeletePayment={handleDeletePayment}
-                />
-              )}
-            </TabsContent>
-          )}
-          
-          {userRole === 'landlord_premium' && (
-            <TabsContent value="processor">
-              <ReceiptProcessor
+          <TabsContent value="payments">
+            {isLoading ? (
+              <div className="flex justify-center p-8">
+                <div className="text-center text-muted-foreground">Cargando pagos...</div>
+              </div>
+            ) : (
+              <PaymentsList
+                payments={payments}
                 tenants={tenants}
-                onPaymentCreated={handleReceiptPaymentCreated}
+                tenantNames={tenantNames}
+                onAddPayment={loadData}
+                onUpdatePayment={handleUpdatePayment}
+                onDeletePayment={handleDeletePayment}
               />
-            </TabsContent>
-          )}
+            )}
+          </TabsContent>
+
+          <TabsContent value="processor">
+            <ReceiptProcessor
+              tenants={tenants}
+              onPaymentCreated={handleReceiptPaymentCreated}
+            />
+          </TabsContent>
         </Tabs>
       </section>
     </Layout>

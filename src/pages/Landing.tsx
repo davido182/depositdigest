@@ -179,16 +179,13 @@ const Landing = () => {
           }}
         >
           <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+            {/* Logo + wordmark */}
             <div className="flex items-center gap-2.5">
-              <div
-                style={{
-                  width: 34, height: 34, borderRadius: 10,
-                  background: "linear-gradient(135deg, #2563eb, #7c3aed)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                <Building2 style={{ width: 18, height: 18, color: "#fff" }} />
-              </div>
+              <img
+                src="/rentaflux-logo.svg"
+                alt="RentaFlux"
+                style={{ width: 36, height: 36, flexShrink: 0 }}
+              />
               <span style={{ fontSize: "1.2rem", fontWeight: 700, letterSpacing: "-0.3px" }}>
                 RentaFlux
               </span>

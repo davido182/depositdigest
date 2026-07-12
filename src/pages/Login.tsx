@@ -8,6 +8,21 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
+// Shared logo block used across all login screens
+const LogoBrand = ({ subtitle }: { subtitle: string }) => (
+  <div className="mb-8 text-center">
+    <div className="flex items-center justify-center mb-3">
+      <img
+        src="/rentaflux-logo.svg"
+        alt="RentaFlux"
+        className="h-14 w-14"
+      />
+    </div>
+    <h1 className="text-2xl font-bold tracking-tight">RentaFlux</h1>
+    <p className="text-muted-foreground text-sm mt-1">{subtitle}</p>
+  </div>
+);
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,7 +31,7 @@ const Login = () => {
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showResetForm, setShowResetForm] = useState(false);
-  const { signIn, signUp, resetPassword, user, isPasswordRecovery, isInitialized, isLoading: authLoading } = useAuth();
+  const { signIn, signUp, resetPassword, updatePassword, user, isPasswordRecovery, isInitialized, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -148,15 +163,7 @@ const Login = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
         <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="h-8 w-8 mr-2 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">R</span>
-              </div>
-              <h1 className="text-2xl font-bold tracking-tight">RentaFlux</h1>
-            </div>
-            <p className="text-muted-foreground">Recuperar contraseña</p>
-          </div>
+          <LogoBrand subtitle="Recuperar contraseña" />
 
           <Card>
             <CardHeader>
@@ -205,15 +212,7 @@ const Login = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
         <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="h-8 w-8 mr-2 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">R</span>
-              </div>
-              <h1 className="text-2xl font-bold tracking-tight">RentaFlux</h1>
-            </div>
-            <p className="text-muted-foreground">Establecer nueva contraseña</p>
-          </div>
+          <LogoBrand subtitle="Establecer nueva contraseña" />
 
           <Card>
             <CardHeader>
@@ -268,15 +267,7 @@ const Login = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center mb-4">
-            <div className="h-8 w-8 mr-2 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">R</span>
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight">RentaFlux</h1>
-          </div>
-          <p className="text-muted-foreground">Gestiona tus propiedades de alquiler con facilidad</p>
-        </div>
+        <LogoBrand subtitle="Gestiona tus propiedades de alquiler con facilidad" />
 
         <Card>
           <CardHeader>

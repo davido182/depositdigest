@@ -21,7 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, DollarSign, Home, Mail, Phone, Upload, FileText, Building } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { Calendar, DollarSign, Home, Mail, Phone, Upload, FileText, Building, CalendarIcon, X } from "lucide-react";
+import { format, parseISO, isValid } from "date-fns";
+import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import DatabaseService from "@/services/DatabaseService";
 import { ValidationService } from "@/services/ValidationService";
@@ -762,46 +767,95 @@ export function TenantEditForm({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
+              {/* ── Fecha de Ingreso — Calendar Popover ── */}
               <div className="grid gap-2">
-                <Label htmlFor="moveInDate">Fecha de Ingreso</Label>
-                <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
-                  <Input
-                    id="moveInDate"
-                    name="moveInDate"
-                    type="date"
-                    value={formatDateForInput(formData.moveInDate ?? "")}
-                    onChange={handleChange}
-                    className={errors.moveInDate ? "border-destructive" : ""}
-                  />
-                </div>
+                <Label>Fecha de Ingreso</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.moveInDate && "text-muted-foreground",
+                        errors.moveInDate && "border-destructive"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                      {formData.moveInDate && isValid(parseISO(formData.moveInDate))
+                        ? format(parseISO(formData.moveInDate), "d MMM yyyy", { locale: es })
+                        : "Seleccionar fecha"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarPicker
+                      mode="single"
+                      selected={formData.moveInDate && isValid(parseISO(formData.moveInDate)) ? parseISO(formData.moveInDate) : undefined}
+                      onSelect={(date) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          moveInDate: date ? format(date, "yyyy-MM-dd") : "",
+                          lease_start_date: date ? format(date, "yyyy-MM-dd") : "",
+                        }));
+                        if (errors.moveInDate) setErrors(prev => ({ ...prev, moveInDate: "" }));
+                      }}
+                      initialFocus
+                      locale={es}
+                    />
+                  </PopoverContent>
+                </Popover>
                 {errors.moveInDate && (
                   <p className="text-xs text-destructive">{errors.moveInDate}</p>
                 )}
-                {formData.moveInDate && (
-                  <p className="text-xs text-muted-foreground">
-                    Formato: {formatDateForDisplay(formData.moveInDate)}
-                  </p>
-                )}
               </div>
 
+              {/* ── Fecha Fin de Contrato — Calendar Popover (optional) ── */}
               <div className="grid gap-2">
-                <Label htmlFor="leaseEndDate">Fecha Fin de Contrato (Opcional)</Label>
-                <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
-                  <Input
-                    id="leaseEndDate"
-                    name="leaseEndDate"
-                    type="date"
-                    value={formatDateForInput(formData.leaseEndDate || "")}
-                    onChange={handleChange}
-                  />
-                </div>
-                {formData.leaseEndDate && (
-                  <p className="text-xs text-muted-foreground">
-                    Formato: {formatDateForDisplay(formData.leaseEndDate)}
-                  </p>
-                )}
+                <Label className="flex items-center justify-between">
+                  <span>Fin de Contrato</span>
+                  <span className="text-xs text-muted-foreground font-normal">Opcional</span>
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal text-muted-foreground"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                      {formData.leaseEndDate && isValid(parseISO(formData.leaseEndDate))
+                        ? format(parseISO(formData.leaseEndDate), "d MMM yyyy", { locale: es })
+                        : "Sin fecha límite"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <div className="p-2 border-b">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-xs text-muted-foreground"
+                        onClick={() => setFormData(prev => ({ ...prev, leaseEndDate: "", lease_end_date: null }))}
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Quitar fecha
+                      </Button>
+                    </div>
+                    <CalendarPicker
+                      mode="single"
+                      selected={formData.leaseEndDate && isValid(parseISO(formData.leaseEndDate)) ? parseISO(formData.leaseEndDate) : undefined}
+                      onSelect={(date) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          leaseEndDate: date ? format(date, "yyyy-MM-dd") : "",
+                          lease_end_date: date ? format(date, "yyyy-MM-dd") : null,
+                        }));
+                      }}
+                      disabled={(date) =>
+                        formData.moveInDate ? date < parseISO(formData.moveInDate) : false
+                      }
+                      initialFocus
+                      locale={es}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
