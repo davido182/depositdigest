@@ -47,7 +47,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_live_placeholder' }}
           VITE_APP_NAME: RentaFlux
           VITE_APP_VERSION: ${{ github.event.inputs.version_name }}
           VITE_APP_DOMAIN: https://www.rentaflux.com
