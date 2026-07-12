@@ -52,8 +52,8 @@ jobs:
 
       # ── 6. Verify android/ platform exists ───────────────────────────
       #    android/ is committed to the repo — skip "cap add", go direct to sync
-      - name: Capacitor — add Android platform
-        run: npx cap add android
+      #- name: Capacitor — add Android platform
+      # run: npx cap add android
 
       # ── 7. Sync web assets to Android ────────────────────────────────
       - name: Capacitor — sync web assets to Android
